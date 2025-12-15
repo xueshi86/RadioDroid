@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_search"
+        android:title="@string/action_search"
+        android:icon="@drawable/ic_search_24dp"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_icons_view"
+        android:title="@string/action_toggle_view"
+        android:icon="@drawable/ic_view_icons_24dp"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_list_view"
+        android:title="@string/action_toggle_view"
+        android:icon="@drawable/ic_view_list_24dp"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_mpd"
+        android:title="@string/settings_mpd"
+        android:icon="@drawable/mpd"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/media_route_menu_item"
+        android:title="@string/media_route_menu_title"
+        app:actionProviderClass="androidx.mediarouter.app.MediaRouteActionProvider"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/action_set_sleep_timer"
+        android:icon="@drawable/ic_hourglass_empty_black_24dp"
+        android:title="@string/nav_item_add_sleep"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/action_save"
+        android:icon="@drawable/ic_save_black_24dp"
+        android:title="@string/nav_item_save_playlist"
+        app:showAsAction="ifRoom"/>
+
+    <item
+        android:id="@+id/action_load"
+        android:icon="@drawable/ic_load_playlist_24dp"
+        android:title="@string/nav_item_load_playlist"
+        app:showAsAction="ifRoom"/>
+
+    <item
+        android:id="@+id/action_add_alarm"
+        android:title="@string/nav_item_alarm"
+        android:icon="@drawable/ic_add_alarm_black_24dp"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_delete"
+        android:title="@string/action_delete"
+        android:icon="@drawable/ic_delete_white_24dp"
+        app:showAsAction="ifRoom" />
+</menu>

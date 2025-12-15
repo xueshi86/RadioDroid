@@ -1,0 +1,348 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="detail_name">名称</string>
+    <string name="detail_tags">标签</string>
+    <string name="detail_country">国家</string>
+    <string name="detail_create_shortcut">添加到主屏幕</string>
+    <string name="detail_language">语言</string>
+    <string name="detail_weblink">网络链接</string>
+    <string name="detail_visit_website">@string/action_station_visit_website</string>
+    <string name="detail_play">播放</string>
+    <string name="detail_pause">暂停</string>
+    <string name="detail_stop">停止</string>
+    <string name="detail_share">分享</string>
+    <string name="detail_play_in_radiodroid">使用睿卓播放</string>
+
+    <string name="action_links">链接</string>
+    <string name="action_homepage">主页</string>
+    <string name="action_favorite">收藏</string>
+    <string name="action_alarm">闹钟</string>
+
+    <string name="action_station_visit_website">访问网站</string>
+    <string name="action_station_copy_stream_url">复制流媒体地址</string>
+    <string name="action_station_share">分享</string>
+    
+    <string name="action_local">本地电台</string>
+    <string name="action_skip_to_next">下一个</string>
+    <string name="action_pause">暂停</string>
+    <string name="action_skip_to_previous">上一个</string>
+    <string name="action_resume">恢复</string>
+    <string name="action_stop">停止</string>
+    <string name="action_search">搜索</string>
+    <string name="action_delete">删除</string>
+    <string name="action_delete_history">删除历史</string>
+    <string name="action_delete_favorites">删除收藏</string>
+    <string name="action_delete_stream_history">清除曲目历史</string>
+    <string name="action_ok">确认</string>
+    <string name="action_cancel">取消</string>
+    <string name="action_top_click">访问排行</string>
+    <string name="action_toggle_view">切换视图</string>
+    <string name="action_top_vote">投票排行</string>
+    <string name="action_changed_lately">最近更新</string>
+    <string name="action_currently_playing">正在播放</string>
+    <string name="action_tags">标签</string>
+    <string name="action_countries">国家</string>
+    <string name="action_languages">语言</string>
+    <string name="action_edit">编辑</string>
+    <string name="action_lyrics">歌词</string>
+    <string name="action_copy_info">复制信息</string>
+    <string name="error_station_load">无法连接电台</string>
+    <string name="error_list_update">无法连接 radio browser 服务器</string>
+
+    <string name="share_action">分享电台链接到..</string>
+
+    <string name="nav_item_stations">电台</string>
+    <string name="nav_item_starred">收藏</string>
+    <string name="nav_item_history">历史</string>
+    <string name="nav_item_settings">设置</string>
+    <string name="nav_item_alarm">闹钟</string>
+
+    <string name="about_text">此程序使用位于 https://www.radio-browser.info 的免费广播电台目录。\n任何人都可以添加电台到目录中，就像一个在线（流媒体）广播电台的维基一样。\n\n联系：\nsegler_alex@web.de\n\n漏洞跟踪：\nhttps://github.com/segler-alex/RadioDroid/issues\n\n如果您喜欢此软件并愿意提供帮助，敬请给本人发送邮件，我真的需要有绘图经验的朋友来让这个程序别太虐待眼睛了:)\n或许哪位朋友会画图标、图片...或者哪位程序员会修复漏洞，或者开发（功能，不是漏洞;）\n还有关于新功能的建议也一向非常感谢！\n\n此程序是在 GPLv3 授权下的免费软件。https://www.gnu.org/licenses/gpl-3.0.html</string>
+    <string name="about_version">版本：%1$s</string>
+    <string name="detail_star">添加到收藏</string>
+    <string name="detail_unstar">从收藏删除</string>
+    <string name="detail_play_in_external_player">@string/action_play_in_external</string>
+    <string name="progress_loading">正在载入...</string>
+
+    <string name="sleep_timer" formatted="true">睡眠定时器：%1$02d:%2$02d</string>
+    <string name="sleep_timer_title">在选定的分钟后停止播放</string>
+    <string name="sleep_timer_apply">应用</string>
+    <string name="sleep_timer_clear">清除</string>
+    <string name="nav_item_add_sleep">睡眠定时器</string>
+    
+    <string name="nav_item_save_playlist">导出收藏到播放列表</string>
+    <string name="nav_item_load_playlist">从播放列表导入收藏</string>
+    <string name="nav_item_save_history_playlist">导出历史到播放列表</string>
+    <string name="confirm_overwrite_file">覆盖此文件吗？</string>
+    <string name="dialog_hint_file_name">输入文件名</string>
+    <string name="error_empty_field">必须填写此栏目</string>
+    <string name="error_invalid_file_name">文件名无效</string>
+    <string name="label_button_cancel">取消</string>
+    <string name="label_button_overwrite">覆盖</string>
+    <string name="notify_load_playlist_nok">无法从 %1$s&#47;%2$s 导入</string>
+    <string name="notify_load_playlist_now">正在从 %1$s&#47;%2$s 导入，请稍候。</string>
+    <string name="notify_load_playlist_ok">已从 %2$s&#47;%3$s 导入 %1$d 个电台</string>
+    <string name="notify_save_playlist_nok">无法导出到 %1$s&#47;%2$s</string>
+    <string name="notify_save_playlist_now">正在导出到 %1$s&#47;%2$s，请稍候。</string>
+    <string name="notify_save_playlist_ok">成功导出到 %1$s&#47;%2$s</string>
+    <string name="notify_sync_list_deleted_entries">列表中 %2$d 个本地电台中的 %1$d 个在服务器标记为不存在</string>
+
+    <string name="searchpreference_clear_history">清除历史</string>
+    <string name="searchpreference_no_results">无匹配项</string>
+    <string name="searchpreference_search">搜索…</string>
+    <string name="settings_appearance">外观</string>
+    <string name="settings_theme_selection_title">主题</string>
+    <string name="theme_light">亮色</string>
+    <string name="theme_dark">暗色</string>
+    <string name="settings_circular_icons">使用圆形图标</string>
+    <string name="settings_compact_style">精简模式</string>
+    <string name="settings_compact_style_desc_off">使用大图标并显示电台详情</string>
+    <string name="settings_compact_style_desc_on">使用小图标并隐藏电台详情</string>
+    <string name="settings_bottom_navigation">底部导航栏</string>
+
+    <string name="settings_interaction">互动</string>
+    <string name="settings_single_use_tags">显示不常用标签</string>
+    <string name="settings_single_use_tags_desc_off">不显示不常用标签</string>
+    <string name="settings_single_use_tags_desc_on">显示不常用标签</string>
+
+    <string name="settings_show_broken">无效电台</string>
+    <string name="settings_show_broken_on">在列表中显示无效电台</string>
+    <string name="settings_show_broken_off">不在列表中显示无效电台</string>
+
+    <string name="settings_startup_behaviour">启动行为</string>
+    <string name="startup_action_title">启动时</string>
+    <string name="startup_action_title_desc">%s</string>
+    <string name="startup_show_all_stations">显示所有电台</string>
+    <string name="startup_show_favorites">显示收藏</string>
+    <string name="startup_show_history">显示历史</string>
+    <string name="startup_show_last_view">显示上次浏览</string>
+
+    <string name="settings_load_icons">显示电台图标</string>
+    <string name="settings_load_icons_on">下载电台图标</string>
+    <string name="settings_load_icons_off">不下载电台图标</string>
+
+    <string name="settings_auto_favorite">自动收藏</string>
+    <string name="settings_auto_favorite_on">播放时自动收藏电台</string>
+    <string name="settings_auto_favorite_off">播放时不自动收藏电台</string>
+
+    <string name="settings_icon_click_toggles_favorite">点击收藏</string>
+    <string name="settings_icon_click_toggles_favorite_on">点击电台图标添加或移除收藏的电台</string>
+    <string name="settings_icon_click_toggles_favorite_off">点击电台图标开始播放</string>
+
+    <string name="settings_click_trend_icon_visible">热度图标</string>
+    <string name="settings_click_trend_icon_visible_on">显示热度图标</string>
+    <string name="settings_click_trend_icon_visible_off">隐藏热度图标</string>
+
+    <string name="settings_alarm">闹钟</string>
+    <string name="settings_alarm_external">使用外部程序</string>
+    <string name="settings_alarm_external_desc_on">使用默认外部程序打开闹钟</string>
+    <string name="settings_alarm_external_desc_off">使用睿卓打开闹钟</string>
+    <string name="settings_alarm_audio_player">音频播放器</string>
+    <string name="settings_alarm_sleep_timer">睡眠定时器</string>
+    <string name="settings_alarm_sleep_timer_desc">在 %1$s 分钟后停止播放</string>
+    <string name="settings_play">播放器</string>
+    <string name="settings_auto_play_on_startup">自动播放</string>
+    <string name="settings_auto_play_on_startup_on">启动时播放上一个电台</string>
+    <string name="settings_auto_play_on_startup_off">启动时不播放上一个电台</string>
+    <string name="settings_auto_off_on_startup">自动停止</string>
+    <string name="settings_auto_off_on_startup_on">自动播放时使用自动停止定时器</string>
+    <string name="settings_auto_off_on_startup_off">自动播放时不使用自动停止定时器</string>
+    <string name="settings_auto_off_sleep_timer">自动停止定时器</string>
+    <string name="settings_auto_off_sleep_timer_desc">在 %1$s 分钟后停止播放</string>
+    <string name="settings_play_external">使用外部播放器</string>
+    <string name="settings_play_external_desc_on">使用外部播放器播放电台</string>
+    <string name="settings_play_external_desc_off">使用睿卓播放电台</string>
+    <string name="settings_equalizer">均衡器</string>
+
+    <string name="settings_connectivity">连接</string>
+    <string name="settings_connect_timeout">连接超时</string>
+    <string name="settings_read_timeout">读取超时</string>
+    <string name="settings_resume_timeout">恢复播放超时</string>
+    <string name="settings_retry_timeout">重试超时</string>
+    <string name="settings_retry_delay">重连延时</string>
+    <string name="settings_proxy">代理</string>
+    <string name="settings_proxy_login">用户名</string>
+    <string name="settings_proxy_password">密码</string>
+    <string name="settings_proxy_action_test">测试</string>
+    <string name="settings_proxy_working">成功连接到 %s</string>
+    <string name="settings_proxy_not_working">未能连接到 %1$s\n%2$s</string>
+    <string name="settings_proxy_invalid">您提供的代理服务器值无效</string>
+    <string name="ignore_proxy_settings_invalid">已忽略无效的代理服务器设置</string>
+    <string name="settings_seconds_format">%d 秒</string>
+    <string name="settings_milliseconds_format">%d 毫秒</string>
+    
+    <string name="settings_pause_when_noisy">耳机断开时暂停</string>
+
+    <string name="settings_auto_resume_do_not_resume">不恢复</string>
+
+    <string name="settings_auto_resume_on_wired_headset_connected">有线连接时恢复</string>
+    <string name="settings_auto_resume_on_wired_headset_connected_on">有线耳机插入时恢复播放</string>
+
+    <string name="settings_auto_resume_on_bluetooth_a2dp_connected">蓝牙连接时恢复</string>
+    <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">蓝牙 A2DP 设备连接时恢复播放</string>
+    
+    <string name="settings_warn_no_wifi">未使用 Wi-Fi 时警告</string>
+    <string name="settings_warn_no_wifi_on">播放时无 Wi-Fi 连接警告</string>
+    <string name="settings_warn_no_wifi_off">未使用 Wi-Fi 连接时不警告</string>
+
+    <string name="settings_recordings">录音</string>
+    <string name="settings_record_name_formatting">文件格式</string>
+
+    <string name="settings_record_name_formatting_default_display">电台_艺术家_曲目_\u200b日期_\u200b时间</string>
+    <string name="settings_record_name_formatting_1_display">电台_艺术家_\u200b曲目</string>
+    <string name="settings_record_name_formatting_2_display">电台_日期_\u200b时间</string>
+    <string name="settings_record_name_formatting_3_display">索引号_电台_\u200b日期</string>
+
+    <string name="notify_pre_play">正在连接</string>
+    <string name="notify_play">正在播放</string>
+    <string name="notify_paused">已暂停</string>
+    <string name="notify_metered_connection">计量连接</string>
+
+    <string name="notify_starred">电台已被收藏</string>
+    <string name="notify_autostarred">电台已被自动收藏</string>
+    <string name="notify_unstarred">电台已从收藏移除</string>
+    <string name="notify_deleted_favorites">收藏已被删除</string>
+    <string name="notify_deleted_history">历史已被删除</string>
+
+    <string name="notify_open_link_failure">未发现打开链接的应用</string>
+
+    <string name="notify_station_removed_from_list">1 项已移除</string>
+    <string name="action_station_removed_from_list_undo">撤消</string>
+
+    <string name="alert_install_lyrics_app">您的设备上未安装 QuickLyric。您想从 Google Play 商店下载吗？</string>
+
+    <string name="alert_delete_history">您真要删除历史吗？</string>
+    <string name="alert_delete_favorites">您真要删除全部收藏吗？</string>
+    <string name="yes">确认</string>
+    <string name="no">取消</string>
+
+    <string name="alert_select_mpd_server">请选择服务器</string>
+    <string name="alert_select_mpd_server_name">服务器名</string>
+    <string name="alert_select_mpd_server_password">服务器密码</string>
+    <string name="hostname">主机名</string>
+    <string name="port">端口</string>
+
+    <string name="alert_select_mpd_server_add">添加</string>
+    <string name="alert_select_mpd_server_save">保存</string>
+    <string name="alert_select_mpd_server_remove">移除</string>
+    <string name="alert_add_or_edit_mpd_server">输入服务器详情</string>
+    <string name="alert_alarm_working">闹钟时间到</string>
+    <string name="alert_alarm_not_working">无足够信息启动闹钟</string>
+    <string name="alert_select_external_alarm_app">选择音频播放器</string>
+
+    <string name="alert_press_back_to_exit">再按一次返回退出</string>
+
+    <string name="error_stream_url">流媒体地址错误</string>
+    <string name="error_caching_stream">流媒体缓存错误</string>
+    <string name="error_play_stream">无法播放流媒体</string>
+    <string name="error_stream_reconnect_timeout">无法重新连接到流媒体：超时</string>
+    <string name="warning_no_network_trying_resume">无网络连接。正尝试在连接可用时恢复播放。</string>
+    <string name="giving_up_resume">已忽略尝试恢复播放</string>
+
+    <string name="error_record_needs_write">需要写入权限才能录音</string>
+    <string name="error_grant_audiofocus">系统未授予音频焦点请求</string>
+
+    <string name="error_no_equalizer_found">未发现均衡器程序</string>
+
+    <string name="player_info_status">状态：&#160;</string>
+    <string name="player_info_status_stopped">已停止</string>
+    <string name="player_info_status_playing">正在播放</string>
+    <string name="player_info_status_recording">正在录音</string>
+    <string name="player_info_status_playing_and_recording">正在播放和录音</string>
+    <string name="player_info_transferred">已传送数据：%1$s</string>
+    <string name="player_info_recording_to">正在录音到：\n%1$s</string>
+    <string name="player_info_recorded_to">上次录音：\n%1$s</string>
+
+    <string name="tab_player_art">专辑封面</string>
+    <string name="tab_player_info">信息</string>
+    <string name="tab_player_history">曲目历史</string>
+    <string name="tab_player_recordings">录音</string>    
+
+    <string name="station_detail_bitrate">%1$1d kbps</string>
+    <string name="station_detail_broken">无效</string>
+    <string name="station_detail_deleted_on_server">已删除</string>
+
+    <string name="image_button_disable">停用</string>
+    <string name="image_button_record">录音</string>
+    <string name="image_button_record_request_permission">请求录音权限</string>
+    <string name="image_button_recordings">正在录音</string>
+    <string name="image_button_delete">删除</string>
+    <string name="image_button_more">增加</string>
+    <string name="image_button_less">减少</string>
+    <string name="image_button_repeat">重复</string>
+    <string name="image_button_dont_repeat">不重复</string>
+    <string name="icon_click_trend_decreasing">热度正在下降</string>
+    <string name="icon_click_trend_increasing">热度正在上升</string>
+    <string name="icon_click_trend_stable">热度稳定</string>
+
+    <string name="media_route_menu_title">GoogleCast</string>
+    <string name="app_id">5A97BAE4</string>
+    <string name="app_name">睿卓</string>
+
+    <string name="settings_mpd">Music Player Daemon</string>
+    <string name="settings_mpd_port">MPD 端口</string>
+    <string name="settings_view_mpd_servers">您的服务器</string>
+    <string name="action_mpd_nok">MPD 未连接</string>
+    <string name="action_mpd_ok">MPD 已连接</string>
+    <string name="action_mpd_connected">已连接到服务器：%1$s</string>
+
+    <string name="mpd_no_connection">未连接</string>
+    <string name="action_enable_mpd">启用 MPD</string>
+    <string name="action_disable_mpd">停用 MPD</string>
+    <string name="action_add_mpd_server">添加 MPD 服务器</string>
+    
+    <string name="action_play_in_external">使用外部播放器播放</string>
+    <string name="action_choose_external_player">选择外部播放器</string>
+
+    <string name="settings_lastfm_api_key">Last.fm API 密钥</string>
+    <string name="settings_lastfm_api_key_desc">输入一个 API 密钥以便在全屏播放器中启用专辑封面</string>
+    <string name="settings_disable_battery_optimization">电池优化</string>
+    <string name="settings_ignore_battery_optimization_summary_on">电池优化被忽略，睿卓会始终在失去焦点后重获焦点。</string>
+    <string name="settings_ignore_battery_optimization_summary_off">电池优化被激活，睿卓将无法在后台失去焦点后重获焦点。</string>
+    <string name="settings_other">其它</string>
+    <string name="settings_statistics">统计</string>
+    <string name="settings_about">关于睿卓 (RadioDroid)</string>
+
+    <string name="description_btn_skip_to_next">转到下一个</string>
+    <string name="description_btn_skip_to_previous">转到上一个</string>
+
+    <string name="description_btn_setup_alarm">设置闹钟</string>
+    
+    <string-array name="weekdays">
+        <item>星期日</item>
+        <item>星期一</item>
+        <item>星期二</item>
+        <item>星期三</item>
+        <item>星期四</item>
+        <item>星期五</item>
+        <item>星期六</item>
+    </string-array>
+
+    <string name="notify_stream_url_copied">流媒体地址复制成功</string>
+    <string name="notify_track_info_copied">曲目信息复制成功</string>
+
+
+    <string-array name="actions_station_link">
+        <item>访问网站</item>
+        <item>复制流媒体地址</item>
+    </string-array>
+
+    <string name="alert_metered_connection_title">检测到计量连接</string>
+    <string name="alert_metered_connection_message">计量连接可能会产生额外费用，按\'确认\'继续。</string>
+    <string name="nav_item_statistics">统计</string>
+    <string name="nav_item_about">关于</string>
+    <string name="refresh">刷新</string>
+
+    <string name="alarm_backup">备用闹钟</string>
+    <string name="alarm_fallback_info">所选电台载入失败，已使用系统闹钟</string>
+    <string name="alarm_back_desc">当电台载入失败时使用的备用系统闹钟</string>
+
+    <string name="context_menu_share">@string/detail_share</string>
+    <string name="context_menu_visit_homepage">@string/action_station_visit_website</string>
+    <string name="context_menu_play_in_radiodroid">@string/detail_play_in_radiodroid</string>
+    <string name="context_menu_play_in_external_player">@string/action_play_in_external</string>
+    <string name="context_menu_add_alarm">@string/action_alarm</string>
+    <string name="context_menu_create_shortcut">@string/detail_create_shortcut</string>
+    <string name="context_menu_delete">@string/action_delete</string>
+</resources>

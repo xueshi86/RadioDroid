@@ -1,0 +1,285 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+def getAvailableLocales() {
+    def tree = fileTree(dir: 'src/main/res', include: '**/strings.xml')
+    return tree.collect {
+        def lang = it.getParentFile().getName() - "values-" - "values"
+
+        // We want a name which would be understood by Locale::forLanguageTag, so we should do
+        // do a simple conversion for an edge case:
+        //   "pt-rBR" -> "pt-BR"
+        //   "zh-rCN" -> "zh-CN"
+        //   and so on
+        lang = lang.replace("-r", "-")
+
+        if (lang.empty) {
+            lang = "en"
+        }
+
+        lang
+    }
+}
+
+android {
+
+    flavorDimensions "one"
+
+    compileSdkVersion 33
+
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlin {
+        jvmToolchain {
+            languageVersion.set(JavaLanguageVersion.of("17"))
+        }
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+
+    defaultConfig {
+        applicationId "net.programmierecke.radiodroid2"
+        minSdkVersion 16
+        targetSdkVersion 33
+
+        versionCode 96
+        versionName "0.86"
+
+        multiDexEnabled true
+        vectorDrawables.useSupportLibrary = true
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = ["room.schemaLocation": "$projectDir/schemas".toString()]
+            }
+        }
+
+        // Define your application name here.
+        // It must neither be present in /res/values/strings.xml
+        // nor in /res/values/string_no_translate.xml
+        resValue 'string', 'app_name_untranslated', 'RadioDroid'
+
+        // There is no easy way to get available locales during runtime, and especially before
+        // tests setup.
+        def escapedLocales = getAvailableLocales().collect { "\"" + it + "\"" }
+        buildConfigField "String[]", "AVAILABLE_LOCALES", String.format("{ %s }", escapedLocales.join(","))
+
+        testInstrumentationRunner "net.programmierecke.radiodroid2.tests.CustomTestRunner"
+
+        // The following argument makes the Android Test Orchestrator run its
+        // "pm clear" command after each test invocation. This command ensures
+        // that the app's state is completely cleared between tests.
+        testInstrumentationRunnerArguments clearPackageData: 'true'
+
+        buildConfigField "java.util.concurrent.atomic.AtomicBoolean", "IS_TESTING", "new java.util.concurrent.atomic.AtomicBoolean(false)"
+
+        multiDexKeepProguard file('multidex-config.pro')
+
+        vectorDrawables.useSupportLibrary = true
+    }
+
+    testOptions {
+        execution 'ANDROIDX_TEST_ORCHESTRATOR'
+    }
+
+    sourceSets {
+        // Store flags in subfolder to not pollute drawables
+        // https://antonioleiva.com/android-multiple-resource-folders/
+        main.res.srcDirs += ["src/main/res/drawable/flags"]
+
+        androidTest {
+            resources.srcDirs += ['src/androidTest/resources']
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+
+            lintOptions {
+                disable 'MissingTranslation'
+            }
+        }
+    }
+    productFlavors {
+        play {
+            dimension "one"
+        }
+        free {
+            dimension "one"
+        }
+    }
+    lint {
+        abortOnError true
+    }
+    namespace 'net.programmierecke.radiodroid2'
+
+    testOptions {
+        unitTests.all {
+            useJUnit()
+        }
+        animationsDisabled = true
+        unitTests.returnDefaultValues = true
+    }
+}
+
+ext {
+    exoplayerVersion = '2.18.2'
+    iconicsVersion = '4.0.2'
+}
+
+dependencies {
+    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.appcompat:appcompat:1.5.1'
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation 'com.google.android.material:material:1.8.0-beta01'
+    implementation 'androidx.preference:preference:1.2.0'
+    implementation 'androidx.mediarouter:mediarouter:1.3.1'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.tvprovider:tvprovider:1.0.0'
+
+    // Keep OkHttp 3.12.X to support Android 4.X, see https://developer.squareup.com/blog/okhttp-3-13-requires-android-5
+    //noinspection GradleDependency
+    implementation 'com.squareup.okhttp3:okhttp:3.12.13'
+
+    implementation 'com.google.code.gson:gson:2.9.1'
+    //noinspection GradleDependency 2.8 is newer than 2.71828'
+    implementation 'com.squareup.picasso:picasso:2.8'
+
+    
+    implementation "com.google.android.exoplayer:exoplayer-core:$exoplayerVersion"
+    implementation "com.google.android.exoplayer:exoplayer-hls:$exoplayerVersion"
+    implementation "com.mikepenz:iconics-core:$iconicsVersion"
+    implementation "com.mikepenz:iconics-views:$iconicsVersion"
+    implementation 'com.mikepenz:google-material-typeface:3.0.1.4.original-kotlin@aar'
+    implementation 'com.mikepenz:community-material-typeface:3.7.95.4-kotlin@aar'
+    implementation 'com.github.rustamg:file-dialogs:1.0'
+    implementation 'info.debatty:java-string-similarity:2.0.0'
+    implementation 'me.xdrop:fuzzywuzzy:1.4.0'
+    
+    implementation 'com.github.ByteHamster:SearchPreference:v2.3.0'
+
+    implementation 'androidx.room:room-runtime:2.4.3'
+    androidTestImplementation("androidx.test.espresso:espresso-contrib:3.4.0") {
+        exclude group: 'org.checkerframework', module: 'checker'
+    }
+    annotationProcessor 'androidx.room:room-compiler:2.4.3'
+
+    implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
+    implementation "androidx.lifecycle:lifecycle-common-java8:2.5.1"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1"
+
+    implementation 'androidx.paging:paging-runtime:3.1.1'
+
+    playImplementation 'com.google.android.gms:play-services-cast:21.2.0'
+    playImplementation 'com.google.android.gms:play-services-cast-framework:21.2.0'
+    playImplementation 'com.google.android.gms:play-services-safetynet:18.0.1'
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.1'
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.9.1'
+
+    androidTestImplementation 'androidx.test:core:1.5.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.4'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    androidTestImplementation 'androidx.test:runner:1.4.0'
+    androidTestImplementation 'androidx.test:rules:1.4.0'
+    androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.2.0'
+
+    //noinspection GradleDependency
+    androidTestImplementation("com.squareup.okhttp3:mockwebserver:3.12.13")
+    androidTestImplementation("com.github.YarikSOffice:lingver:1.3.0")
+    androidTestUtil 'androidx.test:orchestrator:1.4.1'
+}
+
+
+// https://stackoverflow.com/questions/24649240/build-release-apk-with-customize-name-format-in-android-studio
+// https://stackoverflow.com/questions/32092665/resolve-application-label-for-each-build-type/32220436#32220436
+// https://stackoverflow.com/questions/18332474/how-to-set-versionname-in-apk-filename-using-gradle
+
+// Gradle 3.0
+// https://stackoverflow.com/questions/44800028/change-apk-filename-in-gradle-failed-with-gradle3-0-0-alpha4
+
+android.applicationVariants.all { variant ->
+
+    variant.outputs.all { output ->
+
+        // get app_name field from defaultConfig
+        def appName = variant.mergedFlavor.resValues.get('string/app_name_untranslated').getValue()
+        appName = "${appName}"
+
+        // concat new App name with each flavor's name
+
+        variant.productFlavors.each { flavor ->
+            appName += "-${flavor.name}"
+        }
+
+        // optionally add buildType name
+        appName += "-${variant.buildType.name}"
+
+        // your requirement: if buildType == debug, add DEV to App name
+        if (variant.buildType.name == "debug") {
+            appName += "-DEV"
+        }
+
+        // if you want, you can set a new resValue
+        // variant.resValue 'string', 'app_name', appName
+
+        /*
+         * Gets the version name from the latest Git tag
+         */
+
+        def gitHash = { ->
+            def stdout = new ByteArrayOutputStream()
+            try {
+                exec {
+                    commandLine 'git', 'rev-parse', '--short', 'HEAD'
+                    standardOutput = stdout
+                }
+                return stdout.toString().trim()
+            } catch (Exception ignored) {
+                return "No commit hash"
+            }
+        }
+
+        resValue 'string', 'GIT_HASH', gitHash()
+
+        def getBuildDate = {
+            new Date().format('yyyy-MM-dd HH:mm:ss')
+        }
+
+        resValue 'string', 'BUILD_DATE', getBuildDate()
+
+        def finalName = appName
+
+        if (!versionName.isEmpty()) {
+            finalName += "-" + versionName
+        }
+
+        finalName += "-" + gitHash() + ".apk"
+        // outputFileName = "${variant.name}-${variant.versionName}.apk"
+        outputFileName = finalName
+    }
+}
+
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        def requested = details.requested
+        if (requested.group == 'com.android.support') {
+            if (!requested.name.startsWith("multidex")) {
+                details.useVersion '27.1.1'
+            }
+        }
+    }
+}

@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:title="@string/nav_item_settings"
+    android:key="pref_toplevel"
+    xmlns:search="http://schemas.android.com/apk/com.bytehamster.lib.preferencesearch">
+
+    <com.bytehamster.lib.preferencesearch.SearchPreference android:key="searchPreference" />
+
+  <PreferenceScreen android:title="@string/settings_appearance"
+        search:ignore="true"
+        android:key="pref_category_ui">
+
+        <ListPreference
+            android:defaultValue="@string/theme_light"
+            android:entries="@array/theme_entries"
+            android:entryValues="@array/theme_values"
+            android:key="theme_name"
+            android:title="@string/settings_theme_selection_title"
+            search:summary=""
+            android:summary="%s"/>
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="circular_icons"
+            android:title="@string/settings_circular_icons" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="compact_style"
+            android:summaryOff="@string/settings_compact_style_desc_off"
+            android:summaryOn="@string/settings_compact_style_desc_on"
+            android:title="@string/settings_compact_style" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="bottom_navigation"
+            android:title="@string/settings_bottom_navigation" />
+
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="@string/settings_startup_behaviour"
+        search:ignore="true"
+        android:key="pref_category_startup">
+
+        <ListPreference
+            android:defaultValue="@string/startup_show_history"
+            android:entries="@array/startup_action_entries"
+            android:entryValues="@array/startup_action_entryvalues"
+            android:key="startup_action"
+            android:summary="@string/startup_action_title_desc"
+            search:summary=""
+            android:title="@string/startup_action_title" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="auto_play_on_startup"
+            android:summaryOff="@string/settings_auto_play_on_startup_off"
+            android:summaryOn="@string/settings_auto_play_on_startup_on"
+            android:title="@string/settings_auto_play_on_startup" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="auto_off_on_startup"
+            android:dependency="auto_play_on_startup"
+            android:summaryOff="@string/settings_auto_off_on_startup_off"
+            android:summaryOn="@string/settings_auto_off_on_startup_on"
+            android:title="@string/settings_auto_off_on_startup" />
+
+        <ListPreference
+            android:defaultValue="10"
+            android:dependency="auto_off_on_startup"
+            android:entries="@array/timeout_minutes"
+            android:entryValues="@array/timeout_minutes_values"
+            android:key="auto_off_timeout"
+            android:summary="@string/settings_auto_off_sleep_timer_desc"
+            search:summary=""
+            android:title="@string/settings_auto_off_sleep_timer" />
+
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="@string/settings_interaction"
+        search:ignore="true"
+        android:key="pref_category_interaction">
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="load_icons"
+            android:summaryOff="@string/settings_load_icons_off"
+            android:summaryOn="@string/settings_load_icons_on"
+            android:title="@string/settings_load_icons" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:dependency="load_icons"
+            android:key="icon_click_toggles_favorite"
+            android:summaryOff="@string/settings_icon_click_toggles_favorite_off"
+            android:summaryOn="@string/settings_icon_click_toggles_favorite_on"
+            android:title="@string/settings_icon_click_toggles_favorite" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="auto_favorite"
+            android:summaryOff="@string/settings_auto_favorite_off"
+            android:summaryOn="@string/settings_auto_favorite_on"
+            android:title="@string/settings_auto_favorite" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="show_broken"
+            android:summaryOff="@string/settings_show_broken_off"
+            android:summaryOn="@string/settings_show_broken_on"
+            android:title="@string/settings_show_broken" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="click_trend_icon_visible"
+            android:summaryOff="@string/settings_click_trend_icon_visible_off"
+            android:summaryOn="@string/settings_click_trend_icon_visible_on"
+            android:title="@string/settings_click_trend_icon_visible" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="single_use_tags"
+            android:summaryOff="@string/settings_single_use_tags_desc_off"
+            android:summaryOn="@string/settings_single_use_tags_desc_on"
+            android:title="@string/settings_single_use_tags" />
+
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="@string/settings_play"
+        search:ignore="true"
+        android:key="pref_category_player">
+
+        <CheckBoxPreference
+            android:disableDependentsState="true"
+            android:key="play_external"
+            android:summaryOff="@string/settings_play_external_desc_off"
+            android:summaryOn="@string/settings_play_external_desc_on"
+            android:title="@string/settings_play_external" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="warn_no_wifi"
+            android:summaryOff="@string/settings_warn_no_wifi_off"
+            android:summaryOn="@string/settings_warn_no_wifi_on"
+            android:title="@string/settings_warn_no_wifi" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="pause_when_noisy"
+            android:title="@string/settings_pause_when_noisy" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="auto_resume_on_wired_headset_connection"
+            android:summaryOff="@string/settings_auto_resume_do_not_resume"
+            android:summaryOn="@string/settings_auto_resume_on_wired_headset_connected_on"
+            android:title="@string/settings_auto_resume_on_wired_headset_connected" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="auto_resume_on_bluetooth_a2dp_connection"
+            android:summaryOff="@string/settings_auto_resume_do_not_resume"
+            android:summaryOn="@string/settings_auto_resume_on_bluetooth_a2dp_connected_on"
+            android:title="@string/settings_auto_resume_on_bluetooth_a2dp_connected" />
+
+        <Preference
+            android:key="equalizer"
+            android:title="@string/settings_equalizer" />
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="@string/settings_alarm"
+        search:ignore="true"
+        android:key="pref_category_alarm">
+
+        <CheckBoxPreference
+            android:disableDependentsState="true"
+            android:key="alarm_external"
+            android:summaryOff="@string/settings_alarm_external_desc_off"
+            android:summaryOn="@string/settings_alarm_external_desc_on"
+            android:title="@string/settings_alarm_external" />
+
+        <Preference
+            android:enabled="false"
+            android:key="shareapp_package"
+            android:title="@string/settings_alarm_audio_player" />
+
+        <ListPreference
+            android:defaultValue="10"
+            android:dependency="alarm_external"
+            android:entries="@array/timeout_minutes"
+            android:entryValues="@array/timeout_minutes_values"
+            android:key="alarm_timeout"
+            android:summary="@string/settings_alarm_sleep_timer_desc"
+            search:summary=""
+            android:title="@string/settings_alarm_sleep_timer" />
+
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="@string/settings_recordings"
+        search:ignore="true"
+        android:key="pref_category_recordings">
+        <ListPreference
+            android:defaultValue="@string/settings_record_name_formatting_default"
+            android:entries="@array/settings_record_name_formatting_list_display"
+            android:entryValues="@array/settings_record_name_formatting_list"
+            android:key="record_name_formatting"
+            android:summary="%s"
+            search:summary=""
+            android:title="@string/settings_record_name_formatting" />
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="@string/settings_mpd"
+        search:ignore="true"
+        android:key="pref_category_mpd">
+        <Preference
+            android:key="mpd_servers_viewer"
+            android:title="@string/settings_view_mpd_servers" />
+    </PreferenceScreen>
+
+    <PreferenceScreen
+        search:ignore="true"
+        android:key="pref_category_connectivity"
+        android:title="@string/settings_connectivity">
+
+        <net.programmierecke.radiodroid2.views.IntEditTextPreference
+            android:defaultValue="5"
+            android:key="stream_connect_timeout"
+            android:maxLength="2"
+            android:summary="@string/settings_seconds_format"
+            search:summary=""
+            android:title="@string/settings_connect_timeout" />
+        <net.programmierecke.radiodroid2.views.IntEditTextPreference
+            android:defaultValue="10"
+            android:key="stream_read_timeout"
+            android:maxLength="2"
+            android:summary="@string/settings_seconds_format"
+            search:summary=""
+            android:title="@string/settings_read_timeout" />
+        <net.programmierecke.radiodroid2.views.IntEditTextPreference
+            android:defaultValue="10"
+            android:key="settings_retry_timeout"
+            android:maxLength="2"
+            android:summary="@string/settings_seconds_format"
+            search:summary=""
+            android:title="@string/settings_retry_timeout" />
+        <net.programmierecke.radiodroid2.views.IntEditTextPreference
+            android:defaultValue="100"
+            android:key="settings_retry_delay"
+            android:maxLength="8"
+            android:summary="@string/settings_milliseconds_format"
+            search:summary=""
+            android:title="@string/settings_retry_delay" />
+        <net.programmierecke.radiodroid2.views.IntEditTextPreference
+            android:defaultValue="60"
+            android:key="settings_resume_within"
+            android:maxLength="3"
+            android:summary="@string/settings_seconds_format"
+            search:summary=""
+            android:title="@string/settings_resume_timeout" />
+        <Preference
+            android:key="settings_proxy"
+            android:title="@string/settings_proxy" />
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="@string/settings_other"
+        search:ignore="true"
+        android:key="pref_category_other">
+
+        <EditTextPreference
+            android:key="last_fm_api_key"
+            android:title="@string/settings_lastfm_api_key"
+            android:summary="@string/settings_lastfm_api_key_desc"/>
+
+        <Preference
+            android:defaultValue="false"
+            android:key="@string/key_ignore_battery_optimization"
+            android:summaryOff="@string/settings_ignore_battery_optimization_summary_off"
+            android:summaryOn= "@string/settings_ignore_battery_optimization_summary_on"
+            android:title="@string/settings_disable_battery_optimization" />
+
+        <Preference
+            android:key="show_statistics"
+            android:title="@string/settings_statistics" />
+
+        <Preference
+            android:key="show_about"
+            android:title="@string/settings_about" />
+
+    </PreferenceScreen>
+</PreferenceScreen>

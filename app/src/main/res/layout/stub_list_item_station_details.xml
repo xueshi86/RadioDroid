@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+    <!--android:visibility="gone">-->
+
+    <net.programmierecke.radiodroid2.views.TagsView
+            android:id="@+id/viewTags"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingMultiplier="1"
+            android:textSize="16sp"
+            app:cornerRadius="8dp"
+            app:tagBackgroundColor="?attr/tagBackgroundColor"
+            app:tagHeight="25sp"
+            app:textHorizontalPadding="8dp"
+            app:textVerticalMargin="4dp" />
+
+
+    <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+        <com.mikepenz.iconics.view.IconicsImageButton
+                android:id="@+id/buttonVisitWebsite"
+                style="@style/IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/detail_visit_website"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:tint="?attr/iconsInItemBackgroundColor"
+                app:iiv_icon="gmd-home"
+                app:iiv_padding="2dp"
+                app:iiv_size="24dp"/>
+
+        <ImageButton
+            android:id="@+id/buttonShare"
+            style="@style/IconButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/detail_share"
+            app:srcCompat="@drawable/ic_share_24dp"
+            app:tint="?attr/iconsInItemBackgroundColor" />
+
+        <ImageButton
+                android:id="@+id/buttonBookmark"
+                style="@style/IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/detail_star"
+                app:tint="?attr/iconsInItemBackgroundColor"
+                app:srcCompat="@drawable/ic_star_border_black_24dp" />
+
+        <ImageButton
+                android:id="@+id/buttonAddAlarm"
+                style="@style/IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/description_btn_setup_alarm"
+                app:tint="?attr/iconsInItemBackgroundColor"
+                app:srcCompat="@drawable/ic_add_alarm_black_24dp" />
+
+        <ImageButton
+                android:id="@+id/buttonCreateShortcut"
+                style="@style/IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/detail_create_shortcut"
+                app:tint="?attr/iconsInItemBackgroundColor"
+                app:srcCompat="@drawable/ic_back_arrow_24dp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <ImageButton
+            android:id="@+id/buttonPlayInRadioDroid"
+            style="@style/IconButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/detail_play_in_radiodroid"
+            app:tint="?attr/iconsInItemBackgroundColor"
+            app:srcCompat="@drawable/ic_play_in_radiodroid" />
+    </LinearLayout>
+
+</LinearLayout>

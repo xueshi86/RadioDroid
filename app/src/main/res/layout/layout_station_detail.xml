@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/LinearLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/my_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
+
+    <TextView
+        android:id="@+id/detail_station_name"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/detail_name"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/textViewStationName"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textSize="16sp" />
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="2dip"
+        android:background="#dcdcdc" />
+
+    <TextView
+        android:id="@+id/detail_station_tags"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/detail_tags"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/detail_station_tags_value"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textSize="16sp" />
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="2dip"
+        android:background="#dcdcdc" />
+
+    <TextView
+        android:id="@+id/detail_station_country"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/detail_country"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/detail_station_country_value"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textSize="16sp" />
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="2dip"
+        android:background="#dcdcdc" />
+
+    <TextView
+        android:id="@+id/detail_station_language"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/detail_language"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/detail_station_language_value"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textSize="16sp" />
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="2dip"
+        android:background="#dcdcdc" />
+
+    <LinearLayout
+        android:id="@+id/detail_station_www_clickable"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:drawable/list_selector_background"
+        android:clickable="true"
+        android:orientation="vertical" >
+
+        <TextView
+            android:id="@+id/detail_station_www"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/detail_weblink"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/detail_station_www_value"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="2dip"
+        android:background="#dcdcdc" />
+
+</LinearLayout>
