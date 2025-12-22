@@ -42,3 +42,22 @@ build/*
 .DS_Store
 
 *.aab
+
+# APK output directories
+app/build/outputs/apk/
+app/build/outputs/bundle/
+
+# Gradle wrapper
+gradlew
+gradlew.bat
+gradle-wrapper.jar
+
+# VS Code
+.vscode/
+
+# OS files
+Thumbs.db
+
+# Log files
+*.log
+build_debug.log

@@ -55,8 +55,8 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
         }
     }
 
-    public ItemAdapterIconOnlyStation(FragmentActivity fragmentActivity, int resourceId, StationsFilter.FilterType filterType) {
-        super(fragmentActivity, resourceId, filterType);
+    public ItemAdapterIconOnlyStation(FragmentActivity fragmentActivity, int resourceId) {
+        super(fragmentActivity, resourceId);
     }
 
     @NonNull

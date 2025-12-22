@@ -6,7 +6,39 @@
 
     <com.bytehamster.lib.preferencesearch.SearchPreference android:key="searchPreference" />
 
-  <PreferenceScreen android:title="@string/settings_appearance"
+  <PreferenceScreen android:title="@string/settings_local_database_update"
+        search:ignore="true"
+        android:key="pref_category_local_database_update">
+
+        <Preference
+            android:key="check_network_connection"
+            android:title="@string/settings_check_network_connection"
+            android:summary="@string/settings_check_network_connection_desc" />
+
+        <Preference
+            android:key="update_local_database"
+            android:title="@string/settings_update_local_database"
+            android:summary="@string/settings_update_local_database_desc" />
+
+        <Preference
+            android:key="local_database_status"
+            android:title="@string/settings_local_database_status"
+            android:summary="@string/settings_local_database_status_default"
+            android:selectable="false" />
+
+        <Preference
+            android:key="export_database"
+            android:title="导出主数据库"
+            android:summary="将主数据库导出到外部存储，便于备份和迁移" />
+
+        <Preference
+            android:key="import_database"
+            android:title="导入主数据库"
+            android:summary="从外部存储导入主数据库，快速恢复电台数据" />
+
+    </PreferenceScreen>
+
+    <PreferenceScreen android:title="@string/settings_appearance"
         search:ignore="true"
         android:key="pref_category_ui">
 

@@ -27,7 +27,6 @@ import com.google.android.material.snackbar.Snackbar;
 import net.programmierecke.radiodroid2.ActivityMain;
 import net.programmierecke.radiodroid2.FavouriteManager;
 import net.programmierecke.radiodroid2.R;
-import net.programmierecke.radiodroid2.RadioBrowserServerManager;
 import net.programmierecke.radiodroid2.RadioDroidApp;
 import net.programmierecke.radiodroid2.Utils;
 import net.programmierecke.radiodroid2.alarm.TimePickerFragment;
@@ -139,8 +138,6 @@ public class StationActions {
 
         Toast toast = Toast.makeText(context, context.getString(R.string.notify_starred), Toast.LENGTH_SHORT);
         toast.show();
-
-        vote(context, station);
     }
 
     public static void removeFromFavourites(final @NonNull Context context, final @Nullable View view, final @NonNull DataRadioStation station) {
@@ -212,27 +209,4 @@ public class StationActions {
                 PlayerType.RADIODROID, () -> Utils.play(radioDroidApp, station));
     }
 
-    private static void vote(final @NonNull Context context, final @NonNull DataRadioStation station) {
-        final WeakReference<Context> contextRef = new WeakReference<>(context);
-
-        new AsyncTask<Void, Void, String>() {
-            @Override
-            protected String doInBackground(Void... params) {
-                Context ctx = contextRef.get();
-                if (ctx == null) {
-                    return null;
-                }
-
-                final RadioDroidApp radioDroidApp = (RadioDroidApp) ctx.getApplicationContext();
-                final OkHttpClient httpClient = radioDroidApp.getHttpClient();
-
-                return Utils.downloadFeedRelative(httpClient, ctx, "json/vote/" + station.StationUuid, true, null);
-            }
-
-            @Override
-            protected void onPostExecute(String result) {
-                super.onPostExecute(result);
-            }
-        }.execute();
-    }
 }

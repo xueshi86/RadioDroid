@@ -1,27 +1,30 @@
 package net.programmierecke.radiodroid2;
 
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import net.programmierecke.radiodroid2.adapters.ItemAdapterStatistics;
 import net.programmierecke.radiodroid2.data.DataStatistics;
+import net.programmierecke.radiodroid2.database.RadioStationRepository;
 import net.programmierecke.radiodroid2.interfaces.IFragmentRefreshable;
 
-import okhttp3.OkHttpClient;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FragmentServerInfo extends Fragment implements IFragmentRefreshable {
+    private static final String TAG = "FragmentServerInfo";
     private ItemAdapterStatistics itemAdapterStatistics;
+    private RadioStationRepository repository;
 
     @Nullable
     @Override
@@ -35,49 +38,64 @@ public class FragmentServerInfo extends Fragment implements IFragmentRefreshable
         ListView lv = (ListView)view.findViewById(R.id.listViewStatistics);
         lv.setAdapter(itemAdapterStatistics);
 
-        Download(false);
+        // 初始化仓库
+        if (getContext() != null) {
+            repository = RadioStationRepository.getInstance(getContext());
+            loadLocalStatistics();
+        }
 
         return view;
     }
 
-    void Download(final boolean forceUpdate){
-        LocalBroadcastManager.getInstance(getContext()).sendBroadcast(new Intent(ActivityMain.ACTION_SHOW_LOADING));
+    private void loadLocalStatistics() {
+        if (repository == null) {
+            Log.e(TAG, "Repository is null, cannot load statistics");
+            return;
+        }
 
-        RadioDroidApp radioDroidApp = (RadioDroidApp) getActivity().getApplication();
-        final OkHttpClient httpClient = radioDroidApp.getHttpClient();
-
-        new AsyncTask<Void, Void, String>() {
+        // 获取本地数据库统计信息
+        repository.getStationCount(new RadioStationRepository.StationCountCallback() {
             @Override
-            protected String doInBackground(Void... params) {
-                return Utils.downloadFeedRelative(httpClient, getActivity(), "json/stats", forceUpdate, null);
-            }
-
-            @Override
-            protected void onPostExecute(String result) {
-                if(getContext() != null)
-                    LocalBroadcastManager.getInstance(getContext()).sendBroadcast(new Intent(ActivityMain.ACTION_HIDE_LOADING));
-                if (result != null) {
-                    itemAdapterStatistics.clear();
-                    DataStatistics[] items = DataStatistics.DecodeJson(result);
-                    for(DataStatistics item: items) {
-                        itemAdapterStatistics.add(item);
-                    }
-                }else{
-                    try {
-                        Toast toast = Toast.makeText(getContext(), getResources().getText(R.string.error_list_update), Toast.LENGTH_SHORT);
-                        toast.show();
-                    }
-                    catch(Exception e){
-                        Log.e("ERR",e.toString());
-                    }
+            public void onStationCountReceived(int count) {
+                // 创建本地统计数据
+                ArrayList<DataStatistics> statistics = new ArrayList<>();
+                
+                // 总电台数
+                DataStatistics totalStations = new DataStatistics();
+                totalStations.Name = "stations_total";
+                totalStations.Value = String.valueOf(count);
+                statistics.add(totalStations);
+                    
+                // 工作正常的电台数
+                DataStatistics workingStations = new DataStatistics();
+                workingStations.Name = "stations_working";
+                workingStations.Value = "N/A"; // 需要额外的查询
+                statistics.add(workingStations);
+                    
+                // 损坏的电台数
+                DataStatistics brokenStations = new DataStatistics();
+                brokenStations.Name = "stations_broken";
+                brokenStations.Value = "N/A"; // 需要额外的查询
+                statistics.add(brokenStations);
+                    
+                // 更新UI
+                itemAdapterStatistics.clear();
+                for (DataStatistics item : statistics) {
+                    itemAdapterStatistics.add(item);
                 }
-                super.onPostExecute(result);
+                    
+                Log.d(TAG, "Loaded local statistics: " + count + " total stations");
             }
-        }.execute();
+            
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "Error loading station count: " + error);
+            }
+        });
     }
 
     @Override
     public void Refresh() {
-        Download(true);
+        loadLocalStatistics();
     }
 }

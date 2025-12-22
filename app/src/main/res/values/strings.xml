@@ -40,7 +40,7 @@
     <string name="action_toggle_view">Toggle view</string>
     <string name="action_top_vote">Top Vote</string>
     <string name="action_changed_lately">Changed Lately</string>
-    <string name="action_currently_playing">Playing</string>
+    <string name="action_currently_playing">Currently Playing</string>
     <string name="action_tags">Tags</string>
     <string name="action_countries">Countries/Regions</string>
     <string name="action_languages">Languages</string>
@@ -92,6 +92,15 @@
     <string name="searchpreference_no_results">No results</string>
     <string name="searchpreference_search">Search…</string>
     <string name="settings_appearance">Appearance</string>
+    <string name="settings_local_database_update">Local Database Update</string>
+    <string name="settings_update_local_database">Update Local Database</string>
+    <string name="settings_update_local_database_desc">Download all radio stations from network and store them locally</string>
+    <string name="settings_check_network_connection">Check Network Connection</string>
+    <string name="settings_check_network_connection_desc">Test connection to radio browser server</string>
+    <string name="settings_local_database_status">本地数据库状态</string>
+    <string name="settings_local_database_status_default">尚未更新</string>
+    <string name="settings_local_database_status_success">最后更新: %1$s\n电台数量: %2$d</string>
+    <string name="settings_local_database_status_failed">更新失败: %s</string>
     <string name="settings_theme_selection_title">Theme</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
@@ -350,4 +359,7 @@
     <string name="context_menu_add_alarm">@string/action_alarm</string>
     <string name="context_menu_create_shortcut">@string/detail_create_shortcut</string>
     <string name="context_menu_delete">@string/action_delete</string>
+    
+    <string name="empty_database_message">Local database is empty, please update the local database in settings first</string>
+    <string name="no_results_message">No %s categories found, the database update may be incomplete, please try updating the local database in settings</string>
 </resources>

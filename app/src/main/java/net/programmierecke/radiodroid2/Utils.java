@@ -229,6 +229,14 @@ public class Utils {
 
         return null;
     }
+    
+    /**
+     * Download from a specific server with specified protocol
+     */
+    public static String downloadFeedFromServer(OkHttpClient httpClient, Context ctx, String server, String theRelativeUri, boolean useHttps, boolean forceUpdate, Map<String, String> dictParams) {
+        String endpoint = RadioBrowserServerManager.constructEndpoint(server, theRelativeUri, useHttps);
+        return downloadFeed(httpClient, ctx, endpoint, forceUpdate, dictParams);
+    }
 
     public static String getRealStationLink(OkHttpClient httpClient, Context ctx, String stationId) {
         Log.i("UTIL", "StationUUID:" + stationId);

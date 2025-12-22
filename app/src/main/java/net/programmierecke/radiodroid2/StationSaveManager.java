@@ -16,6 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.collection.ArraySet;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import net.programmierecke.radiodroid2.database.RadioStationRepository;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
 
 import org.json.JSONArray;
@@ -27,9 +28,12 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Observable;
 import java.util.Vector;
 
@@ -53,6 +57,31 @@ public class StationSaveManager extends Observable {
 
     protected String getSaveId() {
         return "default";
+    }
+    
+    // 获取默认文件名，使用数据库更新时间
+    private String getDefaultFileName() {
+        try {
+            RadioStationRepository repository = RadioStationRepository.getInstance(context);
+            long updateTime = repository.getDatabaseUpdateTime();
+            
+            if (updateTime > 0) {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+                Date date = new Date(updateTime);
+                return "RadioDroid_" + sdf.format(date) + ".m3u";
+            } else {
+                // 如果没有更新时间，使用当前时间
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+                Date date = new Date();
+                return "RadioDroid_" + sdf.format(date) + ".m3u";
+            }
+        } catch (Exception e) {
+            Log.e("SAVE", "Error getting default filename: " + e.toString());
+            // 出错时使用当前时间
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+            Date date = new Date();
+            return "RadioDroid_" + sdf.format(date) + ".m3u";
+        }
     }
 
     protected void setStationStatusListener(StationStatusListener stationStatusListener) {
@@ -356,24 +385,32 @@ public class StationSaveManager extends Observable {
     }
 
     public void SaveM3U(final String filePath, final String fileName) {
-        Toast toast = Toast.makeText(context, context.getResources().getString(R.string.notify_save_playlist_now, filePath, fileName), Toast.LENGTH_LONG);
+        // 如果文件名为空，使用数据库更新时间作为默认文件名
+        final String finalFileName;
+        if (fileName == null || fileName.isEmpty()) {
+            finalFileName = getDefaultFileName();
+        } else {
+            finalFileName = fileName;
+        }
+        
+        Toast toast = Toast.makeText(context, context.getResources().getString(R.string.notify_save_playlist_now, filePath, finalFileName), Toast.LENGTH_LONG);
         toast.show();
 
         new AsyncTask<Void, Void, Boolean>() {
             @Override
             protected Boolean doInBackground(Void... params) {
-                return SaveM3UInternal(filePath, fileName);
+                return SaveM3UInternal(filePath, finalFileName);
             }
 
             @Override
             protected void onPostExecute(Boolean result) {
                 if (result.booleanValue()) {
                     Log.i("SAVE", "OK");
-                    Toast toast = Toast.makeText(context, context.getResources().getString(R.string.notify_save_playlist_ok, filePath, fileName), Toast.LENGTH_LONG);
+                    Toast toast = Toast.makeText(context, context.getResources().getString(R.string.notify_save_playlist_ok, filePath, finalFileName), Toast.LENGTH_LONG);
                     toast.show();
                 } else {
                     Log.i("SAVE", "NOK");
-                    Toast toast = Toast.makeText(context, context.getResources().getString(R.string.notify_save_playlist_nok, filePath, fileName), Toast.LENGTH_LONG);
+                    Toast toast = Toast.makeText(context, context.getResources().getString(R.string.notify_save_playlist_nok, filePath, finalFileName), Toast.LENGTH_LONG);
                     toast.show();
                 }
                 super.onPostExecute(result);
@@ -382,24 +419,32 @@ public class StationSaveManager extends Observable {
     }
 
     public void SaveM3USimple(final String filePath, final String fileName) {
-        Toast toast = Toast.makeText(context, context.getResources().getString(R.string.notify_save_playlist_now, filePath, fileName), Toast.LENGTH_LONG);
+        // 如果文件名为空，使用数据库更新时间作为默认文件名
+        final String finalFileName;
+        if (fileName == null || fileName.isEmpty()) {
+            finalFileName = getDefaultFileName();
+        } else {
+            finalFileName = fileName;
+        }
+        
+        Toast toast = Toast.makeText(context, context.getResources().getString(R.string.notify_save_playlist_now, filePath, finalFileName), Toast.LENGTH_LONG);
         toast.show();
 
         new AsyncTask<Void, Void, Boolean>() {
             @Override
             protected Boolean doInBackground(Void... params) {
-                return SaveM3UInternal(filePath, fileName);
+                return SaveM3UInternal(filePath, finalFileName);
             }
 
             @Override
             protected void onPostExecute(Boolean result) {
                 if (result.booleanValue()) {
                     Log.i("SAVE", "OK");
-                    Toast toast = Toast.makeText(context, context.getResources().getString(R.string.notify_save_playlist_ok, filePath, fileName), Toast.LENGTH_LONG);
+                    Toast toast = Toast.makeText(context, context.getResources().getString(R.string.notify_save_playlist_ok, filePath, finalFileName), Toast.LENGTH_LONG);
                     toast.show();
                 } else {
                     Log.i("SAVE", "NOK");
-                    Toast toast = Toast.makeText(context, context.getResources().getString(R.string.notify_save_playlist_nok, filePath, fileName), Toast.LENGTH_LONG);
+                    Toast toast = Toast.makeText(context, context.getResources().getString(R.string.notify_save_playlist_nok, filePath, finalFileName), Toast.LENGTH_LONG);
                     toast.show();
                 }
                 super.onPostExecute(result);
@@ -476,14 +521,14 @@ public class StationSaveManager extends Observable {
         try {
             File f = new File(filePath, fileName);
             BufferedWriter bw = new BufferedWriter(new FileWriter(f, false));
-            var r = SaveM3UWriter(bw);
+            SaveM3UWriter(bw);
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
                 context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC))));
             } else {
                 MediaScannerConnection
                         .scanFile(context, new String[]{f.getAbsolutePath()}, null, null);
             }
-            return r;
+            return true;
         } catch (Exception e) {
             Log.e("Exception", "File write failed: " + e.toString());
             return false;

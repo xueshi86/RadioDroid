@@ -1,11 +1,21 @@
 package net.programmierecke.radiodroid2;
 
+import android.content.Context;
 import android.util.Log;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * Created by segler on 15.02.18.
@@ -85,6 +95,112 @@ public class RadioBrowserServerManager {
      * Construct full url from server and path
      */
     public static String constructEndpoint(String server, String path){
-        return "https://" + server + "/" + path;
+        return "http://" + server + "/" + path;
+    }
+    
+    /**
+     * Construct full url from server and path with protocol
+     */
+    public static String constructEndpoint(String server, String path, boolean useHttps){
+        String protocol = useHttps ? "https://" : "http://";
+        return protocol + server + "/" + path;
+    }
+    
+    /**
+     * Test connection speed for specific server and protocol
+     */
+    public static long testConnectionSpeed(Context context, String server, boolean useHttps) {
+        RadioDroidApp radioDroidApp = (RadioDroidApp) context.getApplicationContext();
+        OkHttpClient httpClient = radioDroidApp.getHttpClient();
+        
+        String endpoint = constructEndpoint(server, "json/stats", useHttps);
+        
+        try {
+            long startTime = System.currentTimeMillis();
+            Request request = new Request.Builder()
+                    .url(endpoint)
+                    .get()
+                    .build();
+            
+            Response response = httpClient.newCall(request).execute();
+            long endTime = System.currentTimeMillis();
+            
+            if (response.isSuccessful()) {
+                return endTime - startTime;
+            }
+        } catch (IOException e) {
+            Log.w("SRV", "Connection test failed for " + (useHttps ? "HTTPS" : "HTTP") + "://" + server, e);
+        }
+        
+        return Long.MAX_VALUE; // Return a very large value to indicate failure
+    }
+    
+    /**
+     * Test connection speeds for both servers and both protocols
+     */
+    public static Map<String, Long> testAllConnectionSpeeds(Context context) {
+        Map<String, Long> results = new HashMap<>();
+        
+        // Test the two specified servers
+        String[] servers = {"fi1.api.radio-browser.info", "de2.api.radio-browser.info"};
+        
+        for (String server : servers) {
+            // Test HTTP
+            long httpTime = testConnectionSpeed(context, server, false);
+            results.put(server + "_HTTP", httpTime);
+            
+            // Test HTTPS
+            long httpsTime = testConnectionSpeed(context, server, true);
+            results.put(server + "_HTTPS", httpsTime);
+            
+            Log.d("SRV", "Connection test - " + server + " HTTP: " + 
+                  (httpTime == Long.MAX_VALUE ? "Failed" : httpTime + "ms") + 
+                  ", HTTPS: " + (httpsTime == Long.MAX_VALUE ? "Failed" : httpsTime + "ms"));
+        }
+        
+        return results;
+    }
+    
+    /**
+     * Get the fastest server and protocol based on connection tests
+     */
+    public static ServerInfo getFastestServer(Context context) {
+        Map<String, Long> results = testAllConnectionSpeeds(context);
+        
+        String fastestKey = null;
+        long fastestTime = Long.MAX_VALUE;
+        
+        for (Map.Entry<String, Long> entry : results.entrySet()) {
+            if (entry.getValue() < fastestTime) {
+                fastestTime = entry.getValue();
+                fastestKey = entry.getKey();
+            }
+        }
+        
+        if (fastestKey != null && fastestTime < Long.MAX_VALUE) {
+            String[] parts = fastestKey.split("_");
+            String server = parts[0];
+            boolean useHttps = parts[1].equals("HTTPS");
+            
+            Log.i("SRV", "Fastest connection: " + fastestKey + " with " + fastestTime + "ms");
+            return new ServerInfo(server, useHttps);
+        }
+        
+        // Fallback to default if all tests failed
+        Log.w("SRV", "All connection tests failed, using default server");
+        return new ServerInfo(getCurrentServer(), false);
+    }
+    
+    /**
+     * Server info class to hold server name and protocol preference
+     */
+    public static class ServerInfo {
+        public String server;
+        public boolean useHttps;
+        
+        public ServerInfo(String server, boolean useHttps) {
+            this.server = server;
+            this.useHttps = useHttps;
+        }
     }
 }

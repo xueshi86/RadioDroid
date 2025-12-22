@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <resources>
     <string name="detail_name">名称</string>
@@ -92,6 +92,15 @@
     <string name="searchpreference_no_results">无匹配项</string>
     <string name="searchpreference_search">搜索…</string>
     <string name="settings_appearance">外观</string>
+    <string name="settings_local_database_update">本地数据库更新</string>
+    <string name="settings_update_local_database">更新本地数据库</string>
+    <string name="settings_update_local_database_desc">从网络下载所有电台数据并存储到本地</string>
+    <string name="settings_check_network_connection">网络检查</string>
+    <string name="settings_check_network_connection_desc">检查电台浏览器服务器连接状态</string>
+    <string name="settings_local_database_status">本地数据库状态</string>
+    <string name="settings_local_database_status_default">尚未更新</string>
+    <string name="settings_local_database_status_success">最后更新: %1$s\n电台数量: %2$d</string>
+    <string name="settings_local_database_status_failed">更新失败: %s</string>
     <string name="settings_theme_selection_title">主题</string>
     <string name="theme_light">亮色</string>
     <string name="theme_dark">暗色</string>
@@ -345,4 +354,7 @@
     <string name="context_menu_add_alarm">@string/action_alarm</string>
     <string name="context_menu_create_shortcut">@string/detail_create_shortcut</string>
     <string name="context_menu_delete">@string/action_delete</string>
+    
+    <string name="empty_database_message">本地数据库为空，请先在设置中更新本地数据库</string>
+    <string name="no_results_message">没有找到%s分类，可能数据库更新不完整，请尝试在设置中更新本地数据库</string>
 </resources>

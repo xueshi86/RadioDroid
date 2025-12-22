@@ -55,6 +55,7 @@ public class DataRadioStation implements Parcelable {
 	public String State;
 	public String TagsAll;
 	public String Language;
+	public String LastChangeTime;
 	public int ClickCount;
 	public int ClickTrend;
 	public int Votes;
@@ -169,6 +170,9 @@ public class DataRadioStation implements Parcelable {
 							aStation.State = anObject.getString("state");
 							aStation.IconUrl = anObject.getString("favicon");
 							aStation.Language = anObject.getString("language");
+							if (anObject.has("lastchangetime")) {
+								aStation.LastChangeTime = anObject.getString("lastchangetime");
+							}
 							aStation.ClickCount = anObject.getInt("clickcount");
 							if (anObject.has("clicktrend")) {
 								aStation.ClickTrend = anObject.getInt("clicktrend");
@@ -241,6 +245,9 @@ public class DataRadioStation implements Parcelable {
 					aStation.State = anObject.getString("state");
 					aStation.IconUrl = anObject.getString("favicon");
 					aStation.Language = anObject.getString("language");
+					if (anObject.has("lastchangetime")) {
+						aStation.LastChangeTime = anObject.getString("lastchangetime");
+					}
 					aStation.ClickCount = anObject.getInt("clickcount");
 					if (anObject.has("clicktrend")) {
 						aStation.ClickTrend = anObject.getInt("clicktrend");

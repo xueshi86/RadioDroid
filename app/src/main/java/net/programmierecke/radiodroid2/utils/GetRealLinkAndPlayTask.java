@@ -3,52 +3,47 @@ package net.programmierecke.radiodroid2.utils;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.RemoteException;
+import android.util.Log;
 
 import net.programmierecke.radiodroid2.IPlayerService;
-import net.programmierecke.radiodroid2.RadioDroidApp;
-import net.programmierecke.radiodroid2.Utils;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
 
 import java.lang.ref.WeakReference;
 
-import okhttp3.OkHttpClient;
-
-public class GetRealLinkAndPlayTask extends AsyncTask<Void, Void, String> {
+public class GetRealLinkAndPlayTask extends AsyncTask<Void, Void, Void> {
+    private static final String TAG = "GetRealLinkAndPlayTask";
+    
     private WeakReference<Context> contextRef;
     private DataRadioStation station;
     private WeakReference<IPlayerService> playerServiceRef;
-
-    private OkHttpClient httpClient;
 
     public GetRealLinkAndPlayTask(Context context, DataRadioStation station, IPlayerService playerService) {
         this.contextRef = new WeakReference<>(context);
         this.station = station;
         this.playerServiceRef = new WeakReference<>(playerService);
-
-        RadioDroidApp radioDroidApp = (RadioDroidApp) context.getApplicationContext();
-        httpClient = radioDroidApp.getHttpClient();
     }
 
     @Override
-    protected String doInBackground(Void... params) {
-        Context context = contextRef.get();
-        if (context != null) {
-            return Utils.getRealStationLink(httpClient, context.getApplicationContext(), station.StationUuid);
-        }
-
+    protected Void doInBackground(Void... params) {
+        // 不再进行网络查询，直接使用本地存储的电台URL
         return null;
     }
 
     @Override
-    protected void onPostExecute(String result) {
+    protected void onPostExecute(Void result) {
         IPlayerService playerService = playerServiceRef.get();
-        if (result != null && playerService != null && !isCancelled()) {
+        if (playerService != null && !isCancelled()) {
             try {
-                station.playableUrl = result;
-                playerService.SetStation(station);
-                playerService.Play(false);
+                // 直接使用本地存储的电台URL，不再获取"真实"链接
+                if (station.StreamUrl != null && !station.StreamUrl.isEmpty()) {
+                    station.playableUrl = station.StreamUrl;
+                    playerService.SetStation(station);
+                    playerService.Play(false);
+                } else {
+                    Log.w(TAG, "Station StreamUrl is null or empty: " + station.StationUuid);
+                }
             } catch (RemoteException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error playing station", e);
             }
         }
         super.onPostExecute(result);

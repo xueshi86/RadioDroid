@@ -3,9 +3,18 @@ package net.programmierecke.radiodroid2;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.media.audiofx.AudioEffect;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
+import android.util.Log;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.widget.Toolbar;
@@ -16,20 +25,31 @@ import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.Preference.OnPreferenceClickListener;
 import androidx.preference.PreferenceScreen;
 
-import android.os.PowerManager;
-import android.provider.Settings;
-import android.util.Log;
-import android.widget.Toast;
-
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial;
 import com.mikepenz.iconics.typeface.library.googlematerial.GoogleMaterial;
 import com.bytehamster.lib.preferencesearch.SearchConfiguration;
 import com.bytehamster.lib.preferencesearch.SearchPreference;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+
 import net.programmierecke.radiodroid2.interfaces.IApplicationSelected;
 import net.programmierecke.radiodroid2.proxy.ProxySettingsDialog;
+import net.programmierecke.radiodroid2.dialogs.DatabaseUpdateProgressDialog;
+import net.programmierecke.radiodroid2.database.RadioStationRepository;
 
 import static net.programmierecke.radiodroid2.ActivityMain.FRAGMENT_FROM_BACKSTACK;
+
+import android.os.PowerManager;
 
 public class FragmentSettings extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener, IApplicationSelected, PreferenceFragmentCompat.OnPreferenceStartScreenCallback  {
 
@@ -64,6 +84,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         findPreference("pref_category_connectivity").setIcon(Utils.IconicsIcon(getContext(), GoogleMaterial.Icon.gmd_import_export));
         findPreference("pref_category_recordings").setIcon(Utils.IconicsIcon(getContext(), CommunityMaterial.Icon2.cmd_record_rec));
         findPreference("pref_category_mpd").setIcon(Utils.IconicsIcon(getContext(), CommunityMaterial.Icon2.cmd_speaker_wireless));
+        findPreference("pref_category_local_database_update").setIcon(Utils.IconicsIcon(getContext(), CommunityMaterial.Icon2.cmd_refresh));
         findPreference("pref_category_other").setIcon(Utils.IconicsIcon(getContext(), CommunityMaterial.Icon2.cmd_information_outline));
     }
 
@@ -115,6 +136,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     return false;
                 }
             });
+
         } else if (s.equals("pref_category_connectivity")) {
             //final ListPreference servers = (ListPreference) findPreference("radiobrowser_server");
             //updateDnsList(servers);
@@ -139,6 +161,178 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 public boolean onPreferenceClick(Preference preference) {
                     RadioDroidApp radioDroidApp = (RadioDroidApp) requireActivity().getApplication();
                     Utils.showMpdServersDialog(radioDroidApp, requireActivity().getSupportFragmentManager(), null);
+                    return false;
+                }
+            });
+        } else if (s.equals("pref_category_local_database_update")) {
+            findPreference("update_local_database").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    RadioDroidApp radioDroidApp = (RadioDroidApp) requireActivity().getApplication();
+                    RadioStationRepository repository = RadioStationRepository.getInstance(requireContext());
+                    
+                    // Show progress dialog with cancel button
+                    DatabaseUpdateProgressDialog progressDialog = DatabaseUpdateProgressDialog.newInstance(
+                        getString(R.string.settings_update_local_database),
+                        "正在从网络下载电台数据，请稍候..."
+                    );
+                    
+                    // Set cancel listener
+                    progressDialog.setOnCancelListener(() -> {
+                        // 用户取消操作，显示提示信息
+                        requireActivity().runOnUiThread(() -> {
+                            androidx.appcompat.app.AlertDialog.Builder infoBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+                            infoBuilder.setTitle("更新已取消");
+                            infoBuilder.setMessage("已下载的电台数据已保存。");
+                            infoBuilder.setPositiveButton("确定", null);
+                            infoBuilder.show();
+                            
+                            // 更新数据库状态，显示已保存的电台数量和时间
+                            updateDatabaseStatus(true, null);
+                        });
+                    });
+                    
+                    progressDialog.show(getParentFragmentManager(), "progress_dialog");
+                    
+                    // Start sync process
+                    repository.syncAllStationsFromNetwork(requireContext(), new RadioStationRepository.SyncCallback() {
+                        @Override
+                        public void onProgress(String message) {
+                            requireActivity().runOnUiThread(() -> progressDialog.updateMessage(message));
+                        }
+                        
+                        @Override
+                        public void onProgress(String message, int current, int total) {
+                            requireActivity().runOnUiThread(() -> progressDialog.updateProgress(message, current, total));
+                        }
+                        
+                        @Override
+                        public void onSuccess(String message) {
+                            requireActivity().runOnUiThread(() -> {
+                                progressDialog.dismiss();
+                                androidx.appcompat.app.AlertDialog.Builder successBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+                                successBuilder.setTitle("更新成功");
+                                successBuilder.setMessage(message);
+                                successBuilder.setPositiveButton("确定", null);
+                                successBuilder.show();
+                                
+                                // Update database status preference
+                                updateDatabaseStatus(true, null);
+                            });
+                        }
+                        
+                        @Override
+                        public void onError(String error) {
+                            requireActivity().runOnUiThread(() -> {
+                                progressDialog.dismiss();
+                                androidx.appcompat.app.AlertDialog.Builder errorBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+                                errorBuilder.setTitle("更新失败");
+                                errorBuilder.setMessage(error);
+                                errorBuilder.setPositiveButton("确定", null);
+                                errorBuilder.show();
+                                
+                                // Update database status preference
+                                updateDatabaseStatus(false, error);
+                            });
+                        }
+                    });
+                    
+                    return false;
+                }
+            });
+
+            findPreference("check_network_connection").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    // First check if there are saved results
+                    NetworkCheckResults savedResultsData = loadNetworkCheckResults();
+                    
+                    if (savedResultsData != null) {
+                        // There are saved results, ask user if they want to view them or run a new test
+                        androidx.appcompat.app.AlertDialog.Builder choiceBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+                        choiceBuilder.setTitle("网络连接检查");
+                        
+                        // Calculate when the test was performed
+                        String timeString = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                            .format(new java.util.Date(savedResultsData.timestamp));
+                        
+                        choiceBuilder.setMessage("已有保存的测试结果（" + timeString + "）。\n\n您想要查看保存的结果还是进行新的测试？");
+                        
+                        choiceBuilder.setPositiveButton("查看保存的结果", (dialog, which) -> {
+                            showNetworkConnectionResults(savedResultsData.results, savedResultsData.timestamp);
+                        });
+                        
+                        choiceBuilder.setNegativeButton("进行新的测试", (dialog, which) -> {
+                            performNewNetworkTest();
+                        });
+                        
+                        choiceBuilder.setNeutralButton("取消", null);
+                        choiceBuilder.show();
+                    } else {
+                        // No saved results, perform a new test directly
+                        performNewNetworkTest();
+                    }
+                    
+                    return false;
+                }
+            });
+            
+            // 导出数据库按钮处理程序
+            findPreference("export_database").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    // 检查是否有外部存储权限
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        if (requireContext().checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) 
+                            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                            requestPermissions(new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 
+                                1001);
+                            return false;
+                        }
+                    }
+                    
+                    // 显示确认对话框
+                    androidx.appcompat.app.AlertDialog.Builder confirmBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+                    confirmBuilder.setTitle("导出主数据库");
+                    confirmBuilder.setMessage("是否将主数据库导出到外部存储？导出的文件将保存在Download文件夹中。");
+                    
+                    confirmBuilder.setPositiveButton("导出", (dialog, which) -> {
+                        exportDatabase();
+                    });
+                    
+                    confirmBuilder.setNegativeButton("取消", null);
+                    confirmBuilder.show();
+                    
+                    return false;
+                }
+            });
+            
+            // 导入数据库按钮处理程序
+            findPreference("import_database").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    // 检查是否有外部存储权限
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        if (requireContext().checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) 
+                            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                            requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 
+                                1002);
+                            return false;
+                        }
+                    }
+                    
+                    // 显示确认对话框
+                    androidx.appcompat.app.AlertDialog.Builder confirmBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+                    confirmBuilder.setTitle("导入主数据库");
+                    confirmBuilder.setMessage("是否从外部存储导入主数据库？这将覆盖当前的主数据库，请确保已备份重要数据。");
+                    
+                    confirmBuilder.setPositiveButton("导入", (dialog, which) -> {
+                        importDatabase();
+                    });
+                    
+                    confirmBuilder.setNegativeButton("取消", null);
+                    confirmBuilder.show();
+                    
                     return false;
                 }
             });
@@ -180,6 +374,214 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 batPref.getParent().removePreference(batPref);
             }
         }
+    }
+
+    // Method to show network connection results
+    private void showNetworkConnectionResults(Map<String, Long> results, long timestamp) {
+        // Create a custom view for the results
+        ScrollView scrollView = new ScrollView(requireContext());
+        LinearLayout linearLayout = new LinearLayout(requireContext());
+        linearLayout.setOrientation(LinearLayout.VERTICAL);
+        linearLayout.setPadding(60, 40, 60, 40);
+        
+        // Title
+        TextView titleView = new TextView(requireContext());
+        titleView.setText("网络连接速度测试结果");
+        titleView.setTextSize(20);
+        titleView.setTypeface(null, Typeface.BOLD);
+        titleView.setPadding(0, 0, 0, 30);
+        linearLayout.addView(titleView);
+        
+        // Test time
+        TextView timeView = new TextView(requireContext());
+        if (timestamp > 0) {
+            String timeString = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                .format(new java.util.Date(timestamp));
+            timeView.setText("测试时间: " + timeString);
+        } else {
+            timeView.setText("测试时间: " + new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                .format(new java.util.Date()));
+        }
+        timeView.setTextSize(14);
+        timeView.setPadding(0, 0, 0, 20);
+        timeView.setTextColor(Color.GRAY);
+        linearLayout.addView(timeView);
+        
+        // Server 1
+        TextView server1Title = new TextView(requireContext());
+        server1Title.setText("服务器 1: fi1.api.radio-browser.info");
+        server1Title.setTextSize(16);
+        server1Title.setTypeface(null, Typeface.BOLD);
+        server1Title.setPadding(0, 20, 0, 10);
+        linearLayout.addView(server1Title);
+        
+        // Server 1 HTTP
+        TextView server1Http = new TextView(requireContext());
+        long httpTime1 = results.get("fi1.api.radio-browser.info_HTTP");
+        server1Http.setText("HTTP: " + (httpTime1 == Long.MAX_VALUE ? "连接失败" : httpTime1 + " ms"));
+        server1Http.setTextSize(14);
+        server1Http.setPadding(30, 5, 0, 5);
+        server1Http.setTextColor(httpTime1 == Long.MAX_VALUE ? Color.RED : Color.BLACK);
+        linearLayout.addView(server1Http);
+        
+        // Server 1 HTTPS
+        TextView server1Https = new TextView(requireContext());
+        long httpsTime1 = results.get("fi1.api.radio-browser.info_HTTPS");
+        server1Https.setText("HTTPS: " + (httpsTime1 == Long.MAX_VALUE ? "连接失败" : httpsTime1 + " ms"));
+        server1Https.setTextSize(14);
+        server1Https.setPadding(30, 5, 0, 5);
+        server1Https.setTextColor(httpsTime1 == Long.MAX_VALUE ? Color.RED : Color.BLACK);
+        linearLayout.addView(server1Https);
+        
+        // Server 2
+        TextView server2Title = new TextView(requireContext());
+        server2Title.setText("服务器 2: de2.api.radio-browser.info");
+        server2Title.setTextSize(16);
+        server2Title.setTypeface(null, Typeface.BOLD);
+        server2Title.setPadding(0, 20, 0, 10);
+        linearLayout.addView(server2Title);
+        
+        // Server 2 HTTP
+        TextView server2Http = new TextView(requireContext());
+        long httpTime2 = results.get("de2.api.radio-browser.info_HTTP");
+        server2Http.setText("HTTP: " + (httpTime2 == Long.MAX_VALUE ? "连接失败" : httpTime2 + " ms"));
+        server2Http.setTextSize(14);
+        server2Http.setPadding(30, 5, 0, 5);
+        server2Http.setTextColor(httpTime2 == Long.MAX_VALUE ? Color.RED : Color.BLACK);
+        linearLayout.addView(server2Http);
+        
+        // Server 2 HTTPS
+        TextView server2Https = new TextView(requireContext());
+        long httpsTime2 = results.get("de2.api.radio-browser.info_HTTPS");
+        server2Https.setText("HTTPS: " + (httpsTime2 == Long.MAX_VALUE ? "连接失败" : httpsTime2 + " ms"));
+        server2Https.setTextSize(14);
+        server2Https.setPadding(30, 5, 0, 5);
+        server2Https.setTextColor(httpsTime2 == Long.MAX_VALUE ? Color.RED : Color.BLACK);
+        linearLayout.addView(server2Https);
+        
+        // Fastest connection
+        TextView fastestTitle = new TextView(requireContext());
+        fastestTitle.setText("最快连接:");
+        fastestTitle.setTextSize(16);
+        fastestTitle.setTypeface(null, Typeface.BOLD);
+        fastestTitle.setPadding(0, 20, 0, 10);
+        linearLayout.addView(fastestTitle);
+        
+        // Find the fastest connection
+        long minTime = Long.MAX_VALUE;
+        String fastestConnection = "无";
+        
+        for (Map.Entry<String, Long> entry : results.entrySet()) {
+            if (entry.getValue() < minTime) {
+                minTime = entry.getValue();
+                String[] parts = entry.getKey().split("_");
+                fastestConnection = parts[0] + " (" + parts[1] + ")";
+            }
+        }
+        
+        TextView fastestResult = new TextView(requireContext());
+        fastestResult.setText(fastestConnection + " - " + (minTime == Long.MAX_VALUE ? "无可用连接" : minTime + " ms"));
+        fastestResult.setTextSize(14);
+        fastestResult.setPadding(30, 5, 0, 5);
+        fastestResult.setTextColor(minTime == Long.MAX_VALUE ? Color.RED : Color.parseColor("#008000"));
+        linearLayout.addView(fastestResult);
+        
+        scrollView.addView(linearLayout);
+        
+        // Create and show the dialog
+        androidx.appcompat.app.AlertDialog.Builder resultsBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+        resultsBuilder.setView(scrollView);
+        resultsBuilder.setPositiveButton("确定", null);
+        resultsBuilder.show();
+    }
+    
+    // Method to perform a new network test
+    private void performNewNetworkTest() {
+        // Show progress dialog
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+        builder.setTitle(R.string.settings_check_network_connection);
+        builder.setMessage("正在检查网络连接速度...");
+        androidx.appcompat.app.AlertDialog dialog = builder.create();
+        dialog.show();
+        
+        // Check network connection speeds in background thread
+        new Thread(() -> {
+            try {
+                // Test all connection speeds
+                Map<String, Long> results = RadioBrowserServerManager.testAllConnectionSpeeds(requireContext());
+                
+                // Save the results
+                long currentTime = System.currentTimeMillis();
+                saveNetworkCheckResults(results, currentTime);
+                
+                requireActivity().runOnUiThread(() -> {
+                    dialog.dismiss();
+                    showNetworkConnectionResults(results, currentTime);
+                });
+            } catch (Exception e) {
+                requireActivity().runOnUiThread(() -> {
+                    dialog.dismiss();
+                    androidx.appcompat.app.AlertDialog.Builder errorBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+                    errorBuilder.setTitle("网络检查失败");
+                    errorBuilder.setMessage("无法连接到电台浏览器服务器: " + e.getMessage());
+                    errorBuilder.setPositiveButton("确定", null);
+                    errorBuilder.show();
+                });
+            }
+        }).start();
+    }
+    
+    // 内部类，用于保存网络检查结果和时间戳
+    private static class NetworkCheckResults {
+        public Map<String, Long> results;
+        public long timestamp;
+        
+        public NetworkCheckResults(Map<String, Long> results, long timestamp) {
+            this.results = results;
+            this.timestamp = timestamp;
+        }
+    }
+    
+    // 使用SharedPreferences保存网络检查结果
+    private void saveNetworkCheckResults(Map<String, Long> results, long timestamp) {
+        SharedPreferences sharedPref = requireContext().getSharedPreferences(
+            "NetworkCheckResults", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        
+        // 保存每个服务器和协议的结果
+        for (Map.Entry<String, Long> entry : results.entrySet()) {
+            editor.putLong(entry.getKey(), entry.getValue());
+        }
+        
+        // 保存结果的时间戳
+        editor.putLong("timestamp", timestamp);
+        editor.apply();
+    }
+    
+    // 加载保存的网络检查结果
+    private NetworkCheckResults loadNetworkCheckResults() {
+        SharedPreferences sharedPref = requireContext().getSharedPreferences(
+            "NetworkCheckResults", Context.MODE_PRIVATE);
+        
+        // 检查是否有保存的结果
+        long timestamp = sharedPref.getLong("timestamp", 0);
+        if (timestamp == 0) {
+            return null; // 没有保存的结果
+        }
+        
+        Map<String, Long> results = new HashMap<>();
+        
+        // 加载每个服务器和协议的结果
+        results.put("fi1.api.radio-browser.info_HTTP", 
+            sharedPref.getLong("fi1.api.radio-browser.info_HTTP", Long.MAX_VALUE));
+        results.put("fi1.api.radio-browser.info_HTTPS", 
+            sharedPref.getLong("fi1.api.radio-browser.info_HTTPS", Long.MAX_VALUE));
+        results.put("de2.api.radio-browser.info_HTTP", 
+            sharedPref.getLong("de2.api.radio-browser.info_HTTP", Long.MAX_VALUE));
+        results.put("de2.api.radio-browser.info_HTTPS", 
+            sharedPref.getLong("de2.api.radio-browser.info_HTTPS", Long.MAX_VALUE));
+        
+        return new NetworkCheckResults(results, timestamp);
     }
 
     /*
@@ -224,6 +626,9 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         if (batPref != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // the second condition should already follow from the first
             updateBatteryPrefDescription(batPref);
         }
+        
+        // Update database status when settings screen is loaded
+        updateDatabaseStatusOnLoad();
     }
 
     @Override
@@ -239,6 +644,162 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             batPref.setSummary(R.string.settings_ignore_battery_optimization_summary_on);
         } else {
             batPref.setSummary(R.string.settings_ignore_battery_optimization_summary_off);
+        }
+    }
+    
+    private void updateDatabaseStatus(boolean success, String error) {
+        updateDatabaseStatus(success, error, false);
+    }
+    
+    private void updateDatabaseStatus(boolean success, String error, boolean useDatabaseTimestamp) {
+        Preference statusPref = findPreference("local_database_status");
+        if (statusPref != null) {
+            SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+            SharedPreferences.Editor editor = prefs.edit();
+            
+            if (success) {
+                // 获取本地数据库中的电台数量
+                RadioStationRepository repository = RadioStationRepository.getInstance(getContext());
+                
+                // 如果需要使用数据库时间戳，先获取数据库更新时间
+                if (useDatabaseTimestamp) {
+                    long dbUpdateTime = repository.getDatabaseUpdateTime();
+                    String timestamp;
+                    if (dbUpdateTime > 0) {
+                        timestamp = java.text.DateFormat.getDateTimeInstance().format(new java.util.Date(dbUpdateTime));
+                    } else {
+                        // 如果没有数据库时间戳，使用当前时间
+                        timestamp = java.text.DateFormat.getDateTimeInstance().format(new java.util.Date());
+                    }
+                    
+                    repository.getStationCount(new RadioStationRepository.StationCountCallback() {
+                        @Override
+                        public void onStationCountReceived(int count) {
+                            // 在UI线程更新状态显示
+                            if (getActivity() != null && isAdded()) {
+                                getActivity().runOnUiThread(() -> {
+                                    // 再次检查Fragment状态，防止在UI操作中Fragment已分离
+                                    if (isAdded() && getContext() != null) {
+                                        statusPref.setSummary(getString(R.string.settings_local_database_status_success, timestamp, count));
+                                    }
+                                });
+                            }
+                        }
+
+                        @Override
+                        public void onError(String error) {
+                            // 如果获取电台数量失败，只显示时间
+                            if (getActivity() != null && isAdded()) {
+                                getActivity().runOnUiThread(() -> {
+                                    // 再次检查Fragment状态，防止在UI操作中Fragment已分离
+                                    if (isAdded() && getContext() != null) {
+                                        statusPref.setSummary(getString(R.string.settings_local_database_status_success, timestamp, 0));
+                                    }
+                                });
+                            }
+                        }
+                    });
+                    
+                    // Save status to SharedPreferences
+                    editor.putString("local_database_last_status", "success");
+                    editor.putString("local_database_last_update", timestamp);
+                } else {
+                    // 使用当前时间戳（原有逻辑）
+                    String timestamp = java.text.DateFormat.getDateTimeInstance().format(new java.util.Date());
+                    
+                    repository.getStationCount(new RadioStationRepository.StationCountCallback() {
+                        @Override
+                        public void onStationCountReceived(int count) {
+                            // 在UI线程更新状态显示
+                            if (getActivity() != null && isAdded()) {
+                                getActivity().runOnUiThread(() -> {
+                                    // 再次检查Fragment状态，防止在UI操作中Fragment已分离
+                                    if (isAdded() && getContext() != null) {
+                                        statusPref.setSummary(getString(R.string.settings_local_database_status_success, timestamp, count));
+                                    }
+                                });
+                            }
+                        }
+
+                        @Override
+                        public void onError(String error) {
+                            // 如果获取电台数量失败，只显示时间
+                            if (getActivity() != null && isAdded()) {
+                                getActivity().runOnUiThread(() -> {
+                                    // 再次检查Fragment状态，防止在UI操作中Fragment已分离
+                                    if (isAdded() && getContext() != null) {
+                                        statusPref.setSummary(getString(R.string.settings_local_database_status_success, timestamp, 0));
+                                    }
+                                });
+                            }
+                        }
+                    });
+                    
+                    // Save status to SharedPreferences
+                    editor.putString("local_database_last_status", "success");
+                    editor.putString("local_database_last_update", timestamp);
+                }
+            } else {
+                statusPref.setSummary(getString(R.string.settings_local_database_status_failed, error));
+                
+                // Save status to SharedPreferences
+                editor.putString("local_database_last_status", "failed");
+                editor.putString("local_database_last_update", error);
+            }
+            
+            editor.apply();
+        }
+    }
+    
+    private void updateDatabaseStatusOnLoad() {
+        Preference statusPref = findPreference("local_database_status");
+        if (statusPref != null) {
+            // Check if we have a stored update status
+            SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+            String lastUpdateStatus = prefs.getString("local_database_last_status", null);
+            String lastUpdateTime = prefs.getString("local_database_last_update", null);
+            
+            if (lastUpdateStatus != null && lastUpdateTime != null) {
+                if ("success".equals(lastUpdateStatus)) {
+                    // 获取本地数据库中的电台数量
+                    RadioStationRepository repository = RadioStationRepository.getInstance(getContext());
+                    repository.getStationCount(new RadioStationRepository.StationCountCallback() {
+                        @Override
+                        public void onStationCountReceived(int count) {
+                            // 在UI线程更新状态显示
+                            if (getActivity() != null && isAdded()) {
+                                getActivity().runOnUiThread(() -> {
+                                    // 再次检查Fragment状态，防止在UI操作中Fragment已分离
+                                    if (isAdded() && getContext() != null) {
+                                        statusPref.setSummary(getString(R.string.settings_local_database_status_success, lastUpdateTime, count));
+                                    }
+                                });
+                            }
+                        }
+
+                        @Override
+                        public void onError(String error) {
+                            // 如果获取电台数量失败，只显示时间
+                            if (getActivity() != null && isAdded()) {
+                                getActivity().runOnUiThread(() -> {
+                                    // 再次检查Fragment状态，防止在UI操作中Fragment已分离
+                                    if (isAdded() && getContext() != null) {
+                                        statusPref.setSummary(getString(R.string.settings_local_database_status_success, lastUpdateTime, 0));
+                                    }
+                                });
+                            }
+                        }
+                    });
+                } else {
+                    if (isAdded() && getContext() != null) {
+                        statusPref.setSummary(getString(R.string.settings_local_database_status_failed, lastUpdateTime));
+                    }
+                }
+            } else {
+                if (isAdded() && getContext() != null) {
+                    statusPref.setSummary(getString(R.string.settings_local_database_status_default));
+                }
+            }
         }
     }
 
@@ -273,5 +834,150 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         ed.commit();
 
         findPreference("shareapp_package").setSummary(packageName);
+    }
+    
+    // 导出主数据库到外部存储
+    private void exportDatabase() {
+        // 显示进度对话框
+        androidx.appcompat.app.AlertDialog.Builder progressBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+        progressBuilder.setTitle("导出数据库");
+        progressBuilder.setMessage("正在导出主数据库，请稍候...");
+        androidx.appcompat.app.AlertDialog progressDialog = progressBuilder.create();
+        progressDialog.show();
+        
+        // 在后台线程执行导出操作
+        new Thread(() -> {
+            try {
+                // 获取主数据库文件路径
+                File mainDatabaseFile = requireContext().getDatabasePath("radio_droid_database");
+                
+                // 创建导出目录
+                File exportDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "RadioDroid");
+                if (!exportDir.exists()) {
+                    exportDir.mkdirs();
+                }
+                
+                // 创建导出文件名（包含时间戳）
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+                String timestamp = sdf.format(new Date());
+                File exportFile = new File(exportDir, "radio_droid_database_" + timestamp + ".db");
+                
+                // 复制数据库文件
+                FileChannel source = new FileInputStream(mainDatabaseFile).getChannel();
+                FileChannel destination = new FileOutputStream(exportFile).getChannel();
+                destination.transferFrom(source, 0, source.size());
+                source.close();
+                destination.close();
+                
+                // 在UI线程显示结果
+                requireActivity().runOnUiThread(() -> {
+                    progressDialog.dismiss();
+                    androidx.appcompat.app.AlertDialog.Builder successBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+                    successBuilder.setTitle("导出成功");
+                    successBuilder.setMessage("主数据库已成功导出到：\n" + exportFile.getAbsolutePath());
+                    successBuilder.setPositiveButton("确定", null);
+                    successBuilder.show();
+                });
+                
+            } catch (IOException e) {
+                e.printStackTrace();
+                // 在UI线程显示错误
+                requireActivity().runOnUiThread(() -> {
+                    progressDialog.dismiss();
+                    androidx.appcompat.app.AlertDialog.Builder errorBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+                    errorBuilder.setTitle("导出失败");
+                    errorBuilder.setMessage("导出主数据库时发生错误：" + e.getMessage());
+                    errorBuilder.setPositiveButton("确定", null);
+                    errorBuilder.show();
+                });
+            }
+        }).start();
+    }
+    
+    // 从外部存储导入主数据库
+    private void importDatabase() {
+        // 显示进度对话框
+        androidx.appcompat.app.AlertDialog.Builder progressBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+        progressBuilder.setTitle("导入数据库");
+        progressBuilder.setMessage("正在导入主数据库，请稍候...");
+        androidx.appcompat.app.AlertDialog progressDialog = progressBuilder.create();
+        progressDialog.show();
+        
+        // 在后台线程执行导入操作
+        new Thread(() -> {
+            try {
+                // 获取导入目录
+                File importDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "RadioDroid");
+                
+                if (!importDir.exists() || !importDir.isDirectory()) {
+                    throw new IOException("导入目录不存在：" + importDir.getAbsolutePath());
+                }
+                
+                // 查找最新的数据库文件
+                File[] files = importDir.listFiles((dir, name) -> name.startsWith("radio_droid_database_") && name.endsWith(".db"));
+                if (files == null || files.length == 0) {
+                    throw new IOException("未找到可导入的数据库文件");
+                }
+                
+                // 按修改时间排序，获取最新的文件
+                Arrays.sort(files, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
+                File importFile = files[0];
+                
+                // 获取主数据库文件路径
+                File mainDatabaseFile = requireContext().getDatabasePath("radio_droid_database");
+                
+                // 创建备份文件
+                File backupFile = new File(mainDatabaseFile.getParent(), "radio_droid_database_backup_" + 
+                    new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date()) + ".db");
+                
+                // 复制当前数据库到备份文件
+                if (mainDatabaseFile.exists()) {
+                    FileChannel source = new FileInputStream(mainDatabaseFile).getChannel();
+                    FileChannel backup = new FileOutputStream(backupFile).getChannel();
+                    backup.transferFrom(source, 0, source.size());
+                    source.close();
+                    backup.close();
+                }
+                
+                // 关闭数据库连接
+                RadioStationRepository repository = RadioStationRepository.getInstance(requireContext());
+                repository.closeDatabase();
+                
+                // 复制导入文件到主数据库
+                FileChannel importSource = new FileInputStream(importFile).getChannel();
+                FileChannel destination = new FileOutputStream(mainDatabaseFile).getChannel();
+                destination.transferFrom(importSource, 0, importSource.size());
+                importSource.close();
+                destination.close();
+                
+                // 重新初始化数据库
+                repository.reinitializeDatabase(requireContext());
+                
+                // 在UI线程显示结果
+                requireActivity().runOnUiThread(() -> {
+                    progressDialog.dismiss();
+                    androidx.appcompat.app.AlertDialog.Builder successBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+                    successBuilder.setTitle("导入成功");
+                    successBuilder.setMessage("主数据库已成功导入。\n原数据库已备份为：\n" + backupFile.getAbsolutePath());
+                    successBuilder.setPositiveButton("确定", null);
+                    successBuilder.show();
+                    
+                    // 更新数据库状态，使用数据库更新时间
+                    updateDatabaseStatus(true, null, true);
+                });
+                
+            } catch (IOException e) {
+                e.printStackTrace();
+                // 在UI线程显示错误
+                requireActivity().runOnUiThread(() -> {
+                    progressDialog.dismiss();
+                    androidx.appcompat.app.AlertDialog.Builder errorBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+                    errorBuilder.setTitle("导入失败");
+                    errorBuilder.setMessage("导入主数据库时发生错误：" + e.getMessage());
+                    errorBuilder.setPositiveButton("确定", null);
+                    errorBuilder.show();
+                });
+            }
+        }).start();
     }
 }

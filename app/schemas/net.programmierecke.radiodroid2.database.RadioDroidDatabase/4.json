@@ -1,0 +1,315 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 4,
+    "identityHash": "b41d321bd79b0abf960c8b543105b59b",
+    "entities": [
+      {
+        "tableName": "track_history",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uid` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `station_uuid` TEXT NOT NULL, `station_icon_url` TEXT NOT NULL, `track` TEXT NOT NULL, `artist` TEXT NOT NULL, `title` TEXT NOT NULL, `art_url` TEXT, `start_time` INTEGER NOT NULL, `end_time` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "uid",
+            "columnName": "uid",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stationUuid",
+            "columnName": "station_uuid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stationIconUrl",
+            "columnName": "station_icon_url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "track",
+            "columnName": "track",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "artist",
+            "columnName": "artist",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "artUrl",
+            "columnName": "art_url",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "startTime",
+            "columnName": "start_time",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endTime",
+            "columnName": "end_time",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "uid"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "radio_stations",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`station_uuid` TEXT NOT NULL, `change_uuid` TEXT, `name` TEXT, `url` TEXT, `homepage` TEXT, `favicon` TEXT, `country` TEXT, `countrycode` TEXT, `state` TEXT, `tags` TEXT, `language` TEXT, `clickcount` INTEGER NOT NULL, `clicktrend` INTEGER NOT NULL, `votes` INTEGER NOT NULL, `bitrate` INTEGER NOT NULL, `codec` TEXT, `lastcheckok` INTEGER NOT NULL, `hls` INTEGER NOT NULL, `lastchangetime` TEXT, `lastclicktime` TEXT, PRIMARY KEY(`station_uuid`))",
+        "fields": [
+          {
+            "fieldPath": "stationUuid",
+            "columnName": "station_uuid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "changeUuid",
+            "columnName": "change_uuid",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "url",
+            "columnName": "url",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "homepage",
+            "columnName": "homepage",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "favicon",
+            "columnName": "favicon",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "country",
+            "columnName": "country",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "countrycode",
+            "columnName": "countrycode",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "tags",
+            "columnName": "tags",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "language",
+            "columnName": "language",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "clickcount",
+            "columnName": "clickcount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clicktrend",
+            "columnName": "clicktrend",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "votes",
+            "columnName": "votes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bitrate",
+            "columnName": "bitrate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "codec",
+            "columnName": "codec",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "lastcheckok",
+            "columnName": "lastcheckok",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hls",
+            "columnName": "hls",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastchangetime",
+            "columnName": "lastchangetime",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "lastclicktime",
+            "columnName": "lastclicktime",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "station_uuid"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [
+          {
+            "name": "index_radio_stations_name",
+            "unique": false,
+            "columnNames": [
+              "name"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_radio_stations_name` ON `${TABLE_NAME}` (`name`)"
+          },
+          {
+            "name": "index_radio_stations_clickcount",
+            "unique": false,
+            "columnNames": [
+              "clickcount"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_radio_stations_clickcount` ON `${TABLE_NAME}` (`clickcount`)"
+          },
+          {
+            "name": "index_radio_stations_votes",
+            "unique": false,
+            "columnNames": [
+              "votes"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_radio_stations_votes` ON `${TABLE_NAME}` (`votes`)"
+          },
+          {
+            "name": "index_radio_stations_lastchangetime",
+            "unique": false,
+            "columnNames": [
+              "lastchangetime"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_radio_stations_lastchangetime` ON `${TABLE_NAME}` (`lastchangetime`)"
+          },
+          {
+            "name": "index_radio_stations_lastclicktime",
+            "unique": false,
+            "columnNames": [
+              "lastclicktime"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_radio_stations_lastclicktime` ON `${TABLE_NAME}` (`lastclicktime`)"
+          },
+          {
+            "name": "index_radio_stations_country",
+            "unique": false,
+            "columnNames": [
+              "country"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_radio_stations_country` ON `${TABLE_NAME}` (`country`)"
+          },
+          {
+            "name": "index_radio_stations_countrycode",
+            "unique": false,
+            "columnNames": [
+              "countrycode"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_radio_stations_countrycode` ON `${TABLE_NAME}` (`countrycode`)"
+          },
+          {
+            "name": "index_radio_stations_language",
+            "unique": false,
+            "columnNames": [
+              "language"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_radio_stations_language` ON `${TABLE_NAME}` (`language`)"
+          },
+          {
+            "name": "index_radio_stations_tags",
+            "unique": false,
+            "columnNames": [
+              "tags"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_radio_stations_tags` ON `${TABLE_NAME}` (`tags`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "update_timestamp",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `last_update_timestamp` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "last_update_timestamp",
+            "columnName": "last_update_timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b41d321bd79b0abf960c8b543105b59b')"
+    ]
+  }
+}

@@ -1,4 +1,4 @@
-package net.programmierecke.radiodroid2;
+package net.programmierecke.radiodroid2.station;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -21,9 +21,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import net.programmierecke.radiodroid2.ActivityMain;
 import net.programmierecke.radiodroid2.BuildConfig;
 import net.programmierecke.radiodroid2.CountryCodeDictionary;
 import net.programmierecke.radiodroid2.CountryFlagsLoader;
+import net.programmierecke.radiodroid2.FragmentBase;
+import net.programmierecke.radiodroid2.R;
 import net.programmierecke.radiodroid2.adapters.ItemAdapterCategory;
 import net.programmierecke.radiodroid2.data.DataCategory;
 import net.programmierecke.radiodroid2.database.CountryCount;
@@ -32,8 +35,6 @@ import net.programmierecke.radiodroid2.database.RadioStationRepository;
 import net.programmierecke.radiodroid2.station.StationsFilter;
 import net.programmierecke.radiodroid2.utils.DatabaseEmptyHelper;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,8 +45,8 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-public class FragmentCategories extends FragmentBase {
-    private static final String TAG = "FragmentCategories";
+public class FragmentCategoriesLocal extends FragmentBase {
+    private static final String TAG = "FragmentCategoriesLocal";
 
     private RecyclerView rvCategories;
     private androidx.constraintlayout.widget.ConstraintLayout layoutError;
@@ -86,7 +87,7 @@ public class FragmentCategories extends FragmentBase {
         }
     };
 
-    public FragmentCategories() {
+    public FragmentCategoriesLocal() {
     }
     
     @Override
@@ -143,6 +144,55 @@ public class FragmentCategories extends FragmentBase {
         } catch (Exception e) {
             Log.e(TAG, "Error when searching for category: " + Data.Name, e);
         }
+    }
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        View view = inflater.inflate(R.layout.fragment_stations_remote, container, false);
+
+        rvCategories = view.findViewById(R.id.recyclerViewStations);
+        layoutError = view.findViewById(R.id.layoutError);
+        swipeRefreshLayout = view.findViewById(R.id.swiperefresh);
+        if (swipeRefreshLayout != null) {
+            swipeRefreshLayout.setEnabled(false); // 本地数据不需要下拉刷新
+        }
+
+        // Adapter和LayoutManager将在onActivityCreated中初始化，确保Context可用
+        rvCategories.setAdapter(null);
+
+        return view;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        
+        // 在这里初始化Repository和Adapter，确保Context可用
+        if (getContext() != null) {
+            repository = RadioStationRepository.getInstance(getContext());
+            
+            // 初始化Adapter
+            adapterCategory = new ItemAdapterCategory(R.layout.list_item_category);
+            adapterCategory.setCategoryClickListener(new ItemAdapterCategory.CategoryClickListener() {
+                @Override
+                public void onCategoryClick(DataCategory category) {
+                    ClickOnItem(category);
+                }
+            });
+            
+            // 设置RecyclerView
+            LinearLayoutManager llm = new LinearLayoutManager(getContext());
+            llm.setOrientation(LinearLayoutManager.VERTICAL);
+            rvCategories.setLayoutManager(llm);
+            rvCategories.setAdapter(adapterCategory);
+        } else {
+            Log.e(TAG, "Context is null in onActivityCreated");
+            return;
+        }
+        
+        // 加载数据
+        loadCategories();
     }
 
     private void loadCategories() {
@@ -473,6 +523,10 @@ public class FragmentCategories extends FragmentBase {
         });
     }
 
+    public void EnableSingleUseFilter(boolean b) {
+        this.singleUseFilter = b;
+    }
+
     private void showEmptyDatabaseMessage() {
         // Create an empty category list with a message
         ArrayList<DataCategory> categoriesList = new ArrayList<>();
@@ -503,58 +557,5 @@ public class FragmentCategories extends FragmentBase {
         } else {
             Log.e(TAG, "Adapter is null in showNoResultsMessage");
         }
-    }
-
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_stations_remote, container, false);
-
-        rvCategories = view.findViewById(R.id.recyclerViewStations);
-        layoutError = view.findViewById(R.id.layoutError);
-        swipeRefreshLayout = view.findViewById(R.id.swiperefresh);
-        if (swipeRefreshLayout != null) {
-            swipeRefreshLayout.setEnabled(false); // 本地数据不需要下拉刷新
-        }
-
-        // Adapter和LayoutManager将在onActivityCreated中初始化，确保Context可用
-        rvCategories.setAdapter(null);
-
-        return view;
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        
-        // 在这里初始化Repository和Adapter，确保Context可用
-        if (getContext() != null) {
-            repository = RadioStationRepository.getInstance(getContext());
-            
-            // 初始化Adapter
-            adapterCategory = new ItemAdapterCategory(R.layout.list_item_category);
-            adapterCategory.setCategoryClickListener(new ItemAdapterCategory.CategoryClickListener() {
-                @Override
-                public void onCategoryClick(DataCategory category) {
-                    ClickOnItem(category);
-                }
-            });
-            
-            // 设置RecyclerView
-            LinearLayoutManager llm = new LinearLayoutManager(getContext());
-            llm.setOrientation(LinearLayoutManager.VERTICAL);
-            rvCategories.setLayoutManager(llm);
-            rvCategories.setAdapter(adapterCategory);
-        } else {
-            Log.e(TAG, "Context is null in onActivityCreated");
-            return;
-        }
-        
-        // 加载数据
-        loadCategories();
-    }
-
-    public void EnableSingleUseFilter(boolean b) {
-        this.singleUseFilter = b;
     }
 }

@@ -20,8 +20,8 @@ public class ItemAdapaterContextMenuStation extends ItemAdapterStation implement
     private RecyclerItemMoveAndSwipeHelper<ItemAdapterStation.StationViewHolder> swipeAndMoveHelper = null;
     private long timeLastDragEnded = 0;
 
-    ItemAdapaterContextMenuStation(FragmentActivity fragmentActivity, int resourceId, StationsFilter.FilterType filterType) {
-        super(fragmentActivity, resourceId, filterType);
+    ItemAdapaterContextMenuStation(FragmentActivity fragmentActivity, int resourceId) {
+        super(fragmentActivity, resourceId);
     }
 
     @Override

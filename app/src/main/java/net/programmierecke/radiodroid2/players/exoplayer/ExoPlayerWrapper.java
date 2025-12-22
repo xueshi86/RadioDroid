@@ -256,9 +256,8 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                     final IcyInfo icyInfo = ((IcyInfo) entry);
                     Log.d(TAG, "IcyInfo: " + icyInfo);
                     if (icyInfo.title != null) {
-                        Map<String, String> rawMetadata = new HashMap<>() {{
-                            put("StreamTitle", icyInfo.title);
-                        }};
+                        Map<String, String> rawMetadata = new HashMap<String, String>();
+                        rawMetadata.put("StreamTitle", icyInfo.title);
                         StreamLiveInfo streamLiveInfo = new StreamLiveInfo(rawMetadata);
                         onDataSourceStreamLiveInfo(streamLiveInfo);
                     }

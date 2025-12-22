@@ -66,6 +66,8 @@ import net.programmierecke.radiodroid2.service.PlayerService;
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
 import net.programmierecke.radiodroid2.station.StationsFilter;
+import net.programmierecke.radiodroid2.database.RadioStation;
+import net.programmierecke.radiodroid2.database.RadioStationRepository;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -76,7 +78,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.Date;
 
-import okhttp3.OkHttpClient;
+
 
 import static net.programmierecke.radiodroid2.service.MediaSessionCallback.EXTRA_STATION_UUID;
 
@@ -465,6 +467,25 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             }
         }
     }
+    
+    /**
+     * 导航到设置页面
+     */
+    private void navigateToSettings() {
+        Fragment f = new FragmentSettings();
+        
+        // 清除回退栈并添加设置片段
+        mFragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        FragmentTransaction fragmentTransaction = mFragmentManager.beginTransaction();
+        if (Utils.bottomNavigationEnabled(this))
+            fragmentTransaction.replace(R.id.containerView, f).commit();
+        else
+            fragmentTransaction.replace(R.id.containerView, f).addToBackStack(null).commit();
+            
+        // 隐藏加载进度条
+        LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(ActivityMain.ACTION_HIDE_LOADING));
+        invalidateOptionsMenu();
+    }
 
     @Override
     public void onDestroy() {
@@ -508,6 +529,12 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         if (extras == null) {
             return;
         }
+        
+        // 检查是否需要打开设置页面
+        if (extras.getBoolean("open_settings", false)) {
+            navigateToSettings();
+            return;
+        }
 
         if (MediaSessionCallback.ACTION_PLAY_STATION_BY_UUID.equals(action)) {
             final Context context = getApplicationContext();
@@ -516,12 +543,14 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
                 return;
             intent.removeExtra(EXTRA_STATION_UUID); // mark intent as consumed
             RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
-            final OkHttpClient httpClient = radioDroidApp.getHttpClient();
-
+            // 使用本地数据库获取电台信息，不再进行网络查询
             new AsyncTask<Void, Void, DataRadioStation>() {
                 @Override
                 protected DataRadioStation doInBackground(Void... params) {
-                    return Utils.getStationByUuid(httpClient, context, stationUUID);
+                    // 从本地数据库获取电台信息
+                    RadioStationRepository repository = RadioStationRepository.getInstance(context);
+                    RadioStation station = repository.getStationByUuid(stationUUID);
+                    return station != null ? station.toDataRadioStation() : null;
                 }
 
                 @Override
@@ -543,7 +572,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             Log.d("MAIN","received search request for tag 1: "+searchTag);
             if (searchTag != null) {
                 Log.d("MAIN","received search request for tag 2: "+searchTag);
-                Search(StationsFilter.SearchStyle.ByTagExact, searchTag);
+                search(StationsFilter.SearchStyle.ByTagExact, searchTag);
             }
         }
     }
@@ -697,19 +726,24 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             if (resultData != null) {
                 uri = resultData.getData();
                 Log.d(TAG, "Choosen save path: " + uri);
+                
+                // 获取文件路径和文件名
+                String path = getPathFromUri(uri);
+                String fileName = getFileNameFromUri(uri);
+                
                 RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
                 FavouriteManager favouriteManager = radioDroidApp.getFavouriteManager();
                 HistoryManager historyManager = radioDroidApp.getHistoryManager();
-                try{
-                    OutputStream os = getContentResolver().openOutputStream(uri);
-                    OutputStreamWriter writer = new OutputStreamWriter(os);
+                
+                try {
                     if (selectedMenuItem == R.id.nav_item_starred) {
-                        favouriteManager.SaveM3UWriter(writer);
-                    }else if (selectedMenuItem == R.id.nav_item_history) {
-                        historyManager.SaveM3UWriter(writer);
+                        // 使用SaveM3U方法，这样会使用默认文件名
+                        favouriteManager.SaveM3U(path, fileName);
+                    } else if (selectedMenuItem == R.id.nav_item_history) {
+                        // 使用SaveM3U方法，这样会使用默认文件名
+                        historyManager.SaveM3U(path, fileName);
                     }
-                }
-                catch (Exception e){
+                } catch (Exception e) {
                     Log.e(TAG, "Unable to write to file " + e);
                 }
             }
@@ -768,7 +802,8 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("audio/x-mpegurl");
-        intent.putExtra(Intent.EXTRA_TITLE, "playlist.m3u");
+        // 不设置默认文件名，让StationSaveManager使用数据库更新时间作为默认文件名
+        // intent.putExtra(Intent.EXTRA_TITLE, "playlist.m3u");
         startActivityForResult(intent, ACTION_SAVE_FILE);
     }
 
@@ -839,8 +874,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
                             })
                             .setNegativeButton(this.getString(R.string.no), null)
                             .show();
-                }
-                if (selectedMenuItem == R.id.nav_item_starred) {
+                } else if (selectedMenuItem == R.id.nav_item_starred) {
                     new AlertDialog.Builder(this)
                             .setMessage(this.getString(R.string.alert_delete_favorites))
                             .setCancelable(true)
@@ -954,11 +988,11 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             mNavigationView.getMenu().findItem(selectedMenuItem).setChecked(true);
     }
 
-    public void Search(StationsFilter.SearchStyle searchStyle, String query) {
+    public void search(StationsFilter.SearchStyle searchStyle, String query) {
         Log.d("MAIN", "Search() searchstyle=" + searchStyle + " query=" + query);
         Fragment currentFragment = mFragmentManager.getFragments().get(mFragmentManager.getFragments().size() - 1);
         if (currentFragment instanceof FragmentTabs) {
-            ((FragmentTabs) currentFragment).Search(searchStyle, query);
+            ((FragmentTabs) currentFragment).search(searchStyle, query);
         } else {
             String backStackTag = String.valueOf(R.id.nav_item_stations);
             FragmentTabs f = new FragmentTabs();
@@ -971,7 +1005,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
                 mNavigationView.getMenu().findItem(R.id.nav_item_stations).setChecked(true);
             }
 
-            f.Search(searchStyle, query);
+            f.search(searchStyle, query);
             selectedMenuItem = R.id.nav_item_stations;
             invalidateOptionsMenu();
         }
@@ -980,9 +1014,29 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
 
     public void SearchStations(@NonNull String query) {
         Log.d("MAIN", "SearchStations() " + query);
-        Fragment currentFragment = mFragmentManager.getFragments().get(mFragmentManager.getFragments().size() - 1);
-        if (currentFragment instanceof IFragmentSearchable) {
-            ((IFragmentSearchable) currentFragment).Search(StationsFilter.SearchStyle.ByName, query);
+        
+        // 检查FragmentManager是否为空
+        if (mFragmentManager == null) {
+            Log.e("MAIN", "FragmentManager is null, cannot search");
+            return;
+        }
+        
+        // 检查Fragment列表是否为空
+        if (mFragmentManager.getFragments() == null || mFragmentManager.getFragments().isEmpty()) {
+            Log.e("MAIN", "No fragments available, cannot search");
+            return;
+        }
+        
+        try {
+            Fragment currentFragment = mFragmentManager.getFragments().get(mFragmentManager.getFragments().size() - 1);
+            if (currentFragment instanceof IFragmentSearchable) {
+                ((IFragmentSearchable) currentFragment).search(StationsFilter.SearchStyle.ByName, query);
+            } else {
+                Log.w("MAIN", "Current fragment does not implement IFragmentSearchable: " + 
+                     (currentFragment != null ? currentFragment.getClass().getSimpleName() : "null"));
+            }
+        } catch (Exception e) {
+            Log.e("MAIN", "Error during search", e);
         }
     }
 
@@ -1091,6 +1145,53 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
 
     private void hideLoadingIcon() {
         findViewById(R.id.progressBarLoading).setVisibility(View.GONE);
+    }
+    
+    // 从URI获取文件路径
+    private String getPathFromUri(Uri uri) {
+        String docId = DocumentsContract.getTreeDocumentId(uri);
+        if (docId.startsWith(":")) {
+            // 如果是相对路径，返回空字符串，让SaveM3UInternal方法处理
+            return "";
+        }
+        
+        // 尝试从URI中提取路径
+        String path = uri.getPath();
+        if (path != null) {
+            int lastSlash = path.lastIndexOf('/');
+            if (lastSlash > 0) {
+                return path.substring(0, lastSlash);
+            }
+        }
+        
+        return "";
+    }
+    
+    // 从URI获取文件名
+    private String getFileNameFromUri(Uri uri) {
+        String displayName = null;
+        
+        // 尝试从URI中获取显示名称
+        try {
+            String[] projection = {android.provider.OpenableColumns.DISPLAY_NAME};
+            try (android.database.Cursor cursor = getContentResolver().query(uri, projection, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int columnIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                    if (columnIndex >= 0) {
+                        displayName = cursor.getString(columnIndex);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting file name from URI: " + e.toString());
+        }
+        
+        // 如果无法获取显示名称，返回空字符串，让SaveM3UInternal方法使用默认文件名
+        if (displayName == null || displayName.isEmpty()) {
+            return "";
+        }
+        
+        return displayName;
     }
 
     private void changeTimer() {

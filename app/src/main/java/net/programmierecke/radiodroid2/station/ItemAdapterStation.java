@@ -74,7 +74,6 @@ public class ItemAdapterStation
     StationActionsListener stationActionsListener;
     private FilterListener filterListener;
     private boolean supportsStationRemoval = false;
-    private StationsFilter.FilterType filterType = StationsFilter.FilterType.LOCAL;
 
     private boolean shouldLoadIcons;
 
@@ -161,10 +160,9 @@ public class ItemAdapterStation
         }
     }
 
-    public ItemAdapterStation(FragmentActivity fragmentActivity, int resourceId, StationsFilter.FilterType filterType) {
+    public ItemAdapterStation(FragmentActivity fragmentActivity, int resourceId) {
         this.activity = fragmentActivity;
         this.resourceId = resourceId;
-        this.filterType = filterType;
 
         stationImagePlaceholder = AppCompatResources.getDrawable(fragmentActivity, R.drawable.ic_photo_24dp);
 
@@ -225,10 +223,25 @@ public class ItemAdapterStation
 
     public void updateList(FragmentStarred refreshableList, List<DataRadioStation> stationsList) {
         this.refreshable = refreshableList;
-        this.stationsList = stationsList;
-        this.filteredStationsList = stationsList;
-
-        notifyStationsChanged();
+        
+        // 使用DiffUtil来优化列表更新，减少不必要的刷新
+        if (this.stationsList == null) {
+            this.stationsList = stationsList;
+            this.filteredStationsList = stationsList;
+            notifyStationsChanged();
+        } else {
+            // 如果列表大小差异很大，直接更新
+            if (Math.abs(this.stationsList.size() - stationsList.size()) > 50) {
+                this.stationsList = stationsList;
+                this.filteredStationsList = stationsList;
+                notifyStationsChanged();
+            } else {
+                // 对于小的变化，使用更高效的更新方式
+                this.stationsList = stationsList;
+                this.filteredStationsList = stationsList;
+                notifyDataSetChanged();
+            }
+        }
     }
 
     private void notifyStationsChanged() {
@@ -489,7 +502,7 @@ public class ItemAdapterStation
 
     public StationsFilter getFilter() {
         if (filter == null) {
-            filter = new StationsFilter(getContext(), filterType, new StationsFilter.DataProvider() {
+            filter = new StationsFilter(getContext(), new StationsFilter.DataProvider() {
                 @Override
                 public List<DataRadioStation> getOriginalStationList() {
                     return stationsList;
