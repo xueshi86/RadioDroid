@@ -235,6 +235,39 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                                 updateDatabaseStatus(false, error);
                             });
                         }
+                        
+                        @Override
+                        public boolean onConfirmReplace(String message, int tempCount, int mainCount) {
+                            // 使用CountDownLatch等待用户选择
+                            final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+                            final boolean[] result = {false};
+                            
+                            requireActivity().runOnUiThread(() -> {
+                                androidx.appcompat.app.AlertDialog.Builder confirmBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+                                confirmBuilder.setTitle("确认替换");
+                                confirmBuilder.setMessage(message);
+                                confirmBuilder.setPositiveButton("替换", (dialog, which) -> {
+                                    result[0] = true;
+                                    latch.countDown();
+                                });
+                                confirmBuilder.setNegativeButton("取消", (dialog, which) -> {
+                                    result[0] = false;
+                                    latch.countDown();
+                                });
+                                confirmBuilder.setCancelable(false);
+                                confirmBuilder.show();
+                            });
+                            
+                            try {
+                                // 等待用户选择，最多等待60秒
+                                latch.await(60, java.util.concurrent.TimeUnit.SECONDS);
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                                Log.e("FragmentSettings", "等待用户确认时被中断", e);
+                            }
+                            
+                            return result[0];
+                        }
                     });
                     
                     return false;

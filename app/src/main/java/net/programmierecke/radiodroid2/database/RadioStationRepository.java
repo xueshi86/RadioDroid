@@ -195,9 +195,9 @@ public class RadioStationRepository {
                     Log.d(TAG, "临时数据库中的电台数量: " + tempDatabaseCount);
                     
                     // 比较两个数据库的电台数量
-                    if (tempDatabaseCount - mainDatabaseCount > 50) {
-                        // 临时数据库的电台数量比主数据库多50个以上，使用临时数据库
-                        Log.d(TAG, "临时数据库的电台数量比主数据库多50个以上，将使用临时数据库");
+                    if (tempDatabaseCount >= mainDatabaseCount) {
+                        // 临时数据库的电台数量大于或等于主数据库，使用临时数据库
+                        Log.d(TAG, "临时数据库的电台数量(" + tempDatabaseCount + ")大于或等于主数据库(" + mainDatabaseCount + ")，将使用临时数据库");
                         
                         // 将主数据库的数据清空，然后将临时数据库的数据复制到主数据库
                         radioStationDao.deleteAll();
@@ -224,21 +224,57 @@ public class RadioStationRepository {
                         
                         callback.onSuccess(completionMessage);
                     } else {
-                        // 临时数据库的电台数量比主数据库多不超过50个，继续使用主数据库
-                        Log.d(TAG, "临时数据库的电台数量比主数据库多不超过50个，将继续使用主数据库");
+                        // 临时数据库的电台数量小于主数据库，询问用户是否替换
+                        Log.d(TAG, "临时数据库的电台数量(" + tempDatabaseCount + ")小于主数据库(" + mainDatabaseCount + ")，将询问用户是否替换");
+                        
+                        // 通过回调询问用户是否替换数据
+                        boolean shouldReplace = callback.onConfirmReplace(
+                            "新数据(" + tempDatabaseCount + "个)比现有数据(" + mainDatabaseCount + "个)少，是否替换？", 
+                            tempDatabaseCount, 
+                            mainDatabaseCount
+                        );
+                        
+                        if (shouldReplace) {
+                            // 用户确认替换，执行替换操作
+                            Log.d(TAG, "用户确认替换，将使用临时数据库");
+                            
+                            // 将主数据库的数据清空，然后将临时数据库的数据复制到主数据库
+                            radioStationDao.deleteAll();
+                            List<RadioStation> allStationsFromTemp = tempRadioStationDao.getAllStations();
+                            if (!allStationsFromTemp.isEmpty()) {
+                                radioStationDao.insertAll(allStationsFromTemp);
+                                Log.d(TAG, "已将临时数据库的 " + allStationsFromTemp.size() + " 个电台复制到主数据库");
+                            }
+                            
+                            // 更新数据库时间戳
+                            updateDatabaseTimestamp();
+                            Log.d(TAG, "已更新数据库时间戳");
+                            
+                            String completionMessage = "更新完成，共同步 " + totalDownloaded + " 个电台，已切换到新数据";
+                            
+                            // 发送数据库更新完成广播
+                            Intent databaseUpdatedIntent = new Intent("net.programmierecke.radiodroid2.DATABASE_UPDATED");
+                            LocalBroadcastManager.getInstance(context).sendBroadcast(databaseUpdatedIntent);
+                            Log.d(TAG, "已发送数据库更新完成广播");
+                            
+                            callback.onSuccess(completionMessage);
+                        } else {
+                            // 用户取消替换，继续使用主数据库
+                            Log.d(TAG, "用户取消替换，将继续使用主数据库");
+                            
+                            String completionMessage = "更新完成，但用户选择继续使用现有数据";
+                            
+                            // 发送数据库更新完成广播
+                            Intent databaseUpdatedIntent = new Intent("net.programmierecke.radiodroid2.DATABASE_UPDATED");
+                            LocalBroadcastManager.getInstance(context).sendBroadcast(databaseUpdatedIntent);
+                            Log.d(TAG, "已发送数据库更新完成广播");
+                            
+                            callback.onSuccess(completionMessage);
+                        }
                         
                         // 清空临时数据库
                         tempRadioStationDao.deleteAll();
                         Log.d(TAG, "已清空临时数据库");
-                        
-                        String completionMessage = "更新完成，但新数据量不足，将继续使用现有数据";
-                        
-                        // 发送数据库更新完成广播
-                        Intent databaseUpdatedIntent = new Intent("net.programmierecke.radiodroid2.DATABASE_UPDATED");
-                        LocalBroadcastManager.getInstance(context).sendBroadcast(databaseUpdatedIntent);
-                        Log.d(TAG, "已发送数据库更新完成广播");
-                        
-                        callback.onSuccess(completionMessage);
                     }
                 } else {
                     callback.onError("没有获取到任何电台数据");
@@ -617,6 +653,7 @@ public class RadioStationRepository {
         void onProgress(String message, int current, int total);
         void onSuccess(String message);
         void onError(String error);
+        boolean onConfirmReplace(String message, int tempCount, int mainCount);
     }
     
     // 进度回调接口
