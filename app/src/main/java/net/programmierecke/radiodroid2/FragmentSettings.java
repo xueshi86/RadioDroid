@@ -6,9 +6,11 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.media.audiofx.AudioEffect;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.Settings;
 import android.util.Log;
 import android.widget.LinearLayout;
@@ -16,6 +18,8 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.widget.Toolbar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -44,14 +48,19 @@ import java.util.Map;
 
 import net.programmierecke.radiodroid2.interfaces.IApplicationSelected;
 import net.programmierecke.radiodroid2.proxy.ProxySettingsDialog;
-import net.programmierecke.radiodroid2.dialogs.DatabaseUpdateProgressDialog;
 import net.programmierecke.radiodroid2.database.RadioStationRepository;
+import net.programmierecke.radiodroid2.service.DatabaseUpdateManager;
+import net.programmierecke.radiodroid2.service.DatabaseUpdateWorker;
+import net.programmierecke.radiodroid2.ui.DatabaseUpdateProgressDialog;
 
 import static net.programmierecke.radiodroid2.ActivityMain.FRAGMENT_FROM_BACKSTACK;
 
 import android.os.PowerManager;
 
 public class FragmentSettings extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener, IApplicationSelected, PreferenceFragmentCompat.OnPreferenceStartScreenCallback  {
+    
+    private DatabaseUpdateProgressDialog updateDialog;
+    private ActivityResultLauncher<String> filePickerLauncher;
 
     public static FragmentSettings openNewSettingsSubFragment(ActivityMain activity, String key) {
         FragmentSettings f = new FragmentSettings();
@@ -61,6 +70,91 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         FragmentTransaction fragmentTransaction = activity.getSupportFragmentManager().beginTransaction();
         fragmentTransaction.replace(R.id.containerView, f).addToBackStack(String.valueOf(FRAGMENT_FROM_BACKSTACK)).commit();
         return f;
+    }
+    
+    /**
+     * 检查是否有正在进行的数据库更新，如果有则恢复显示进度对话框
+     */
+    private void checkAndRestoreUpdateDialog() {
+        Log.d("FragmentSettings", "checkAndRestoreUpdateDialog called");
+        
+        // 检查是否有正在进行的更新
+        boolean isUpdating = DatabaseUpdateManager.isUpdating(requireContext());
+        Log.d("FragmentSettings", "DatabaseUpdateManager.isUpdating() returned: " + isUpdating);
+        
+        // 检查对话框内部状态，即使isUpdating返回false，如果对话框已存在，也应该尝试恢复
+        boolean dialogExists = (updateDialog != null);
+        Log.d("FragmentSettings", "updateDialog exists: " + dialogExists);
+        
+        // 只有在真正有更新进行或对话框已存在时才恢复显示
+        if (isUpdating || dialogExists) {
+            Log.d("FragmentSettings", "Restoring dialog - isUpdating: " + isUpdating + ", dialogExists: " + dialogExists);
+            // 如果有正在进行的更新或对话框已存在，显示进度对话框
+            try {
+                // 先检查是否已有对话框实例
+                if (updateDialog == null) {
+                    Log.d("FragmentSettings", "Creating new DatabaseUpdateProgressDialog");
+                    updateDialog = new DatabaseUpdateProgressDialog(requireContext());
+                } else {
+                    Log.d("FragmentSettings", "Reusing existing DatabaseUpdateProgressDialog, isShowing=" + updateDialog.isShowing());
+                }
+                
+                // 如果对话框未显示或已隐藏，重新显示
+                if (!updateDialog.isShowing()) {
+                    Log.d("FragmentSettings", "Dialog is not showing, calling show()");
+                    // 确保在主线程中显示对话框
+                    if (isAdded() && getActivity() != null && !getActivity().isFinishing() && !getActivity().isDestroyed()) {
+                        // 添加一个小延迟，确保UI准备好
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    // 再次检查所有条件，确保状态没有改变
+                                    // 注意：这里只检查对话框状态，不再检查isUpdating，避免重复启动更新
+                                    Log.d("FragmentSettings", "In delayed runnable: updateDialog.isShowing=" + (updateDialog != null ? updateDialog.isShowing() : "null"));
+                                    
+                                    // 如果对话框存在且之前是显示状态，显示它
+                                    if (updateDialog != null && dialogExists && 
+                                        isAdded() && getActivity() != null && !getActivity().isFinishing() && !getActivity().isDestroyed()) {
+                                        updateDialog.show();
+                                        Log.d("FragmentSettings", "Dialog shown successfully");
+                                    } else if (updateDialog != null && isUpdating && 
+                                        isAdded() && getActivity() != null && !getActivity().isFinishing() && !getActivity().isDestroyed()) {
+                                        // 只有在真正有更新进行时才显示对话框
+                                        updateDialog.show();
+                                        Log.d("FragmentSettings", "Dialog shown for active update");
+                                    } else {
+                                        Log.d("FragmentSettings", "Cannot show dialog: conditions not met - updateDialog=" + (updateDialog != null ? "not null" : "null") + 
+                                                  ", isUpdating=" + isUpdating + 
+                                                  ", dialogExists=" + dialogExists +
+                                                  ", isAdded=" + isAdded() + 
+                                                  ", activity=" + (getActivity() != null ? "not null" : "null"));
+                                    }
+                                } catch (Exception e) {
+                                    Log.e("FragmentSettings", "Error showing dialog in delayed runnable", e);
+                                }
+                            }
+                        }, 500); // 增加延迟到500毫秒，确保UI完全准备好
+                    } else {
+                        Log.d("FragmentSettings", "Cannot show dialog: fragment not added or activity not available - isAdded=" + isAdded() + 
+                                  ", activity=" + (getActivity() != null ? "not null" : "null"));
+                    }
+                } else {
+                    Log.d("FragmentSettings", "Dialog is already showing");
+                }
+            } catch (Exception e) {
+                Log.e("FragmentSettings", "Error showing dialog", e);
+            }
+        } else {
+            Log.d("FragmentSettings", "No database update in progress");
+            // 如果没有更新在进行，清理对话框
+            if (updateDialog != null) {
+                if (updateDialog.isShowing()) {
+                    updateDialog.dismiss();
+                }
+                updateDialog = null;
+            }
+        }
     }
 
     @Override
@@ -113,6 +207,18 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
     @Override
     public void onCreatePreferences(Bundle bundle, String s) {
         setPreferencesFromResource(R.xml.preferences, s);
+        
+        // 初始化文件选择器
+        filePickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.GetContent(),
+            uri -> {
+                if (uri != null) {
+                    // 用户选择了文件，执行导入
+                    importDatabase(uri);
+                }
+            }
+        );
+        
         refreshToolbar();
         if (s == null) {
             refreshToplevelIcons();
@@ -168,107 +274,16 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             findPreference("update_local_database").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
-                    RadioDroidApp radioDroidApp = (RadioDroidApp) requireActivity().getApplication();
-                    RadioStationRepository repository = RadioStationRepository.getInstance(requireContext());
+                    // 启动数据库更新
+                    DatabaseUpdateManager.startUpdate(requireContext());
                     
-                    // Show progress dialog with cancel button
-                    DatabaseUpdateProgressDialog progressDialog = DatabaseUpdateProgressDialog.newInstance(
-                        getString(R.string.settings_update_local_database),
-                        "正在从网络下载电台数据，请稍候..."
-                    );
-                    
-                    // Set cancel listener
-                    progressDialog.setOnCancelListener(() -> {
-                        // 用户取消操作，显示提示信息
-                        requireActivity().runOnUiThread(() -> {
-                            androidx.appcompat.app.AlertDialog.Builder infoBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
-                            infoBuilder.setTitle("更新已取消");
-                            infoBuilder.setMessage("已下载的电台数据已保存。");
-                            infoBuilder.setPositiveButton("确定", null);
-                            infoBuilder.show();
-                            
-                            // 更新数据库状态，显示已保存的电台数量和时间
-                            updateDatabaseStatus(true, null);
-                        });
-                    });
-                    
-                    progressDialog.show(getParentFragmentManager(), "progress_dialog");
-                    
-                    // Start sync process
-                    repository.syncAllStationsFromNetwork(requireContext(), new RadioStationRepository.SyncCallback() {
-                        @Override
-                        public void onProgress(String message) {
-                            requireActivity().runOnUiThread(() -> progressDialog.updateMessage(message));
-                        }
-                        
-                        @Override
-                        public void onProgress(String message, int current, int total) {
-                            requireActivity().runOnUiThread(() -> progressDialog.updateProgress(message, current, total));
-                        }
-                        
-                        @Override
-                        public void onSuccess(String message) {
-                            requireActivity().runOnUiThread(() -> {
-                                progressDialog.dismiss();
-                                androidx.appcompat.app.AlertDialog.Builder successBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
-                                successBuilder.setTitle("更新成功");
-                                successBuilder.setMessage(message);
-                                successBuilder.setPositiveButton("确定", null);
-                                successBuilder.show();
-                                
-                                // Update database status preference
-                                updateDatabaseStatus(true, null);
-                            });
-                        }
-                        
-                        @Override
-                        public void onError(String error) {
-                            requireActivity().runOnUiThread(() -> {
-                                progressDialog.dismiss();
-                                androidx.appcompat.app.AlertDialog.Builder errorBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
-                                errorBuilder.setTitle("更新失败");
-                                errorBuilder.setMessage(error);
-                                errorBuilder.setPositiveButton("确定", null);
-                                errorBuilder.show();
-                                
-                                // Update database status preference
-                                updateDatabaseStatus(false, error);
-                            });
-                        }
-                        
-                        @Override
-                        public boolean onConfirmReplace(String message, int tempCount, int mainCount) {
-                            // 使用CountDownLatch等待用户选择
-                            final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
-                            final boolean[] result = {false};
-                            
-                            requireActivity().runOnUiThread(() -> {
-                                androidx.appcompat.app.AlertDialog.Builder confirmBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
-                                confirmBuilder.setTitle("确认替换");
-                                confirmBuilder.setMessage(message);
-                                confirmBuilder.setPositiveButton("替换", (dialog, which) -> {
-                                    result[0] = true;
-                                    latch.countDown();
-                                });
-                                confirmBuilder.setNegativeButton("取消", (dialog, which) -> {
-                                    result[0] = false;
-                                    latch.countDown();
-                                });
-                                confirmBuilder.setCancelable(false);
-                                confirmBuilder.show();
-                            });
-                            
-                            try {
-                                // 等待用户选择，最多等待60秒
-                                latch.await(60, java.util.concurrent.TimeUnit.SECONDS);
-                            } catch (InterruptedException e) {
-                                Thread.currentThread().interrupt();
-                                Log.e("FragmentSettings", "等待用户确认时被中断", e);
-                            }
-                            
-                            return result[0];
-                        }
-                    });
+                    // 显示进度对话框
+                    if (updateDialog != null && updateDialog.isShowing()) {
+                        // 如果对话框已经在显示，不做任何操作
+                    } else {
+                        updateDialog = new DatabaseUpdateProgressDialog(requireContext());
+                        updateDialog.show();
+                    }
                     
                     return false;
                 }
@@ -357,10 +372,11 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     // 显示确认对话框
                     androidx.appcompat.app.AlertDialog.Builder confirmBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
                     confirmBuilder.setTitle("导入主数据库");
-                    confirmBuilder.setMessage("是否从外部存储导入主数据库？这将覆盖当前的主数据库，请确保已备份重要数据。");
+                    confirmBuilder.setMessage("是否从外部存储导入主数据库？\n\n注意：导入完成后应用将自动重启以加载新数据库。\n\n这将覆盖当前的主数据库，请确保已备份重要数据。");
                     
-                    confirmBuilder.setPositiveButton("导入", (dialog, which) -> {
-                        importDatabase();
+                    confirmBuilder.setPositiveButton("选择文件", (dialog, which) -> {
+                        // 打开文件选择器，用户可以导航到Download/RadioDroid文件夹选择.db文件
+                        filePickerLauncher.launch("*/*");
                     });
                     
                     confirmBuilder.setNegativeButton("取消", null);
@@ -645,6 +661,8 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
     @Override
     public void onResume() {
         super.onResume();
+        Log.d("FragmentSettings", "onResume called");
+        
         getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
 
         refreshToolbar();
@@ -655,6 +673,9 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         if(findPreference("shareapp_package") != null)
             findPreference("shareapp_package").setSummary(getPreferenceManager().getSharedPreferences().getString("shareapp_package", ""));
 
+        // 恢复数据库更新进度对话框
+        checkAndRestoreUpdateDialog();
+
         Preference batPref = getPreferenceScreen().findPreference(getString(R.string.key_ignore_battery_optimization));
         if (batPref != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // the second condition should already follow from the first
             updateBatteryPrefDescription(batPref);
@@ -662,11 +683,27 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         
         // Update database status when settings screen is loaded
         updateDatabaseStatusOnLoad();
+        
+        // 检查是否有正在进行的数据库更新，如果有则恢复显示进度对话框
+        checkAndRestoreUpdateDialog();
+        
+        // 更新应用前台时间 - 移到checkAndRestoreUpdateDialog之后，避免取消正在进行的更新
+        DatabaseUpdateWorker.updateAppForegroundTime(requireContext());
     }
 
     @Override
     public void onPause() {
         getPreferenceManager().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+        
+        // 隐藏进度对话框但不取消更新
+        if (updateDialog != null) {
+            if (updateDialog.isShowing()) {
+                updateDialog.hide();
+                Log.d("FragmentSettings", "Dialog hidden in onPause");
+            }
+            // 不设置为null，以便在onResume时可以重新显示
+        }
+        
         super.onPause();
     }
 
@@ -884,16 +921,20 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 // 获取主数据库文件路径
                 File mainDatabaseFile = requireContext().getDatabasePath("radio_droid_database");
                 
+                // 获取电台数量
+                RadioStationRepository repository = RadioStationRepository.getInstance(requireContext());
+                int stationCount = repository.getStationCountSync();
+                
                 // 创建导出目录
                 File exportDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "RadioDroid");
                 if (!exportDir.exists()) {
                     exportDir.mkdirs();
                 }
                 
-                // 创建导出文件名（包含时间戳）
+                // 创建导出文件名（包含时间戳和电台数量）
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
                 String timestamp = sdf.format(new Date());
-                File exportFile = new File(exportDir, "radio_droid_database_" + timestamp + ".db");
+                File exportFile = new File(exportDir, "radio_droid_database_" + timestamp + "_" + stationCount + ".db");
                 
                 // 复制数据库文件
                 FileChannel source = new FileInputStream(mainDatabaseFile).getChannel();
@@ -928,7 +969,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
     }
     
     // 从外部存储导入主数据库
-    private void importDatabase() {
+    private void importDatabase(Uri uri) {
         // 显示进度对话框
         androidx.appcompat.app.AlertDialog.Builder progressBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
         progressBuilder.setTitle("导入数据库");
@@ -939,23 +980,6 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         // 在后台线程执行导入操作
         new Thread(() -> {
             try {
-                // 获取导入目录
-                File importDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "RadioDroid");
-                
-                if (!importDir.exists() || !importDir.isDirectory()) {
-                    throw new IOException("导入目录不存在：" + importDir.getAbsolutePath());
-                }
-                
-                // 查找最新的数据库文件
-                File[] files = importDir.listFiles((dir, name) -> name.startsWith("radio_droid_database_") && name.endsWith(".db"));
-                if (files == null || files.length == 0) {
-                    throw new IOException("未找到可导入的数据库文件");
-                }
-                
-                // 按修改时间排序，获取最新的文件
-                Arrays.sort(files, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
-                File importFile = files[0];
-                
                 // 获取主数据库文件路径
                 File mainDatabaseFile = requireContext().getDatabasePath("radio_droid_database");
                 
@@ -976,11 +1000,28 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 RadioStationRepository repository = RadioStationRepository.getInstance(requireContext());
                 repository.closeDatabase();
                 
-                // 复制导入文件到主数据库
-                FileChannel importSource = new FileInputStream(importFile).getChannel();
+                // 从Uri复制文件到主数据库
+                java.io.InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
                 FileChannel destination = new FileOutputStream(mainDatabaseFile).getChannel();
-                destination.transferFrom(importSource, 0, importSource.size());
-                importSource.close();
+                java.nio.channels.ReadableByteChannel sourceChannel = java.nio.channels.Channels.newChannel(inputStream);
+                long transferred = 0;
+                long size = 0;
+                
+                // 使用缓冲区复制文件
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    baos.write(buffer, 0, bytesRead);
+                }
+                inputStream.close();
+                
+                // 将数据写入目标文件
+                java.io.ByteArrayInputStream bais = new java.io.ByteArrayInputStream(baos.toByteArray());
+                java.nio.channels.ReadableByteChannel finalSourceChannel = java.nio.channels.Channels.newChannel(bais);
+                destination.transferFrom(finalSourceChannel, 0, baos.size());
+                finalSourceChannel.close();
+                bais.close();
                 destination.close();
                 
                 // 重新初始化数据库
@@ -991,15 +1032,20 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     progressDialog.dismiss();
                     androidx.appcompat.app.AlertDialog.Builder successBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
                     successBuilder.setTitle("导入成功");
-                    successBuilder.setMessage("主数据库已成功导入。\n原数据库已备份为：\n" + backupFile.getAbsolutePath());
-                    successBuilder.setPositiveButton("确定", null);
+                    successBuilder.setMessage("主数据库已成功导入。\n原数据库已备份为：\n" + backupFile.getAbsolutePath() + "\n\n应用将自动重启以加载新数据库。");
+                    successBuilder.setPositiveButton("确定", (dialog, which) -> {
+                        // 重启应用
+                        Intent intent = new Intent(requireContext(), ActivityMain.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
+                        requireActivity().finish();
+                        System.exit(0);
+                    });
+                    successBuilder.setCancelable(false);
                     successBuilder.show();
-                    
-                    // 更新数据库状态，使用数据库更新时间
-                    updateDatabaseStatus(true, null, true);
                 });
                 
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 // 在UI线程显示错误
                 requireActivity().runOnUiThread(() -> {

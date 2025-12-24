@@ -180,7 +180,7 @@ public class Utils {
             String responseStr = response.body().string();
 
             if (!response.isSuccessful()) {
-                Log.e("UTIL", "Unsuccessful response: " + response.message() + "\n" + responseStr);
+                Log.e("UTIL", "HTTP请求失败: URL=" + theURI + ", 状态码=" + response.code() + ", 消息=" + response.message() + ", 响应=" + responseStr);
                 return null;
             }
 
@@ -189,8 +189,16 @@ public class Utils {
                 Log.d("UTIL", "wrote cache file for:" + theURI);
             }
             return responseStr;
+        } catch (java.net.SocketTimeoutException e) {
+            Log.e("UTIL", "网络请求超时: URL=" + theURI + ", 错误=" + e.getMessage());
+        } catch (java.net.UnknownHostException e) {
+            Log.e("UTIL", "DNS解析失败: URL=" + theURI + ", 错误=" + e.getMessage());
+        } catch (java.net.ConnectException e) {
+            Log.e("UTIL", "连接失败: URL=" + theURI + ", 错误=" + e.getMessage());
+        } catch (java.io.IOException e) {
+            Log.e("UTIL", "IO错误: URL=" + theURI + ", 错误=" + e.getMessage());
         } catch (Exception e) {
-            Log.e("UTIL", "downloadFeed() " + e);
+            Log.e("UTIL", "downloadFeed() 未知错误: URL=" + theURI + ", 错误类型=" + e.getClass().getSimpleName() + ", 错误=" + e.getMessage());
         }
 
         return null;

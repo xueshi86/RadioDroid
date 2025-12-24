@@ -13,6 +13,7 @@ import androidx.room.Room;
 import net.programmierecke.radiodroid2.RadioBrowserServerManager;
 import net.programmierecke.radiodroid2.RadioDroidApp;
 import net.programmierecke.radiodroid2.Utils;
+import net.programmierecke.radiodroid2.service.DatabaseUpdateWorker;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
 
 import java.util.ArrayList;
@@ -37,6 +38,9 @@ public class RadioStationRepository {
     private UpdateTimestampDao updateTimestampDao;
     private Context context;
     private Executor executor = Executors.newSingleThreadExecutor();
+    
+    // 静态锁对象，确保同步方法不会被多个线程同时调用
+    private static final Object sSyncLock = new Object();
     
     // 单例模式
     private static volatile RadioStationRepository INSTANCE;
@@ -70,134 +74,240 @@ public class RadioStationRepository {
     // 从网络获取并存储所有电台数据
     public void syncAllStationsFromNetwork(Context context, SyncCallback callback) {
         executor.execute(() -> {
+            syncAllStationsFromNetworkInternal(context, callback);
+        });
+    }
+    
+    // 内部同步方法，不使用Executor，直接在当前线程执行
+    public void syncAllStationsFromNetworkInternal(Context context, SyncCallback callback) {
+        syncAllStationsFromNetworkInternal(context, callback, false);
+    }
+    
+    // 内部同步方法，支持恢复模式
+    public void syncAllStationsFromNetworkInternal(Context context, SyncCallback callback, boolean resumeMode) {
+        // 添加线程信息日志
+        Log.d(TAG, "Starting syncAllStationsFromNetworkInternal on thread: " + Thread.currentThread().getId() + ", name: " + Thread.currentThread().getName());
+        
+        // 使用同步块确保只有一个同步操作在运行
+        synchronized (sSyncLock) {
+            Log.d(TAG, "Acquired sync lock, starting station synchronization");
             try {
                 Log.d(TAG, "开始同步电台数据");
                 callback.onProgress("正在检查网络连接", 0, 100);
-                
-                // 检查网络检查结果
-                RadioBrowserServerManager.ServerInfo fastestServer = checkNetworkAndGetFastestServer(context, callback);
-                if (fastestServer == null) {
-                    return; // 网络检查失败，错误已在checkNetworkAndGetFastestServer中处理
-                }
-                
-                RadioDroidApp radioDroidApp = (RadioDroidApp) context.getApplicationContext();
-                OkHttpClient httpClient = radioDroidApp.getHttpClient();
-                
-                // 设置当前使用的服务器
-                RadioBrowserServerManager.setCurrentServer(fastestServer.server);
-                
-                callback.onProgress("正在获取电台总数", 0, 100);
-                // 首先获取电台总数
-                String statsResult = Utils.downloadFeedFromServer(httpClient, radioDroidApp, fastestServer.server, "json/stats", fastestServer.useHttps, true, null);
-                if (statsResult == null) {
-                    callback.onError("获取服务器统计信息失败");
-                    return;
-                }
-                
-                // 解析统计信息获取电台总数
-                int totalStations = 0;
-                try {
-                    Log.d(TAG, "服务器返回的原始统计信息: " + statsResult);
-                    org.json.JSONObject stats = new org.json.JSONObject(statsResult);
-                    totalStations = stats.getInt("stations");
-                    Log.d(TAG, "解析得到的电台总数: " + totalStations);
-                    callback.onProgress("查询到网络数据库现存 " + totalStations + " 个电台", 0, totalStations);
-                } catch (Exception e) {
-                    Log.e(TAG, "解析统计信息失败", e);
-                    callback.onError("解析统计信息失败: " + e.getMessage());
-                    return;
-                }
-                
-                // 获取主数据库中的电台数量
-                int mainDatabaseCount = radioStationDao.getCount();
-                Log.d(TAG, "主数据库中的电台数量: " + mainDatabaseCount);
-                
-                callback.onProgress("开始更新临时数据库", 0, totalStations);
-                
+            
+            // 检查网络检查结果
+            RadioBrowserServerManager.ServerInfo fastestServer = checkNetworkAndGetFastestServer(context, callback);
+            if (fastestServer == null) {
+                Log.e(TAG, "网络检查失败，无法获取服务器信息");
+                callback.onError("网络检查失败，无法获取服务器信息");
+                throw new RuntimeException("网络检查失败，无法获取服务器信息");
+            }
+            
+            RadioDroidApp radioDroidApp = (RadioDroidApp) context.getApplicationContext();
+            OkHttpClient httpClient = radioDroidApp.getHttpClient();
+            
+            // 设置当前使用的服务器
+            RadioBrowserServerManager.setCurrentServer(fastestServer.server);
+            
+            callback.onProgress("正在获取电台总数", 0, 100);
+        // 首先获取电台总数
+        Log.d(TAG, "Attempting to download stats from: " + fastestServer.server + "/json/stats");
+        String statsResult = Utils.downloadFeedFromServer(httpClient, radioDroidApp, fastestServer.server, "json/stats", fastestServer.useHttps, true, null);
+        Log.d(TAG, "Download completed, result is " + (statsResult == null ? "null" : "non-null"));
+        if (statsResult == null) {
+            Log.e(TAG, "获取服务器统计信息失败，服务器返回空结果");
+            callback.onError("获取服务器统计信息失败");
+            // 重置更新状态
+            DatabaseUpdateWorker.resetUpdateState(context);
+            throw new RuntimeException("获取服务器统计信息失败");
+        }
+            
+            // 解析统计信息获取电台总数
+            int totalStations = 0;
+            try {
+                Log.d(TAG, "服务器返回的原始统计信息: " + statsResult);
+                org.json.JSONObject stats = new org.json.JSONObject(statsResult);
+                totalStations = stats.getInt("stations");
+                Log.d(TAG, "解析得到的电台总数: " + totalStations);
+                callback.onProgress("查询到网络数据库现存 " + totalStations + " 个电台", 0, totalStations);
+            } catch (Exception e) {
+                Log.e(TAG, "解析统计信息失败", e);
+                callback.onError("解析统计信息失败: " + e.getMessage());
+                // 重置更新状态
+                DatabaseUpdateWorker.resetUpdateState(context);
+                throw new RuntimeException("解析统计信息失败: " + e.getMessage());
+            }
+            
+            // 获取主数据库中的电台数量
+            int mainDatabaseCount = radioStationDao.getCount();
+            Log.d(TAG, "主数据库中的电台数量: " + mainDatabaseCount);
+            
+            callback.onProgress("开始更新临时数据库", 0, totalStations);
+            
+            // 只有在非恢复模式下才清空临时数据库
+            if (!resumeMode) {
                 // 清空临时数据库
                 tempRadioStationDao.deleteAll();
                 Log.d(TAG, "已清空临时数据库");
+            } else {
+                // 恢复模式下，检查临时数据库中已有的数据
+                int existingTempCount = tempRadioStationDao.getCount();
+                Log.d(TAG, "恢复模式：临时数据库中已有 " + existingTempCount + " 个电台");
+                if (existingTempCount > 0) {
+                    callback.onProgress("恢复下载进度", existingTempCount, totalStations);
+                }
+            }
+            
+            // 使用分页获取所有电台数据，每页50个
+            final int pageSize = 50; // 每页50个电台
+            int totalPages = (int) Math.ceil((double) totalStations / pageSize);
+            int totalDownloaded = 0;
+            int batchSize = 10; // 批量处理大小
+            
+            // 在恢复模式下，检查临时数据库中已有的电台数量，并从相应的页面开始下载
+            int startPage = 0;
+            if (resumeMode) {
+                int existingTempCount = tempRadioStationDao.getCount();
+                if (existingTempCount > 0) {
+                    // 计算应该从哪一页开始下载
+                    startPage = existingTempCount / pageSize;
+                    totalDownloaded = existingTempCount;
+                    Log.d(TAG, "恢复模式：从第 " + (startPage + 1) + " 页开始下载，已有 " + totalDownloaded + " 个电台");
+                }
+            }
+            
+            // 用于批量插入的临时列表
+            List<RadioStation> batchInsertList = new ArrayList<>(pageSize * batchSize);
+            
+            for (int page = startPage; page < totalPages; page++) {
+                int skip = page * pageSize;
+                int currentStationCount = Math.min(skip + pageSize, totalStations);
                 
-                // 使用分页获取所有电台数据，每页50个
-                final int pageSize = 50; // 每页50个电台
-                int totalPages = (int) Math.ceil((double) totalStations / pageSize);
-                int totalDownloaded = 0;
-                int batchSize = 10; // 批量处理大小
+                String urlWithParams = "json/stations?limit=" + pageSize + "&offset=" + skip + "&hidebroken=true";
                 
-                // 用于批量插入的临时列表
-                List<RadioStation> batchInsertList = new ArrayList<>(pageSize * batchSize);
+                String resultString = null;
+                int retryCount = 0;
+                final int maxRetries = 3;
                 
-                for (int page = 0; page < totalPages; page++) {
-                    int skip = page * pageSize;
-                    // 计算当前已下载的电台数量（不超过总数）
-                    int currentStationCount = Math.min(skip + pageSize, totalStations);
-                    
-                    // 构建带查询参数的URL，只获取必要字段以提高速度
-                    // 使用hidebroken=true确保只返回正常工作的电台
-                    String urlWithParams = "json/stations?limit=" + pageSize + "&offset=" + skip + "&hidebroken=true";
-                    
-                    // 获取当前页的电台数据
-                    String resultString = Utils.downloadFeedFromServer(httpClient, radioDroidApp, fastestServer.server, urlWithParams, fastestServer.useHttps, true, null);
-                    
-                    if (resultString != null) {
-                        List<DataRadioStation> dataStations = DataRadioStation.DecodeJson(resultString);
-                        
-                        if (dataStations != null && !dataStations.isEmpty()) {
-                            // 转换为RadioStation实体
-                            for (DataRadioStation dataStation : dataStations) {
-                                RadioStation radioStation = RadioStation.fromDataRadioStation(dataStation);
-                                batchInsertList.add(radioStation);
-                            }
-                            
-                            totalDownloaded += dataStations.size();
-                            Log.d(TAG, "已下载 " + totalDownloaded + "/" + totalStations + " 个电台");
-                            
-                            // 每处理batchSize页后批量插入一次数据库，减少数据库操作次数
-                            if ((page + 1) % batchSize == 0 || page == totalPages - 1) {
-                                if (!batchInsertList.isEmpty()) {
-                                    tempRadioStationDao.insertAll(batchInsertList);
-                                    Log.d(TAG, "批量插入了 " + batchInsertList.size() + " 个电台到临时数据库");
-                                    batchInsertList.clear();
-                                }
-                            }
-                            
-                            callback.onProgress("正在下载电台数据", totalDownloaded, totalStations);
-                        } else {
-                            Log.w(TAG, "第 " + (page + 1) + " 页数据为空");
-                        }
-                    } else {
-                        Log.w(TAG, "第 " + (page + 1) + " 页下载失败");
-                        // 继续尝试下一页，而不是完全失败
-                    }
-                    
-                    // 每处理一定数量的页面后稍作休息，避免请求过于频繁
-                    if ((page + 1) % batchSize == 0) {
+                while (retryCount < maxRetries && resultString == null) {
+                    if (retryCount > 0) {
+                        Log.w(TAG, "第 " + (page + 1) + " 页第 " + retryCount + " 次重试");
                         try {
-                            Thread.sleep(200);
+                            Thread.sleep(1000 * retryCount);
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
-                            Log.w(TAG, "休眠被中断", e);
-                            // 用户中断，保存已下载的数据
-                            int tempDatabaseCount = tempRadioStationDao.getCount();
-                            Log.d(TAG, "用户中断，临时数据库中的电台数量: " + tempDatabaseCount);
-                            
-                            callback.onSuccess("更新已中断，已下载 " + totalDownloaded + " 个电台并保存到临时数据库");
-                            return;
+                            Log.w(TAG, "重试等待被中断", e);
+                            break;
                         }
+                    }
+                    
+                    resultString = Utils.downloadFeedFromServer(httpClient, radioDroidApp, fastestServer.server, urlWithParams, fastestServer.useHttps, true, null);
+                    retryCount++;
+                }
+                
+                if (resultString != null) {
+                    List<DataRadioStation> dataStations = DataRadioStation.DecodeJson(resultString);
+                    
+                    if (dataStations != null && !dataStations.isEmpty()) {
+                        for (DataRadioStation dataStation : dataStations) {
+                            RadioStation radioStation = RadioStation.fromDataRadioStation(dataStation);
+                            batchInsertList.add(radioStation);
+                        }
+                        
+                        totalDownloaded += dataStations.size();
+                        Log.d(TAG, "已下载 " + totalDownloaded + "/" + totalStations + " 个电台");
+                        
+                        if ((page + 1) % batchSize == 0 || page == totalPages - 1) {
+                            if (!batchInsertList.isEmpty()) {
+                                tempRadioStationDao.insertAll(batchInsertList);
+                                Log.d(TAG, "批量插入了 " + batchInsertList.size() + " 个电台到临时数据库");
+                                batchInsertList.clear();
+                                
+                                int actualTempCount = tempRadioStationDao.getCount();
+                                if (actualTempCount > totalDownloaded) {
+                                    Log.w(TAG, "进度不一致：临时数据库有 " + actualTempCount + " 个电台，但统计为 " + totalDownloaded);
+                                    totalDownloaded = actualTempCount;
+                                }
+                            }
+                        }
+                        
+                        callback.onProgress("正在下载电台数据", totalDownloaded, totalStations);
+                    } else {
+                        Log.w(TAG, "第 " + (page + 1) + " 页数据为空");
+                    }
+                } else {
+                    Log.e(TAG, "第 " + (page + 1) + " 页下载失败，已重试 " + maxRetries + " 次，跳过该页");
+                    if (totalStations > 0) {
+                        int estimatedProgress = Math.min((page + 1) * pageSize, totalStations);
+                        callback.onProgress("网络请求失败，跳过该页继续", estimatedProgress, totalStations);
                     }
                 }
                 
-                if (totalDownloaded > 0) {
-                    Log.d(TAG, "数据下载完成，共同步 " + totalDownloaded + " 个电台");
+                if ((page + 1) % batchSize == 0) {
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        Log.w(TAG, "休眠被中断", e);
+                        int tempDatabaseCount = tempRadioStationDao.getCount();
+                        Log.d(TAG, "用户中断，临时数据库中的电台数量: " + tempDatabaseCount);
+                        
+                        callback.onSuccess("更新已中断，已下载 " + totalDownloaded + " 个电台并保存到临时数据库");
+                        return;
+                    }
+                }
+            }
+            
+            if (totalDownloaded > 0) {
+                Log.d(TAG, "数据下载完成，共同步 " + totalDownloaded + " 个电台");
+                
+                // 获取临时数据库中的电台数量
+                int tempDatabaseCount = tempRadioStationDao.getCount();
+                Log.d(TAG, "临时数据库中的电台数量: " + tempDatabaseCount);
+                
+                // 比较两个数据库的电台数量
+                if (tempDatabaseCount >= mainDatabaseCount) {
+                    // 临时数据库的电台数量大于或等于主数据库，使用临时数据库
+                    Log.d(TAG, "临时数据库的电台数量(" + tempDatabaseCount + ")大于或等于主数据库(" + mainDatabaseCount + ")，将使用临时数据库");
                     
-                    // 获取临时数据库中的电台数量
-                    int tempDatabaseCount = tempRadioStationDao.getCount();
-                    Log.d(TAG, "临时数据库中的电台数量: " + tempDatabaseCount);
+                    // 将主数据库的数据清空，然后将临时数据库的数据复制到主数据库
+                    radioStationDao.deleteAll();
+                    List<RadioStation> allStationsFromTemp = tempRadioStationDao.getAllStations();
+                    if (!allStationsFromTemp.isEmpty()) {
+                        radioStationDao.insertAll(allStationsFromTemp);
+                        Log.d(TAG, "已将临时数据库的 " + allStationsFromTemp.size() + " 个电台复制到主数据库");
+                    }
                     
-                    // 比较两个数据库的电台数量
-                    if (tempDatabaseCount >= mainDatabaseCount) {
-                        // 临时数据库的电台数量大于或等于主数据库，使用临时数据库
-                        Log.d(TAG, "临时数据库的电台数量(" + tempDatabaseCount + ")大于或等于主数据库(" + mainDatabaseCount + ")，将使用临时数据库");
+                    // 清空临时数据库
+                    tempRadioStationDao.deleteAll();
+                    Log.d(TAG, "已清空临时数据库");
+                    
+                    // 更新数据库时间戳
+                    updateDatabaseTimestamp();
+                    Log.d(TAG, "已更新数据库时间戳");
+                    
+                    String completionMessage = "更新完成，共同步 " + totalDownloaded + " 个电台，已切换到新数据";
+                    
+                    // 发送数据库更新完成广播
+                    Intent databaseUpdatedIntent = new Intent("net.programmierecke.radiodroid2.DATABASE_UPDATED");
+                    LocalBroadcastManager.getInstance(context).sendBroadcast(databaseUpdatedIntent);
+                    Log.d(TAG, "已发送数据库更新完成广播");
+                    
+                    callback.onSuccess(completionMessage);
+                } else {
+                    // 临时数据库的电台数量小于主数据库，询问用户是否替换
+                    Log.d(TAG, "临时数据库的电台数量(" + tempDatabaseCount + ")小于主数据库(" + mainDatabaseCount + ")，将询问用户是否替换");
+                    
+                    // 通过回调询问用户是否替换数据
+                    boolean shouldReplace = callback.onConfirmReplace(
+                        "新数据(" + tempDatabaseCount + "个)比现有数据(" + mainDatabaseCount + "个)少，是否替换？", 
+                        tempDatabaseCount, 
+                        mainDatabaseCount
+                    );
+                    
+                    if (shouldReplace) {
+                        // 用户确认替换，执行替换操作
+                        Log.d(TAG, "用户确认替换，将使用临时数据库");
                         
                         // 将主数据库的数据清空，然后将临时数据库的数据复制到主数据库
                         radioStationDao.deleteAll();
@@ -206,10 +316,6 @@ public class RadioStationRepository {
                             radioStationDao.insertAll(allStationsFromTemp);
                             Log.d(TAG, "已将临时数据库的 " + allStationsFromTemp.size() + " 个电台复制到主数据库");
                         }
-                        
-                        // 清空临时数据库
-                        tempRadioStationDao.deleteAll();
-                        Log.d(TAG, "已清空临时数据库");
                         
                         // 更新数据库时间戳
                         updateDatabaseTimestamp();
@@ -224,66 +330,41 @@ public class RadioStationRepository {
                         
                         callback.onSuccess(completionMessage);
                     } else {
-                        // 临时数据库的电台数量小于主数据库，询问用户是否替换
-                        Log.d(TAG, "临时数据库的电台数量(" + tempDatabaseCount + ")小于主数据库(" + mainDatabaseCount + ")，将询问用户是否替换");
+                        // 用户取消替换，继续使用主数据库
+                        Log.d(TAG, "用户取消替换，将继续使用主数据库");
                         
-                        // 通过回调询问用户是否替换数据
-                        boolean shouldReplace = callback.onConfirmReplace(
-                            "新数据(" + tempDatabaseCount + "个)比现有数据(" + mainDatabaseCount + "个)少，是否替换？", 
-                            tempDatabaseCount, 
-                            mainDatabaseCount
-                        );
+                        String completionMessage = "更新完成，但用户选择继续使用现有数据";
                         
-                        if (shouldReplace) {
-                            // 用户确认替换，执行替换操作
-                            Log.d(TAG, "用户确认替换，将使用临时数据库");
-                            
-                            // 将主数据库的数据清空，然后将临时数据库的数据复制到主数据库
-                            radioStationDao.deleteAll();
-                            List<RadioStation> allStationsFromTemp = tempRadioStationDao.getAllStations();
-                            if (!allStationsFromTemp.isEmpty()) {
-                                radioStationDao.insertAll(allStationsFromTemp);
-                                Log.d(TAG, "已将临时数据库的 " + allStationsFromTemp.size() + " 个电台复制到主数据库");
-                            }
-                            
-                            // 更新数据库时间戳
-                            updateDatabaseTimestamp();
-                            Log.d(TAG, "已更新数据库时间戳");
-                            
-                            String completionMessage = "更新完成，共同步 " + totalDownloaded + " 个电台，已切换到新数据";
-                            
-                            // 发送数据库更新完成广播
-                            Intent databaseUpdatedIntent = new Intent("net.programmierecke.radiodroid2.DATABASE_UPDATED");
-                            LocalBroadcastManager.getInstance(context).sendBroadcast(databaseUpdatedIntent);
-                            Log.d(TAG, "已发送数据库更新完成广播");
-                            
-                            callback.onSuccess(completionMessage);
-                        } else {
-                            // 用户取消替换，继续使用主数据库
-                            Log.d(TAG, "用户取消替换，将继续使用主数据库");
-                            
-                            String completionMessage = "更新完成，但用户选择继续使用现有数据";
-                            
-                            // 发送数据库更新完成广播
-                            Intent databaseUpdatedIntent = new Intent("net.programmierecke.radiodroid2.DATABASE_UPDATED");
-                            LocalBroadcastManager.getInstance(context).sendBroadcast(databaseUpdatedIntent);
-                            Log.d(TAG, "已发送数据库更新完成广播");
-                            
-                            callback.onSuccess(completionMessage);
-                        }
+                        // 发送数据库更新完成广播
+                        Intent databaseUpdatedIntent = new Intent("net.programmierecke.radiodroid2.DATABASE_UPDATED");
+                        LocalBroadcastManager.getInstance(context).sendBroadcast(databaseUpdatedIntent);
+                        Log.d(TAG, "已发送数据库更新完成广播");
                         
-                        // 清空临时数据库
-                        tempRadioStationDao.deleteAll();
-                        Log.d(TAG, "已清空临时数据库");
+                        callback.onSuccess(completionMessage);
                     }
-                } else {
-                    callback.onError("没有获取到任何电台数据");
+                    
+                    // 清空临时数据库
+                    tempRadioStationDao.deleteAll();
+                    Log.d(TAG, "已清空临时数据库");
                 }
-            } catch (Exception e) {
+            } else {
+                Log.e(TAG, "没有获取到任何电台数据");
+                callback.onError("没有获取到任何电台数据");
+                // 重置更新状态
+                DatabaseUpdateWorker.resetUpdateState(context);
+                throw new RuntimeException("没有获取到任何电台数据");
+            }
+        } catch (RuntimeException e) {
+            // 重新抛出RuntimeException
+            throw e;
+        } catch (Exception e) {
                 Log.e(TAG, "同步电台数据时出错", e);
                 callback.onError("同步出错: " + e.getMessage());
+                // 重置更新状态
+                DatabaseUpdateWorker.resetUpdateState(context);
+                throw new RuntimeException("同步出错: " + e.getMessage());
             }
-        });
+        } // 结束synchronized块
     }
     
     // 检查网络并获取最快的服务器
@@ -337,7 +418,9 @@ public class RadioStationRepository {
         } catch (Exception e) {
             Log.e(TAG, "检查网络连接时出错", e);
             callback.onError("检查网络连接出错: " + e.getMessage());
-            return null;
+            // 重置更新状态
+            DatabaseUpdateWorker.resetUpdateState(context);
+            throw new RuntimeException("检查网络连接出错: " + e.getMessage());
         }
     }
     
@@ -667,6 +750,14 @@ public class RadioStationRepository {
     public void closeDatabase() {
         // 由于无法直接访问RadioDroidDatabase.INSTANCE，我们只能重置Repository实例
         INSTANCE = null;
+    }
+    
+    // 获取临时数据库中的电台数量
+    public int getTempDatabaseCount() {
+        if (tempRadioStationDao != null) {
+            return tempRadioStationDao.getCount();
+        }
+        return 0;
     }
     
     // 重新初始化数据库

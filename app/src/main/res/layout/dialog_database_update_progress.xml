@@ -3,35 +3,38 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="24dp">
-
+    android:padding="16dp">
+    
     <ProgressBar
-        android:id="@+id/progressBar"
+        android:id="@+id/progress_bar"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:indeterminate="false"
-        android:max="100"
-        android:progress="0" />
-
+        android:layout_marginBottom="8dp"
+        android:indeterminate="true" />
+    
     <TextView
-        android:id="@+id/textMessage"
+        android:id="@+id/message_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        android:text="正在更新数据库..."
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:textStyle="bold" />
-
+        android:text="正在准备更新..."
+        android:textSize="14sp" />
+    
     <TextView
-        android:id="@+id/textProgress"
+        android:id="@+id/progress_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="0 / 0 (0%)"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:textColor="?android:attr/textColorSecondary"
-        android:textSize="14sp" />
-
+        android:layout_marginBottom="16dp"
+        android:gravity="end"
+        android:text="准备中..."
+        android:textSize="12sp" />
+    
+    <Button
+        android:id="@+id/cancel_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:text="取消" />
+    
 </LinearLayout>

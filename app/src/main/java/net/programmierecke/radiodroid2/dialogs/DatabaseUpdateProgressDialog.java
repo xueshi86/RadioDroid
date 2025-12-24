@@ -57,9 +57,9 @@ public class DatabaseUpdateProgressDialog extends DialogFragment {
         LayoutInflater inflater = LayoutInflater.from(requireContext());
         View view = inflater.inflate(R.layout.dialog_database_update_progress, null);
         
-        progressBar = view.findViewById(R.id.progressBar);
-        textMessage = view.findViewById(R.id.textMessage);
-        textProgress = view.findViewById(R.id.textProgress);
+        progressBar = view.findViewById(R.id.progress_bar);
+        textMessage = view.findViewById(R.id.message_text);
+        textProgress = view.findViewById(R.id.progress_text);
         
         textMessage.setText(initialMessage);
         textProgress.setText("");
