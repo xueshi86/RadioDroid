@@ -871,15 +871,23 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     private void releaseWakeLockAndWifiLock() {
 
         if (wakeLock != null) {
-            if (wakeLock.isHeld()) {
-                wakeLock.release();
+            try {
+                if (wakeLock.isHeld()) {
+                    wakeLock.release();
+                }
+            } catch (RuntimeException e) {
+                Log.w(TAG, "Failed to release wake lock: " + e.getMessage());
             }
             wakeLock = null;
         }
 
         if (wifiLock != null) {
-            if (wifiLock.isHeld()) {
-                wifiLock.release();
+            try {
+                if (wifiLock.isHeld()) {
+                    wifiLock.release();
+                }
+            } catch (RuntimeException e) {
+                Log.w(TAG, "Failed to release wifi lock: " + e.getMessage());
             }
             wifiLock = null;
         }

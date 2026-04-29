@@ -114,7 +114,11 @@ public class StreamProxy implements Recordable {
     }
 
     private int readMetaData(InputStream inputStream) throws IOException {
-        int metadataBytes = inputStream.read() * 16;
+        int metadataSizeByte = inputStream.read();
+        if (metadataSizeByte < 0) {
+            return 0;
+        }
+        int metadataBytes = metadataSizeByte * 16;
         int metadataBytesToRead = metadataBytes;
         int readBytesBufferMetadata = 0;
         int readBytes;

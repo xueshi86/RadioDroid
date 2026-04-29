@@ -4,6 +4,8 @@ import android.content.Context;
 
 import net.programmierecke.radiodroid2.station.DataRadioStation;
 
+import java.util.ArrayList;
+
 public class HistoryManager extends StationSaveManager{
     private static final int MAXSIZE = 25;
 
@@ -32,7 +34,7 @@ public class HistoryManager extends StationSaveManager{
 
     private void cutList(int count){
         if (listStations.size() > count){
-            listStations = listStations.subList(0,count);
+            listStations = new ArrayList<>(listStations.subList(0, count));
         }
     }
 }

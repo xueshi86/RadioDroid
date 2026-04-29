@@ -559,9 +559,8 @@ public class StationSaveManager extends Observable {
         final RadioDroidApp radioDroidApp = (RadioDroidApp) context.getApplicationContext();
         final OkHttpClient httpClient = radioDroidApp.getHttpClient();
 
-        try {
-            File f = new File(filePath, fileName);
-            BufferedWriter bw = new BufferedWriter(new FileWriter(f, false));
+        File f = new File(filePath, fileName);
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(f, false))) {
             SaveM3UWriter(bw);
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
                 context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC))));
@@ -577,9 +576,6 @@ public class StationSaveManager extends Observable {
     }
 
     public boolean SaveM3UWriter(Writer bw) {
-        final RadioDroidApp radioDroidApp = (RadioDroidApp) context.getApplicationContext();
-        final OkHttpClient httpClient = radioDroidApp.getHttpClient();
-
         try {
             bw.write("#EXTM3U\n");
             for (DataRadioStation station : listStations) {
@@ -588,7 +584,6 @@ public class StationSaveManager extends Observable {
                 bw.write(station.StreamUrl + "\n\n");
             }
             bw.flush();
-            bw.close();
 
             return true;
         } catch (Exception e) {

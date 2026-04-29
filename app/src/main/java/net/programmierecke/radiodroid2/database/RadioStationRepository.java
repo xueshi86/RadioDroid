@@ -1149,6 +1149,9 @@ public class RadioStationRepository {
     // 关闭数据库连接
     public void closeDatabase() {
         try {
+            // 清理临时数据库文件
+            cleanupTempDatabaseFiles(context);
+            
             // 直接关闭RadioDroidDatabase的静态实例，避免创建新实例
             RadioDroidDatabase.closeInstance();
             
@@ -1157,6 +1160,33 @@ public class RadioStationRepository {
             Log.d(TAG, "Database connection closed successfully");
         } catch (Exception e) {
             Log.e(TAG, "Error closing database connection", e);
+        }
+    }
+    
+    /**
+     * 清理临时数据库文件
+     * Room数据库会创建多个文件（.db, -wal, -shm, -journal），需要全部清理
+     */
+    public static void cleanupTempDatabaseFiles(Context context) {
+        String[] tempDbNames = {
+            "radio_droid_database_temp",
+            "radio_droid_database_temp-wal",
+            "radio_droid_database_temp-shm",
+            "radio_droid_database_temp-journal"
+        };
+        
+        File databasesDir = context.getDatabasePath("radio_droid_database_temp").getParentFile();
+        if (databasesDir != null && databasesDir.exists()) {
+            for (String dbName : tempDbNames) {
+                File dbFile = new File(databasesDir, dbName);
+                if (dbFile.exists()) {
+                    if (dbFile.delete()) {
+                        Log.d(TAG, "Deleted temp database file: " + dbName);
+                    } else {
+                        Log.w(TAG, "Failed to delete temp database file: " + dbName);
+                    }
+                }
+            }
         }
     }
     

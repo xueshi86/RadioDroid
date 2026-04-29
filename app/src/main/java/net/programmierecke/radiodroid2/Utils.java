@@ -593,12 +593,15 @@ public class Utils {
      */
     public static boolean setOkHttpProxy(@NonNull OkHttpClient.Builder builder, @NonNull final ProxySettings proxySettings) {
         if (proxySettings.type == Proxy.Type.DIRECT) {
+            java.net.Authenticator.setDefault(null);
             return true;
         }
         if (TextUtils.isEmpty(proxySettings.host)) {
+            java.net.Authenticator.setDefault(null);
             return false;
         }
         if (proxySettings.port < 1 || proxySettings.port > 65535) {
+            java.net.Authenticator.setDefault(null);
             return false;
         }
         InetSocketAddress proxyAddress = InetSocketAddress.createUnresolved(proxySettings.host, proxySettings.port);
@@ -607,17 +610,42 @@ public class Utils {
         builder.proxy(proxy);
 
         if (!proxySettings.login.isEmpty()) {
+            final String login = proxySettings.login;
+            final String password = proxySettings.password;
+
+            if (proxySettings.type == Proxy.Type.SOCKS) {
+                java.net.Authenticator.setDefault(new java.net.Authenticator() {
+                    @Override
+                    protected java.net.PasswordAuthentication getPasswordAuthentication() {
+                        if (getRequestorType() == RequestorType.PROXY) {
+                            return new java.net.PasswordAuthentication(login, password.toCharArray());
+                        }
+                        return null;
+                    }
+                });
+            } else {
+                java.net.Authenticator.setDefault(null);
+            }
+
             Authenticator proxyAuthenticator = new Authenticator() {
                 @Override
                 public Request authenticate(Route route, Response response) throws IOException {
-                    String credential = Credentials.basic(proxySettings.login, proxySettings.password);
+                    if (response.code() != 407) {
+                        return null;
+                    }
+                    if (response.request().header("Proxy-Authorization") != null) {
+                        return null;
+                    }
+                    String credential = Credentials.basic(login, password);
                     return response.request().newBuilder()
                             .header("Proxy-Authorization", credential)
                             .build();
                 }
             };
 
-            builder.authenticator(proxyAuthenticator);
+            builder.proxyAuthenticator(proxyAuthenticator);
+        } else {
+            java.net.Authenticator.setDefault(null);
         }
 
         return true;

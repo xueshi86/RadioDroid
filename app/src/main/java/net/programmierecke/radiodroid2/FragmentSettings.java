@@ -289,7 +289,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     // 显示进度对话框
                     if (updateDialog != null && updateDialog.isShowing()) {
                         // 如果对话框已经在显示，不做任何操作
-                    } else {
+                    } else if (isAdded() && getActivity() != null && !getActivity().isFinishing() && !getActivity().isDestroyed()) {
                         updateDialog = new DatabaseUpdateProgressDialog(requireContext());
                         updateDialog.show();
                     }

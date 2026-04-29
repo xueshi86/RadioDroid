@@ -1292,6 +1292,14 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
     }
 
     private void setupBroadcastReceiver() {
+        if (broadcastReceiver != null) {
+            try {
+                LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
+            } catch (IllegalArgumentException e) {
+                Log.w(TAG, "Receiver was not registered: " + e.getMessage());
+            }
+        }
+
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_HIDE_LOADING);
         filter.addAction(ACTION_SHOW_LOADING);
