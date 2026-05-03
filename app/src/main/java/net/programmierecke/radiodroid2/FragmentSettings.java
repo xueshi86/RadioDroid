@@ -69,7 +69,8 @@ import android.os.PowerManager;
 public class FragmentSettings extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener, IApplicationSelected, PreferenceFragmentCompat.OnPreferenceStartScreenCallback  {
     
     private DatabaseUpdateProgressDialog updateDialog;
-    private ActivityResultLauncher<String> filePickerLauncher;
+    private ActivityResultLauncher<String[]> filePickerLauncher;
+    private ActivityResultLauncher<Intent> exportFileLauncher;
     private BroadcastReceiver timerFinishedReceiver;
     private BroadcastReceiver databaseUpdatedReceiver;
 
@@ -208,13 +209,25 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
     public void onCreatePreferences(Bundle bundle, String s) {
         setPreferencesFromResource(R.xml.preferences, s);
         
-        // 初始化文件选择器
+        // 初始化文件选择器（使用OpenDocument替代GetContent，兼容Android 13+）
         filePickerLauncher = registerForActivityResult(
-            new ActivityResultContracts.GetContent(),
+            new ActivityResultContracts.OpenDocument(),
             uri -> {
                 if (uri != null) {
-                    // 用户选择了文件，执行导入
                     importDatabase(uri);
+                }
+            }
+        );
+        
+        // 初始化导出文件选择器（使用CreateDocument，兼容Android 10+ Scoped Storage）
+        exportFileLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == android.app.Activity.RESULT_OK && result.getData() != null) {
+                    Uri uri = result.getData().getData();
+                    if (uri != null) {
+                        exportDatabaseToUri(uri);
+                    }
                 }
             }
         );
@@ -338,16 +351,6 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             findPreference("export_database").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
-                    // 检查是否有外部存储权限
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        if (requireContext().checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) 
-                            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                            requestPermissions(new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 
-                                1001);
-                            return false;
-                        }
-                    }
-                    
                     // 显示确认对话框
                     androidx.appcompat.app.AlertDialog.Builder confirmBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()));
                     confirmBuilder.setTitle(getString(R.string.export_database_title));
@@ -368,24 +371,14 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             findPreference("import_database").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
-                    // 检查是否有外部存储权限
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        if (requireContext().checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) 
-                            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                            requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 
-                                1002);
-                            return false;
-                        }
-                    }
-                    
                     // 显示确认对话框
                     androidx.appcompat.app.AlertDialog.Builder confirmBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()));
                     confirmBuilder.setTitle(getString(R.string.import_database_title));
                     confirmBuilder.setMessage(getString(R.string.import_database_message));
                     
                     confirmBuilder.setPositiveButton(getString(R.string.import_database_button), (dialog, which) -> {
-                        // 打开文件选择器，用户可以导航到Download/RadioDroid文件夹选择.db文件
-                        filePickerLauncher.launch("*/*");
+                        // 使用OpenDocument打开文件选择器，兼容Android 13+
+                        filePickerLauncher.launch(new String[]{"*/*"});
                     });
                     
                     confirmBuilder.setNegativeButton(getString(android.R.string.cancel), null);
@@ -1082,31 +1075,13 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         findPreference("shareapp_package").setSummary(packageName);
     }
     
-    // 导出主数据库到外部存储
+    // 导出主数据库（使用SAF让用户选择保存位置）
     private void exportDatabase() {
-        // 显示进度对话框
-        androidx.appcompat.app.AlertDialog.Builder progressBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()));
-        progressBuilder.setTitle(R.string.export_database_title);
-        progressBuilder.setMessage(getString(R.string.progress_exporting_database));
-        androidx.appcompat.app.AlertDialog progressDialog = progressBuilder.create();
-        progressDialog.show();
-        
-        // 在后台线程执行导出操作
         new Thread(() -> {
             try {
-                // 获取主数据库文件路径
-                File mainDatabaseFile = requireContext().getDatabasePath("radio_droid_database");
-                
-                // 获取电台数量和更新时间
                 RadioStationRepository repository = RadioStationRepository.getInstance(requireContext());
-                
-                // 确保update_timestamp表存在
                 repository.ensureUpdateTimestampTable();
-                
-                // 从数据库获取电台数量
                 int stationCount = repository.getStationCountSync();
-                
-                // 从数据库获取时间戳
                 long timestamp = repository.getDatabaseUpdateTime();
                 String updateTime;
                 if (timestamp > 0) {
@@ -1115,41 +1090,72 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 } else {
                     updateTime = "unknown";
                 }
+                String defaultFileName = "radio_droid_database_" + updateTime + "_" + stationCount + ".db";
                 
-                // 创建导出目录
-                File exportDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "RadioDroid");
-                if (!exportDir.exists()) {
-                    exportDir.mkdirs();
+                requireActivity().runOnUiThread(() -> {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                        intent.addCategory(Intent.CATEGORY_OPENABLE);
+                        intent.setType("application/octet-stream");
+                        intent.putExtra(Intent.EXTRA_TITLE, defaultFileName);
+                        exportFileLauncher.launch(intent);
+                    } catch (Exception e) {
+                        Log.e("FragmentSettings", "Error launching export dialog", e);
+                        Toast.makeText(requireContext(), getString(R.string.export_failed_message, e.getMessage()), Toast.LENGTH_LONG).show();
+                    }
+                });
+            } catch (Exception e) {
+                Log.e("FragmentSettings", "Error preparing export", e);
+                requireActivity().runOnUiThread(() -> {
+                    String errorMsg = e.getMessage() != null ? e.getMessage() : getString(R.string.export_failed_title);
+                    Toast.makeText(requireContext(), getString(R.string.export_failed_message, errorMsg), Toast.LENGTH_LONG).show();
+                });
+            }
+        }).start();
+    }
+    
+    // 导出主数据库到用户选择的URI
+    private void exportDatabaseToUri(Uri uri) {
+        androidx.appcompat.app.AlertDialog.Builder progressBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()));
+        progressBuilder.setTitle(R.string.export_database_title);
+        progressBuilder.setMessage(getString(R.string.progress_exporting_database));
+        androidx.appcompat.app.AlertDialog progressDialog = progressBuilder.create();
+        progressDialog.show();
+        
+        new Thread(() -> {
+            try {
+                File mainDatabaseFile = requireContext().getDatabasePath("radio_droid_database");
+                
+                try (java.io.InputStream inputStream = new java.io.FileInputStream(mainDatabaseFile);
+                     java.io.OutputStream outputStream = requireContext().getContentResolver().openOutputStream(uri)) {
+                    if (outputStream == null) {
+                        throw new IOException("Unable to open output stream for URI: " + uri);
+                    }
+                    byte[] buffer = new byte[8192];
+                    int length;
+                    while ((length = inputStream.read(buffer)) > 0) {
+                        outputStream.write(buffer, 0, length);
+                    }
                 }
                 
-                // 创建导出文件名（包含更新时间和电台数量）
-                File exportFile = new File(exportDir, "radio_droid_database_" + updateTime + "_" + stationCount + ".db");
-                
-                // 复制数据库文件
-                FileChannel source = new FileInputStream(mainDatabaseFile).getChannel();
-                FileChannel destination = new FileOutputStream(exportFile).getChannel();
-                destination.transferFrom(source, 0, source.size());
-                source.close();
-                destination.close();
-                
-                // 在UI线程显示结果
                 requireActivity().runOnUiThread(() -> {
                     progressDialog.dismiss();
+                    String displayPath = getDisplayPathFromUri(uri);
                     androidx.appcompat.app.AlertDialog.Builder successBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()));
                     successBuilder.setTitle(R.string.export_success_title);
-                    successBuilder.setMessage(getString(R.string.export_success_message, exportFile.getAbsolutePath()));
+                    successBuilder.setMessage(getString(R.string.export_success_message, displayPath));
                     successBuilder.setPositiveButton(R.string.action_ok, null);
                     successBuilder.show();
                 });
                 
             } catch (IOException e) {
                 e.printStackTrace();
-                // 在UI线程显示错误
                 requireActivity().runOnUiThread(() -> {
                     progressDialog.dismiss();
+                    String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
                     androidx.appcompat.app.AlertDialog.Builder errorBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()));
                     errorBuilder.setTitle(R.string.export_failed_title);
-                    errorBuilder.setMessage(getString(R.string.export_failed_message, e.getMessage()));
+                    errorBuilder.setMessage(getString(R.string.export_failed_message, errorMsg));
                     errorBuilder.setPositiveButton(R.string.action_ok, null);
                     errorBuilder.show();
                 });
@@ -1157,138 +1163,166 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         }).start();
     }
     
+    // 将URI转换为友好的文件路径显示
+    private String getDisplayPathFromUri(Uri uri) {
+        if (uri == null) {
+            return "";
+        }
+        
+        String uriString = uri.toString();
+        
+        // 如果是文件URI（file://），直接返回路径
+        if ("file".equals(uri.getScheme())) {
+            return uri.getPath();
+        }
+        
+        // 如果是content URI，尝试解析为友好路径
+        if ("content".equals(uri.getScheme())) {
+            // 尝试通过DocumentsContract解析
+            if (uriString.contains("com.android.externalstorage.documents")) {
+                String path = uri.getLastPathSegment();
+                if (path != null) {
+                    // 将 "primary:Download/filename.db" 转换为 "/storage/emulated/0/Download/filename.db"
+                    if (path.startsWith("primary:")) {
+                        path = "/storage/emulated/0/" + path.substring("primary:".length());
+                    }
+                    return path;
+                }
+            }
+            
+            // 尝试通过ContentResolver查询显示名称
+            try {
+                android.database.Cursor cursor = requireContext().getContentResolver().query(uri, null, null, null, null);
+                if (cursor != null) {
+                    try {
+                        if (cursor.moveToFirst()) {
+                            int displayNameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                            if (displayNameIndex >= 0) {
+                                String displayName = cursor.getString(displayNameIndex);
+                                if (displayName != null && !displayName.isEmpty()) {
+                                    // 推断文件夹路径
+                                    if (uriString.contains("Download")) {
+                                        return "/storage/emulated/0/Download/" + displayName;
+                                    } else if (uriString.contains("Documents")) {
+                                        return "/storage/emulated/0/Documents/" + displayName;
+                                    } else {
+                                        return displayName;
+                                    }
+                                }
+                            }
+                        }
+                    } finally {
+                        cursor.close();
+                    }
+                }
+            } catch (Exception e) {
+                Log.w("FragmentSettings", "Failed to resolve display path from URI", e);
+            }
+        }
+        
+        // 无法解析时返回原始URI字符串
+        return uriString;
+    }
+    
     // 从外部存储导入主数据库
     private void importDatabase(Uri uri) {
-        // 显示进度对话框
         androidx.appcompat.app.AlertDialog.Builder progressBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()));
         progressBuilder.setTitle(R.string.import_database_title);
         progressBuilder.setMessage(getString(R.string.progress_importing_database));
         androidx.appcompat.app.AlertDialog progressDialog = progressBuilder.create();
         progressDialog.show();
         
-        // 在后台线程执行导入操作
         new Thread(() -> {
             try {
-                // 获取主数据库文件路径
                 File mainDatabaseFile = requireContext().getDatabasePath("radio_droid_database");
                 Log.d("FragmentSettings", "主数据库文件路径: " + mainDatabaseFile.getAbsolutePath());
                 
-                // 关闭数据库连接
                 RadioStationRepository repository = RadioStationRepository.getInstance(requireContext());
                 repository.closeDatabase();
                 Log.d("FragmentSettings", "数据库连接已关闭");
                 
-                // 添加延迟，确保数据库完全关闭并释放文件句柄
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                
-                // 确保目标目录存在
                 File databaseDir = mainDatabaseFile.getParentFile();
                 if (!databaseDir.exists()) {
                     databaseDir.mkdirs();
                     Log.d("FragmentSettings", "创建数据库目录: " + databaseDir.getAbsolutePath());
                 }
                 
-                // 如果目标文件已存在，先删除
+                // 先复制到临时文件，验证成功后再替换，防止数据丢失
+                File tempImportFile = new File(databaseDir, "radio_droid_database_import_temp.db");
+                if (tempImportFile.exists()) {
+                    tempImportFile.delete();
+                }
+                
+                try (java.io.InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
+                     java.io.FileOutputStream outputStream = new java.io.FileOutputStream(tempImportFile)) {
+                    if (inputStream == null) {
+                        tempImportFile.delete();
+                        throw new Exception(getString(R.string.import_failed_invalid));
+                    }
+                    
+                    byte[] buffer = new byte[8192];
+                    int length;
+                    long totalCopied = 0;
+                    while ((length = inputStream.read(buffer)) > 0) {
+                        outputStream.write(buffer, 0, length);
+                        totalCopied += length;
+                    }
+                    outputStream.flush();
+                    
+                    Log.d("FragmentSettings", "已复制 " + totalCopied + " 字节到临时文件");
+                    
+                    if (totalCopied == 0) {
+                        tempImportFile.delete();
+                        throw new Exception(getString(R.string.import_failed_empty));
+                    }
+                }
+                
+                if (!tempImportFile.exists()) {
+                    throw new Exception(getString(R.string.error_target_file_not_exist));
+                }
+                
+                long targetFileSize = tempImportFile.length();
+                Log.d("FragmentSettings", "临时文件大小: " + targetFileSize + " 字节");
+                
+                if (targetFileSize == 0) {
+                    tempImportFile.delete();
+                    throw new Exception(getString(R.string.import_failed_empty));
+                }
+                
+                // 验证成功后再替换旧数据库
                 if (mainDatabaseFile.exists()) {
                     boolean deleted = mainDatabaseFile.delete();
                     Log.d("FragmentSettings", "删除旧数据库文件: " + deleted);
                     if (!deleted) {
+                        tempImportFile.delete();
                         throw new Exception(getString(R.string.error_cannot_delete_old_db));
                     }
-                    
-                    // 添加延迟，确保文件删除完成
-                    try {
-                        Thread.sleep(200);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
                 }
                 
-                // 获取源文件信息
-                long sourceFileSize = 0;
-                try (java.io.InputStream inputStream = requireContext().getContentResolver().openInputStream(uri)) {
-                    sourceFileSize = inputStream.available();
-                    Log.d("FragmentSettings", "源文件大小: " + sourceFileSize + " 字节");
-                    
-                    if (sourceFileSize == 0) {
-                        throw new Exception(getString(R.string.import_failed_invalid));
+                boolean renamed = tempImportFile.renameTo(mainDatabaseFile);
+                if (!renamed) {
+                    // 如果重命名失败，尝试复制
+                    try (java.io.FileInputStream fis = new java.io.FileInputStream(tempImportFile);
+                         java.io.FileOutputStream fos = new java.io.FileOutputStream(mainDatabaseFile)) {
+                        byte[] buffer = new byte[8192];
+                        int length;
+                        while ((length = fis.read(buffer)) > 0) {
+                            fos.write(buffer, 0, length);
+                        }
+                        fos.flush();
                     }
-                    
-                    // 使用FileChannel进行更可靠的文件复制
-                    java.io.FileOutputStream outputStream = new java.io.FileOutputStream(mainDatabaseFile);
-                    java.nio.channels.ReadableByteChannel sourceChannel = null;
-                    java.nio.channels.FileChannel destChannel = null;
-                    
-                    try {
-                        sourceChannel = java.nio.channels.Channels.newChannel(inputStream);
-                        destChannel = outputStream.getChannel();
-                        
-                        long transferred = destChannel.transferFrom(sourceChannel, 0, sourceFileSize);
-                        Log.d("FragmentSettings", "已复制 " + transferred + " 字节到目标文件");
-                        
-                        if (transferred != sourceFileSize) {
-                            Log.w("FragmentSettings", "复制的字节数与源文件大小不一致: " + transferred + " vs " + sourceFileSize);
-                        }
-                    } finally {
-                        if (sourceChannel != null) {
-                            sourceChannel.close();
-                        }
-                        if (destChannel != null) {
-                            destChannel.close();
-                        }
-                        outputStream.close();
-                    }
+                    tempImportFile.delete();
                 }
                 
-                // 验证文件是否成功复制
                 if (!mainDatabaseFile.exists()) {
                     throw new Exception(getString(R.string.error_target_file_not_exist));
                 }
                 
-                long targetFileSize = mainDatabaseFile.length();
-                Log.d("FragmentSettings", "目标文件大小: " + targetFileSize + " 字节");
-                
-                if (targetFileSize == 0) {
-                    throw new Exception(getString(R.string.import_failed_empty));
-                }
-                
-                if (targetFileSize != sourceFileSize) {
-                    Log.w("FragmentSettings", "源文件和目标文件大小不一致: " + sourceFileSize + " vs " + targetFileSize);
-                }
-                
-                // 添加延迟，确保文件写入完成
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                
-                // 重新初始化数据库
                 repository.reinitializeDatabase(requireContext());
                 
-                // 添加延迟，确保数据库初始化完成
-                try {
-                    Thread.sleep(300);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                
-                // 确保update_timestamp表存在并有有效数据
                 repository.ensureUpdateTimestampTable();
                 Log.d("FragmentSettings", "已确保update_timestamp表存在");
                 
-                // 添加延迟，确保表创建完成
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                
-                // 验证数据库是否可以正常访问
                 int stationCount = repository.getStationCountSync();
                 if (stationCount < 0) {
                     throw new Exception(getString(R.string.error_database_corrupted));
@@ -1296,16 +1330,13 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 
                 Log.d("FragmentSettings", "数据库导入成功，电台数量: " + stationCount);
                 
-                // 获取数据库中的更新时间戳
                 final long dbUpdateTime = repository.getDatabaseUpdateTime();
                 Log.d("FragmentSettings", "从数据库读取的更新时间戳: " + dbUpdateTime);
                 final int finalStationCount = stationCount;
                 
-                // 如果数据库中没有时间戳，尝试从文件名中提取
                 long finalUpdateTime = dbUpdateTime;
                 if (finalUpdateTime <= 0) {
                     try {
-                        // 获取文件名
                         String fileName = null;
                         try (android.database.Cursor cursor = requireContext().getContentResolver().query(uri, null, null, null, null)) {
                             if (cursor != null && cursor.moveToFirst()) {
@@ -1319,14 +1350,13 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                         Log.d("FragmentSettings", "导入的文件名: " + fileName);
                         
                         if (fileName != null) {
-                            // 尝试从文件名中提取时间戳 (格式: radio_droid_database_yyyyMMdd_HHmmss_count.db)
                             java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("radio_droid_database_(\\d{8})_(\\d{6})_\\d+\\.db");
                             java.util.regex.Matcher matcher = pattern.matcher(fileName);
                             
                             if (matcher.find()) {
-                                String dateStr = matcher.group(1); // yyyyMMdd
-                                String timeStr = matcher.group(2); // HHmmss
-                                String dateTimeStr = dateStr + timeStr; // yyyyMMddHHmmss
+                                String dateStr = matcher.group(1);
+                                String timeStr = matcher.group(2);
+                                String dateTimeStr = dateStr + timeStr;
                                 
                                 java.text.SimpleDateFormat format = new java.text.SimpleDateFormat("yyyyMMddHHmmss", java.util.Locale.getDefault());
                                 java.util.Date date = format.parse(dateTimeStr);
@@ -1334,7 +1364,6 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                                 
                                 Log.d("FragmentSettings", "从文件名提取的时间戳: " + finalUpdateTime);
                                 
-                                // 更新数据库中的时间戳
                                 repository.updateDatabaseTimestamp(finalUpdateTime);
                                 Log.d("FragmentSettings", "已更新数据库时间戳: " + finalUpdateTime);
                             } else {
@@ -1346,26 +1375,21 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     }
                 }
                 
-                // 将finalUpdateTime标记为final以便在lambda中使用
                 final long finalUpdateTimeForLambda = finalUpdateTime;
                 
-                // 在UI线程显示结果并更新SharedPreferences
                 requireActivity().runOnUiThread(() -> {
                     progressDialog.dismiss();
                     
-                    // 计算更新时间
                     String updateTime;
                     if (finalUpdateTimeForLambda > 0) {
                         java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault());
                         updateTime = dateFormat.format(new java.util.Date(finalUpdateTimeForLambda));
                         Log.d("FragmentSettings", "格式化的更新时间: " + updateTime);
                     } else {
-                        // 如果数据库中没有时间戳且无法从文件名提取，显示"数据库尚未更新"
                         updateTime = getString(R.string.database_not_updated);
                         Log.d("FragmentSettings", "数据库中没有时间戳且无法从文件名提取，显示数据库尚未更新");
                     }
                     
-                    // 保存更新时间和状态到SharedPreferences
                     SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
                     SharedPreferences.Editor editor = prefs.edit();
                     editor.putString("local_database_last_status", "success");
@@ -1379,7 +1403,6 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     successBuilder.setTitle(R.string.import_success_title);
                     successBuilder.setMessage(getString(R.string.import_success_message, finalStationCount));
                     successBuilder.setPositiveButton(R.string.action_ok, (dialog, which) -> {
-                        // 重启应用
                         Intent intent = new Intent(requireContext(), ActivityMain.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                         startActivity(intent);

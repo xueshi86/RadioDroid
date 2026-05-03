@@ -424,6 +424,11 @@
     <string name="import_database_button">选择文件</string>
     <string name="export_database_summary">将主数据库导出到外部存储，备份电台数据</string>
     <string name="import_database_summary">从外部存储导入主数据库，快速恢复电台数据</string>
+    <string name="export_success_title">导出成功</string>
+    <string name="export_success_message">主数据库已成功导出到：\n%s</string>
+    <string name="export_failed_title">导出失败</string>
+    <string name="export_failed_message">导出主数据库时出错：%s</string>
+    <string name="progress_exporting_database">正在导出主数据库，请稍候...</string>
     <string name="database_not_updated">数据库尚未更新</string>
     <string name="last_update">上次更新：%1$s，电台数量：%2$d</string>
     <string name="get_status_failed">获取状态失败：%1$s</string>
@@ -469,6 +474,13 @@
     <string name="progress_stalled">更新进度停滞，尝试恢复...</string>
     <string name="progress_system_paused_suffix">（可能被系统暂停）</string>
     <string name="update_preparing">准备中...</string>
+    <string name="progress_preparing_update">正在准备更新...</string>
+    <string name="progress_resuming_update">正在恢复更新...</string>
+    <string name="progress_updating_database">正在更新数据库</string>
+    <string name="progress_completing_update">正在完成更新</string>
+    <string name="progress_system_paused">（可能被系统暂停）</string>
+    <string name="update_notification_channel_name">数据库更新</string>
+    <string name="update_notification_channel_description">显示数据库更新进度</string>
     <string name="update_confirm_cancel_title">取消更新</string>
     <string name="update_confirm_cancel_message">确定要取消数据库更新吗？</string>
     <string name="update_confirm_cancel_positive">确认</string>
@@ -481,6 +493,18 @@
     <string name="error_insufficient_storage">内部存储空间不足，至少需要50MB</string>
     <string name="warning_low_external_storage">外部存储空间较少，建议释放一些空间以确保更新顺利完成</string>
     <string name="progress_cannot_check_storage">无法检查存储空间，继续更新</string>
+    
+    <string name="notification_channel_name">数据库更新</string>
+    <string name="notification_channel_description">显示数据库更新进度</string>
+    <string name="notification_title">电台数据库更新</string>
+    <string name="notification_text">正在后台更新电台数据库，您可以继续使用其他功能</string>
+    
+    <string name="error_save_file_failed">保存文件失败：%1$s</string>
+    <string name="error_invalid_file_format">请选择M3U格式的播放列表文件</string>
+    <string name="error_import_failed_parse">导入失败：无法解析文件</string>
+    <string name="error_import_failed">导入失败：%1$s</string>
+    <string name="success_imported_stations">从 %2$s 导入了 %1$d 个电台</string>
+    <string name="action_random_play">随机播放</string>
     
     <!-- Error messages -->
     <string name="error_network_unavailable">网络连接不可用，请检查网络设置</string>

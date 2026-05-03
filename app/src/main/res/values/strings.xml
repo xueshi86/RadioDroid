@@ -500,7 +500,7 @@ The app will automatically restart to load the new database.</string>
     <string name="error_low_battery">Very low battery (%1$d%%), please connect charger before updating database</string>
     <string name="progress_cannot_check_battery">Cannot check battery level, continuing update</string>
     <string name="error_insufficient_storage">Insufficient internal storage, at least 50MB required</string>
-    <string name="warning_low_external_storage">Low external storage,建议释放一些空间以确保更新顺利完成</string>
+    <string name="warning_low_external_storage">Low external storage, please free up some space to ensure the update completes smoothly</string>
     <string name="progress_cannot_check_storage">Cannot check storage space, continuing update</string>
     
     <!-- Notification messages -->
