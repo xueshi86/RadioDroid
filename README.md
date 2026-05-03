@@ -34,6 +34,8 @@ RadioDroid is an Android radio browser app that uses the [www.radio-browser.info
 
 ## Changelog
 
+v0.95版本：修复文件管理器在Android 13+/15/16上无法打开的问题，用OpenDocument替换GetContent，用CreateDocument替换直接文件写入，移除所有过时的存储权限检查，兼容所有Android版本；修复数据库导入数据丢失风险，改为先复制到临时文件验证成功后再替换；修复数据库更新时数据丢失风险，replaceMainFromTemp改为先读取临时数据库验证后再删除主库；移除cancelUpdate中危险的SharedPreferences直接文件操作；移除数据库导入中1100ms无意义的Thread.sleep延迟；优化数据库更新进度写入，commit改为apply减少磁盘I/O；优化批量插入大小从1000提升至2000。
+
 v0.94版本：修复HTTP/SOCKS代理认证失败问题，修正OkHttp认证器调用错误(authenticator改为proxyAuthenticator)，新增SOCKS5代理认证支持和无限重试保护；修复StreamProxy元数据解析EOF检查缺失导致的流结束崩溃问题；修复StationSaveManager导出M3U时BufferedWriter资源泄漏问题；修复ActivityMain广播接收器重复注册导致的内存泄漏问题；修复历史记录列表subList视图引发的并发修改异常；新增临时数据库文件(.db/-wal/-shm/-journal)自动清理机制，防止磁盘空间浪费；修复WakeLock/WifiLock释放时缺少异常保护导致的潜在崩溃；修复FragmentSettings对话框显示时缺少Fragment生命周期检查的问题；优化数据库更新失败时的资源回收逻辑。
 
 v0.93版本：增加随机播放功能，在电台界面右上角增加随机播放按钮，会从本地数据库随机选取一个电台播放，增加发现电台渠道和趣味性；优化搜索界面和搜索功能实现，优化了现有的搜索算法，支持部分匹配和近似匹配，和标签组合搜索，以便更快找到电台；修改了部分界面遗留的硬编码问题，目前基本没有中英文混杂的界面显示问题了；添加了俄语支持；修正了暗色主题下某些界面和字体颜色错误的问题；修正了均衡器和统计页面的显示问题。
