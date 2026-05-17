@@ -39,6 +39,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 
 import net.programmierecke.radiodroid2.history.TrackHistoryAdapter;
@@ -65,6 +67,7 @@ import net.programmierecke.radiodroid2.views.TagsView;
 
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
@@ -264,7 +267,7 @@ public class FragmentPlayerFull extends Fragment {
             }
         });
 
-        recordingsAdapter = new RecordingsAdapter(requireContext());
+        recordingsAdapter = new RecordingsAdapter(requireContext(), recordingsManager);
         recordingsAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             public void onItemRangeInserted(int positionStart, int itemCount) {
                 final LinearLayoutManager lm = (LinearLayoutManager) historyAndRecordsPagerAdapter.recyclerViewRecordings.getLayoutManager();
@@ -527,7 +530,7 @@ public class FragmentPlayerFull extends Fragment {
             } else {
                 textViewGeneralInfo.setText(station.Name);
                 // 设置无障碍内容描述
-                textViewGeneralInfo.setContentDescription("正在收听" + station.Name + "电台");
+                textViewGeneralInfo.setContentDescription(getString(R.string.content_desc_listening_station, station.Name));
             }
 
             Drawable flag = CountryFlagsLoader.getInstance().getFlag(requireContext(), station.CountryCode);
@@ -654,11 +657,9 @@ public class FragmentPlayerFull extends Fragment {
         if (TextUtils.isEmpty(liveInfo.getArtist()) || TextUtils.isEmpty(liveInfo.getTrack()) ||
                 LastFMApiKey.isEmpty()) {
             if (station.hasIcon()) {
-                // TODO: Check if we already have this station's icon loaded into image view
-                Picasso.get()
-                        .load(station.IconUrl)
-                        .error(R.drawable.ic_launcher)
-                        .into(artAndInfoPagerAdapter.imageViewArt);
+                loadStationIconWithFallback(artAndInfoPagerAdapter.imageViewArt, station.IconUrl, station.HomePageUrl);
+            } else if (!TextUtils.isEmpty(station.HomePageUrl)) {
+                loadStationIconWithFallback(artAndInfoPagerAdapter.imageViewArt, null, station.HomePageUrl);
             } else {
                 artAndInfoPagerAdapter.imageViewArt.setImageResource(R.drawable.ic_launcher);
             }
@@ -745,10 +746,9 @@ public class FragmentPlayerFull extends Fragment {
                     DataRadioStation station = Utils.getCurrentOrLastStation(fragment.requireContext());
 
                     if (station != null && station.hasIcon()) {
-                        Picasso.get()
-                                .load(station.IconUrl)
-                                .error(R.drawable.ic_launcher)
-                                .into(fragment.artAndInfoPagerAdapter.imageViewArt);
+                        fragment.loadStationIconWithFallback(fragment.artAndInfoPagerAdapter.imageViewArt, station.IconUrl, station.HomePageUrl);
+                    } else if (station != null && !TextUtils.isEmpty(station.HomePageUrl)) {
+                        fragment.loadStationIconWithFallback(fragment.artAndInfoPagerAdapter.imageViewArt, null, station.HomePageUrl);
                     } else {
                         fragment.artAndInfoPagerAdapter.imageViewArt.setImageResource(R.drawable.ic_launcher);
                     }
@@ -952,5 +952,50 @@ public class FragmentPlayerFull extends Fragment {
             updatePlaybackButtons(PlayerServiceUtil.isPlaying(), PlayerServiceUtil.isRecording());
             updateRecordings();
         }
+    }
+
+    private void loadStationIconWithFallback(final ImageView target, final String iconUrl, final String homePageUrl) {
+        final List<String> urls = new ArrayList<>();
+        if (iconUrl != null && !iconUrl.trim().isEmpty()) {
+            urls.add(iconUrl);
+        }
+        if (homePageUrl != null && !homePageUrl.trim().isEmpty()) {
+            try {
+                java.net.URI uri = new java.net.URI(homePageUrl);
+                String domain = uri.getHost();
+                if (domain != null && !domain.isEmpty()) {
+                    String scheme = uri.getScheme() != null ? uri.getScheme() : "https";
+                    urls.add(scheme + "://" + domain + "/favicon.ico");
+                    urls.add(scheme + "://" + domain + "/apple-touch-icon.png");
+                    urls.add("https://www.google.com/s2/favicons?domain=" + domain + "&sz=128");
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        if (urls.isEmpty()) {
+            target.setImageResource(R.drawable.ic_launcher);
+            return;
+        }
+        tryLoadUrl(target, urls, 0);
+    }
+
+    private void tryLoadUrl(final ImageView target, final List<String> urls, final int index) {
+        if (index >= urls.size()) {
+            target.setImageResource(R.drawable.ic_launcher);
+            return;
+        }
+        Picasso.get()
+                .load(urls.get(index))
+                .networkPolicy(index == 0 ? NetworkPolicy.OFFLINE : NetworkPolicy.NO_CACHE)
+                .into(target, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        tryLoadUrl(target, urls, index + 1);
+                    }
+                });
     }
 }

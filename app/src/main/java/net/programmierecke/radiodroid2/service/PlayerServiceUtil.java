@@ -30,7 +30,12 @@ import net.programmierecke.radiodroid2.station.DataRadioStation;
 import net.programmierecke.radiodroid2.station.live.ShoutcastInfo;
 import net.programmierecke.radiodroid2.station.live.StreamLiveInfo;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class PlayerServiceUtil {
 
@@ -274,37 +279,132 @@ public class PlayerServiceUtil {
     }
 
     public static void getStationIcon(final ImageView holder, final String fromUrl) {
-        if (fromUrl == null) {
+        getStationIcon(holder, fromUrl, null);
+    }
+
+    public static void getStationIcon(final ImageView holder, final String iconUrl, final String homePageUrl) {
+        Resources r = mainContext.getResources();
+        final float px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 70, r.getDisplayMetrics());
+        final Drawable placeholder = AppCompatResources.getDrawable(holder.getContext(), R.mipmap.ic_launcher);
+
+        List<String> urlsToTry = new ArrayList<>();
+
+        if (iconUrl != null && !iconUrl.trim().isEmpty()) {
+            urlsToTry.add(iconUrl);
+        }
+
+        if (homePageUrl != null && !homePageUrl.trim().isEmpty()) {
+            urlsToTry.addAll(buildFallbackUrls(homePageUrl));
+        }
+
+        if (urlsToTry.isEmpty()) {
+            holder.setImageDrawable(placeholder);
             return;
         }
 
-        if (fromUrl.trim().equals("")) return;
-        Resources r = mainContext.getResources();
-        final float px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 70, r.getDisplayMetrics());
-        final Drawable stationImagePlaceholder = AppCompatResources.getDrawable(holder.getContext(), R.drawable.ic_photo_24dp);
+        tryLoadIconFromList(holder, urlsToTry, 0, placeholder, (int) px);
+    }
 
-        Callback imageLoadCallback = new Callback() {
-            @Override
-            public void onSuccess() {
-            }
+    private static final int MAX_RETRY_COUNT = 3;
+    private static final long[] RETRY_DELAYS_MS = {1000, 3000, 5000};
+    private static final Set<String> failedFallbackDomains = new HashSet<>();
 
-            @Override
-            public void onError(Exception e) {
-                Picasso.get()
-                        .load(fromUrl)
-                        .placeholder(stationImagePlaceholder)
-                        .resize((int) px, 0)
-                        .networkPolicy(NetworkPolicy.NO_CACHE)
-                        .into(holder);
+    private static List<String> buildFallbackUrls(String homePageUrl) {
+        List<String> fallbacks = new ArrayList<>();
+        try {
+            URI uri = new URI(homePageUrl);
+            String domain = uri.getHost();
+            if (domain == null || domain.isEmpty()) {
+                return fallbacks;
             }
-        };
+            String scheme = uri.getScheme() != null ? uri.getScheme() : "https";
+
+            fallbacks.add(scheme + "://" + domain + "/favicon.ico");
+            fallbacks.add(scheme + "://" + domain + "/apple-touch-icon.png");
+            fallbacks.add("https://www.google.com/s2/favicons?domain=" + domain + "&sz=128");
+        } catch (Exception e) {
+            Log.w("PlayerServiceUtil", "Failed to build fallback URLs from: " + homePageUrl, e);
+        }
+        return fallbacks;
+    }
+
+    private static void tryLoadIconFromList(final ImageView holder, final List<String> urls,
+                                             final int index, final Drawable placeholder,
+                                             final int pxSize) {
+        if (index >= urls.size()) {
+            holder.setImageDrawable(placeholder);
+            return;
+        }
+
+        final String url = urls.get(index);
 
         Picasso.get()
-                .load(fromUrl)
-                .placeholder(stationImagePlaceholder)
-                .resize((int) px, 0)
-                .networkPolicy(NetworkPolicy.OFFLINE)
-                .into(holder, imageLoadCallback);
+                .load(url)
+                .placeholder(placeholder)
+                .resize(pxSize, 0)
+                .networkPolicy(index == 0 ? NetworkPolicy.OFFLINE : NetworkPolicy.NO_CACHE)
+                .into(holder, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        if (index >= 1) {
+                            Log.d("PlayerServiceUtil", "Fallback URL " + index + " failed: " + url);
+                        }
+                        tryLoadIconFromList(holder, urls, index + 1, placeholder, pxSize);
+                    }
+                });
+    }
+
+    private static void loadIconWithRetry(final ImageView holder, final String fromUrl,
+                                           final Drawable placeholder, final int pxSize,
+                                           final int retryCount) {
+        if (retryCount == 0) {
+            Picasso.get()
+                    .load(fromUrl)
+                    .placeholder(placeholder)
+                    .resize(pxSize, 0)
+                    .networkPolicy(NetworkPolicy.OFFLINE)
+                    .into(holder, new Callback() {
+                        @Override
+                        public void onSuccess() {
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            loadIconWithRetry(holder, fromUrl, placeholder, pxSize, 1);
+                        }
+                    });
+        } else if (retryCount <= MAX_RETRY_COUNT) {
+            long delay = RETRY_DELAYS_MS[Math.min(retryCount - 1, RETRY_DELAYS_MS.length - 1)];
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Picasso.get()
+                            .load(fromUrl)
+                            .placeholder(placeholder)
+                            .resize(pxSize, 0)
+                            .networkPolicy(NetworkPolicy.NO_CACHE)
+                            .into(holder, new Callback() {
+                                @Override
+                                public void onSuccess() {
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    if (retryCount < MAX_RETRY_COUNT) {
+                                        loadIconWithRetry(holder, fromUrl, placeholder, pxSize, retryCount + 1);
+                                    } else {
+                                        Drawable appIcon = AppCompatResources.getDrawable(holder.getContext(), R.mipmap.ic_launcher);
+                                        holder.setImageDrawable(appIcon);
+                                    }
+                                }
+                            });
+                }
+            }, delay);
+        }
     }
 
     public static ShoutcastInfo getShoutcastInfo() {
@@ -454,5 +554,16 @@ public class PlayerServiceUtil {
             }
         }
         return false;
+    }
+
+    public static int getAudioSessionId() {
+        if (itsPlayerService != null) {
+            try {
+                return itsPlayerService.getAudioSessionId();
+            } catch (RemoteException e) {
+                Log.e("", "" + e);
+            }
+        }
+        return 0;
     }
 }

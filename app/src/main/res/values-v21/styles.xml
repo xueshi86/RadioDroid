@@ -30,6 +30,8 @@
         <item name="menuTextColorDefault">@color/menuTextColorDefault</item>
         <item name="itemTextAppearance">@style/MenuTextAppearance</item>
 
+        <item name="actionBarPopupTheme">@style/ThemeOverlay.AppCompat.Light</item>
+
         <item name="menuBottomTextColorSelected">@color/menuBottomTextColorSelected</item>
         <item name="menuBottomTextColorDefault">@color/menuBottomTextColorDefault</item>
         <item name="menuBottomBackgroundColor">@color/menuBottomBackgroundColor</item>
@@ -75,7 +77,9 @@
 
         <item name="menuTextColorSelected">@color/menuTextColorSelectedDark</item>
         <item name="menuTextColorDefault">@color/menuTextColorDefaultDark</item>
-        <item name="android:itemTextAppearance">@style/MenuTextAppearance</item>
+        <item name="android:itemTextAppearance">@style/MenuTextAppearance.Dark</item>
+
+        <item name="actionBarPopupTheme">@style/ThemeOverlay.AppCompat.Dark</item>
 
         <item name="menuBottomTextColorSelected">@color/menuBottomTextColorSelectedDark</item>
         <item name="menuBottomTextColorDefault">@color/menuBottomTextColorDefaultDark</item>

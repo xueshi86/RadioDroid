@@ -75,6 +75,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         android:text="@string/action_lyrics"
+        android:textColor="?android:attr/textColorPrimary"
         app:layout_constraintEnd_toStartOf="@id/btnCopyTrackInfo"
         app:layout_constraintTop_toBottomOf="@id/imageViewTrackArt" />
 
@@ -86,6 +87,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         android:text="@string/action_copy_info"
+        android:textColor="?android:attr/textColorPrimary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="100"
         app:layout_constraintTop_toBottomOf="@id/imageViewTrackArt" />

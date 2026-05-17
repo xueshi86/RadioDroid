@@ -214,9 +214,24 @@ public class RadioDroidApp extends MultiDexApplication {
             cache.mkdirs();
         }
 
+        int CACHE_MAX_SIZE = 250 * 1024 * 1024;
+
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
                 .addInterceptor(new UserAgentInterceptor("RadioDroid2/" + BuildConfig.VERSION_NAME))
-                .cache(new Cache(cache, Integer.MAX_VALUE));
+                .addNetworkInterceptor(new okhttp3.Interceptor() {
+                    @NonNull
+                    @Override
+                    public okhttp3.Response intercept(@NonNull Chain chain) throws IOException {
+                        okhttp3.Response response = chain.proceed(chain.request());
+                        okhttp3.Headers.Builder headersBuilder = response.headers().newBuilder();
+                        String cacheControl = response.header("Cache-Control");
+                        if (cacheControl == null || cacheControl.contains("max-age=0") || cacheControl.contains("no-cache") || cacheControl.contains("no-store")) {
+                            headersBuilder.set("Cache-Control", "public, max-age=604800");
+                        }
+                        return response.newBuilder().headers(headersBuilder.build()).build();
+                    }
+                })
+                .cache(new Cache(cache, CACHE_MAX_SIZE));
 
         if (testsInterceptor != null) {
             builder.addInterceptor(testsInterceptor);

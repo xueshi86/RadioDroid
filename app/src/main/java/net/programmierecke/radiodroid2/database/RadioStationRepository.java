@@ -18,6 +18,7 @@ import androidx.paging.DataSource;
 import androidx.room.Room;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
+import androidx.preference.PreferenceManager;
 import net.programmierecke.radiodroid2.R;
 import net.programmierecke.radiodroid2.RadioBrowserServerManager;
 import net.programmierecke.radiodroid2.RadioDroidApp;
@@ -73,7 +74,8 @@ public class RadioStationRepository {
         // 创建临时数据库的实例
         RadioDroidDatabase tempDatabase = Room.databaseBuilder(context.getApplicationContext(),
                 RadioDroidDatabase.class, "radio_droid_database_temp")
-                .addMigrations(RadioDroidDatabase.MIGRATION_3_4)
+                .addMigrations(RadioDroidDatabase.MIGRATION_3_4, RadioDroidDatabase.MIGRATION_4_5, RadioDroidDatabase.MIGRATION_5_6, RadioDroidDatabase.MIGRATION_5_14, RadioDroidDatabase.MIGRATION_6_14)
+                .fallbackToDestructiveMigration()
                 .build();
         this.tempRadioStationDao = tempDatabase.radioStationDao();
         // 获取UpdateTimestampDao
@@ -491,63 +493,24 @@ public class RadioStationRepository {
             if (totalDownloaded > 0) {
                 Log.d(TAG, "数据下载完成，共同步 " + totalDownloaded + " 个电台");
                 
-                // 获取临时数据库中的电台数量
                 int tempDatabaseCount = tempRadioStationDao.getCount();
                 Log.d(TAG, "临时数据库中的电台数量: " + tempDatabaseCount);
                 
-                // 比较两个数据库的电台数量
                 if (tempDatabaseCount >= mainDatabaseCount) {
-                    // 临时数据库的电台数量大于或等于主数据库，使用临时数据库
                     Log.d(TAG, "临时数据库的电台数量(" + tempDatabaseCount + ")大于或等于主数据库(" + mainDatabaseCount + ")，将使用临时数据库");
                     
-                    // 更新进度：正在处理下载的数据
                     callback.onProgress(context.getString(R.string.progress_processing_data), totalDownloaded, totalDownloaded);
                     
-                    // 将主数据库的数据清空，然后将临时数据库的数据复制到主数据库
-                    radioStationDao.deleteAll();
+                    replaceMainFromTemp();
                     
-                    // 更新进度：正在读取临时数据库
-                    callback.onProgress(context.getString(R.string.progress_reading_temp_db), totalDownloaded, totalDownloaded);
-                    List<RadioStation> allStationsFromTemp = tempRadioStationDao.getAllStations();
-                    Log.d(TAG, "从临时数据库获取到 " + allStationsFromTemp.size() + " 个电台，准备复制到主数据库");
-                    
-                    if (!allStationsFromTemp.isEmpty()) {
-                        // 更新进度：正在验证数据完整性
-                        callback.onProgress(context.getString(R.string.progress_validating_data), totalDownloaded, totalDownloaded);
-                        // 验证数据完整性，检查是否有null值
-                        List<RadioStation> validStations = new ArrayList<>();
-                        for (RadioStation station : allStationsFromTemp) {
-                            if (station != null && station.stationUuid != null) {
-                                validStations.add(station);
-                            } else {
-                                Log.w(TAG, "发现无效电台数据，跳过插入: " + station);
-                            }
-                        }
-                        Log.d(TAG, "验证后有效电台数量: " + validStations.size());
-                        
-                        if (!validStations.isEmpty()) {
-                            // 更新进度：正在写入主数据库
-                            callback.onProgress(context.getString(R.string.progress_writing_main_db), totalDownloaded, totalDownloaded);
-                            radioStationDao.insertAll(validStations);
-                            
-                            // 验证实际插入数量
-                            int finalMainDatabaseCount = radioStationDao.getCount();
-                            Log.d(TAG, "已将临时数据库的 " + validStations.size() + " 个电台复制到主数据库，主数据库实际数量: " + finalMainDatabaseCount);
-                        }
-                    }
-                    
-                    // 清空临时数据库
                     tempRadioStationDao.deleteAll();
                     Log.d(TAG, "已清空临时数据库");
                     
-                    // 更新数据库时间戳
                     updateDatabaseTimestamp(context);
                     Log.d(TAG, "已更新数据库时间戳");
                     
-                    // 更新进度：正在切换数据库
                     callback.onProgress(context.getString(R.string.progress_switching_db), totalDownloaded, totalDownloaded);
                     
-                    // 发送数据库更新完成广播
                     Intent databaseUpdatedIntent = new Intent("net.programmierecke.radiodroid2.DATABASE_UPDATED");
                     LocalBroadcastManager.getInstance(context).sendBroadcast(databaseUpdatedIntent);
                     Log.d(TAG, "已发送数据库更新完成广播");
@@ -555,10 +518,8 @@ public class RadioStationRepository {
                     String completionMessage = String.format(context.getString(R.string.update_completed), totalDownloaded);
                     callback.onSuccess(completionMessage);
                 } else {
-                    // 临时数据库的电台数量小于主数据库，询问用户是否替换
                     Log.d(TAG, "临时数据库的电台数量(" + tempDatabaseCount + ")小于主数据库(" + mainDatabaseCount + ")，将询问用户是否替换");
                     
-                    // 通过回调询问用户是否替换数据
                     boolean shouldReplace = callback.onConfirmReplace(
                         String.format(context.getString(R.string.update_confirm_replace_message), tempDatabaseCount, mainDatabaseCount), 
                         tempDatabaseCount, 
@@ -566,53 +527,17 @@ public class RadioStationRepository {
                     );
                     
                     if (shouldReplace) {
-                        // 用户确认替换，执行替换操作
                         Log.d(TAG, "用户确认替换，将使用临时数据库");
                         
-                        // 更新进度：正在处理下载的数据
                         callback.onProgress(context.getString(R.string.progress_processing_data), totalDownloaded, totalDownloaded);
                         
-                        // 将主数据库的数据清空，然后将临时数据库的数据复制到主数据库
-                        radioStationDao.deleteAll();
+                        replaceMainFromTemp();
                         
-                        // 更新进度：正在读取临时数据库
-                        callback.onProgress(context.getString(R.string.progress_reading_temp_db), totalDownloaded, totalDownloaded);
-                        List<RadioStation> allStationsFromTemp = tempRadioStationDao.getAllStations();
-                        Log.d(TAG, "从临时数据库获取到 " + allStationsFromTemp.size() + " 个电台，准备复制到主数据库");
-                        
-                        if (!allStationsFromTemp.isEmpty()) {
-                            // 更新进度：正在验证数据完整性
-                            callback.onProgress(context.getString(R.string.progress_validating_data), totalDownloaded, totalDownloaded);
-                            // 验证数据完整性，检查是否有null值
-                            List<RadioStation> validStations = new ArrayList<>();
-                            for (RadioStation station : allStationsFromTemp) {
-                                if (station != null && station.stationUuid != null) {
-                                    validStations.add(station);
-                                } else {
-                                    Log.w(TAG, "发现无效电台数据，跳过插入: " + station);
-                                }
-                            }
-                            Log.d(TAG, "验证后有效电台数量: " + validStations.size());
-                            
-                            if (!validStations.isEmpty()) {
-                                // 更新进度：正在写入主数据库
-                                callback.onProgress(context.getString(R.string.progress_writing_main_db), totalDownloaded, totalDownloaded);
-                                radioStationDao.insertAll(validStations);
-                                
-                                // 验证实际插入数量
-                                int finalMainDatabaseCount = radioStationDao.getCount();
-                                Log.d(TAG, "已将临时数据库的 " + validStations.size() + " 个电台复制到主数据库，主数据库实际数量: " + finalMainDatabaseCount);
-                            }
-                        }
-                        
-                        // 更新数据库时间戳
                         updateDatabaseTimestamp(context);
                         Log.d(TAG, "已更新数据库时间戳");
                         
-                        // 更新进度：正在切换数据库
                         callback.onProgress(context.getString(R.string.progress_switching_db), totalDownloaded, totalDownloaded);
                         
-                        // 发送数据库更新完成广播
                         Intent databaseUpdatedIntent = new Intent("net.programmierecke.radiodroid2.DATABASE_UPDATED");
                         LocalBroadcastManager.getInstance(context).sendBroadcast(databaseUpdatedIntent);
                         Log.d(TAG, "已发送数据库更新完成广播");
@@ -620,12 +545,10 @@ public class RadioStationRepository {
                         String completionMessage = String.format(context.getString(R.string.update_completed), totalDownloaded);
                         callback.onSuccess(completionMessage);
                     } else {
-                        // 用户取消替换，继续使用主数据库
                         Log.d(TAG, "用户取消替换，将继续使用主数据库");
                         
                         String completionMessage = context.getString(R.string.update_completed_keep_existing);
                         
-                        // 发送数据库更新完成广播
                         Intent databaseUpdatedIntent = new Intent("net.programmierecke.radiodroid2.DATABASE_UPDATED");
                         LocalBroadcastManager.getInstance(context).sendBroadcast(databaseUpdatedIntent);
                         Log.d(TAG, "已发送数据库更新完成广播");
@@ -633,7 +556,6 @@ public class RadioStationRepository {
                         callback.onSuccess(completionMessage);
                     }
                     
-                    // 清空临时数据库
                     tempRadioStationDao.deleteAll();
                     Log.d(TAG, "已清空临时数据库");
                 }
@@ -657,6 +579,35 @@ public class RadioStationRepository {
     
     // 保存最快服务器的响应时间
     private long mFastestServerResponseTime = Long.MAX_VALUE;
+    
+    private void replaceMainFromTemp() {
+        synchronized (sSyncLock) {
+            try {
+                List<RadioStation> allStationsFromTemp = tempRadioStationDao.getAllStations();
+                Log.d(TAG, "从临时数据库获取到 " + allStationsFromTemp.size() + " 个电台");
+                
+                if (allStationsFromTemp.isEmpty()) {
+                    Log.w(TAG, "临时数据库为空，跳过替换");
+                    return;
+                }
+                
+                radioStationDao.deleteAll();
+                
+                final int insertBatchSize = 2000;
+                for (int i = 0; i < allStationsFromTemp.size(); i += insertBatchSize) {
+                    int endIndex = Math.min(i + insertBatchSize, allStationsFromTemp.size());
+                    List<RadioStation> batch = new ArrayList<>(allStationsFromTemp.subList(i, endIndex));
+                    radioStationDao.insertAll(batch);
+                }
+                
+                int finalCount = radioStationDao.getCount();
+                Log.d(TAG, "主数据库最终数量: " + finalCount);
+            } catch (Exception e) {
+                Log.e(TAG, "替换主数据库失败", e);
+                throw e;
+            }
+        }
+    }
     
     // 检查网络并获取最快的服务器
     private RadioBrowserServerManager.ServerInfo checkNetworkAndGetFastestServer(Context context, SyncCallback callback) {
@@ -772,6 +723,10 @@ public class RadioStationRepository {
         return radioStationDao.getAllStationsByName();
     }
 
+    public LiveData<List<RadioStation>> getAllStationsByClickCount() {
+        return radioStationDao.getAllStationsByClickCount();
+    }
+
     // 随机获取一个电台
     public RadioStation getRandomStationSync() {
         return radioStationDao.getRandomStationSync();
@@ -787,6 +742,10 @@ public class RadioStationRepository {
         return radioStationDao.getTopClickStations(limit);
     }
     
+    public LiveData<List<RadioStation>> getTopClickStationsAll() {
+        return radioStationDao.getTopClickStationsAll();
+    }
+    
     // 按投票数获取电台
     public LiveData<List<RadioStation>> getStationsByVotes() {
         return radioStationDao.getStationsByVotes();
@@ -797,6 +756,10 @@ public class RadioStationRepository {
         return radioStationDao.getTopVoteStations(limit);
     }
     
+    public LiveData<List<RadioStation>> getTopVoteStationsAll() {
+        return radioStationDao.getTopVoteStationsAll();
+    }
+    
     // 按最后更改时间获取电台
     public LiveData<List<RadioStation>> getStationsByLastChangeTime() {
         return radioStationDao.getStationsByLastChangeTime();
@@ -805,6 +768,18 @@ public class RadioStationRepository {
     // 获取最近更新的电台（限制数量）
     public LiveData<List<RadioStation>> getRecentlyChangedStations(int limit) {
         return radioStationDao.getRecentlyChangedStations(limit);
+    }
+
+    public LiveData<List<RadioStation>> getRecentlyChangedWorkingStations(int limit) {
+        return radioStationDao.getRecentlyChangedWorkingStations(limit);
+    }
+    
+    public LiveData<List<RadioStation>> getRecentlyChangedStationsAll() {
+        return radioStationDao.getRecentlyChangedStationsAll();
+    }
+
+    public LiveData<List<RadioStation>> getRecentlyChangedWorkingStationsAll() {
+        return radioStationDao.getRecentlyChangedWorkingStationsAll();
     }
     
     // 获取最近点击的电台（限制数量）
@@ -841,6 +816,10 @@ public class RadioStationRepository {
     public LiveData<List<RadioStation>> getStationsByLanguage(String language) {
         return radioStationDao.getStationsByLanguage(language);
     }
+
+    public LiveData<List<RadioStation>> getStationsByLanguageAll(String language) {
+        return radioStationDao.getStationsByLanguageAll(language);
+    }
     
     // 按语言获取电台（限制数量）
     public LiveData<List<RadioStation>> getStationsByLanguageWithLimit(String language, int limit) {
@@ -860,6 +839,10 @@ public class RadioStationRepository {
     // 按国家获取电台（限制数量）
     public LiveData<List<RadioStation>> getStationsByCountryWithLimit(String countryCode, int limit) {
         return radioStationDao.getStationsByCountryWithLimit(countryCode, limit);
+    }
+
+    public LiveData<List<RadioStation>> getStationsByCountryCodeAll(String countryCode) {
+        return radioStationDao.getStationsByCountryCodeAll(countryCode);
     }
     
     // 获取所有标签
@@ -1193,24 +1176,70 @@ public class RadioStationRepository {
     // 重新初始化数据库
     public void reinitializeDatabase(Context context) {
         try {
-            // 关闭现有数据库连接
+            SharedPreferences backupPrefs = context.getSharedPreferences("user_settings_backup", Context.MODE_PRIVATE);
+            SharedPreferences defaultPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+            
+            Map<String, ?> allSettings = defaultPrefs.getAll();
+            SharedPreferences.Editor backupEditor = backupPrefs.edit();
+            for (Map.Entry<String, ?> entry : allSettings.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                if (value instanceof String) {
+                    backupEditor.putString(key, (String) value);
+                } else if (value instanceof Integer) {
+                    backupEditor.putInt(key, (Integer) value);
+                } else if (value instanceof Boolean) {
+                    backupEditor.putBoolean(key, (Boolean) value);
+                } else if (value instanceof Long) {
+                    backupEditor.putLong(key, (Long) value);
+                } else if (value instanceof Float) {
+                    backupEditor.putFloat(key, (Float) value);
+                } else if (value instanceof Set) {
+                    backupEditor.putStringSet(key, (Set<String>) value);
+                }
+            }
+            backupEditor.commit();
+            Log.d(TAG, "Backed up " + allSettings.size() + " user settings");
+            
             closeDatabase();
             
-            // 强制重新创建数据库实例
             RadioDroidDatabase newDb = RadioDroidDatabase.forceRecreateDatabase(context);
             
-            // 重新初始化DAO对象
             this.radioStationDao = newDb.radioStationDao();
             this.updateTimestampDao = newDb.updateTimestampDao();
             
-            // 重新创建临时数据库
             RadioDroidDatabase tempDatabase = Room.databaseBuilder(context.getApplicationContext(),
                     RadioDroidDatabase.class, "radio_droid_database_temp")
-                    .addMigrations(RadioDroidDatabase.MIGRATION_3_4, RadioDroidDatabase.MIGRATION_4_5)
+                    .addMigrations(RadioDroidDatabase.MIGRATION_3_4, RadioDroidDatabase.MIGRATION_4_5, RadioDroidDatabase.MIGRATION_5_6, RadioDroidDatabase.MIGRATION_5_14, RadioDroidDatabase.MIGRATION_6_14)
+                    .fallbackToDestructiveMigration()
                     .build();
             this.tempRadioStationDao = tempDatabase.radioStationDao();
             
-            Log.d(TAG, "Database reinitialized successfully");
+            SharedPreferences.Editor restoreEditor = defaultPrefs.edit();
+            Map<String, ?> backupSettings = backupPrefs.getAll();
+            for (Map.Entry<String, ?> entry : backupSettings.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                if (value instanceof String) {
+                    restoreEditor.putString(key, (String) value);
+                } else if (value instanceof Integer) {
+                    restoreEditor.putInt(key, (Integer) value);
+                } else if (value instanceof Boolean) {
+                    restoreEditor.putBoolean(key, (Boolean) value);
+                } else if (value instanceof Long) {
+                    restoreEditor.putLong(key, (Long) value);
+                } else if (value instanceof Float) {
+                    restoreEditor.putFloat(key, (Float) value);
+                } else if (value instanceof Set) {
+                    restoreEditor.putStringSet(key, (Set<String>) value);
+                }
+            }
+            restoreEditor.commit();
+            Log.d(TAG, "Restored " + backupSettings.size() + " user settings");
+            
+            backupPrefs.edit().clear().commit();
+            
+            Log.d(TAG, "Database reinitialized successfully with user settings preserved");
         } catch (Exception e) {
             Log.e(TAG, "Error reinitializing database", e);
             throw new RuntimeException("Failed to reinitialize database: " + e.getMessage(), e);

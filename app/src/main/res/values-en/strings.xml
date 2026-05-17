@@ -183,15 +183,15 @@
     <string name="settings_seconds_format">%d seconds</string>
     <string name="settings_milliseconds_format">%d milliseconds</string>
 
-    <string name="settings_pause_when_noisy">Pause on headset disconnect</string>
+    <string name="settings_pause_when_noisy">Pause on wired headset disconnect</string>
 
     <string name="settings_auto_resume_do_not_resume">Do not resume</string>
 
-    <string name="settings_auto_resume_on_wired_headset_connected">Resume on wired connection</string>
+    <string name="settings_auto_resume_on_wired_headset_connected">Resume on wired headset connection</string>
     <string name="settings_auto_resume_on_wired_headset_connected_on">Resume playback on wired headset plug-in</string>
 
     <string name="settings_auto_resume_on_bluetooth_a2dp_connected">Resume on Bluetooth connection</string>
-    <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Resume playback on Bluetooth A2DP device connection</string>
+    <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Resume playback on Bluetooth device connection</string>
 
     <string name="settings_warn_no_wifi">Off-Wi-Fi warning</string>
     <string name="settings_warn_no_wifi_on">Warn when playing without Wi-Fi connection</string>
@@ -260,6 +260,41 @@
     <string name="error_grant_audiofocus">Request for audio focus was not granted by the system</string>
 
     <string name="error_no_equalizer_found">No equalizer app found</string>
+    <string name="equalizer_enabled">Enable Equalizer</string>
+    <string name="equalizer_bass_boost">Bass Boost</string>
+    <string name="equalizer_bass_boost_strength">Strength</string>
+    <string name="equalizer_preset">Preset</string>
+    <string name="equalizer_custom">Custom</string>
+    <string name="equalizer_preset_voice">Voice</string>
+    <string name="equalizer_preset_music">Music</string>
+    <string name="eq_preset_normal">Normal</string>
+    <string name="eq_preset_classical">Classical</string>
+    <string name="eq_preset_dance">Dance</string>
+    <string name="eq_preset_flat">Flat</string>
+    <string name="eq_preset_folk">Folk</string>
+    <string name="eq_preset_heavy_metal">Heavy Metal</string>
+    <string name="eq_preset_hip_hop">Hip Hop</string>
+    <string name="eq_preset_jazz">Jazz</string>
+    <string name="eq_preset_pop">Pop</string>
+    <string name="eq_preset_rock">Rock</string>
+    <string name="eq_preset_unknown">Preset %d</string>
+    <string name="eq_preset_latin">Latin</string>
+    <string name="eq_preset_blues">Blues</string>
+    <string name="eq_preset_electronic">Electronic</string>
+    <string name="eq_preset_rnb">R&amp;B</string>
+    <string name="eq_preset_country">Country</string>
+    <string name="equalizer_bands">Frequency Bands</string>
+    <string name="equalizer_not_playing">Start playing a station first to use the equalizer</string>
+    <string name="equalizer_settings_saved_hint">Settings will take effect when playback starts</string>
+    <string name="equalizer_init_failed">Failed to initialize equalizer. Your device may not support this feature.</string>
+    <string name="equalizer_open_external">Open System Equalizer</string>
+    <string name="equalizer_open_external_summary">Open your device\'s built-in audio effect panel (if available)</string>
+    <string name="equalizer_use_builtin">Use Built-in Equalizer</string>
+    <string name="equalizer_no_external">No system equalizer found. Using built-in equalizer.</string>
+    <string name="sort_by_name">Sort by Name</string>
+    <string name="sort_by_click_count">Sort by Popularity</string>
+    <string name="sort_by_votes">Sort by Votes</string>
+    <string name="sort_by_recent">Sort by Recent</string>
 
     <string name="player_info_status">Status:&#160;</string>
     <string name="player_info_status_stopped">stopped</string>
@@ -363,6 +398,9 @@
     <string name="context_menu_delete">@string/action_delete</string>
     
     <string name="empty_database_message">Local database is empty, please update the local database in settings first</string>
+    <string name="empty_database_title">Local Database is Empty</string>
+    <string name="empty_database_button">Update Local Database</string>
+    <string name="empty_database_icon_desc">Empty database icon</string>
     <string name="no_results_message">No %s categories found, database update may be incomplete, please try updating the local database in settings</string>
     
     <string name="settings_language">Interface Language</string>
@@ -370,6 +408,11 @@
     <string name="language_system">System Default</string>
     <string name="language_english">English</string>
     <string name="language_chinese">Chinese</string>
+    <string name="language_spanish">Spanish</string>
+    <string name="language_russian">Russian</string>
+    <string name="language_french">French</string>
+    <string name="language_italian">Italian</string>
+    <string name="language_brazilian_portuguese">Português (Brasil)</string>
     
     <string name="multi_search_title">Multi Criteria Search</string>
     <string name="multi_search_country">Country</string>
@@ -382,4 +425,39 @@
     <string name="multi_search_no_results">No stations found matching the criteria</string>
     <string name="multi_search_expand_filters">Expand Filters</string>
     <string name="multi_search_collapse_filters">Collapse Filters</string>
+    
+    <string name="error_checking_database">Error checking local database: %1$s</string>
+    <string name="error_no_valid_stations_in_db">No valid station data found in local database, please try updating the local database</string>
+    <string name="error_no_stations_in_db">No stations found in local database, please try updating the local database</string>
+    <string name="error_no_valid_stations_data">No valid station data in local database</string>
+    <string name="error_no_stations_data">No station data in local database</string>
+    <string name="error_repository_not_initialized">Data repository not initialized, please restart the app</string>
+    <string name="no_recently_updated_stations">No recently updated stations found</string>
+    <string name="db_update_incomplete_hint">Database update may be incomplete, please try updating the local database in settings</string>
+    <string name="error_context_not_available">Application context not available, please restart the app</string>
+    <string name="error_activity_not_available">Activity not available, please restart the app</string>
+    <string name="error_no_valid_stations_found">No valid stations found</string>
+    <string name="error_no_matching_stations">No matching stations found</string>
+    <string name="loading_all_stations_fallback">No stations found for language(%1$s), loading all stations…</string>
+    <string name="loading_all_stations_country_fallback">No stations found for country(%1$s), loading all stations…</string>
+    <string name="error_adapter_not_initialized">Adapter not initialized, please restart the app</string>
+    <string name="error_displaying_data">Error displaying data, please try again</string>
+    <string name="error_search_keyword_required">Please enter a search keyword</string>
+    <string name="error_during_search">Error during search: %1$s</string>
+    <string name="error_processing_search_results">Error processing search results: %1$s</string>
+    <string name="error_no_valid_top_click_data">No valid top click data found</string>
+    <string name="error_no_top_click_data">No top click data found</string>
+    <string name="error_no_valid_top_vote_data">No valid top vote data found</string>
+    <string name="error_no_top_vote_data">No top vote data found</string>
+    <string name="content_desc_pause_station">Pause playing %1$s station</string>
+    <string name="content_desc_pause">Pause</string>
+    <string name="content_desc_play_station">Play %1$s station</string>
+    <string name="content_desc_play">Play station</string>
+    <string name="content_desc_station_format">%1$s station</string>
+    <string name="content_desc_no_station_selected">No station selected</string>
+    <string name="content_desc_listening_station">Listening to %1$s station</string>
+    <string name="db_status_summary">Last updated: %1$s, Station count: %2$d</string>
+    <string name="db_status_never_updated">Database not yet updated</string>
+    <string name="db_status_error">Failed to get status: %1$s</string>
+    <string name="export_type_file">File</string>
 </resources>

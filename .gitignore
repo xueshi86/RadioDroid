@@ -61,3 +61,5 @@ Thumbs.db
 # Log files
 *.log
 build_debug.log
+# Logcat output
+logcat*.txt

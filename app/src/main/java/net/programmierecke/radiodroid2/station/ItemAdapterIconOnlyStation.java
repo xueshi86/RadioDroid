@@ -1,6 +1,7 @@
 package net.programmierecke.radiodroid2.station;
 
 import android.content.SharedPreferences;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.ContextMenu;
@@ -77,9 +78,21 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
 
         if (station.hasIcon()) {
             setupIcon(useCircularIcons, holder.imageViewIcon, holder.transparentImageView);
-            PlayerServiceUtil.getStationIcon(holder.imageViewIcon, station.IconUrl);
+            PlayerServiceUtil.getStationIcon(holder.imageViewIcon, station.IconUrl, station.HomePageUrl);
+        } else if (!TextUtils.isEmpty(station.HomePageUrl)) {
+            setupIcon(useCircularIcons, holder.imageViewIcon, holder.transparentImageView);
+            PlayerServiceUtil.getStationIcon(holder.imageViewIcon, null, station.HomePageUrl);
         } else {
             holder.imageViewIcon.setImageDrawable(stationImagePlaceholder);
+            if (Utils.isDarkTheme(getContext())) {
+                holder.imageViewIcon.setBackgroundColor(getContext().getResources().getColor(R.color.windowBackgroundDark));
+            } else {
+                holder.imageViewIcon.setBackgroundColor(getContext().getResources().getColor(android.R.color.white));
+            }
+            if (useCircularIcons) {
+                holder.transparentImageView.setVisibility(View.VISIBLE);
+                holder.imageViewIcon.getLayoutParams().height = holder.imageViewIcon.getLayoutParams().width;
+            }
         }
 
         TypedValue tv = new TypedValue();

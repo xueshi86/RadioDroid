@@ -20,12 +20,17 @@ public class FragmentAbout extends Fragment {
         TextView aTextVersion = (TextView) view.findViewById(R.id.about_version);
         if (aTextVersion != null) {
             String version = BuildConfig.VERSION_NAME;
-            aTextVersion.setText("版本: " + version);
+            aTextVersion.setText(getString(R.string.about_version, version));
+        }
+
+        TextView aTextFork = (TextView) view.findViewById(R.id.about_fork);
+        if (aTextFork != null) {
+            aTextFork.setText(getString(R.string.about_fork_description));
         }
 
         TextView aTextGithub = (TextView) view.findViewById(R.id.about_github);
         if (aTextGithub != null) {
-            aTextGithub.setText("GitHub: https://github.com/xueshi86/RadioDroid");
+            aTextGithub.setText(getString(R.string.about_github));
         }
 
         return view;

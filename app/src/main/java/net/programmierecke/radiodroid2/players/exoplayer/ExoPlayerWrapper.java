@@ -64,13 +64,14 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
 
     private final DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
 
-    private RecordableListener recordableListener;
+    private volatile RecordableListener recordableListener;
 
     private long totalTransferredBytes;
     private long currentPlaybackTransferredBytes;
 
     private boolean isHls;
     private boolean isPlayingFlag;
+    private String streamContentType;
 
     private Handler playerThreadHandler;
 
@@ -116,7 +117,7 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         if (player == null) {
             player = new ExoPlayer.Builder(context).build();
             player.setAudioAttributes(new AudioAttributes.Builder().setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
-                    .setUsage(isAlarm ? C.USAGE_ALARM : C.USAGE_MEDIA).build(), false);
+                    .setUsage(C.USAGE_MEDIA).build(), false);
 
             player.addListener(this);
             player.addAnalyticsListener(new AnalyticEventListener());
@@ -405,14 +406,33 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         stateListener.onDataSourceStreamLiveInfo(streamLiveInfo);
     }
 
+    private long recordableBytesLogged;
+    private boolean recordableListenerNullLogged;
+
     @Override
     public void onDataSourceBytesRead(byte[] buffer, int offset, int length) {
         totalTransferredBytes += length;
         currentPlaybackTransferredBytes += length;
 
-        if (recordableListener != null) {
-            recordableListener.onBytesAvailable(buffer, offset, length);
+        RecordableListener listener = recordableListener;
+        if (listener != null) {
+            listener.onBytesAvailable(buffer, offset, length);
+            recordableBytesLogged += length;
+            if (BuildConfig.DEBUG && recordableBytesLogged >= 65536) {
+                Log.d(TAG, "Recording bytes sent to listener, total: " + (recordableBytesLogged));
+                recordableBytesLogged = 0;
+            }
+        } else {
+            if (!recordableListenerNullLogged) {
+                Log.w(TAG, "onDataSourceBytesRead: recordableListener is NULL, bytes not recorded");
+                recordableListenerNullLogged = true;
+            }
         }
+    }
+
+    @Override
+    public void onDataSourceContentType(String contentType) {
+        streamContentType = contentType;
     }
 
     @Override
@@ -422,7 +442,9 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
 
     @Override
     public void startRecording(@NonNull RecordableListener recordableListener) {
+        Log.d(TAG, "startRecording called, setting recordableListener");
         this.recordableListener = recordableListener;
+        this.recordableListenerNullLogged = false;
     }
 
     @Override
@@ -445,7 +467,25 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
 
     @Override
     public String getExtension() {
-        return isHls ? "ts" : "mp3";
+        if (isHls) {
+            return "ts";
+        }
+        if (streamContentType != null) {
+            String type = streamContentType.toLowerCase();
+            if (type.contains("aac") || type.contains("mp4") || type.contains("m4a")) {
+                return "aac";
+            }
+            if (type.contains("ogg") || type.contains("vorbis") || type.contains("opus")) {
+                return "ogg";
+            }
+            if (type.contains("flac")) {
+                return "flac";
+            }
+            if (type.contains("wav") || type.contains("wave")) {
+                return "wav";
+            }
+        }
+        return "mp3";
     }
 
     private void cancelStopTask() {

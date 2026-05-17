@@ -43,10 +43,11 @@ public class FragmentTabs extends Fragment implements IFragmentRefreshable, IFra
 
     public static ViewPager viewPager;
 
-    private String queuedSearchQuery; // Search may be requested before onCreateView so we should wait
+    private String queuedSearchQuery;
     private StationsFilter.SearchStyle queuedSearchStyle;
 
     private Fragment[] fragments = new Fragment[5];
+    private ViewPagerAdapter viewPagerAdapter;
 
     @Nullable
     @Override
@@ -56,6 +57,23 @@ public class FragmentTabs extends Fragment implements IFragmentRefreshable, IFra
         viewPager = (ViewPager) x.findViewById(R.id.viewpager);
 
         setupViewPager(viewPager);
+
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                if (getActivity() != null) {
+                    getActivity().invalidateOptionsMenu();
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+            }
+        });
 
         if (queuedSearchQuery != null) {
             Log.d("TABS", "do queued search by name:"+ queuedSearchQuery);
@@ -97,6 +115,16 @@ public class FragmentTabs extends Fragment implements IFragmentRefreshable, IFra
         tabLayout.setVisibility(View.GONE);
     }
 
+    public Fragment getCurrentVisibleFragment() {
+        if (viewPager != null && viewPagerAdapter != null) {
+            int currentItem = viewPager.getCurrentItem();
+            if (currentItem >= 0 && currentItem < viewPagerAdapter.mFragmentList.size()) {
+                return viewPagerAdapter.mFragmentList.get(currentItem);
+            }
+        }
+        return null;
+    }
+
     private String getCountryCode() {
         Context ctx = getContext();
         String countryCode = null;
@@ -136,23 +164,23 @@ public class FragmentTabs extends Fragment implements IFragmentRefreshable, IFra
         }
 
         FragmentManager m = getChildFragmentManager();
-        ViewPagerAdapter adapter = new ViewPagerAdapter(m);
+        viewPagerAdapter = new ViewPagerAdapter(m);
         if (countryCode != null){
-            adapter.addFragment(fragments[IDX_LOCAL], R.string.action_local);
+            viewPagerAdapter.addFragment(fragments[IDX_LOCAL], R.string.action_local);
         }
-        adapter.addFragment(fragments[IDX_TOP_CLICK], R.string.action_top_click);
-        adapter.addFragment(fragments[IDX_TOP_VOTE], R.string.action_top_vote);
-        adapter.addFragment(fragments[IDX_CHANGED_LATELY], R.string.action_changed_lately);
-        adapter.addFragment(fragments[IDX_MULTI_SEARCH], R.string.action_search);
-        viewPager.setAdapter(adapter);
+        viewPagerAdapter.addFragment(fragments[IDX_TOP_CLICK], R.string.action_top_click);
+        viewPagerAdapter.addFragment(fragments[IDX_TOP_VOTE], R.string.action_top_vote);
+        viewPagerAdapter.addFragment(fragments[IDX_CHANGED_LATELY], R.string.action_changed_lately);
+        viewPagerAdapter.addFragment(fragments[IDX_MULTI_SEARCH], R.string.action_search);
+        viewPager.setAdapter(viewPagerAdapter);
     }
 
     public void search(StationsFilter.SearchStyle searchStyle, final String query) {
         Log.d("TABS","Search = "+ query + " searchStyle="+searchStyle);
-        if (viewPager != null) {
+        if (viewPager != null && viewPagerAdapter != null) {
             Log.d("TABS","a Search = "+ query);
-            // 设置当前标签为多条件搜索
-            viewPager.setCurrentItem(IDX_MULTI_SEARCH, false);
+            int searchIndex = viewPagerAdapter.mFragmentList.size() - 1;
+            viewPager.setCurrentItem(searchIndex, false);
         } else {
             Log.d("TABS","b Search = "+ query);
             queuedSearchQuery = query;
@@ -162,7 +190,7 @@ public class FragmentTabs extends Fragment implements IFragmentRefreshable, IFra
 
     @Override
     public void Refresh() {
-        Fragment fragment = fragments[viewPager.getCurrentItem()];
+        Fragment fragment = getCurrentVisibleFragment();
         if (fragment instanceof IFragmentRefreshable) {
             ((IFragmentRefreshable) fragment).Refresh();
         }

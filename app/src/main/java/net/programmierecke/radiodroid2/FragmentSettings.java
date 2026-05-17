@@ -6,9 +6,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.media.audiofx.AudioEffect;
+import android.Manifest;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -33,6 +35,7 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceManager;
 import androidx.preference.Preference.OnPreferenceClickListener;
 import androidx.preference.PreferenceScreen;
 
@@ -73,6 +76,8 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
     private ActivityResultLauncher<Intent> exportFileLauncher;
     private BroadcastReceiver timerFinishedReceiver;
     private BroadcastReceiver databaseUpdatedReceiver;
+    private ActivityResultLauncher<String> bluetoothPermissionLauncher;
+    private boolean dialogOpenedFromCheckbox = false;
 
     public static FragmentSettings openNewSettingsSubFragment(ActivityMain activity, String key) {
         FragmentSettings f = new FragmentSettings();
@@ -170,7 +175,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
     }
 
     private void refreshToplevelIcons() {
-        findPreference("shareapp_package").setSummary(getPreferenceManager().getSharedPreferences().getString("shareapp_package", ""));
+        findPreference("shareapp_package").setSummary(getAppDisplayName(getPreferenceManager().getSharedPreferences().getString("shareapp_package", "")));
         findPreference("pref_category_ui").setIcon(Utils.IconicsIcon(getContext(), CommunityMaterial.Icon2.cmd_monitor));
         findPreference("pref_category_startup").setIcon(Utils.IconicsIcon(getContext(), GoogleMaterial.Icon.gmd_flight_takeoff));
         findPreference("pref_category_interaction").setIcon(Utils.IconicsIcon(getContext(), CommunityMaterial.Icon.cmd_gesture_tap));
@@ -231,6 +236,20 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 }
             }
         );
+
+        bluetoothPermissionLauncher = registerForActivityResult(
+            new ActivityResultContracts.RequestPermission(),
+            granted -> {
+                updateBluetoothPermissionState();
+                if (!granted) {
+                    SharedPreferences.Editor editor = getPreferenceManager().getSharedPreferences().edit();
+                    editor.putBoolean("pause_on_bluetooth_disconnect", false);
+                    editor.putBoolean("close_on_bluetooth_disconnect", false);
+                    editor.putBoolean("auto_resume_on_bluetooth_a2dp_connection", false);
+                    editor.apply();
+                }
+            }
+        );
         
         refreshToolbar();
         if (s == null) {
@@ -243,23 +262,13 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             findPreference("equalizer").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
-                    Intent intent = new Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL);
-                    
-                    // 添加更多参数以确保均衡器正确启动
-                    intent.putExtra(AudioEffect.EXTRA_PACKAGE_NAME, getContext().getPackageName());
-                    intent.putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC);
-                    intent.putExtra(AudioEffect.EXTRA_AUDIO_SESSION, 0); // 0表示使用默认音频会话
-
-                    if (getContext().getPackageManager().resolveActivity(intent, 0) == null) {
-                        Toast.makeText(getContext(), R.string.error_no_equalizer_found, Toast.LENGTH_SHORT).show();
-                    } else {
-                        // 使用getActivity()确保在Fragment中正确启动
-                        startActivity(intent);
-                    }
-
-                    return false;
+                    Intent intent = new Intent(getContext(), net.programmierecke.radiodroid2.ui.EqualizerActivity.class);
+                    startActivity(intent);
+                    return true;
                 }
             });
+
+            setupBluetoothPermissionPreference();
 
 
         } else if (s.equals("pref_category_connectivity")) {
@@ -296,17 +305,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             findPreference("update_local_database").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
-                    // 启动数据库更新
-                    DatabaseUpdateManager.startUpdate(requireContext());
-                    
-                    // 显示进度对话框
-                    if (updateDialog != null && updateDialog.isShowing()) {
-                        // 如果对话框已经在显示，不做任何操作
-                    } else if (isAdded() && getActivity() != null && !getActivity().isFinishing() && !getActivity().isDestroyed()) {
-                        updateDialog = new DatabaseUpdateProgressDialog(requireContext());
-                        updateDialog.show();
-                    }
-                    
+                    startDatabaseUpdate();
                     return false;
                 }
             });
@@ -388,6 +387,19 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 }
             });
         } else if (s.equals("pref_category_alarm")) {
+            Preference shareappPref = findPreference("shareapp_package");
+            if (shareappPref != null) {
+                shareappPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                    @Override
+                    public boolean onPreferenceClick(Preference preference) {
+                        ApplicationSelectorDialog newFragment = new ApplicationSelectorDialog();
+                        newFragment.setCallback(FragmentSettings.this);
+                        newFragment.show(getActivity().getSupportFragmentManager(), "appPicker");
+                        return true;
+                    }
+                });
+            }
+
             // 初始化睡眠定时器摘要文本
             Preference alarmTimeoutPref = findPreference("alarm_timeout");
             if (alarmTimeoutPref != null) {
@@ -591,6 +603,16 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         resultsBuilder.show();
     }
     
+    private void startDatabaseUpdate() {
+        DatabaseUpdateManager.startUpdate(requireContext());
+        if (updateDialog != null && updateDialog.isShowing()) {
+            // 对话框已在显示
+        } else if (isAdded() && getActivity() != null && !getActivity().isFinishing() && !getActivity().isDestroyed()) {
+            updateDialog = new DatabaseUpdateProgressDialog(requireContext());
+            updateDialog.show();
+        }
+    }
+
     // Method to perform a new network test
     private void performNewNetworkTest() {
         // Show progress dialog
@@ -768,14 +790,18 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             refreshToplevelIcons();
 
         if(findPreference("shareapp_package") != null)
-            findPreference("shareapp_package").setSummary(getPreferenceManager().getSharedPreferences().getString("shareapp_package", ""));
+            findPreference("shareapp_package").setSummary(getAppDisplayName(getPreferenceManager().getSharedPreferences().getString("shareapp_package", "")));
 
         // 恢复数据库更新进度对话框
         checkAndRestoreUpdateDialog();
 
         Preference batPref = getPreferenceScreen().findPreference(getString(R.string.key_ignore_battery_optimization));
-        if (batPref != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // the second condition should already follow from the first
+        if (batPref != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             updateBatteryPrefDescription(batPref);
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            updateBluetoothPermissionState();
         }
         
         // 每次打开设置界面都更新数据库状态，确保状态信息是最新的
@@ -817,6 +843,80 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             batPref.setSummary(R.string.settings_ignore_battery_optimization_summary_on);
         } else {
             batPref.setSummary(R.string.settings_ignore_battery_optimization_summary_off);
+        }
+    }
+
+    private void setupBluetoothPermissionPreference() {
+        androidx.preference.SwitchPreferenceCompat btPermPref = findPreference("bluetooth_connect_permission");
+        if (btPermPref == null) return;
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            btPermPref.setVisible(false);
+            return;
+        }
+
+        btPermPref.setOnPreferenceChangeListener((preference, newValue) -> {
+            boolean isChecked = (Boolean) newValue;
+            if (isChecked) {
+                if (!hasBluetoothConnectPermission()) {
+                    bluetoothPermissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT);
+                }
+                return false;
+            } else {
+                if (hasBluetoothConnectPermission()) {
+                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    intent.setData(Uri.fromParts("package", requireContext().getPackageName(), null));
+                    startActivity(intent);
+                }
+                return false;
+            }
+        });
+
+        updateBluetoothPermissionState();
+    }
+
+    private boolean hasBluetoothConnectPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return true;
+        return requireContext().checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void updateBluetoothPermissionState() {
+        androidx.preference.SwitchPreferenceCompat btPermPref = findPreference("bluetooth_connect_permission");
+        if (btPermPref == null) return;
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            btPermPref.setVisible(false);
+            return;
+        }
+
+        boolean hasPermission = hasBluetoothConnectPermission();
+
+        btPermPref.setChecked(hasPermission);
+
+        if (hasPermission) {
+            btPermPref.setSummary(R.string.settings_bluetooth_connect_permission_summary);
+        } else {
+            btPermPref.setSummary(R.string.settings_bluetooth_connect_permission_denied);
+        }
+
+        androidx.preference.CheckBoxPreference pauseBtPref = findPreference("pause_on_bluetooth_disconnect");
+        androidx.preference.CheckBoxPreference closeBtPref = findPreference("close_on_bluetooth_disconnect");
+        androidx.preference.CheckBoxPreference resumeBtPref = findPreference("auto_resume_on_bluetooth_a2dp_connection");
+
+        if (pauseBtPref != null) pauseBtPref.setEnabled(hasPermission);
+        if (closeBtPref != null) closeBtPref.setEnabled(hasPermission);
+        if (resumeBtPref != null) resumeBtPref.setEnabled(hasPermission);
+
+        if (!hasPermission) {
+            SharedPreferences.Editor editor = getPreferenceManager().getSharedPreferences().edit();
+            editor.putBoolean("pause_on_bluetooth_disconnect", false);
+            editor.putBoolean("close_on_bluetooth_disconnect", false);
+            editor.putBoolean("auto_resume_on_bluetooth_a2dp_connection", false);
+            editor.apply();
+            if (pauseBtPref != null) pauseBtPref.setChecked(false);
+            if (closeBtPref != null) closeBtPref.setChecked(false);
+            if (resumeBtPref != null) resumeBtPref.setChecked(false);
         }
     }
     
@@ -877,7 +977,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                                     statusPref.setSummary(getString(R.string.settings_local_database_status_success, updateTime, statusInfo.stationCount));
                                     
                                     // 更新数据库状态摘要信息
-                                    String statusSummary = "上次更新: " + updateTime + ", 电台数量: " + statusInfo.stationCount;
+                                    String statusSummary = getString(R.string.db_status_summary, updateTime, statusInfo.stationCount);
                                     SharedPreferences.Editor editor = getPreferenceManager().getSharedPreferences().edit();
                                     editor.putString("database_status_summary", statusSummary);
                                     editor.apply();
@@ -944,7 +1044,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                                 statusPref.setSummary(getString(R.string.settings_local_database_status_success, updateTime, statusInfo.stationCount));
                                 
                                 // 更新数据库状态摘要信息
-                                String statusSummary = "上次更新: " + updateTime + ", 电台数量: " + statusInfo.stationCount;
+                                String statusSummary = getString(R.string.db_status_summary, updateTime, statusInfo.stationCount);
                                 SharedPreferences.Editor editor = getPreferenceManager().getSharedPreferences().edit();
                                 editor.putString("database_status_summary", statusSummary);
                                 editor.apply();
@@ -983,7 +1083,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                             statusPref.setSummary(getString(R.string.settings_local_database_status_success, lastUpdateTime, count));
                             
                             // 更新数据库状态摘要信息
-                            String statusSummary = "上次更新: " + lastUpdateTime + ", 电台数量: " + count;
+                            String statusSummary = getString(R.string.db_status_summary, lastUpdateTime, count);
                             SharedPreferences.Editor editor = getPreferenceManager().getSharedPreferences().edit();
                             editor.putString("database_status_summary", statusSummary);
                             editor.apply();
@@ -1004,7 +1104,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                             statusPref.setSummary(getString(R.string.settings_local_database_status_failed, error));
                             
                             // 更新数据库状态摘要信息
-                            String statusSummary = "获取状态失败: " + error;
+                            String statusSummary = getString(R.string.db_status_error, error);
                             SharedPreferences.Editor editor = getPreferenceManager().getSharedPreferences().edit();
                             editor.putString("database_status_summary", statusSummary);
                             editor.apply();
@@ -1025,6 +1125,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         if (key.equals("alarm_external")) {
             boolean active = sharedPreferences.getBoolean(key, false);
             if (active) {
+                dialogOpenedFromCheckbox = true;
                 ApplicationSelectorDialog newFragment = new ApplicationSelectorDialog();
                 newFragment.setCallback(this);
                 newFragment.show(getActivity().getSupportFragmentManager(), "appPicker");
@@ -1050,6 +1151,8 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             locale = new Locale("en");
         } else if (language.equals("zh")) {
             locale = new Locale("zh");
+        } else if (language.equals("es")) {
+            locale = new Locale("es");
         } else if (language.equals("ru")) {
             locale = new Locale("ru");
         } else {
@@ -1067,12 +1170,40 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         if (BuildConfig.DEBUG) {
             Log.d("SEL", "selected:" + packageName + "/" + activityName);
         }
+        dialogOpenedFromCheckbox = false;
         SharedPreferences.Editor ed = getPreferenceManager().getSharedPreferences().edit();
         ed.putString("shareapp_package", packageName);
         ed.putString("shareapp_activity", activityName);
         ed.commit();
 
-        findPreference("shareapp_package").setSummary(packageName);
+        findPreference("shareapp_package").setSummary(getAppDisplayName(packageName));
+    }
+
+    @Override
+    public void onAppSelectionCancelled() {
+        if (dialogOpenedFromCheckbox) {
+            dialogOpenedFromCheckbox = false;
+            String currentPackage = getPreferenceManager().getSharedPreferences().getString("shareapp_package", "");
+            if (currentPackage.isEmpty()) {
+                androidx.preference.CheckBoxPreference alarmExtPref = findPreference("alarm_external");
+                if (alarmExtPref != null) {
+                    alarmExtPref.setChecked(false);
+                }
+            }
+        }
+    }
+
+    private String getAppDisplayName(String packageName) {
+        if (packageName == null || packageName.isEmpty()) {
+            return getString(R.string.settings_alarm_audio_player_not_selected);
+        }
+        try {
+            PackageManager pm = requireContext().getPackageManager();
+            ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
+            return pm.getApplicationLabel(appInfo).toString();
+        } catch (PackageManager.NameNotFoundException e) {
+            return packageName;
+        }
     }
     
     // 导出主数据库（使用SAF让用户选择保存位置）
@@ -1403,6 +1534,8 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     successBuilder.setTitle(R.string.import_success_title);
                     successBuilder.setMessage(getString(R.string.import_success_message, finalStationCount));
                     successBuilder.setPositiveButton(R.string.action_ok, (dialog, which) -> {
+                        PreferenceManager.getDefaultSharedPreferences(requireContext()).edit().commit();
+                        
                         Intent intent = new Intent(requireContext(), ActivityMain.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                         startActivity(intent);

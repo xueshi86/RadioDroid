@@ -41,6 +41,7 @@ public class StreamProxy implements Recordable {
     private byte readBuffer[] = new byte[256 * 16];
     private volatile String localAddress = null;
     private boolean isStopped = false;
+    private volatile String streamContentType = null;
 
     public StreamProxy(OkHttpClient httpClient, String uri, StreamProxyListener callback) {
         this.httpClient = httpClient;
@@ -248,6 +249,8 @@ public class StreamProxy implements Recordable {
                     final String type = contentType.toString().toLowerCase();
 
                     if (BuildConfig.DEBUG) Log.d(TAG, "Content Type: " + type);
+
+                    streamContentType = type;
 
                     if (type.equals("application/vnd.apple.mpegurl") || type.equals("application/x-mpegurl")) {
                         Log.e(TAG, "Cannot play HLS streams through proxy!");
@@ -640,6 +643,23 @@ public class StreamProxy implements Recordable {
 
     @Override
     public String getExtension() {
+        if (streamContentType != null) {
+            if (streamContentType.contains("aac") || streamContentType.contains("mp4") || streamContentType.contains("m4a")) {
+                return "aac";
+            }
+            if (streamContentType.contains("ogg") || streamContentType.contains("vorbis") || streamContentType.contains("opus")) {
+                return "ogg";
+            }
+            if (streamContentType.contains("mpegurl") || streamContentType.contains("hls")) {
+                return "ts";
+            }
+            if (streamContentType.contains("flac")) {
+                return "flac";
+            }
+            if (streamContentType.contains("wav") || streamContentType.contains("wave")) {
+                return "wav";
+            }
+        }
         return "mp3";
     }
 }

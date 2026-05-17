@@ -466,14 +466,20 @@ public class DataRadioStation implements Parcelable {
         @Override
         public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
             if (Build.VERSION.SDK_INT >= 25) {
+                Bitmap iconBitmap = bitmap;
+                if (iconBitmap == null) {
+                    iconBitmap = android.graphics.BitmapFactory.decodeResource(ctx.getResources(), R.mipmap.ic_launcher);
+                }
                 Intent playByUUIDintent = new Intent(MediaSessionCallback.ACTION_PLAY_STATION_BY_UUID, null, ctx, ActivityMain.class)
                         .putExtra(MediaSessionCallback.EXTRA_STATION_UUID, station.StationUuid);
                 ShortcutInfo shortcut = new ShortcutInfo.Builder(ctx.getApplicationContext(), ctx.getPackageName() + "/" + station.StationUuid)
                         .setShortLabel(station.Name)
-                        .setIcon(Icon.createWithBitmap(bitmap))
+                        .setIcon(Icon.createWithBitmap(iconBitmap))
                         .setIntent(playByUUIDintent)
                         .build();
                 cb.onShortcutReadyListener(shortcut);
+            } else {
+                cb.onShortcutReadyListener(null);
             }
         }
 

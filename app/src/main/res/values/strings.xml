@@ -5,6 +5,8 @@
     <string name="detail_tags">Tags</string>
     <string name="detail_country">Country</string>
     <string name="detail_create_shortcut">Add to home screen</string>
+    <string name="detail_shortcut_requested">Requesting to add shortcut to home screen</string>
+    <string name="error_creating_shortcut">Failed to create shortcut</string>
     <string name="detail_language">Language</string>
     <string name="detail_weblink">Weblink</string>
     <string name="detail_visit_website">@string/action_station_visit_website</string>
@@ -31,6 +33,7 @@
     <string name="action_stop">Stop</string>
     <string name="action_search">Search</string>
     <string name="action_delete">Delete</string>
+    <string name="action_retry">Retry</string>
     <string name="action_delete_history">Delete history</string>
     <string name="action_delete_favorites">Delete favorites</string>
     <string name="action_delete_stream_history">Clear track history</string>
@@ -49,6 +52,7 @@
     <string name="action_copy_info">Copy Info</string>
     <string name="error_station_load">Could not connect to station</string>
     <string name="error_list_update">Could not connect to radio browser server</string>
+    <string name="error_loading_data">Error loading data</string>
 
     <string name="share_action">Share station link with..</string>
 
@@ -61,6 +65,8 @@
 
     <string name="about_text">This app uses the free radio station directory at\nhttps://www.radio-browser.info\nEveryone can add stations to it. It works like a wiki for online (streaming) radio stations.\n\nContact:\nsegler_alex@web.de\n\nBugtracker:\nhttps://github.com/segler-alex/RadioDroid/issues\n\nIf you like the software and want to help, feel free to send me an email. I really need someone with graphical experience to make the app nicer to the eye :) Maybe someone who can draw icons, images...but also programmers who fix bugs, or implement new ones (features not bugs ;)\nAlso ideas for new features are always appreciated!\n\nThis app is free software licensed under the GPLv3.\nhttps://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="about_version">Version: %1$s</string>
+    <string name="about_fork_description">Fork RadioDroid by xueshi86</string>
+    <string name="about_github">GitHub: https://github.com/xueshi86/RadioDroid</string>
     <string name="detail_star">Add to favorites</string>
     <string name="detail_unstar">Delete from favorites</string>
     <string name="detail_play_in_external_player">@string/action_play_in_external</string>
@@ -81,6 +87,9 @@
 
     <string name="sleep_timer" formatted="true">Sleep timer: %1$02d:%2$02d</string>
     <string name="sleep_timer_title">Stop playing after the selected minute</string>
+    <string name="sleep_timer_set_title">Set Sleep Timer (minutes)</string>
+    <string name="sleep_timer_minutes_label">minutes</string>
+    <string name="sleep_timer_hint">Enter minutes between 1 and 99</string>
     <string name="sleep_timer_apply">Apply</string>
     <string name="sleep_timer_clear">Clear</string>
     <string name="nav_item_add_sleep">Sleep timer</string>
@@ -101,6 +110,7 @@
     <string name="notify_save_playlist_nok">Could not export to %1$s&#47;%2$s</string>
     <string name="notify_save_playlist_now">Exporting to %1$s&#47;%2$s, please wait.</string>
     <string name="notify_save_playlist_ok">Exported to %1$s&#47;%2$s successfully</string>
+    <string name="export_type_file">File</string>
     <string name="notify_sync_list_deleted_entries">%1$d of %2$d local stations in the list marked non-existent on the server</string>
 
     <string name="searchpreference_clear_history">Clear history</string>
@@ -122,6 +132,7 @@
     <string name="language_system">System Default</string>
     <string name="language_english">English</string>
     <string name="language_chinese">Chinese</string>
+    <string name="language_spanish">Spanish</string>
     
     <string name="multi_search_title">Multi Criteria Search</string>
     <string name="multi_search_country">Country</string>
@@ -178,6 +189,42 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="database_status_from_fields">Database Status Updated from Database Fields: %1$s</string>
     
     <string name="empty_database_message">Local database is empty, please update the local database in settings first</string>
+    <string name="empty_database_title">Local Database is Empty</string>
+    <string name="empty_database_button">Update Local Database</string>
+    <string name="empty_database_icon_desc">Empty database icon</string>
+    <string name="error_checking_database">Error checking local database: %1$s</string>
+    <string name="error_no_valid_stations_in_db">No valid station data found in local database, please try updating the local database</string>
+    <string name="error_no_stations_in_db">No stations found in local database, please try updating the local database</string>
+    <string name="error_no_valid_stations_data">No valid station data in local database</string>
+    <string name="error_no_stations_data">No station data in local database</string>
+    <string name="error_repository_not_initialized">Data repository not initialized, please restart the app</string>
+    <string name="no_recently_updated_stations">No recently updated stations found</string>
+    <string name="db_update_incomplete_hint">Database update may be incomplete, please try updating the local database in settings</string>
+    <string name="error_context_not_available">Application context not available, please restart the app</string>
+    <string name="error_activity_not_available">Activity not available, please restart the app</string>
+    <string name="error_no_valid_stations_found">No valid stations found</string>
+    <string name="error_no_matching_stations">No matching stations found</string>
+    <string name="loading_all_stations_fallback">No stations found for language(%1$s), loading all stations…</string>
+    <string name="loading_all_stations_country_fallback">No stations found for country(%1$s), loading all stations…</string>
+    <string name="error_adapter_not_initialized">Adapter not initialized, please restart the app</string>
+    <string name="error_displaying_data">Error displaying data, please try again</string>
+    <string name="error_search_keyword_required">Please enter a search keyword</string>
+    <string name="error_during_search">Error during search: %1$s</string>
+    <string name="error_processing_search_results">Error processing search results: %1$s</string>
+    <string name="error_no_valid_top_click_data">No valid top click data found</string>
+    <string name="error_no_top_click_data">No top click data found</string>
+    <string name="error_no_valid_top_vote_data">No valid top vote data found</string>
+    <string name="error_no_top_vote_data">No top vote data found</string>
+    <string name="content_desc_pause_station">Pause playing %1$s station</string>
+    <string name="content_desc_pause">Pause</string>
+    <string name="content_desc_play_station">Play %1$s station</string>
+    <string name="content_desc_play">Play station</string>
+    <string name="content_desc_station_format">%1$s station</string>
+    <string name="content_desc_no_station_selected">No station selected</string>
+    <string name="content_desc_listening_station">Listening to %1$s station</string>
+    <string name="db_status_summary">Last updated: %1$s, Station count: %2$d</string>
+    <string name="db_status_never_updated">Database not yet updated</string>
+    <string name="db_status_error">Failed to get status: %1$s</string>
     <string name="no_results_message">No %s categories found, database update may be incomplete, please try updating the local database in settings</string>
     <string name="settings_theme_selection_title">Theme</string>
     <string name="theme_light">Light</string>
@@ -204,6 +251,7 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="startup_show_favorites">Show favorites</string>
     <string name="startup_show_history">Show history</string>
     <string name="startup_show_last_view">Last view</string>
+    <string name="startup_show_player">Show track history</string>
 
     <string name="settings_load_icons">Show station icons</string>
     <string name="settings_load_icons_on">Icons will be downloaded</string>
@@ -260,15 +308,25 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="settings_seconds_format">%d seconds</string>
     <string name="settings_milliseconds_format">%d milliseconds</string>
 
-    <string name="settings_pause_when_noisy">Pause on headset disconnect</string>
+    <string name="settings_pause_when_noisy">Pause on wired headset disconnect</string>
+    <string name="settings_close_when_noisy">Close app on wired headset disconnect</string>
+    <string name="settings_close_when_noisy_summary">Automatically close the app when wired headset is disconnected (requires pause on disconnect)</string>
+    <string name="settings_bluetooth_connect_permission">Nearby devices permission</string>
+    <string name="settings_bluetooth_connect_permission_summary">Required on Android 12+ to detect Bluetooth audio device connections. This permission belongs to the \"Nearby devices\" category. Without it, Bluetooth disconnect/connect features will not work.</string>
+    <string name="settings_bluetooth_connect_permission_not_needed">Not required on this Android version</string>
+    <string name="settings_bluetooth_connect_permission_denied">Permission denied. Bluetooth disconnect/connect features are unavailable.</string>
+    <string name="settings_pause_on_bluetooth_disconnect">Pause on Bluetooth disconnect</string>
+    <string name="settings_pause_on_bluetooth_disconnect_summary">Automatically pause playback when Bluetooth audio device disconnects</string>
+    <string name="settings_close_on_bluetooth_disconnect">Close app on Bluetooth disconnect</string>
+    <string name="settings_close_on_bluetooth_disconnect_summary">Automatically close the app when Bluetooth audio device disconnects (requires pause on disconnect)</string>
 
     <string name="settings_auto_resume_do_not_resume">Do not resume</string>
 
-    <string name="settings_auto_resume_on_wired_headset_connected">Resume on wired connection</string>
+    <string name="settings_auto_resume_on_wired_headset_connected">Resume on wired headset connection</string>
     <string name="settings_auto_resume_on_wired_headset_connected_on">Resume playback on wired headset plug-in</string>
 
     <string name="settings_auto_resume_on_bluetooth_a2dp_connected">Resume on Bluetooth connection</string>
-    <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Resume playback on Bluetooth A2DP device connection</string>
+    <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Resume playback on Bluetooth device connection</string>
 
     <string name="settings_warn_no_wifi">Off-Wi-Fi warning</string>
     <string name="settings_warn_no_wifi_on">Warn when playing without Wi-Fi connection</string>
@@ -323,6 +381,8 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="alert_alarm_working">Alarm time now</string>
     <string name="alert_alarm_not_working">No enough info for alarm</string>
     <string name="alert_select_external_alarm_app">Choose audio player</string>
+    <string name="no_audio_apps_found">No audio player apps found on this device</string>
+    <string name="settings_alarm_audio_player_not_selected">Not selected</string>
 
     <string name="alert_press_back_to_exit">Press back once more to exit</string>
 
@@ -337,6 +397,44 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="error_grant_audiofocus">Request for audio focus was not granted by the system</string>
 
     <string name="error_no_equalizer_found">No equalizer app found</string>
+    <string name="equalizer_enabled">Enable Equalizer</string>
+    <string name="equalizer_bass_boost">Bass Boost</string>
+    <string name="equalizer_bass_boost_strength">Strength</string>
+    <string name="equalizer_preset">Preset</string>
+    <string name="equalizer_custom">Custom</string>
+    <string name="equalizer_preset_voice">Voice</string>
+    <string name="equalizer_preset_music">Music</string>
+    <string name="eq_preset_normal">Normal</string>
+    <string name="eq_preset_classical">Classical</string>
+    <string name="eq_preset_dance">Dance</string>
+    <string name="eq_preset_flat">Flat</string>
+    <string name="eq_preset_folk">Folk</string>
+    <string name="eq_preset_heavy_metal">Heavy Metal</string>
+    <string name="eq_preset_hip_hop">Hip Hop</string>
+    <string name="eq_preset_jazz">Jazz</string>
+    <string name="eq_preset_pop">Pop</string>
+    <string name="eq_preset_rock">Rock</string>
+    <string name="eq_preset_unknown">Preset %d</string>
+    <string name="eq_preset_latin">Latin</string>
+    <string name="eq_preset_blues">Blues</string>
+    <string name="eq_preset_electronic">Electronic</string>
+    <string name="eq_preset_rnb">R&amp;B</string>
+    <string name="eq_preset_country">Country</string>
+    <string name="equalizer_bands">Frequency Bands</string>
+    <string name="equalizer_not_playing">Start playing a station first to use the equalizer</string>
+    <string name="equalizer_settings_saved_hint">Settings will take effect when playback starts</string>
+    <string name="equalizer_init_failed">Failed to initialize equalizer. Your device may not support this feature.</string>
+    <string name="equalizer_open_external">Open System Equalizer</string>
+    <string name="equalizer_open_external_summary">Open your device\'s built-in audio effect panel (if available)</string>
+    <string name="equalizer_use_builtin">Use Built-in Equalizer</string>
+    <string name="equalizer_no_external">No system equalizer found. Using built-in equalizer.</string>
+    <string name="sort_by_name">Sort by Name</string>
+    <string name="sort_by_click_count">Sort by Popularity</string>
+    <string name="sort_by_votes">Sort by Votes</string>
+    <string name="sort_by_recent">Sort by Recent</string>
+    <string name="action_sort">Sort</string>
+    <string name="sort_ascending">Ascending ↑</string>
+    <string name="sort_descending">Descending ↓</string>
 
     <string name="player_info_status">Status:&#160;</string>
     <string name="player_info_status_stopped">stopped</string>
@@ -365,6 +463,7 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="image_button_less">Less</string>
     <string name="image_button_repeat">Repeat</string>
     <string name="image_button_dont_repeat">Do not repeat</string>
+    <string name="alarm_repeat">Repeat</string>
     <string name="icon_click_trend_decreasing">Popularity decreasing</string>
     <string name="icon_click_trend_increasing">Popularity increasing</string>
     <string name="icon_click_trend_stable">Popularity stable</string>
@@ -464,13 +563,24 @@ The app will automatically restart to load the new database.</string>
     <string name="progress_updating_database">Updating database</string>
     <string name="progress_completing_update">Completing update</string>
     <string name="update_failed">Update Failed</string>
+    <string name="update_failed_toast">Database update failed. Check your connection and try again.</string>
     <string name="update_failed_message">Update failed: %s</string>
+    <string name="update_failed_db_migration">Update failed: Database version incompatible. The local database will be rebuilt on next update.</string>
+    <string name="update_failed_network">Update failed: Network connection error. Please check your network and try again.</string>
+    <string name="update_failed_storage">Update failed: Insufficient storage space. Please free up space and try again.</string>
     <string name="progress_stalled">Update progress stalled, trying to recover...</string>
     <string name="progress_downloading_data">Downloading station data</string>
     <string name="progress_system_paused"> (may be paused by system)</string>
     <string name="update_dialog_title">Update Radio Database</string>
     <string name="update_cancelled">Update Cancelled</string>
+    <string name="update_network_unavailable_warning">Unable to connect to radio browser server. Please check your network connection and try again later.</string>
+    <string name="update_network_unstable_title">Network Unstable</string>
+    <string name="update_network_unstable_warning">Network connection is slow (fastest response: %1$dms). The update may fail repeatedly. It is recommended to switch to a more stable network or try again later.</string>
+    <string name="update_network_continue_anyway">Continue Anyway</string>
+    <string name="update_network_cancel">Cancel</string>
+    <string name="update_network_error_warning">Network check failed: %1$s\n\nThe update may fail. Do you want to continue?</string>
     <string name="update_system_paused">Update paused by system, waiting to resume...</string>
+    <string name="update_interrupted_message">Database update was interrupted. Please try again or check your network connection.</string>
     <string name="update_preparing">Preparing...</string>
     <string name="update_confirm_cancel_title">Cancel Update</string>
     <string name="update_confirm_cancel_message">Are you sure you want to cancel the database update?</string>
@@ -492,6 +602,9 @@ The app will automatically restart to load the new database.</string>
     <string name="update_confirm_replace_message">New data (%1$d stations) has fewer stations than existing data (%2$d stations), do you want to replace?</string>
     <string name="update_completed_keep_existing">Update completed, but user chose to keep existing data</string>
     <string name="language_russian">Russian</string>
+    <string name="language_french">French</string>
+    <string name="language_italian">Italian</string>
+    <string name="language_brazilian_portuguese">Português (Brasil)</string>
     <string name="progress_system_paused_suffix"> (may be paused by system)</string>
     
     <!-- Database update progress messages -->
@@ -528,5 +641,23 @@ The app will automatically restart to load the new database.</string>
     <!-- Network check UI labels -->
     <string name="network_check_server_label">Server %1$d</string>
     <string name="network_check_fastest_label">Fastest Connection</string>
-    
+
+    <string name="recording_delete_title">Delete Recording</string>
+    <string name="recording_delete_confirm">Are you sure you want to delete \"%s\"?</string>
+    <string name="recording_deleted">Recording deleted</string>
+    <string name="recording_delete_failed">Failed to delete recording</string>
+    <string name="recording_file_not_found">Recording file not found</string>
+    <string name="recording_play_error">Unable to play recording</string>
+    <string name="recording_details">Details</string>
+    <string name="recording_detail_name">File name:</string>
+    <string name="recording_detail_path">File path:</string>
+    <string name="recording_detail_size">File size:</string>
+    <string name="recording_detail_duration">Duration (est.):</string>
+    <string name="recording_detail_modified">Modified:</string>
+    <string name="recording_player_title">Play Recording</string>
+    <string name="recording_play">Play</string>
+    <string name="recording_pause">Pause</string>
+    <string name="recording_play_external">Play with external player</string>
+    <string name="recording_empty_file">Recording file is empty</string>
+
 </resources>

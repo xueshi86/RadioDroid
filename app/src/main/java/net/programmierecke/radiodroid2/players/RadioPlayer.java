@@ -2,6 +2,7 @@ package net.programmierecke.radiodroid2.players;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -130,7 +131,7 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
                     }
                 });
 
-        playStationTask.execute();
+        playStationTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     private void cancelStationLinkRetrieval() {
@@ -230,14 +231,33 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
         args.put("station", Utils.sanitizeName(streamName));
 
         if (lastLiveInfo != null) {
-            args.put("artist", Utils.sanitizeName(lastLiveInfo.getArtist()));
-            args.put("track", Utils.sanitizeName(lastLiveInfo.getTrack()));
+            String artist = lastLiveInfo.getArtist();
+            String track = lastLiveInfo.getTrack();
+            if (isUnknownMetadata(artist)) {
+                args.put("artist", "-");
+            } else {
+                args.put("artist", Utils.sanitizeName(artist));
+            }
+            if (isUnknownMetadata(track)) {
+                args.put("track", "-");
+            } else {
+                args.put("track", Utils.sanitizeName(track));
+            }
         } else {
             args.put("artist", "-");
             args.put("track", "-");
         }
 
         return args;
+    }
+
+    private boolean isUnknownMetadata(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return true;
+        }
+        String lower = value.trim().toLowerCase();
+        return lower.equals("unknown artist") || lower.equals("unknown track") ||
+               lower.equals("unknown") || lower.equals("-");
     }
 
     @Override

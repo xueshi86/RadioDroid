@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
@@ -21,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import net.programmierecke.radiodroid2.ActivityMain;
 import net.programmierecke.radiodroid2.BuildConfig;
@@ -46,6 +48,7 @@ public class FragmentStations extends FragmentBase implements IFragmentSearchabl
     private ViewGroup layoutError;
     private MaterialButton btnRetry;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private FloatingActionButton fabScrollToTop;
 
     private SharedPreferences sharedPref;
 
@@ -151,6 +154,7 @@ public class FragmentStations extends FragmentBase implements IFragmentSearchabl
         rvStations = (RecyclerView) view.findViewById(R.id.recyclerViewStations);
         layoutError = view.findViewById(R.id.layoutError);
         btnRetry = view.findViewById(R.id.btnRefresh);
+        fabScrollToTop = view.findViewById(R.id.fabScrollToTop);
 
         // Adapter将在onActivityCreated中初始化，确保Activity可用
         rvStations.setAdapter(null);
@@ -167,6 +171,24 @@ public class FragmentStations extends FragmentBase implements IFragmentSearchabl
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(rvStations.getContext(),
                 llm.getOrientation());
         rvStations.addItemDecoration(dividerItemDecoration);
+
+        rvStations.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (fabScrollToTop != null) {
+                    boolean canScrollUp = recyclerView.canScrollVertically(-1);
+                    fabScrollToTop.setVisibility(canScrollUp ? View.VISIBLE : View.GONE);
+                }
+            }
+        });
+
+        if (fabScrollToTop != null) {
+            fabScrollToTop.setOnClickListener(v -> {
+                if (rvStations != null) {
+                    rvStations.smoothScrollToPosition(0);
+                }
+            });
+        }
 
         swipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.swiperefresh);
         swipeRefreshLayout.setOnRefreshListener(

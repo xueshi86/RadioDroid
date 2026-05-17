@@ -31,6 +31,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import net.programmierecke.radiodroid2.FragmentBase;
 import net.programmierecke.radiodroid2.R;
@@ -56,6 +57,7 @@ public class FragmentMultiSearch extends FragmentBase {
     private MaterialButton btnExpandFilters;
     private ScrollView scrollViewFilters;
     private androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipeRefreshLayout;
+    private FloatingActionButton fabScrollToTop;
     
     private ItemAdapterStation stationListAdapter;
     private RadioStationRepository repository;
@@ -95,6 +97,7 @@ public class FragmentMultiSearch extends FragmentBase {
         btnExpandFilters = view.findViewById(R.id.btnExpandFilters);
         scrollViewFilters = view.findViewById(R.id.scrollViewFilters);
         swipeRefreshLayout = view.findViewById(R.id.swiperefresh);
+        fabScrollToTop = view.findViewById(R.id.fabScrollToTop);
 
         return view;
     }
@@ -144,8 +147,24 @@ public class FragmentMultiSearch extends FragmentBase {
                     });
                     recyclerViewStations.setAdapter(stationListAdapter);
                     recyclerViewStations.setLayoutManager(new LinearLayoutManager(getActivity()));
-                    // 添加分隔线
                     recyclerViewStations.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL));
+
+                    recyclerViewStations.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                        @Override
+                        public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                            if (fabScrollToTop != null) {
+                                fabScrollToTop.setVisibility(recyclerView.canScrollVertically(-1) ? View.VISIBLE : View.GONE);
+                            }
+                        }
+                    });
+
+                    if (fabScrollToTop != null) {
+                        fabScrollToTop.setOnClickListener(v -> {
+                            if (recyclerViewStations != null) {
+                                recyclerViewStations.smoothScrollToPosition(0);
+                            }
+                        });
+                    }
                 }
                 
                 // 加载所有国家、语言和标签

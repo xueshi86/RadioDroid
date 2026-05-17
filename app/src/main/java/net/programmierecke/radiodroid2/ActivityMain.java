@@ -61,6 +61,9 @@ import com.rustamg.filedialogs.SaveFileDialog;
 
 import net.programmierecke.radiodroid2.alarm.FragmentAlarm;
 import net.programmierecke.radiodroid2.alarm.TimePickerFragment;
+import net.programmierecke.radiodroid2.station.FragmentLocalStations;
+import net.programmierecke.radiodroid2.FragmentStarred;
+import net.programmierecke.radiodroid2.FragmentTabs;
 import net.programmierecke.radiodroid2.cast.CastAwareActivity;
 import net.programmierecke.radiodroid2.database.RadioStation;
 import net.programmierecke.radiodroid2.database.RadioStationRepository;
@@ -151,6 +154,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
     MenuItem menuItemAddAlarm;
     MenuItem menuItemMpd;
     MenuItem menuItemRandomPlay;
+    MenuItem menuItemSort;
 
     private SharedPreferences sharedPref;
 
@@ -166,7 +170,13 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
     protected void onCreate(Bundle savedInstanceState) {
         Iconics.init(this);
 
-        // 初始化应用语言
+        if (getIntent() != null && getIntent().getBooleanExtra("close_app", false)) {
+            super.onCreate(savedInstanceState);
+            finishAffinity();
+            System.exit(0);
+            return;
+        }
+
         initAppLanguage();
 
         super.onCreate(savedInstanceState);
@@ -464,6 +474,10 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
+        if (intent != null && intent.getBooleanExtra("close_app", false)) {
+            finishAffinity();
+            System.exit(0);
+        }
     }
 
     @Override
@@ -480,8 +494,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     LoadFavourites();
                 } else {
-                    Log.w(TAG,"permission not granted -> simple load");
-                    LoadFavouritesSimple();
+                    LoadFavourites();
                 }
                 return;
             }
@@ -489,32 +502,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     SaveFavourites();
                 } else {
-                    Log.w(TAG,"permission not granted -> simple save");
-                    SaveFavouritesSimple();
-                }
-                return;
-            }
-            case 1003: { // SaveFavourites permission
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     SaveFavourites();
-                }
-                return;
-            }
-            case 1004: { // SaveFavouritesSimple permission
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    SaveFavouritesSimple();
-                }
-                return;
-            }
-            case 1005: { // LoadFavourites permission
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    LoadFavourites();
-                }
-                return;
-            }
-            case 1006: { // LoadFavouritesSimple permission
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    LoadFavouritesSimple();
                 }
                 return;
             }
@@ -702,6 +690,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         menuItemAddAlarm = menu.findItem(R.id.action_add_alarm);
         menuItemMpd = menu.findItem(R.id.action_mpd);
         menuItemRandomPlay = menu.findItem(R.id.action_random_play);
+        menuItemSort = menu.findItem(R.id.action_sort);
         // 移除SearchView，直接使用onOptionsItemSelected处理点击事件跳转到多条件搜索界面
         MenuItemCompat.setActionView(menuItemSearch, null);
 
@@ -714,6 +703,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         menuItemIconsView.setVisible(false);
         menuItemAddAlarm.setVisible(false);
         menuItemRandomPlay.setVisible(false);
+        menuItemSort.setVisible(false);
 
         boolean mpd_is_visible = false;
         RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
@@ -730,9 +720,19 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             menuItemSleepTimer.setVisible(true);
             menuItemSearch.setVisible(true);
             menuItemRandomPlay.setVisible(true);
+            boolean shouldShowSort = true;
+            Fragment topFragment = mFragmentManager.findFragmentById(R.id.containerView);
+            if (topFragment instanceof FragmentTabs) {
+                Fragment currentTab = ((FragmentTabs) topFragment).getCurrentVisibleFragment();
+                if (currentTab != null && !(currentTab instanceof FragmentLocalStations)) {
+                    shouldShowSort = false;
+                }
+            }
+            menuItemSort.setVisible(shouldShowSort);
             myToolbar.setTitle(R.string.nav_item_stations);
         } else if (selectedMenuItem == R.id.nav_item_starred) {
             menuItemSleepTimer.setVisible(true);
+            menuItemSort.setVisible(true);
             //menuItemSearch.setVisible(true);
             menuItemSave.setVisible(true);
             menuItemLoad.setVisible(true);
@@ -751,6 +751,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             myToolbar.setTitle(R.string.nav_item_starred);
         } else if (selectedMenuItem == R.id.nav_item_history) {
             menuItemSleepTimer.setVisible(true);
+            menuItemSort.setVisible(false);
             //menuItemSearch.setVisible(true);
             menuItemSave.setVisible(true);
             menuItemSave.setTitle(R.string.nav_item_save_history_playlist);
@@ -760,6 +761,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             }
             myToolbar.setTitle(R.string.nav_item_history);
         } else if (selectedMenuItem == R.id.nav_item_alarm) {
+            menuItemSort.setVisible(false);
             menuItemAddAlarm.setVisible(true);
             myToolbar.setTitle(R.string.nav_item_alarm);
         }
@@ -838,9 +840,9 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
                         if (exception != null) {
                             Toast.makeText(ActivityMain.this, getResources().getString(R.string.error_save_file_failed, exception.getMessage()), Toast.LENGTH_LONG).show();
                         } else if (result.booleanValue()) {
-                            Toast.makeText(ActivityMain.this, getResources().getString(R.string.notify_save_playlist_ok, "文件", fileName), Toast.LENGTH_LONG).show();
+                            Toast.makeText(ActivityMain.this, getResources().getString(R.string.notify_save_playlist_ok, getString(R.string.export_type_file), fileName), Toast.LENGTH_LONG).show();
                         } else {
-                            Toast.makeText(ActivityMain.this, getResources().getString(R.string.notify_save_playlist_nok, "文件", fileName), Toast.LENGTH_LONG).show();
+                            Toast.makeText(ActivityMain.this, getResources().getString(R.string.notify_save_playlist_nok, getString(R.string.export_type_file), fileName), Toast.LENGTH_LONG).show();
                         }
                     }
                 }.execute();
@@ -942,42 +944,6 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
     }
 
     void SaveFavourites() {
-        // 检查是否有外部存储权限
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) 
-                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 
-                    1003);
-                return;
-            }
-        }
-        
-        // 创建导出文件名：导出时间和电台数量
-        FavouriteManager favouriteManager = new FavouriteManager(this);
-        int favouriteCount = favouriteManager.getList().size();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
-        String timestamp = sdf.format(new Date());
-        String defaultFileName = "RadioDroid_Favorites_" + timestamp + "_" + favouriteCount + "stations.m3u";
-        
-        // 使用系统文件选择器
-        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("audio/x-mpegurl");
-        intent.putExtra(Intent.EXTRA_TITLE, defaultFileName);
-        startActivityForResult(intent, ACTION_SAVE_FILE);
-    }
-
-    void SaveFavouritesSimple() {
-        // 检查是否有外部存储权限
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) 
-                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 
-                    1004);
-                return;
-            }
-        }
-        
         // 创建导出文件名：导出时间和电台数量
         FavouriteManager favouriteManager = new FavouriteManager(this);
         int favouriteCount = favouriteManager.getList().size();
@@ -994,35 +960,6 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
     }
 
     void LoadFavourites() {
-        // 检查是否有外部存储权限
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) 
-                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 
-                    1005);
-                return;
-            }
-        }
-        
-        // 使用系统文件选择器
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("audio/x-mpegurl");
-        intent.putExtra(Intent.EXTRA_TITLE, "playlist.m3u");
-        startActivityForResult(intent, ACTION_LOAD_FILE);
-    }
-
-    void LoadFavouritesSimple() {
-        // 检查是否有外部存储权限
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) 
-                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 
-                    1006);
-                return;
-            }
-        }
-        
         // 使用系统文件选择器
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -1044,9 +981,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
                 return true;
         } else if (itemId == R.id.action_save) {
             try {
-                if (Utils.verifyStoragePermissions(this, PERM_REQ_STORAGE_FAV_SAVE)) {
-                    SaveFavourites();
-                }
+                SaveFavourites();
             } catch (Exception e) {
                 Log.e("MAIN", e.toString());
             }
@@ -1054,9 +989,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             return true;
         } else if (itemId == R.id.action_load) {
                 try {
-                    if (Utils.verifyStoragePermissions(this, PERM_REQ_STORAGE_FAV_LOAD)) {
-                        LoadFavourites();
-                    }
+                    LoadFavourites();
                 } catch (Exception e) {
                     Log.e("MAIN", e.toString());
                 }
@@ -1117,6 +1050,9 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             sharedPref.edit().putBoolean("icons_only_favorites_style", true).apply();
             recreate();
             return true;
+        } else if (itemId == R.id.action_sort) {
+            showSortDialog();
+            return true;
         } else if (itemId == R.id.action_add_alarm) {
             TimePickerFragment newFragment = new TimePickerFragment();
             newFragment.setCallback(this);
@@ -1132,6 +1068,107 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             playerBottomSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
         } else {
             playerBottomSheet.setState(BottomSheetBehavior.STATE_EXPANDED);
+        }
+    }
+
+    private void showSortDialog() {
+        Fragment topFragment = mFragmentManager.findFragmentById(R.id.containerView);
+
+        Fragment currentFragment = null;
+
+        if (topFragment instanceof FragmentStarred) {
+            currentFragment = topFragment;
+        } else if (topFragment instanceof FragmentTabs) {
+            currentFragment = ((FragmentTabs) topFragment).getCurrentVisibleFragment();
+        }
+
+        if (currentFragment == null) {
+            return;
+        }
+
+        String[] sortOptions = {
+                getString(R.string.sort_by_name),
+                getString(R.string.sort_by_click_count),
+                getString(R.string.sort_by_votes),
+                getString(R.string.sort_by_recent)
+        };
+
+        int currentMode;
+        boolean isAscending;
+        final int[] sortModes;
+
+        if (currentFragment instanceof FragmentStarred) {
+            final FragmentStarred starredFragment = (FragmentStarred) currentFragment;
+            sortModes = new int[]{
+                    FragmentStarred.SORT_NAME,
+                    FragmentStarred.SORT_CLICK_COUNT,
+                    FragmentStarred.SORT_VOTES,
+                    FragmentStarred.SORT_RECENT
+            };
+            currentMode = starredFragment.getCurrentSortMode();
+            isAscending = starredFragment.isSortAscending();
+
+            String[] displayOptions = new String[sortOptions.length];
+            for (int i = 0; i < sortOptions.length; i++) {
+                String indicator = "";
+                if (sortModes[i] == currentMode) {
+                    indicator = isAscending ? " ↑" : " ↓";
+                }
+                displayOptions[i] = sortOptions[i] + indicator;
+            }
+
+            int checkedItem = -1;
+            for (int i = 0; i < sortModes.length; i++) {
+                if (sortModes[i] == currentMode) {
+                    checkedItem = i;
+                    break;
+                }
+            }
+
+            new AlertDialog.Builder(this, Utils.getAlertDialogThemeResId(this))
+                    .setTitle(R.string.action_sort)
+                    .setSingleChoiceItems(displayOptions, checkedItem, (dialog, which) -> {
+                        starredFragment.setSortMode(sortModes[which]);
+                        dialog.dismiss();
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
+        } else if (currentFragment instanceof FragmentLocalStations) {
+            final FragmentLocalStations localFragment = (FragmentLocalStations) currentFragment;
+            sortModes = new int[]{
+                    FragmentLocalStations.SORT_NAME,
+                    FragmentLocalStations.SORT_CLICK_COUNT,
+                    FragmentLocalStations.SORT_VOTES,
+                    FragmentLocalStations.SORT_RECENT
+            };
+            currentMode = localFragment.getCurrentSortMode();
+            isAscending = localFragment.isSortAscending();
+
+            String[] displayOptions = new String[sortOptions.length];
+            for (int i = 0; i < sortOptions.length; i++) {
+                String indicator = "";
+                if (sortModes[i] == currentMode) {
+                    indicator = isAscending ? " ↑" : " ↓";
+                }
+                displayOptions[i] = sortOptions[i] + indicator;
+            }
+
+            int checkedItem = -1;
+            for (int i = 0; i < sortModes.length; i++) {
+                if (sortModes[i] == currentMode) {
+                    checkedItem = i;
+                    break;
+                }
+            }
+
+            new AlertDialog.Builder(this, Utils.getAlertDialogThemeResId(this))
+                    .setTitle(R.string.action_sort)
+                    .setSingleChoiceItems(displayOptions, checkedItem, (dialog, which) -> {
+                        localFragment.setSortMode(sortModes[which]);
+                        dialog.dismiss();
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
         }
     }
 
@@ -1177,6 +1214,12 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         FavouriteManager fm = radioDroidApp.getFavouriteManager();
 
         final String startupAction = sharedPref.getString("startup_action", getResources().getString(R.string.startup_show_history));
+
+        if (startupAction.equals(getResources().getString(R.string.startup_show_player))) {
+            selectMenuItem(R.id.nav_item_stations);
+            new android.os.Handler().postDelayed(() -> playerBottomSheet.setState(BottomSheetBehavior.STATE_EXPANDED), 300);
+            return;
+        }
 
         if (startupAction.equals(getResources().getString(R.string.startup_show_history)) && hm.isEmpty()) {
             selectMenuItem(R.id.nav_item_stations);
@@ -1604,6 +1647,10 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             locale = new Locale("en");
         } else if (language.equals("zh")) {
             locale = new Locale("zh");
+        } else if (language.equals("es")) {
+            locale = new Locale("es");
+        } else if (language.equals("ru")) {
+            locale = new Locale("ru");
         } else {
             locale = Locale.getDefault();
         }
@@ -1613,7 +1660,6 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             config.setLocale(locale);
         } else {
-            // 在API级别17以下，直接设置config.locale
             config.locale = locale;
         }
         getResources().updateConfiguration(config, getResources().getDisplayMetrics());

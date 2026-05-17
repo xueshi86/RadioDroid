@@ -119,6 +119,6 @@ public class MediaSessionCallback extends MediaSessionCompat.Callback {
         if (station == null)
             station = ((RadioDroidApp) context.getApplicationContext()).getFallbackStationsManager().getBestNameMatch(query);
         GetRealLinkAndPlayTask playTask = new GetRealLinkAndPlayTask(context, station, playerService);
-        playTask.execute();
+        playTask.executeOnExecutor(android.os.AsyncTask.THREAD_POOL_EXECUTOR);
     }
 }

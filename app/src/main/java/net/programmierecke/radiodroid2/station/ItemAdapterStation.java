@@ -10,12 +10,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.app.PendingIntent;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.text.TextUtils;
 
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.fragment.app.FragmentActivity;
@@ -166,7 +168,7 @@ public class ItemAdapterStation
         this.activity = fragmentActivity;
         this.resourceId = resourceId;
 
-        stationImagePlaceholder = AppCompatResources.getDrawable(fragmentActivity, R.drawable.ic_photo_24dp);
+        stationImagePlaceholder = AppCompatResources.getDrawable(fragmentActivity, R.mipmap.ic_launcher);
 
         RadioDroidApp radioDroidApp = (RadioDroidApp) fragmentActivity.getApplication();
         favouriteManager = radioDroidApp.getFavouriteManager();
@@ -290,9 +292,21 @@ public class ItemAdapterStation
         } else {
             if (station.hasIcon()) {
                 setupIcon(useCircularIcons, holder.imageViewIcon, holder.transparentImageView);
-                PlayerServiceUtil.getStationIcon(holder.imageViewIcon, station.IconUrl);
+                PlayerServiceUtil.getStationIcon(holder.imageViewIcon, station.IconUrl, station.HomePageUrl);
+            } else if (!TextUtils.isEmpty(station.HomePageUrl)) {
+                setupIcon(useCircularIcons, holder.imageViewIcon, holder.transparentImageView);
+                PlayerServiceUtil.getStationIcon(holder.imageViewIcon, null, station.HomePageUrl);
             } else {
                 holder.imageViewIcon.setImageDrawable(stationImagePlaceholder);
+                if (Utils.isDarkTheme(getContext())) {
+                    holder.imageViewIcon.setBackgroundColor(getContext().getResources().getColor(R.color.windowBackgroundDark));
+                } else {
+                    holder.imageViewIcon.setBackgroundColor(getContext().getResources().getColor(android.R.color.white));
+                }
+                if (useCircularIcons) {
+                    holder.transparentImageView.setVisibility(View.VISIBLE);
+                    holder.imageViewIcon.getLayoutParams().height = holder.imageViewIcon.getLayoutParams().width;
+                }
             }
 
             if (prefs.getBoolean("compact_style", false))
@@ -426,11 +440,17 @@ public class ItemAdapterStation
             holder.buttonVisitWebsite.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    StationActions.openStationHomeUrl(activity, station);
+                    if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                        StationActions.openStationHomeUrl(activity, station);
+                    }
                 }
             });
 
-            holder.buttonShare.setOnClickListener(view -> StationActions.share(activity, station));
+            holder.buttonShare.setOnClickListener(view -> {
+                if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                    StationActions.share(activity, station);
+                }
+            });
 
             if (favouriteManager.has(station.StationUuid)) {
                 // favorite stations should only be removed in the favorites view
@@ -443,23 +463,20 @@ public class ItemAdapterStation
                 });
             }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
-                    && getContext().getApplicationContext().getSystemService(ShortcutManager.class).isRequestPinShortcutSupported()) {
-                holder.buttonCreateShortcut.setVisibility(View.VISIBLE);
-                holder.buttonCreateShortcut.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        station.prepareShortcut(getContext(), new CreatePinShortcutListener());
-                    }
-                });
-            } else {
-                holder.buttonCreateShortcut.setVisibility(View.INVISIBLE);
-            }
+            holder.buttonCreateShortcut.setVisibility(View.VISIBLE);
+            holder.buttonCreateShortcut.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    station.prepareShortcut(getContext(), new CreatePinShortcutListener());
+                }
+            });
 
             holder.buttonAddAlarm.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    StationActions.setAsAlarm(activity, station);
+                    if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                        StationActions.setAsAlarm(activity, station);
+                    }
                 }
             });
 
@@ -486,9 +503,55 @@ public class ItemAdapterStation
     public class CreatePinShortcutListener implements DataRadioStation.ShortcutReadyListener {
         @Override
         public void onShortcutReadyListener(ShortcutInfo shortcut) {
-            ShortcutManager shortcutManager = getContext().getApplicationContext().getSystemService(ShortcutManager.class);
-            if (shortcutManager.isRequestPinShortcutSupported()) {
-                shortcutManager.requestPinShortcut(shortcut, null);
+            if (shortcut == null) {
+                createShortcutLegacy(null);
+                return;
+            }
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                    ShortcutManager shortcutManager = getContext().getApplicationContext().getSystemService(ShortcutManager.class);
+                    if (shortcutManager != null && shortcutManager.isRequestPinShortcutSupported()) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            Intent intent = new Intent(getContext(), getClass().getClassLoader() != null ? getClass() : ItemAdapterStation.class);
+                            intent.setAction("net.programmierecke.radiodroid2.SHORTCUT_PINNED");
+                            PendingIntent successCallback = PendingIntent.getBroadcast(getContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
+                            shortcutManager.requestPinShortcut(shortcut, successCallback.getIntentSender());
+                        } else {
+                            shortcutManager.requestPinShortcut(shortcut, null);
+                        }
+                        Toast.makeText(getContext(), R.string.detail_shortcut_requested, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                }
+                createShortcutLegacy(shortcut);
+            } catch (Exception e) {
+                createShortcutLegacy(shortcut);
+            }
+        }
+
+        private void createShortcutLegacy(ShortcutInfo shortcut) {
+            try {
+                Intent playIntent;
+                String shortcutName;
+                if (shortcut != null) {
+                    playIntent = shortcut.getIntent();
+                    shortcutName = shortcut.getShortLabel().toString();
+                } else {
+                    DataRadioStation station = filteredStationsList.get(expandedPosition);
+                    playIntent = new Intent(net.programmierecke.radiodroid2.service.MediaSessionCallback.ACTION_PLAY_STATION_BY_UUID, null, getContext(), ActivityMain.class)
+                            .putExtra(net.programmierecke.radiodroid2.service.MediaSessionCallback.EXTRA_STATION_UUID, station.StationUuid);
+                    shortcutName = station.Name;
+                }
+                Intent addIntent = new Intent();
+                addIntent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, playIntent);
+                addIntent.putExtra(Intent.EXTRA_SHORTCUT_NAME, shortcutName);
+                addIntent.setAction("com.android.launcher.action.INSTALL_SHORTCUT");
+                addIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE,
+                        Intent.ShortcutIconResource.fromContext(getContext(), R.mipmap.ic_launcher));
+                getContext().sendBroadcast(addIntent);
+                Toast.makeText(getContext(), R.string.detail_create_shortcut, Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                Toast.makeText(getContext(), R.string.error_creating_shortcut, Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -559,7 +622,17 @@ public class ItemAdapterStation
         if (useCircularIcons) {
             transparentImageView.setVisibility(View.VISIBLE);
             imageView.getLayoutParams().height = imageView.getLayoutParams().height = imageView.getLayoutParams().width;
-            imageView.setBackgroundColor(getContext().getResources().getColor(android.R.color.black));
+            if (Utils.isDarkTheme(getContext())) {
+                imageView.setBackgroundColor(getContext().getResources().getColor(R.color.windowBackgroundDark));
+            } else {
+                imageView.setBackgroundColor(getContext().getResources().getColor(android.R.color.white));
+            }
+        } else {
+            if (Utils.isDarkTheme(getContext())) {
+                imageView.setBackgroundColor(getContext().getResources().getColor(R.color.windowBackgroundDark));
+            } else {
+                imageView.setBackgroundColor(getContext().getResources().getColor(android.R.color.white));
+            }
         }
     }
 

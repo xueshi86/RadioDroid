@@ -7,6 +7,7 @@ import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.Transaction;
 import androidx.room.Update;
 
 import java.util.List;
@@ -34,6 +35,9 @@ public interface RadioStationDao {
     @Query("SELECT * FROM radio_stations ORDER BY name ASC LIMIT 1000")
     LiveData<List<RadioStation>> getAllStationsByName();
 
+    @Query("SELECT * FROM radio_stations ORDER BY clickcount DESC")
+    LiveData<List<RadioStation>> getAllStationsByClickCount();
+
     @Query("SELECT * FROM radio_stations WHERE lastcheckok = 1 ORDER BY RANDOM() LIMIT 1")
     RadioStation getRandomStationSync();
 
@@ -44,17 +48,32 @@ public interface RadioStationDao {
     @Query("SELECT * FROM radio_stations ORDER BY clickcount DESC LIMIT :limit")
     LiveData<List<RadioStation>> getTopClickStations(int limit);
 
+    @Query("SELECT * FROM radio_stations ORDER BY clickcount DESC LIMIT 1000")
+    LiveData<List<RadioStation>> getTopClickStationsAll();
+
     @Query("SELECT * FROM radio_stations ORDER BY votes DESC LIMIT 1000")
     LiveData<List<RadioStation>> getStationsByVotes();
 
     @Query("SELECT * FROM radio_stations ORDER BY votes DESC LIMIT :limit")
     LiveData<List<RadioStation>> getTopVoteStations(int limit);
 
+    @Query("SELECT * FROM radio_stations ORDER BY votes DESC LIMIT 1000")
+    LiveData<List<RadioStation>> getTopVoteStationsAll();
+
     @Query("SELECT * FROM radio_stations ORDER BY lastchangetime DESC LIMIT 1000")
     LiveData<List<RadioStation>> getStationsByLastChangeTime();
 
     @Query("SELECT * FROM radio_stations ORDER BY lastchangetime DESC LIMIT :limit")
     LiveData<List<RadioStation>> getRecentlyChangedStations(int limit);
+
+    @Query("SELECT * FROM radio_stations ORDER BY lastchangetime DESC LIMIT 1000")
+    LiveData<List<RadioStation>> getRecentlyChangedStationsAll();
+
+    @Query("SELECT * FROM radio_stations WHERE lastcheckok = 1 ORDER BY lastchangetime DESC LIMIT :limit")
+    LiveData<List<RadioStation>> getRecentlyChangedWorkingStations(int limit);
+
+    @Query("SELECT * FROM radio_stations WHERE lastcheckok = 1 ORDER BY lastchangetime DESC LIMIT 1000")
+    LiveData<List<RadioStation>> getRecentlyChangedWorkingStationsAll();
 
     @Query("SELECT * FROM radio_stations ORDER BY lastclicktime DESC LIMIT :limit")
     LiveData<List<RadioStation>> getRecentlyPlayedStations(int limit);
@@ -77,6 +96,9 @@ public interface RadioStationDao {
     @Query("SELECT * FROM radio_stations WHERE language = :language ORDER BY clickcount DESC LIMIT 500")
     LiveData<List<RadioStation>> getStationsByLanguage(String language);
 
+    @Query("SELECT * FROM radio_stations WHERE language = :language ORDER BY clickcount DESC")
+    LiveData<List<RadioStation>> getStationsByLanguageAll(String language);
+
     @Query("SELECT * FROM radio_stations WHERE language = :language ORDER BY clickcount DESC LIMIT :limit")
     LiveData<List<RadioStation>> getStationsByLanguageWithLimit(String language, int limit);
     
@@ -88,6 +110,9 @@ public interface RadioStationDao {
     
     @Query("SELECT * FROM radio_stations WHERE countrycode = :countryCode ORDER BY clickcount DESC LIMIT :limit")
     LiveData<List<RadioStation>> getStationsByCountryWithLimit(String countryCode, int limit);
+
+    @Query("SELECT * FROM radio_stations WHERE countrycode = :countryCode ORDER BY clickcount DESC")
+    LiveData<List<RadioStation>> getStationsByCountryCodeAll(String countryCode);
 
     @Query("SELECT DISTINCT tags FROM radio_stations WHERE tags != ''")
     LiveData<List<String>> getAllTags();

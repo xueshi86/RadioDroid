@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -19,6 +20,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.snackbar.Snackbar;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import net.programmierecke.radiodroid2.station.ItemAdapterStation;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
@@ -34,6 +37,7 @@ public class FragmentHistory extends Fragment implements IAdapterRefreshable {
 
     private RecyclerView rvStations;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private FloatingActionButton fabScrollToTop;
 
     private HistoryManager historyManager;
 
@@ -85,6 +89,7 @@ public class FragmentHistory extends Fragment implements IAdapterRefreshable {
         llm.setOrientation(LinearLayoutManager.VERTICAL);
 
         rvStations = (RecyclerView) view.findViewById(R.id.recyclerViewStations);
+        fabScrollToTop = view.findViewById(R.id.fabScrollToTop);
         
         // Adapter将在onActivityCreated中初始化，确保Activity可用
         rvStations.setAdapter(null);
@@ -159,6 +164,23 @@ public class FragmentHistory extends Fragment implements IAdapterRefreshable {
             
             rvStations.setAdapter(adapter);
             adapter.enableItemRemoval(rvStations);
+
+            rvStations.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                    if (fabScrollToTop != null) {
+                        fabScrollToTop.setVisibility(recyclerView.canScrollVertically(-1) ? View.VISIBLE : View.GONE);
+                    }
+                }
+            });
+
+            if (fabScrollToTop != null) {
+                fabScrollToTop.setOnClickListener(v -> {
+                    if (rvStations != null) {
+                        rvStations.smoothScrollToPosition(0);
+                    }
+                });
+            }
             
             // 刷新列表
             RefreshListGui();

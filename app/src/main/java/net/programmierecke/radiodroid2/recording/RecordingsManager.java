@@ -48,6 +48,7 @@ public class RecordingsManager {
     private class RunningRecordableListener implements RecordableListener {
         private RunningRecordingInfo runningRecordingInfo;
         private boolean ended;
+        private long lastFlushBytes;
 
         private RunningRecordableListener(@NonNull RunningRecordingInfo runningRecordingInfo) {
             this.runningRecordingInfo = runningRecordingInfo;
@@ -58,8 +59,16 @@ public class RecordingsManager {
             try {
                 runningRecordingInfo.getOutputStream().write(buffer, offset, length);
                 runningRecordingInfo.setBytesWritten(runningRecordingInfo.getBytesWritten() + length);
+
+                if (runningRecordingInfo.getBytesWritten() - lastFlushBytes >= 65536) {
+                    runningRecordingInfo.getOutputStream().flush();
+                    lastFlushBytes = runningRecordingInfo.getBytesWritten();
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "Recording flushed, total bytes: " + runningRecordingInfo.getBytesWritten());
+                    }
+                }
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error writing recording bytes: " + e.getMessage());
                 runningRecordingInfo.getRecordable().stopRecording();
             }
         }
@@ -73,9 +82,16 @@ public class RecordingsManager {
             ended = true;
 
             try {
+                runningRecordingInfo.getOutputStream().flush();
+                runningRecordingInfo.getOutputStream().getFD().sync();
+            } catch (IOException e) {
+                Log.e(TAG, "Error flushing recording: " + e.getMessage());
+            }
+
+            try {
                 runningRecordingInfo.getOutputStream().close();
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error closing recording: " + e.getMessage());
             }
 
             RecordingsManager.this.stopRecording(runningRecordingInfo.getRecordable());
@@ -87,10 +103,12 @@ public class RecordingsManager {
 
     public void record(@NonNull Context context, @NonNull Recordable recordable) {
         if (!recordable.canRecord()) {
+            Log.w(TAG, "Cannot record: canRecord() returned false");
             return;
         }
 
         if (!runningRecordings.containsKey(recordable)) {
+            Log.d(TAG, "Starting new recording...");
             RunningRecordingInfo info = new RunningRecordingInfo();
 
             info.setRecordable(recordable);
@@ -123,6 +141,9 @@ public class RecordingsManager {
             //TODO: check available disk space here
 
             String filePath = RecordingsManager.getRecordDir() + "/" + info.getFileName();
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Starting recording to: " + filePath);
+            }
             try {
                 info.setOutputStream(new FileOutputStream(filePath));
             } catch (FileNotFoundException e) {
@@ -133,6 +154,7 @@ public class RecordingsManager {
             recordable.startRecording(new RunningRecordableListener(info));
 
             runningRecordings.put(recordable, info);
+            Log.d(TAG, "Recording started successfully: " + info.getFileName());
 
             prefs.edit().putInt("record_num", recordNum + 1).apply();
         }

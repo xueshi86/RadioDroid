@@ -166,15 +166,15 @@
     <string name="settings_seconds_format">%d secondi</string>
     <string name="settings_milliseconds_format">%d millisecondi</string>
 
-    <string name="settings_pause_when_noisy">Pausa alla disconnessione delle cuffie</string>
+    <string name="settings_pause_when_noisy">Pausa alla disconnessione delle cuffie cablate</string>
 
     <string name="settings_auto_resume_do_not_resume">Non riprendere</string>
 
-    <string name="settings_auto_resume_on_wired_headset_connected">Riprendi con cavo connesso</string>
+    <string name="settings_auto_resume_on_wired_headset_connected">Riprendi con auricolari cablati connessi</string>
     <string name="settings_auto_resume_on_wired_headset_connected_on">Riprendi la riproduzione alla connessione di auricolari cablati</string>
 
     <string name="settings_auto_resume_on_bluetooth_a2dp_connected">Riprendi con connessione Bluetooth</string>
-    <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Riprendi la riproduzione alla connessione di dispositivi A2DP Bluetooth</string>
+    <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Riprendi la riproduzione alla connessione di dispositivi Bluetooth</string>
 
     <string name="settings_warn_no_wifi">Avviso di Wi-Fi spento</string>
     <string name="settings_warn_no_wifi_on">Avvisa quando si riproduce senza connessione Wi-Fi</string>
@@ -297,6 +297,17 @@
 
     <string name="description_btn_setup_alarm">Imposta sveglia</string>
 
+    <string name="settings_language">Lingua interfaccia</string>
+    <string name="settings_language_desc">Seleziona la lingua dell\'interfaccia dell\'app</string>
+    <string name="language_system">Predefinito di sistema</string>
+    <string name="language_english">English</string>
+    <string name="language_chinese">中文</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_french">Français</string>
+    <string name="language_italian">Italiano</string>
+    <string name="language_brazilian_portuguese">Português (Brasil)</string>
+
     <string-array name="weekdays">
         <item>D</item>
         <item>L</item>
@@ -332,4 +343,55 @@
     <string name="context_menu_add_alarm">@string/action_alarm</string>
     <string name="context_menu_create_shortcut">@string/detail_create_shortcut</string>
     <string name="context_menu_delete">@string/action_delete</string>
+    
+    <string name="empty_database_title">Il database locale è vuoto</string>
+    <string name="empty_database_message">Il database locale è vuoto, aggiorna prima il database locale nelle impostazioni</string>
+    <string name="empty_database_button">Aggiorna database locale</string>
+    <string name="empty_database_icon_desc">Icona database vuoto</string>
+    <string name="error_checking_database">Errore durante la verifica del database locale: %1$s</string>
+    <string name="error_no_valid_stations_in_db">Nessun dato di stazione valido trovato nel database locale, prova ad aggiornare il database locale</string>
+    <string name="error_no_stations_in_db">Nessuna stazione trovata nel database locale, prova ad aggiornare il database locale</string>
+    <string name="error_no_valid_stations_data">Nessun dato di stazione valido nel database locale</string>
+    <string name="error_no_stations_data">Nessun dato di stazione nel database locale</string>
+    <string name="error_repository_not_initialized">Repository dati non inizializzato, riavvia l\'app</string>
+    <string name="no_recently_updated_stations">Nessuna stazione aggiornata di recente trovata</string>
+    <string name="db_update_incomplete_hint">L\'aggiornamento del database potrebbe essere incompleto, prova ad aggiornare il database locale nelle impostazioni</string>
+    <string name="error_context_not_available">Contesto dell\'app non disponibile, riavvia l\'app</string>
+    <string name="error_activity_not_available">Activity non disponibile, riavvia l\'app</string>
+    <string name="error_no_valid_stations_found">Nessuna stazione valida trovata</string>
+    <string name="error_no_matching_stations">Nessuna stazione corrispondente trovata</string>
+    <string name="loading_all_stations_fallback">Nessuna stazione trovata per la lingua(%1$s), caricamento di tutte le stazioni…</string>
+    <string name="loading_all_stations_country_fallback">Nessuna stazione trovata per il paese(%1$s), caricamento di tutte le stazioni…</string>
+    <string name="error_adapter_not_initialized">Adattatore non inizializzato, riavvia l\'app</string>
+    <string name="error_displaying_data">Errore nella visualizzazione dei dati, riprova</string>
+    <string name="error_search_keyword_required">Inserisci una parola chiave di ricerca</string>
+    <string name="error_during_search">Errore durante la ricerca: %1$s</string>
+    <string name="error_processing_search_results">Errore nell\'elaborazione dei risultati di ricerca: %1$s</string>
+    <string name="error_no_valid_top_click_data">Nessun dato valido di top per clic trovato</string>
+    <string name="error_no_top_click_data">Nessun dato di top per clic trovato</string>
+    <string name="error_no_valid_top_vote_data">Nessun dato valido di top per voti trovato</string>
+    <string name="error_no_top_vote_data">Nessun dato di top per voti trovato</string>
+    <string name="content_desc_pause_station">Metti in pausa la stazione %1$s</string>
+    <string name="content_desc_pause">Pausa</string>
+    <string name="content_desc_play_station">Riproduci la stazione %1$s</string>
+    <string name="content_desc_play">Riproduci stazione</string>
+    <string name="content_desc_station_format">Stazione %1$s</string>
+    <string name="content_desc_no_station_selected">Nessuna stazione selezionata</string>
+    <string name="content_desc_listening_station">In ascolto della stazione %1$s</string>
+    <string name="db_status_summary">Ultimo aggiornamento: %1$s, Numero di stazioni: %2$d</string>
+    <string name="db_status_never_updated">Il database non è ancora stato aggiornato</string>
+    <string name="db_status_error">Impossibile ottenere lo stato: %1$s</string>
+    <string name="export_type_file">File</string>
+    <string name="recording_delete_title">Elimina registrazione</string>
+    <string name="recording_delete_confirm">Sei sicuro di voler eliminare \"%s\"?</string>
+    <string name="recording_deleted">Registrazione eliminata</string>
+    <string name="recording_delete_failed">Impossibile eliminare la registrazione</string>
+    <string name="recording_file_not_found">File di registrazione non trovato</string>
+    <string name="recording_play_error">Impossibile riprodurre la registrazione</string>
+    <string name="recording_details">Dettagli</string>
+    <string name="recording_detail_name">Nome file:</string>
+    <string name="recording_detail_path">Percorso file:</string>
+    <string name="recording_detail_size">Dimensione file:</string>
+    <string name="recording_detail_duration">Durata (stimata):</string>
+    <string name="recording_detail_modified">Modificato:</string>
 </resources>

@@ -11,12 +11,14 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import net.programmierecke.radiodroid2.FragmentBase;
 import net.programmierecke.radiodroid2.R;
@@ -29,6 +31,8 @@ import net.programmierecke.radiodroid2.utils.DatabaseEmptyHelper;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import android.content.SharedPreferences;
 
 public class FragmentRecentlyChanged extends FragmentBase implements IFragmentSearchable {
     private static final String TAG = "FragmentRecentlyChanged";
@@ -43,6 +47,7 @@ public class FragmentRecentlyChanged extends FragmentBase implements IFragmentSe
     private RadioStationRepository repository;
     private StationsFilter.SearchStyle lastSearchStyle = StationsFilter.SearchStyle.ByName;
     private String lastSearchQuery = "";
+    private FloatingActionButton fabScrollToTop;
 
     @Nullable
     @Override
@@ -54,6 +59,7 @@ public class FragmentRecentlyChanged extends FragmentBase implements IFragmentSe
         layoutError = view.findViewById(R.id.layoutError);
         textErrorMessage = view.findViewById(R.id.textErrorMessage);
         btnRetry = view.findViewById(R.id.btnRetry);
+        fabScrollToTop = view.findViewById(R.id.fabScrollToTop);
 
         // Adapter和LayoutManager将在onActivityCreated中初始化，确保Activity可用
         recyclerViewStations.setAdapter(null);
@@ -81,7 +87,7 @@ public class FragmentRecentlyChanged extends FragmentBase implements IFragmentSe
             repository = RadioStationRepository.getInstance(getContext());
         } else {
             Log.e(TAG, "Context is null in onActivityCreated");
-            showError(true, "应用上下文不可用，请重启应用");
+            showError(true, getString(R.string.error_context_not_available));
             return;
         }
         
@@ -93,6 +99,23 @@ public class FragmentRecentlyChanged extends FragmentBase implements IFragmentSe
             layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
             recyclerViewStations.setLayoutManager(layoutManager);
             recyclerViewStations.addItemDecoration(new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL));
+
+            recyclerViewStations.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                    if (fabScrollToTop != null) {
+                        fabScrollToTop.setVisibility(recyclerView.canScrollVertically(-1) ? View.VISIBLE : View.GONE);
+                    }
+                }
+            });
+
+            if (fabScrollToTop != null) {
+                fabScrollToTop.setOnClickListener(v -> {
+                    if (recyclerViewStations != null) {
+                        recyclerViewStations.smoothScrollToPosition(0);
+                    }
+                });
+            }
             
             stationListAdapter = new ItemAdapterStation(getActivity(), R.layout.list_item_station);
             stationListAdapter.setStationActionsListener(new ItemAdapterStation.StationActionsListener() {
@@ -148,7 +171,7 @@ public class FragmentRecentlyChanged extends FragmentBase implements IFragmentSe
         // 检查repository是否已初始化
         if (repository == null) {
             Log.e(TAG, "Repository is null in loadData");
-            showError(true, "数据仓库未初始化，请重启应用");
+            showError(true, getString(R.string.error_repository_not_initialized));
             return;
         }
         
@@ -165,18 +188,26 @@ public class FragmentRecentlyChanged extends FragmentBase implements IFragmentSe
 
                 @Override
                 public void onCheckError(String error) {
-                    showError(true, "检查本地数据库时出错：" + error);
+                    showError(true, getString(R.string.error_checking_database, error));
                 }
             });
     }
     
     private void loadRecentlyChangedStations() {
         Log.d(TAG, "Loading recently changed stations from database");
-        // 确保在主线程上加载数据
         if (getActivity() != null) {
             getActivity().runOnUiThread(() -> {
-                // 从本地数据库获取最近更新的电台数据
-                repository.getRecentlyChangedStations(100).observe(getViewLifecycleOwner(), new Observer<List<RadioStation>>() {
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+                boolean showBroken = sharedPref.getBoolean("show_broken", false);
+
+                androidx.lifecycle.LiveData<List<RadioStation>> liveData;
+                if (showBroken) {
+                    liveData = repository.getRecentlyChangedStationsAll();
+                } else {
+                    liveData = repository.getRecentlyChangedWorkingStationsAll();
+                }
+
+                liveData.observe(getViewLifecycleOwner(), new Observer<List<RadioStation>>() {
                     @Override
                     public void onChanged(List<RadioStation> radioStations) {
                         Log.d(TAG, "Recently changed stations received: " + (radioStations != null ? radioStations.size() : 0) + " stations");
@@ -208,7 +239,7 @@ public class FragmentRecentlyChanged extends FragmentBase implements IFragmentSe
                             Log.d(TAG, "Adapter updated with " + dataStations.size() + " recently changed stations");
                         } else {
                             Log.e(TAG, "Adapter is null, cannot update data");
-                            showError(true, "显示数据时出错，请重试");
+                            showError(true, getString(R.string.error_displaying_data));
                         }
                     }
                 });
@@ -303,12 +334,14 @@ public class FragmentRecentlyChanged extends FragmentBase implements IFragmentSe
     
     private void handleSearchResults(List<RadioStation> radioStations) {
         if (radioStations != null && !radioStations.isEmpty()) {
-            // 转换为DataRadioStation
+            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+            boolean showBroken = sharedPref.getBoolean("show_broken", false);
+
             List<DataRadioStation> dataStations = new ArrayList<>();
             for (RadioStation radioStation : radioStations) {
                 if (radioStation != null) {
                     DataRadioStation dataStation = radioStation.toDataRadioStation();
-                    if (dataStation != null) {
+                    if (dataStation != null && (showBroken || dataStation.Working)) {
                         dataStations.add(dataStation);
                     }
                 }
@@ -334,8 +367,8 @@ public class FragmentRecentlyChanged extends FragmentBase implements IFragmentSe
         // 创建一个空的电台列表，只显示一条提示信息
         ArrayList<DataRadioStation> stationsList = new ArrayList<>();
         DataRadioStation emptyMessage = new DataRadioStation();
-        emptyMessage.Name = "没有找到最近更新的电台";
-        emptyMessage.HomePageUrl = "可能数据库更新不完整，请尝试在设置中更新本地数据库";
+        emptyMessage.Name = getString(R.string.no_recently_updated_stations);
+        emptyMessage.HomePageUrl = getString(R.string.db_update_incomplete_hint);
         stationsList.add(emptyMessage);
 
         // 更新UI

@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import net.programmierecke.radiodroid2.FragmentBase;
 import net.programmierecke.radiodroid2.R;
@@ -37,6 +38,7 @@ public class FragmentSearchLocal extends FragmentBase implements IFragmentSearch
     private LinearLayout layoutError;
     private MaterialButton btnRetry;
     private SwipeRefreshLayout swiperefresh;
+    private FloatingActionButton fabScrollToTop;
 
     private ItemAdapterStation stationListAdapter;
     private RadioStationRepository repository;
@@ -51,6 +53,7 @@ public class FragmentSearchLocal extends FragmentBase implements IFragmentSearch
         recyclerViewStations = view.findViewById(R.id.recyclerViewStations);
         layoutError = view.findViewById(R.id.layoutError);
         swiperefresh = view.findViewById(R.id.swiperefresh);
+        fabScrollToTop = view.findViewById(R.id.fabScrollToTop);
 
         // Adapter和LayoutManager将在onActivityCreated中初始化，确保Activity可用
         recyclerViewStations.setAdapter(null);
@@ -103,6 +106,23 @@ public class FragmentSearchLocal extends FragmentBase implements IFragmentSearch
             recyclerViewStations.setAdapter(stationListAdapter);
             // 设置LayoutManager
             recyclerViewStations.setLayoutManager(new LinearLayoutManager(getActivity()));
+
+            recyclerViewStations.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                    if (fabScrollToTop != null) {
+                        fabScrollToTop.setVisibility(recyclerView.canScrollVertically(-1) ? View.VISIBLE : View.GONE);
+                    }
+                }
+            });
+
+            if (fabScrollToTop != null) {
+                fabScrollToTop.setOnClickListener(v -> {
+                    if (recyclerViewStations != null) {
+                        recyclerViewStations.smoothScrollToPosition(0);
+                    }
+                });
+            }
         } else {
             Log.e(TAG, "Activity is null in onActivityCreated, cannot initialize adapter");
             return;
@@ -138,14 +158,14 @@ public class FragmentSearchLocal extends FragmentBase implements IFragmentSearch
             if (stationListAdapter != null) {
                 stationListAdapter.updateList(null, new ArrayList<>());
             }
-            showError(true, "请输入搜索关键词");
+            showError(true, getString(R.string.error_search_keyword_required));
             return;
         }
         
         // 检查repository是否已初始化
         if (repository == null) {
             Log.e(TAG, "Repository is null, cannot perform search");
-            showError(true, "数据仓库未初始化，请重启应用");
+            showError(true, getString(R.string.error_repository_not_initialized));
             return;
         }
         
@@ -158,7 +178,7 @@ public class FragmentSearchLocal extends FragmentBase implements IFragmentSearch
         // 检查stationListAdapter是否已初始化
         if (stationListAdapter == null) {
             Log.e(TAG, "StationListAdapter is null, cannot perform search");
-            showError(true, "适配器未初始化，请重启应用");
+            showError(true, getString(R.string.error_adapter_not_initialized));
             return;
         }
         
@@ -191,7 +211,7 @@ public class FragmentSearchLocal extends FragmentBase implements IFragmentSearch
                     }
                     
                     Log.e(TAG, "Database check error: " + error);
-                    showError(true, "检查本地数据库时出错：" + error);
+                    showError(true, getString(R.string.error_checking_database, error));
                 }
             });
     }
@@ -208,14 +228,14 @@ public class FragmentSearchLocal extends FragmentBase implements IFragmentSearch
         // 检查repository是否已初始化
         if (repository == null) {
             Log.e(TAG, "Repository is null, cannot perform search");
-            showError(true, "数据仓库未初始化，请重启应用");
+            showError(true, getString(R.string.error_repository_not_initialized));
             return;
         }
         
         // 检查stationListAdapter是否已初始化
         if (stationListAdapter == null) {
             Log.e(TAG, "StationListAdapter is null, cannot perform search");
-            showError(true, "适配器未初始化，请重启应用");
+            showError(true, getString(R.string.error_adapter_not_initialized));
             return;
         }
         
@@ -257,7 +277,7 @@ public class FragmentSearchLocal extends FragmentBase implements IFragmentSearch
             }
         } catch (Exception e) {
             Log.e(TAG, "Error during search", e);
-            showError(true, "搜索时发生错误：" + e.getMessage());
+            showError(true, getString(R.string.error_during_search, e.getMessage()));
         }
     }
     
@@ -273,7 +293,7 @@ public class FragmentSearchLocal extends FragmentBase implements IFragmentSearch
         // 检查stationListAdapter是否已初始化
         if (stationListAdapter == null) {
             Log.e(TAG, "StationListAdapter is null, cannot handle search results");
-            showError(true, "适配器未初始化，请重启应用");
+            showError(true, getString(R.string.error_adapter_not_initialized));
             return;
         }
         
@@ -306,7 +326,7 @@ public class FragmentSearchLocal extends FragmentBase implements IFragmentSearch
             }
         } catch (Exception e) {
             Log.e(TAG, "Error handling search results", e);
-            showError(true, "处理搜索结果时发生错误：" + e.getMessage());
+            showError(true, getString(R.string.error_processing_search_results, e.getMessage()));
         }
     }
 

@@ -166,15 +166,15 @@
     <string name="settings_seconds_format">%d segundo</string>
     <string name="settings_milliseconds_format">%d milisegundo</string>
 
-    <string name="settings_pause_when_noisy">Pausatu aurikularrak deskonektatzean</string>
+    <string name="settings_pause_when_noisy">Pausatu aurikularrak kableatuak deskonektatzean</string>
 
     <string name="settings_auto_resume_do_not_resume">Ez jarraitu</string>
 
-    <string name="settings_auto_resume_on_wired_headset_connected">Jarraitu kabledun konexioaren bidez</string>
-    <string name="settings_auto_resume_on_wired_headset_connected_on">Jarraitu erreprodukzioa kabledun aurikularrekin konektatzean</string>
+    <string name="settings_auto_resume_on_wired_headset_connected">Jarraitu aurikular kableatu konexioaren bidez</string>
+    <string name="settings_auto_resume_on_wired_headset_connected_on">Jarraitu erreprodukzioa aurikular kableatuarekin konektatzean</string>
 
     <string name="settings_auto_resume_on_bluetooth_a2dp_connected">Jarraitu Bluetooth konexioarekin</string>
-    <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Jarraitu erreprodukzioa A2DP Bluetooth gailuekin konektatzean</string>
+    <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Jarraitu erreprodukzioa Bluetooth gailuekin konektatzean</string>
 
     <string name="settings_warn_no_wifi">Abisatu Wi-Fia ez badago</string>
     <string name="settings_warn_no_wifi_on">Abisatu Wi-Fi konexiorik ez badago</string>

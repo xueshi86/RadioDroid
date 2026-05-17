@@ -166,15 +166,15 @@
     <string name="settings_seconds_format">%d detik</string>
     <string name="settings_milliseconds_format">%d milidetik</string>
 
-    <string name="settings_pause_when_noisy">Jeda saat headset dilepas</string>
+    <string name="settings_pause_when_noisy">Jeda saat headset kabel dilepas</string>
 
     <string name="settings_auto_resume_do_not_resume">Jangan lanjutkan</string>
 
-    <string name="settings_auto_resume_on_wired_headset_connected">Lanjutkan pada koneksi kabel</string>
-    <string name="settings_auto_resume_on_wired_headset_connected_on">Lanjutkan pemutaran saat koneksi kabel disambungkan</string>
+    <string name="settings_auto_resume_on_wired_headset_connected">Lanjutkan pada koneksi earphone kabel</string>
+    <string name="settings_auto_resume_on_wired_headset_connected_on">Lanjutkan pemutaran saat earphone kabel disambungkan</string>
 
     <string name="settings_auto_resume_on_bluetooth_a2dp_connected">Lanjutkan pada koneksi Bluetooth</string>
-    <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Lanjutkan pemutaran pada koneksi perangkat Bluetooth A2DP</string>
+    <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Lanjutkan pemutaran pada koneksi perangkat Bluetooth</string>
 
     <string name="settings_warn_no_wifi">Peringatan Wi-Fi</string>
     <string name="settings_warn_no_wifi_on">Peringatkan saat memutar tanpa koneksi Wi-Fi</string>

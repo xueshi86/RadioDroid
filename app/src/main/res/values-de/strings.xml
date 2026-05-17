@@ -220,10 +220,10 @@
     <string name="settings_connect_timeout">Verbindungszeitüberschreitung</string>
     <string name="settings_milliseconds_format">%d Millisekunden</string>
 
-    <string name="settings_pause_when_noisy">Pause bei Kopfhörertrennung</string>
+    <string name="settings_pause_when_noisy">Pause bei Kabel-Kopfhörertrennung</string>
 
-    <string name="settings_auto_resume_on_wired_headset_connected">Kopfhörer/Kabelverbindung</string>
-    <string name="settings_auto_resume_on_wired_headset_connected_on">Die Wiedergabe wird bei Kopfhörer/Kabelwiederverbindung fortgesetzt.</string>
+    <string name="settings_auto_resume_on_wired_headset_connected">Kabel-Kopfhörerverbindung</string>
+    <string name="settings_auto_resume_on_wired_headset_connected_on">Die Wiedergabe wird bei Kabel-Kopfhörerverbindung fortgesetzt.</string>
     <string name="settings_auto_resume_do_not_resume">Die Wiedergabe wird bei Wiederanschluss des Abspielgeräts (Kopfhörer/Kabel/Bluetooth) nicht fortgesetzt.</string>
 
     <string name="settings_auto_resume_on_bluetooth_a2dp_connected">Bluetoothverbindung</string>
@@ -243,4 +243,55 @@
     <string name="settings_retry_timeout">Zeitüberschreitung für Wiederverbindungsversuche</string>
     <string name="settings_seconds_format">%d Sekunden</string>
     <string name="settings_view_mpd_servers">Ihre Server</string>
+    
+    <string name="empty_database_title">Lokale Datenbank ist leer</string>
+    <string name="empty_database_message">Lokale Datenbank ist leer, bitte aktualisieren Sie zuerst die lokale Datenbank in den Einstellungen</string>
+    <string name="empty_database_button">Lokale Datenbank aktualisieren</string>
+    <string name="empty_database_icon_desc">Symbol für leere Datenbank</string>
+    <string name="error_checking_database">Fehler beim Überprüfen der lokalen Datenbank: %1$s</string>
+    <string name="error_no_valid_stations_in_db">Keine gültigen Senderdaten in der lokalen Datenbank gefunden, versuchen Sie die lokale Datenbank zu aktualisieren</string>
+    <string name="error_no_stations_in_db">Keine Sender in der lokalen Datenbank gefunden, versuchen Sie die lokale Datenbank zu aktualisieren</string>
+    <string name="error_no_valid_stations_data">Keine gültigen Senderdaten in der lokalen Datenbank</string>
+    <string name="error_no_stations_data">Keine Senderdaten in der lokalen Datenbank</string>
+    <string name="error_repository_not_initialized">Daten-Repository nicht initialisiert, bitte App neu starten</string>
+    <string name="no_recently_updated_stations">Keine kürzlich aktualisierten Sender gefunden</string>
+    <string name="db_update_incomplete_hint">Datenbankaktualisierung möglicherweise unvollständig, versuchen Sie die lokale Datenbank in den Einstellungen zu aktualisieren</string>
+    <string name="error_context_not_available">App-Kontext nicht verfügbar, bitte App neu starten</string>
+    <string name="error_activity_not_available">Activity nicht verfügbar, bitte App neu starten</string>
+    <string name="error_no_valid_stations_found">Keine gültigen Sender gefunden</string>
+    <string name="error_no_matching_stations">Keine passenden Sender gefunden</string>
+    <string name="loading_all_stations_fallback">Keine Sender für Sprache(%1$s) gefunden, lade alle Sender…</string>
+    <string name="loading_all_stations_country_fallback">Keine Sender für Land(%1$s) gefunden, lade alle Sender…</string>
+    <string name="error_adapter_not_initialized">Adapter nicht initialisiert, bitte App neu starten</string>
+    <string name="error_displaying_data">Fehler beim Anzeigen der Daten, bitte erneut versuchen</string>
+    <string name="error_search_keyword_required">Bitte geben Sie einen Suchbegriff ein</string>
+    <string name="error_during_search">Fehler bei der Suche: %1$s</string>
+    <string name="error_processing_search_results">Fehler beim Verarbeiten der Suchergebnisse: %1$s</string>
+    <string name="error_no_valid_top_click_data">Keine gültigen Top-Klick-Daten gefunden</string>
+    <string name="error_no_top_click_data">Keine Top-Klick-Daten gefunden</string>
+    <string name="error_no_valid_top_vote_data">Keine gültigen Top-Bewertungsdaten gefunden</string>
+    <string name="error_no_top_vote_data">Keine Top-Bewertungsdaten gefunden</string>
+    <string name="content_desc_pause_station">Wiedergabe von Sender %1$s pausieren</string>
+    <string name="content_desc_pause">Pausieren</string>
+    <string name="content_desc_play_station">Sender %1$s abspielen</string>
+    <string name="content_desc_play">Sender abspielen</string>
+    <string name="content_desc_station_format">Sender %1$s</string>
+    <string name="content_desc_no_station_selected">Kein Sender ausgewählt</string>
+    <string name="content_desc_listening_station">Höre Sender %1$s</string>
+    <string name="db_status_summary">Letzte Aktualisierung: %1$s, Senderanzahl: %2$d</string>
+    <string name="db_status_never_updated">Datenbank wurde noch nicht aktualisiert</string>
+    <string name="db_status_error">Status konnte nicht abgerufen werden: %1$s</string>
+    <string name="export_type_file">Datei</string>
+    <string name="recording_delete_title">Aufnahme löschen</string>
+    <string name="recording_delete_confirm">Möchten Sie \"%s\" wirklich löschen?</string>
+    <string name="recording_deleted">Aufnahme gelöscht</string>
+    <string name="recording_delete_failed">Aufnahme konnte nicht gelöscht werden</string>
+    <string name="recording_file_not_found">Aufnahmedatei nicht gefunden</string>
+    <string name="recording_play_error">Aufnahme kann nicht wiedergegeben werden</string>
+    <string name="recording_details">Details</string>
+    <string name="recording_detail_name">Dateiname:</string>
+    <string name="recording_detail_path">Dateipfad:</string>
+    <string name="recording_detail_size">Dateigröße:</string>
+    <string name="recording_detail_duration">Dauer (geschätzt):</string>
+    <string name="recording_detail_modified">Geändert:</string>
 </resources>

@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="10dp"
-        android:text="设置睡眠时间 (分钟)"
+        android:text="@string/sleep_timer_set_title"
         android:textSize="16sp" />
 
     <LinearLayout
@@ -35,7 +35,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
-            android:text="分钟"
+            android:text="@string/sleep_timer_minutes_label"
             android:textSize="16sp" />
 
     </LinearLayout>
@@ -45,7 +45,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="10dp"
-        android:text="输入1到99之间的分钟数"
+        android:text="@string/sleep_timer_hint"
         android:textSize="14sp"
         android:textColor="#666666" />
 

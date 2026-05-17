@@ -8,8 +8,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.bluetooth.BluetoothA2dp;
-import android.bluetooth.BluetoothHeadset;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -18,6 +17,8 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.media.audiofx.AudioEffect;
@@ -73,6 +74,7 @@ import net.programmierecke.radiodroid2.station.live.StreamLiveInfo;
 import net.programmierecke.radiodroid2.players.RadioPlayer;
 import net.programmierecke.radiodroid2.recording.RecordingsManager;
 import net.programmierecke.radiodroid2.recording.RunningRecordingInfo;
+import net.programmierecke.radiodroid2.ui.EqualizerActivity;
 
 import static android.content.Intent.ACTION_MEDIA_BUTTON;
 
@@ -125,14 +127,38 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     private RadioPlayer radioPlayer;
 
     private AudioManager audioManager;
+    private AudioFocusRequest audioFocusRequest;
     private MediaSessionCompat mediaSession;
     private PowerManager powerManager;
     private PowerManager.WakeLock wakeLock;
     private WifiManager.WifiLock wifiLock;
 
     private BecomingNoisyReceiver becomingNoisyReceiver = new BecomingNoisyReceiver();
-    private HeadsetConnectionReceiver headsetConnectionReceiver = new HeadsetConnectionReceiver();
+    private AudioDeviceMonitor audioDeviceMonitor;
     private ConnectivityChecker connectivityChecker = new ConnectivityChecker();
+
+    private android.media.audiofx.Equalizer serviceEqualizer;
+    private android.media.audiofx.BassBoost serviceBassBoost;
+    private boolean eqActivityOpen = false;
+
+    private final BroadcastReceiver eqActivityReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (EqualizerActivity.ACTION_EQ_ACTIVITY_OPENED.equals(action)) {
+                eqActivityOpen = true;
+                releaseServiceEqualizer();
+            } else if (EqualizerActivity.ACTION_EQ_ACTIVITY_CLOSED.equals(action)) {
+                eqActivityOpen = false;
+                if (radioPlayer != null) {
+                    int sessionId = radioPlayer.getAudioSessionId();
+                    if (sessionId != 0) {
+                        applyEqualizerSettings(sessionId);
+                    }
+                }
+            }
+        }
+    };
 
     private PauseReason pauseReason = PauseReason.NONE;
 
@@ -341,6 +367,14 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         public boolean isNotificationActive() throws RemoteException {
             return PlayerService.this.notificationIsActive;
         }
+
+        @Override
+        public int getAudioSessionId() throws RemoteException {
+            if (radioPlayer != null) {
+                return radioPlayer.getAudioSessionId();
+            }
+            return 0;
+        }
     };
 
     private MediaSessionCompat.Callback mediaSessionCallback = null;
@@ -439,6 +473,8 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         return itsBinder;
     }
 
+    private HeadsetConnectionReceiver dynamicHeadsetReceiver;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -469,12 +505,13 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
         trackHistoryRepository = radioDroidApp.getTrackHistoryRepository();
 
-        final IntentFilter headsetConnectionFilter = new IntentFilter();
-        headsetConnectionFilter.addAction(Intent.ACTION_HEADSET_PLUG);
-        headsetConnectionFilter.addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED);
-        headsetConnectionFilter.addAction(BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED);
+        final IntentFilter eqActivityFilter = new IntentFilter();
+        eqActivityFilter.addAction(EqualizerActivity.ACTION_EQ_ACTIVITY_OPENED);
+        eqActivityFilter.addAction(EqualizerActivity.ACTION_EQ_ACTIVITY_CLOSED);
+        registerReceiver(eqActivityReceiver, eqActivityFilter);
 
-        registerReceiver(headsetConnectionReceiver, headsetConnectionFilter);
+        audioDeviceMonitor = new AudioDeviceMonitor(this);
+        audioDeviceMonitor.register();
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -497,7 +534,13 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
         radioPlayer.destroy();
 
-        unregisterReceiver(headsetConnectionReceiver);
+        unregisterReceiver(eqActivityReceiver);
+        if (audioDeviceMonitor != null) {
+            audioDeviceMonitor.unregister();
+            audioDeviceMonitor = null;
+        }
+
+        releaseServiceEqualizer();
         
         // Clean up handler to prevent memory leaks
         if (handler != null) {
@@ -821,12 +864,22 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     }
 
     private int acquireAudioFocus() {
-
-        int result = audioManager.requestAudioFocus(afChangeListener,
-                // Use the music stream.
-                AudioManager.STREAM_MUSIC,
-                // Request permanent focus.
-                AudioManager.AUDIOFOCUS_GAIN);
+        int result;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build();
+            audioFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                    .setAudioAttributes(audioAttributes)
+                    .setOnAudioFocusChangeListener(afChangeListener)
+                    .build();
+            result = audioManager.requestAudioFocus(audioFocusRequest);
+        } else {
+            result = audioManager.requestAudioFocus(afChangeListener,
+                    AudioManager.STREAM_MUSIC,
+                    AudioManager.AUDIOFOCUS_GAIN);
+        }
         if (result != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
             Log.e(TAG, "acquiring audio focus failed!");
             toastOnUi(R.string.error_grant_audiofocus);
@@ -836,8 +889,12 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     }
 
     private void releaseAudioFocus() {
-
-        audioManager.abandonAudioFocus(afChangeListener);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && audioFocusRequest != null) {
+            audioManager.abandonAudioFocusRequest(audioFocusRequest);
+            audioFocusRequest = null;
+        } else {
+            audioManager.abandonAudioFocus(afChangeListener);
+        }
     }
 
     void acquireWakeLockAndWifiLock() {
@@ -979,6 +1036,121 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                 Toast.makeText(itsContext, itsContext.getResources().getString(messageId), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void applyEqualizerSettings(int audioSessionId) {
+        releaseServiceEqualizer();
+
+        if (eqActivityOpen) return;
+
+        SharedPreferences eqPrefs = PreferenceManager.getDefaultSharedPreferences(itsContext);
+        boolean eqEnabled = eqPrefs.getBoolean("equalizer_enabled", false);
+        if (!eqEnabled || audioSessionId == 0) return;
+
+        try {
+            serviceEqualizer = new android.media.audiofx.Equalizer(0, audioSessionId);
+            serviceEqualizer.setEnabled(true);
+
+            int savedPreset = eqPrefs.getInt("equalizer_preset", -1);
+            short numPresets = serviceEqualizer.getNumberOfPresets();
+            short numBands = serviceEqualizer.getNumberOfBands();
+
+            if (savedPreset == -2) {
+                short[] voiceLevels = {-600, -200, 500, 700, 200};
+                for (short i = 0; i < numBands; i++) {
+                    try {
+                        int centerFreq = serviceEqualizer.getCenterFreq(i);
+                        short level;
+                        if (i < voiceLevels.length) {
+                            level = voiceLevels[i];
+                        } else if (centerFreq < 200000) {
+                            level = -600;
+                        } else if (centerFreq < 500000) {
+                            level = -200;
+                        } else if (centerFreq < 2000000) {
+                            level = 500;
+                        } else if (centerFreq < 5000000) {
+                            level = 700;
+                        } else {
+                            level = 200;
+                        }
+                        serviceEqualizer.setBandLevel(i, level);
+                    } catch (Exception ignored) {
+                    }
+                }
+            } else if (savedPreset == -3) {
+                short[] musicLevels = {500, 200, 0, 350, 500};
+                for (short i = 0; i < numBands; i++) {
+                    try {
+                        int centerFreq = serviceEqualizer.getCenterFreq(i);
+                        short level;
+                        if (i < musicLevels.length) {
+                            level = musicLevels[i];
+                        } else if (centerFreq < 200000) {
+                            level = 500;
+                        } else if (centerFreq < 500000) {
+                            level = 200;
+                        } else if (centerFreq < 2000000) {
+                            level = 0;
+                        } else if (centerFreq < 5000000) {
+                            level = 350;
+                        } else {
+                            level = 500;
+                        }
+                        serviceEqualizer.setBandLevel(i, level);
+                    } catch (Exception ignored) {
+                    }
+                }
+            } else if (savedPreset >= 0 && savedPreset < numPresets) {
+                try {
+                    serviceEqualizer.usePreset((short) savedPreset);
+                } catch (Exception ignored) {
+                }
+            } else {
+                String levelsStr = eqPrefs.getString("equalizer_band_levels", null);
+                if (levelsStr != null) {
+                    String[] parts = levelsStr.split(",");
+                    for (short i = 0; i < numBands && i < parts.length; i++) {
+                        try {
+                            short level = Short.parseShort(parts[i]);
+                            serviceEqualizer.setBandLevel(i, level);
+                        } catch (Exception ignored) {
+                        }
+                    }
+                }
+            }
+
+            boolean bassBoostEnabled = eqPrefs.getBoolean("bass_boost_enabled", false);
+            if (bassBoostEnabled) {
+                try {
+                    serviceBassBoost = new android.media.audiofx.BassBoost(0, audioSessionId);
+                    serviceBassBoost.setEnabled(true);
+                    short strength = (short) eqPrefs.getInt("bass_boost_strength", 0);
+                    if (strength > 0) {
+                        serviceBassBoost.setStrength(strength);
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void releaseServiceEqualizer() {
+        if (serviceEqualizer != null) {
+            try {
+                serviceEqualizer.release();
+            } catch (Exception ignored) {
+            }
+            serviceEqualizer = null;
+        }
+        if (serviceBassBoost != null) {
+            try {
+                serviceBassBoost.release();
+            } catch (Exception ignored) {
+            }
+            serviceBassBoost = null;
+        }
     }
 
     private void updateNotification() {
@@ -1168,9 +1340,13 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                         i.putExtra(AudioEffect.EXTRA_AUDIO_SESSION, audioSessionId);
                         i.putExtra(AudioEffect.EXTRA_PACKAGE_NAME, getPackageName());
                         itsContext.sendBroadcast(i);
+
+                        applyEqualizerSettings(audioSessionId);
                         break;
                     }
                     default: {
+                        releaseServiceEqualizer();
+
                         if (state != PlayState.PrePlaying) {
                             disableMediaSession();
                         }

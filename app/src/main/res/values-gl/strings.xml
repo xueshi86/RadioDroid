@@ -167,15 +167,15 @@
     <string name="settings_seconds_format">%d segundos</string>
     <string name="settings_milliseconds_format">%d milisegundos</string>
 
-    <string name="settings_pause_when_noisy">Pausa ao desconectar auriculares</string>
+    <string name="settings_pause_when_noisy">Pausa ao desconectar auriculares con cable</string>
 
     <string name="settings_auto_resume_do_not_resume">Non retomar</string>
 
-    <string name="settings_auto_resume_on_wired_headset_connected">Retomar en conexión con cable</string>
-    <string name="settings_auto_resume_on_wired_headset_connected_on">Retomar a reprodución ao volver a conectar auriculares con cable</string>
+    <string name="settings_auto_resume_on_wired_headset_connected">Retomar en conexión de auriculares con cable</string>
+    <string name="settings_auto_resume_on_wired_headset_connected_on">Retomar a reprodución ao conectar auriculares con cable</string>
 
     <string name="settings_auto_resume_on_bluetooth_a2dp_connected">Retomar con conexión Bluetooth</string>
-    <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Retomar reprodución ao conectar auriculares Bluetooth A2DP</string>
+    <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Retomar reprodución ao conectar auriculares Bluetooth</string>
 
     <string name="settings_warn_no_wifi">Aviso desconexión Wi-Fi</string>
     <string name="settings_warn_no_wifi_on">Avisar cando se está a reproducir sen conexión Wi-Fi</string>

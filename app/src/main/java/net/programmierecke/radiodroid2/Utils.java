@@ -354,20 +354,8 @@ public class Utils {
     }
 
     public static void showPlaySelection(final RadioDroidApp radioDroidApp, final DataRadioStation station, final FragmentManager fragmentManager) {
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(radioDroidApp);
-        final boolean externalAvailable = sharedPref.getBoolean("play_external", false);
-
-        CastHandler castHandler = radioDroidApp.getCastHandler();
-        final boolean castAvailable = castHandler.isCastSessionAvailable();
-
-        final boolean mpdAvailable = radioDroidApp.getMpdClient().isMpdEnabled();
-
-        if (castAvailable && !externalAvailable && !mpdAvailable) {
-            new PlayStationTask(station, radioDroidApp.getApplicationContext(),
-                    url -> castHandler.playRemote(station.Name, url, station.IconUrl),
-                    null)
-                    .execute();
-        } else if (externalAvailable || mpdAvailable) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(radioDroidApp);
+        if (prefs.getBoolean("play_external", false)) {
             showMpdServersDialog(radioDroidApp, fragmentManager, station);
         } else {
             playAndWarnIfMetered(radioDroidApp, station, PlayerType.RADIODROID, () -> play(radioDroidApp, station));
@@ -484,11 +472,13 @@ public class Utils {
     };
 
     public static boolean verifyStoragePermissions(Activity activity, int request_id) {
-        // Check if we have write permission
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return true;
+        }
+
         int permission = ContextCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
         if (permission != PackageManager.PERMISSION_GRANTED) {
-            // We don't have permission so prompt the user
             ActivityCompat.requestPermissions(
                     activity,
                     PERMISSIONS_STORAGE,
@@ -501,11 +491,13 @@ public class Utils {
     }
 
     public static boolean verifyStoragePermissions(Fragment fragment, int request_id) {
-        // Check if we have write permission
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return true;
+        }
+
         int permission = ContextCompat.checkSelfPermission(fragment.requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
         if (permission != PackageManager.PERMISSION_GRANTED) {
-            // We don't have permission so prompt the user
             fragment.requestPermissions(PERMISSIONS_STORAGE, request_id);
             return false;
         }

@@ -157,6 +157,7 @@ public abstract class RadioDroidDatabase extends RoomDatabase {
                     RadioDroidDatabase.class, "radio_droid_database")
                     .addCallback(CALLBACK)
                     .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_5_14, MIGRATION_6_14)
+                    .fallbackToDestructiveMigration()
                     .build();
             
             // 重置关闭标志

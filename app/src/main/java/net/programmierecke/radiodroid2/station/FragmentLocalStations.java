@@ -1,5 +1,6 @@
 package net.programmierecke.radiodroid2.station;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,12 +12,14 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import net.programmierecke.radiodroid2.ActivityMain;
 import net.programmierecke.radiodroid2.FragmentBase;
@@ -31,22 +34,100 @@ import net.programmierecke.radiodroid2.station.ItemAdapterStation;
 import net.programmierecke.radiodroid2.utils.DatabaseEmptyHelper;
 
 import java.util.ArrayList;
-
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class FragmentLocalStations extends FragmentBase implements IFragmentSearchable {
     private static final String TAG = "FragmentLocalStations";
+
+    public static final int SORT_NONE = 0;
+    public static final int SORT_NAME = 1;
+    public static final int SORT_CLICK_COUNT = 2;
+    public static final int SORT_VOTES = 3;
+    public static final int SORT_RECENT = 4;
+    private static final String PREF_SORT_MODE = "local_stations_sort_mode";
+    private static final String PREF_SORT_ASCENDING = "local_stations_sort_ascending";
 
     private RecyclerView rvStations;
     private SwipeRefreshLayout swipeRefreshLayout;
     private LinearLayout layoutError;
     private TextView textErrorMessage;
     private MaterialButton btnRetry;
+    private FloatingActionButton fabScrollToTop;
 
     private ItemAdapterStation stationListAdapter;
     private RadioStationRepository repository;
     private StationsFilter.SearchStyle lastSearchStyle = StationsFilter.SearchStyle.ByName;
     private String lastSearchQuery = "";
+    private int currentSortMode = SORT_CLICK_COUNT;
+    private boolean sortAscending = false;
+    private static final int MAX_DISPLAY_STATIONS = 1000;
+    private List<DataRadioStation> allStations = new ArrayList<>();
+
+    public int getCurrentSortMode() {
+        return currentSortMode;
+    }
+
+    public boolean isSortAscending() {
+        return sortAscending;
+    }
+
+    public void setSortMode(int mode) {
+        if (currentSortMode == mode) {
+            sortAscending = !sortAscending;
+        } else {
+            currentSortMode = mode;
+            sortAscending = true;
+        }
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        prefs.edit()
+                .putInt(PREF_SORT_MODE, currentSortMode)
+                .putBoolean(PREF_SORT_ASCENDING, sortAscending)
+                .apply();
+        applySortAndRefresh();
+    }
+
+    private void applySortAndRefresh() {
+        if (allStations.isEmpty()) return;
+        List<DataRadioStation> sorted = getSortedStations();
+        stationListAdapter.updateList(null, sorted);
+    }
+
+    private List<DataRadioStation> getSortedStations() {
+        List<DataRadioStation> sorted = new ArrayList<>(allStations);
+        Comparator<DataRadioStation> comparator = null;
+        switch (currentSortMode) {
+            case SORT_NAME:
+                comparator = Comparator.comparing(s -> s.Name.toLowerCase());
+                break;
+            case SORT_CLICK_COUNT:
+                comparator = Comparator.comparingInt(s -> s.ClickCount);
+                break;
+            case SORT_VOTES:
+                comparator = Comparator.comparingInt(s -> s.Votes);
+                break;
+            case SORT_RECENT:
+                comparator = Comparator.comparing(s -> s.LastChangeTime, Comparator.nullsLast(Comparator.reverseOrder()));
+                break;
+        }
+        if (comparator != null) {
+            if (!sortAscending) {
+                comparator = comparator.reversed();
+            }
+            Collections.sort(sorted, comparator);
+        }
+        if (sorted.size() > MAX_DISPLAY_STATIONS) {
+            sorted = new ArrayList<>(sorted.subList(0, MAX_DISPLAY_STATIONS));
+        }
+        return sorted;
+    }
+
+    private void updateStationsList(List<DataRadioStation> stations) {
+        allStations = new ArrayList<>(stations);
+        List<DataRadioStation> displayList = getSortedStations();
+        stationListAdapter.updateList(null, displayList);
+    }
 
     @Nullable
     @Override
@@ -58,11 +139,30 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
         layoutError = view.findViewById(R.id.layoutError);
         textErrorMessage = view.findViewById(R.id.textErrorMessage);
         btnRetry = view.findViewById(R.id.btnRetry);
+        fabScrollToTop = view.findViewById(R.id.fabScrollToTop);
 
         // 初始化RecyclerView
         if (getContext() != null) {
             rvStations.setLayoutManager(new LinearLayoutManager(getContext()));
             rvStations.addItemDecoration(new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL));
+        }
+
+        rvStations.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (fabScrollToTop != null) {
+                    boolean canScrollUp = recyclerView.canScrollVertically(-1);
+                    fabScrollToTop.setVisibility(canScrollUp ? View.VISIBLE : View.GONE);
+                }
+            }
+        });
+
+        if (fabScrollToTop != null) {
+            fabScrollToTop.setOnClickListener(v -> {
+                if (rvStations != null) {
+                    rvStations.smoothScrollToPosition(0);
+                }
+            });
         }
         
         // Adapter将在onActivityCreated中初始化，确保Activity可用
@@ -145,7 +245,11 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
             String url = args.getString("url", "");
             Log.d(TAG, "Received URL argument (ignored for local database): " + url);
         }
-        
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        currentSortMode = prefs.getInt(PREF_SORT_MODE, SORT_CLICK_COUNT);
+        sortAscending = prefs.getBoolean(PREF_SORT_ASCENDING, false);
+
         loadData();
     }
 
@@ -206,13 +310,13 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
     }
 
     private void loadStationsBySystemCountry(String systemCountry, String systemLanguage) {
-        Log.d(TAG, "尝试加载系统国家(" + systemCountry + ")的电台");
+        Log.d(TAG, "Loading stations for system country(" + systemCountry + ")");
         
         // 先尝试加载系统国家的电台
         if (getActivity() != null) {
             getActivity().runOnUiThread(() -> {
                 // 首先尝试加载系统国家的电台
-                repository.getStationsByCountryWithLimit(systemCountry, 100).observe(getViewLifecycleOwner(), new Observer<List<RadioStation>>() {
+                repository.getStationsByCountryCodeAll(systemCountry).observe(getViewLifecycleOwner(), new Observer<List<RadioStation>>() {
                     @Override
                     public void onChanged(List<RadioStation> radioStations) {
                         if (radioStations != null && !radioStations.isEmpty()) {
@@ -229,8 +333,8 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
                             }
                             
                             if (!dataStations.isEmpty()) {
-                                stationListAdapter.updateList(null, dataStations);
-                                Log.d(TAG, "加载了 " + dataStations.size() + " 个系统国家(" + systemCountry + ")的电台");
+                                updateStationsList(dataStations);
+                                Log.d(TAG, "Loaded " + dataStations.size() + " stations for country(" + systemCountry + ")");
                             } else {
                                 // 如果系统国家没有电台，尝试加载系统语言的电台
                                 loadStationsBySystemLanguage(systemLanguage);
@@ -251,11 +355,11 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
         // 处理中文语言代码的特殊情况
         final String languageCode = "zh".equals(systemLanguage) ? "chinese" : systemLanguage;
         
-        Log.d(TAG, "尝试加载系统语言(" + languageCode + ")的电台");
+        Log.d(TAG, "Loading stations for system language(" + languageCode + ")");
         
         // 获取系统国家代码
         final String systemCountry = java.util.Locale.getDefault().getCountry();
-        Log.d(TAG, "系统国家代码: " + systemCountry);
+        Log.d(TAG, "System country code: " + systemCountry);
         
         // 先尝试加载系统语言和国家的电台
         if (getActivity() != null) {
@@ -278,7 +382,7 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
                             }
                             
                             if (!dataStations.isEmpty()) {
-                                stationListAdapter.updateList(null, dataStations);
+                                updateStationsList(dataStations);
                                 Log.d(TAG, "加载了 " + dataStations.size() + " 个系统语言(" + languageCode + ")和国家(" + systemCountry + ")的电台");
                             } else {
                                 // 如果系统语言和国家没有电台，尝试只按语言加载
@@ -297,12 +401,12 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
     }
     
     private void loadStationsByLanguageOnly(String languageCode) {
-        Log.d(TAG, "尝试加载系统语言(" + languageCode + ")的电台（不限制国家）");
+        Log.d(TAG, "Loading stations for language(" + languageCode + ") without country restriction");
         
         if (getActivity() != null) {
             getActivity().runOnUiThread(() -> {
                 // 尝试加载系统语言的电台（不限制国家）
-                repository.getStationsByLanguage(languageCode).observe(getViewLifecycleOwner(), new Observer<List<RadioStation>>() {
+                repository.getStationsByLanguageAll(languageCode).observe(getViewLifecycleOwner(), new Observer<List<RadioStation>>() {
                     @Override
                     public void onChanged(List<RadioStation> radioStations) {
                         if (radioStations != null && !radioStations.isEmpty()) {
@@ -319,8 +423,8 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
                             }
                             
                             if (!dataStations.isEmpty()) {
-                                stationListAdapter.updateList(null, dataStations);
-                                Log.d(TAG, "加载了 " + dataStations.size() + " 个系统语言(" + languageCode + ")的电台");
+                                updateStationsList(dataStations);
+                                Log.d(TAG, "Loaded " + dataStations.size() + " stations for language(" + languageCode + ")");
                             } else {
                                 // 如果系统语言没有电台，加载所有电台
                                 showError("系统语言(" + languageCode + ")没有找到电台，正在尝试加载所有电台...");
@@ -340,7 +444,7 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
     }
 
     private void loadAllStations() {
-        Log.d(TAG, "加载所有本地电台");
+        Log.d(TAG, "Loading all local stations");
         
         // 检查repository是否已初始化
         if (repository == null) {
@@ -348,7 +452,7 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
             return;
         }
         
-        repository.getAllStationsByName().observe(getViewLifecycleOwner(), new Observer<List<RadioStation>>() {
+        repository.getAllStationsByClickCount().observe(getViewLifecycleOwner(), new Observer<List<RadioStation>>() {
             @Override
             public void onChanged(List<RadioStation> radioStations) {
                 if (radioStations != null && !radioStations.isEmpty()) {
@@ -365,8 +469,8 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
                     }
                     
                     if (!dataStations.isEmpty()) {
-                        stationListAdapter.updateList(null, dataStations);
-                        Log.d(TAG, "加载了 " + dataStations.size() + " 个所有电台");
+                        updateStationsList(dataStations);
+                        Log.d(TAG, "Loaded " + dataStations.size() + " stations");
                     } else {
                         // 如果所有电台查询也没有结果，显示友好提示信息
                         showError("本地数据库中没有找到任何有效的电台数据，请尝试更新本地数据库");
@@ -403,7 +507,7 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
                     }
                     
                     if (!dataStations.isEmpty()) {
-                        stationListAdapter.updateList(null, dataStations);
+                        updateStationsList(dataStations);
                     } else {
                         showError("本地数据库中没有有效的电台数据");
                     }
@@ -438,7 +542,7 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
                     }
                     
                     if (!dataStations.isEmpty()) {
-                        stationListAdapter.updateList(null, dataStations);
+                        updateStationsList(dataStations);
                     } else {
                         showError("本地数据库中没有有效的电台数据");
                     }
@@ -473,7 +577,7 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
                     }
                     
                     if (!dataStations.isEmpty()) {
-                        stationListAdapter.updateList(null, dataStations);
+                        updateStationsList(dataStations);
                     } else {
                         showError("本地数据库中没有有效的电台数据");
                     }
@@ -536,7 +640,7 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
                         }
                         
                         if (!dataStations.isEmpty()) {
-                            stationListAdapter.updateList(null, dataStations);
+                            updateStationsList(dataStations);
                         } else {
                             showError("没有找到有效的电台");
                         }
@@ -567,10 +671,10 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
     }
     
     private void loadStationsByCountry(String countryCode) {
-        Log.d(TAG, "尝试加载国家(" + countryCode + ")的电台");
+        Log.d(TAG, "Loading stations for country(" + countryCode + ")");
         
         // 加载指定国家的电台
-        repository.getStationsByCountryWithLimit(countryCode, 100).observe(getViewLifecycleOwner(), new Observer<List<RadioStation>>() {
+        repository.getStationsByCountryCodeAll(countryCode).observe(getViewLifecycleOwner(), new Observer<List<RadioStation>>() {
             @Override
             public void onChanged(List<RadioStation> radioStations) {
                 if (radioStations != null && !radioStations.isEmpty()) {
@@ -587,8 +691,8 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
                     }
                     
                     if (!dataStations.isEmpty()) {
-                        stationListAdapter.updateList(null, dataStations);
-                        Log.d(TAG, "加载了 " + dataStations.size() + " 个国家(" + countryCode + ")的电台");
+                        updateStationsList(dataStations);
+                        Log.d(TAG, "Loaded " + dataStations.size() + " stations for country(" + countryCode + ")");
                     } else {
                         // 如果指定国家没有电台，加载所有电台
                         showError("国家(" + countryCode + ")没有找到电台，正在尝试加载所有电台...");

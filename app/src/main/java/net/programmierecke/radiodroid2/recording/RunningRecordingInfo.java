@@ -7,7 +7,7 @@ public class RunningRecordingInfo {
     private String title;
     private String fileName;
     private FileOutputStream outputStream;
-    private long bytesWritten;
+    private volatile long bytesWritten;
 
     public Recordable getRecordable() {
         return recordable;

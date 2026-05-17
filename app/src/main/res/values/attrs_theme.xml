@@ -18,4 +18,5 @@
     <attr name="swipeDeleteBackgroundColor" format="reference" />
 
     <attr name="colorAccentMy" format="reference" />
+    <attr name="actionBarPopupTheme" format="reference" />
 </resources>

@@ -258,13 +258,11 @@ public class DatabaseUpdateWorker extends Worker implements RadioStationReposito
             } catch (Exception e) {
                 Log.e(TAG, "Database update failed", e);
                 
-                // 保存错误信息到SharedPreferences
-                String errorMessage = getApplicationContext().getString(R.string.update_failed_message, e.getMessage());
+                String userFriendlyMessage = getUserFriendlyErrorMessage(e);
                 prefs.edit()
-                    .putString(KEY_PROGRESS_MESSAGE, errorMessage)
+                    .putString(KEY_PROGRESS_MESSAGE, userFriendlyMessage)
                     .commit();
                 
-                // 清除更新状态
                 prefs.edit()
                     .putBoolean(KEY_IS_UPDATING, false)
                     .commit();
@@ -276,10 +274,9 @@ public class DatabaseUpdateWorker extends Worker implements RadioStationReposito
         } catch (Exception e) {
             Log.e(TAG, "Unexpected error in doWork", e);
             
-            // 保存错误信息到SharedPreferences
-            String errorMessage = getApplicationContext().getString(R.string.update_failed) + ": " + e.getMessage();
+            String userFriendlyMessage = getUserFriendlyErrorMessage(e);
             prefs.edit()
-                .putString(KEY_PROGRESS_MESSAGE, errorMessage)
+                .putString(KEY_PROGRESS_MESSAGE, userFriendlyMessage)
                 .commit();
             
             return Result.failure();
@@ -290,94 +287,33 @@ public class DatabaseUpdateWorker extends Worker implements RadioStationReposito
     public void onProgress(String message) {
         Log.d(TAG, "Progress: " + message);
         
-        // 更新进度信息 - 使用commit()确保同步更新，立即持久化
         prefs.edit()
             .putString(KEY_PROGRESS_MESSAGE, message)
-            .putInt(KEY_PROGRESS_MESSAGE_RES_ID, 0)  // 标记为使用字符串方式
-            .commit();
+            .putInt(KEY_PROGRESS_MESSAGE_RES_ID, 0)
+            .apply();
     }
     
     @Override
     public void onProgress(String message, int progress, int total) {
         Log.d(TAG, "Progress: " + message + " (" + progress + "/" + total + ")");
         
-        // 检查是否已被取消
         if (isStopped()) {
-            Log.d(TAG, "Worker is stopped, throwing exception to interrupt sync process");
             throw new RuntimeException(getApplicationContext().getString(R.string.update_cancelled));
         }
         
-        // 检查SharedPreferences中的取消标志
         boolean isCancelled = prefs.getBoolean(KEY_UPDATE_CANCELLED, false);
         if (isCancelled) {
-            Log.d(TAG, "Update cancelled flag detected, throwing exception to interrupt sync process");
             throw new RuntimeException(getApplicationContext().getString(R.string.update_cancelled));
         }
         
         prefs.edit()
             .putString(KEY_PROGRESS_MESSAGE, message)
-            .putInt(KEY_PROGRESS_MESSAGE_RES_ID, 0)  // 标记为使用字符串方式
+            .putInt(KEY_PROGRESS_MESSAGE_RES_ID, 0)
             .putInt(KEY_PROGRESS_CURRENT, progress)
             .putInt(KEY_PROGRESS_TOTAL, total)
-            .commit();
+            .apply();
         
-        prefs.getAll();
-        
-        // 更新前台服务通知
         updateForegroundNotification(message, progress, total);
-        
-        Log.d(TAG, "准备调用forceWriteProgressToDisk()，progress=" + progress);
-        try {
-            forceWriteProgressToDisk(message, progress, total);
-            Log.d(TAG, "forceWriteProgressToDisk()调用完成");
-        } catch (Exception e) {
-            Log.e(TAG, "forceWriteProgressToDisk()调用失败: " + e.getMessage(), e);
-        }
-    }
-    
-    private void forceWriteProgressToDisk(String message, int progress, int total) {
-        try {
-            String prefsPath = getApplicationContext().getApplicationInfo().dataDir + "/shared_prefs/database_update_prefs.xml";
-            File prefsFile = new File(prefsPath);
-            Log.d(TAG, "尝试写入SharedPreferences文件: " + prefsPath + ", exists: " + prefsFile.exists());
-            
-            if (prefsFile.exists()) {
-                prefsFile.setLastModified(System.currentTimeMillis());
-                Log.d(TAG, "强制刷新SharedPreferences文件时间戳");
-                
-                String xmlContent = "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n" +
-                    "<map>\n" +
-                    "    <boolean name=\"" + KEY_IS_UPDATING + "\" value=\"true\" />\n" +
-                    "    <string name=\"" + KEY_PROGRESS_MESSAGE + "\">" + escapeXml(message) + "</string>\n" +
-                    "    <int name=\"" + KEY_PROGRESS_CURRENT + "\" value=\"" + progress + "\" />\n" +
-                    "    <int name=\"" + KEY_PROGRESS_TOTAL + "\" value=\"" + total + "\" />\n" +
-                    "    <long name=\"" + KEY_UPDATE_START_TIME + "\" value=\"" + prefs.getLong(KEY_UPDATE_START_TIME, 0) + "\" />\n" +
-                    "    <long name=\"" + KEY_UPDATE_ID + "\" value=\"" + prefs.getLong(KEY_UPDATE_ID, 0) + "\" />\n" +
-                    "</map>";
-                
-                FileOutputStream fos = new FileOutputStream(prefsFile);
-                fos.write(xmlContent.getBytes("UTF-8"));
-                fos.close();
-                Log.d(TAG, "直接写入SharedPreferences文件成功: progress=" + progress);
-            } else {
-                Log.w(TAG, "SharedPreferences文件不存在，跳过直接写入: " + prefsPath);
-            }
-        } catch (IOException e) {
-            Log.w(TAG, "直接写入SharedPreferences文件失败: " + e.getMessage());
-            e.printStackTrace();
-        } catch (Exception e) {
-            Log.w(TAG, "强制刷新文件时间戳失败: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-    
-    private String escapeXml(String input) {
-        if (input == null) return "";
-        return input.replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-            .replace("\"", "&quot;")
-            .replace("'", "&apos;");
     }
     
     @Override
@@ -405,6 +341,28 @@ public class DatabaseUpdateWorker extends Worker implements RadioStationReposito
             .commit();
     }
     
+    private String getUserFriendlyErrorMessage(Exception e) {
+        String message = e.getMessage();
+        if (message == null) {
+            message = e.getClass().getSimpleName();
+        }
+        
+        if (message.contains("migration") || message.contains("Migration")) {
+            return getApplicationContext().getString(R.string.update_failed_db_migration);
+        } else if (message.contains("network") || message.contains("Network") || 
+                   message.contains("connect") || message.contains("Connect") ||
+                   message.contains("timeout") || message.contains("Timeout") ||
+                   message.contains("UnknownHost") || message.contains("SocketException")) {
+            return getApplicationContext().getString(R.string.update_failed_network);
+        } else if (message.contains("disk") || message.contains("Disk") || 
+                   message.contains("space") || message.contains("Space") ||
+                   message.contains("SQLiteFull")) {
+            return getApplicationContext().getString(R.string.update_failed_storage);
+        } else {
+            return getApplicationContext().getString(R.string.update_failed_message, message);
+        }
+    }
+
     /**
      * 检查是否有正在进行的更新
      */
@@ -595,44 +553,15 @@ public class DatabaseUpdateWorker extends Worker implements RadioStationReposito
             // 设置取消标志，防止恢复逻辑误判
             prefs.edit()
                 .putBoolean(KEY_IS_UPDATING, false)
-                .putLong(KEY_UPDATE_ID, 0)  // 清除更新ID
-                .putLong(KEY_UPDATE_START_TIME, 0)  // 清除开始时间
-                .putLong(KEY_APP_LAST_FOREGROUND_TIME, 0)  // 清除应用前台时间
+                .putLong(KEY_UPDATE_ID, 0)
+                .putLong(KEY_UPDATE_START_TIME, 0)
+                .putLong(KEY_APP_LAST_FOREGROUND_TIME, 0)
                 .putString(KEY_PROGRESS_MESSAGE, context.getString(R.string.update_cancelled))
-                .putInt(KEY_PROGRESS_CURRENT, 0)  // 重置当前进度
-                .putInt(KEY_PROGRESS_TOTAL, 0)  // 重置总进度
-                .putBoolean(KEY_UPDATE_CANCELLED, true)  // 设置取消标志
-                .putLong("cancel_timestamp", System.currentTimeMillis())  // 添加取消时间戳
-                .commit();  // 使用commit()确保立即写入
-            
-            // 强制删除SharedPreferences文件并重新创建，确保彻底清除状态
-            try {
-                String prefsPath = context.getApplicationInfo().dataDir + "/shared_prefs/" + PREFS_NAME + ".xml";
-                java.io.File prefsFile = new java.io.File(prefsPath);
-                if (prefsFile.exists()) {
-                    // 删除文件
-                    prefsFile.delete();
-                    Log.d(TAG, "Deleted SharedPreferences file: " + prefsPath);
-                    
-                    // 重新创建文件，只写入取消状态
-                    SharedPreferences newPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-                    newPrefs.edit()
-                        .putBoolean(KEY_IS_UPDATING, false)
-                        .putLong(KEY_UPDATE_ID, 0)
-                        .putLong(KEY_UPDATE_START_TIME, 0)
-                        .putLong(KEY_APP_LAST_FOREGROUND_TIME, 0)
-                        .putString(KEY_PROGRESS_MESSAGE, context.getString(R.string.update_cancelled))
-                        .putInt(KEY_PROGRESS_CURRENT, 0)
-                        .putInt(KEY_PROGRESS_TOTAL, 0)
-                        .putBoolean(KEY_UPDATE_CANCELLED, true)
-                        .putLong("cancel_timestamp", System.currentTimeMillis())  // 添加取消时间戳
-                        .commit();
-                    
-                    Log.d(TAG, "Recreated SharedPreferences with cancelled state");
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error recreating SharedPreferences file", e);
-            }
+                .putInt(KEY_PROGRESS_CURRENT, 0)
+                .putInt(KEY_PROGRESS_TOTAL, 0)
+                .putBoolean(KEY_UPDATE_CANCELLED, true)
+                .putLong("cancel_timestamp", System.currentTimeMillis())
+                .apply();
             
             // 取消WorkManager任务 - 使用多种方式确保彻底取消
             androidx.work.WorkManager workManager = androidx.work.WorkManager.getInstance(context);

@@ -46,16 +46,18 @@ public class ItemAdapterRadioAlarm extends ArrayAdapter<DataRadioStationAlarm> {
 		TextView tvTime = (TextView) v.findViewById(R.id.textViewTime);
 		SwitchCompat s = (SwitchCompat)v.findViewById(R.id.switch1);
 		ImageButton b = (ImageButton) v.findViewById(R.id.buttonDeleteAlarm);
-		final ImageButton buttonRepeating = (ImageButton) v.findViewById(R.id.checkboxRepeating);
+		SwitchCompat switchRepeating = (SwitchCompat) v.findViewById(R.id.switchRepeating);
 		final LinearLayout repeatDaysView = (LinearLayout) v.findViewById(R.id.repeatDaysView);
 
 		if (repeatDaysView.getChildCount() < 1) {
 			populateWeekDayButtons(aData, vi, repeatDaysView);
 		}
 
-		buttonRepeating.setOnClickListener(new View.OnClickListener() {
+		switchRepeating.setOnCheckedChangeListener(null);
+		switchRepeating.setChecked(aData.repeating);
+		switchRepeating.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 			@Override
-			public void onClick(View view) {
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				ram.toggleRepeating(aData.id);
 			}
 		});
@@ -84,7 +86,6 @@ public class ItemAdapterRadioAlarm extends ArrayAdapter<DataRadioStationAlarm> {
 			});
 		}
 		repeatDaysView.setVisibility(aData.repeating ? View.VISIBLE : View.GONE);
-		buttonRepeating.setContentDescription(this.context.getResources().getString(aData.repeating ? R.string.image_button_dont_repeat : R.string.image_button_repeat));
 		return v;
 	}
 

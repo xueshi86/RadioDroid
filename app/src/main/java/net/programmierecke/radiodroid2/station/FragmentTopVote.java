@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import net.programmierecke.radiodroid2.FragmentBase;
 import net.programmierecke.radiodroid2.R;
@@ -36,6 +37,7 @@ public class FragmentTopVote extends FragmentBase implements IFragmentSearchable
     private ViewGroup layoutError;
     private MaterialButton btnRetry;
     private SwipeRefreshLayout swiperefresh;
+    private FloatingActionButton fabScrollToTop;
 
     private ItemAdapterStation stationListAdapter;
     private RadioStationRepository repository;
@@ -50,6 +52,7 @@ public class FragmentTopVote extends FragmentBase implements IFragmentSearchable
         recyclerViewStations = view.findViewById(R.id.recyclerViewStations);
         layoutError = view.findViewById(R.id.layoutError);
         swiperefresh = view.findViewById(R.id.swiperefresh);
+        fabScrollToTop = view.findViewById(R.id.fabScrollToTop);
 
         // Adapter和LayoutManager将在onActivityCreated中初始化，确保Activity可用
         recyclerViewStations.setAdapter(null);
@@ -107,6 +110,23 @@ public class FragmentTopVote extends FragmentBase implements IFragmentSearchable
             recyclerViewStations.setLayoutManager(new LinearLayoutManager(getActivity()));
             // 添加分隔线
             recyclerViewStations.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL));
+
+            recyclerViewStations.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                    if (fabScrollToTop != null) {
+                        fabScrollToTop.setVisibility(recyclerView.canScrollVertically(-1) ? View.VISIBLE : View.GONE);
+                    }
+                }
+            });
+
+            if (fabScrollToTop != null) {
+                fabScrollToTop.setOnClickListener(v -> {
+                    if (recyclerViewStations != null) {
+                        recyclerViewStations.smoothScrollToPosition(0);
+                    }
+                });
+            }
         } else {
             Log.e(TAG, "Activity is null in onActivityCreated, cannot initialize adapter");
             return;
@@ -136,7 +156,7 @@ public class FragmentTopVote extends FragmentBase implements IFragmentSearchable
         
         // 检查repository是否已初始化
         if (repository == null) {
-            showError(true, "数据仓库未初始化，请重启应用");
+            showError(true, getString(R.string.error_repository_not_initialized));
             return;
         }
         
@@ -153,7 +173,7 @@ public class FragmentTopVote extends FragmentBase implements IFragmentSearchable
 
                 @Override
                 public void onCheckError(String error) {
-                    showError(true, "检查本地数据库时出错：" + error);
+                    showError(true, getString(R.string.error_checking_database, error));
                 }
             });
     }
@@ -163,7 +183,7 @@ public class FragmentTopVote extends FragmentBase implements IFragmentSearchable
         if (getActivity() != null) {
             getActivity().runOnUiThread(() -> {
                 // 从本地数据库获取投票排行前100的电台数据
-                repository.getTopVoteStations(100).observe(getViewLifecycleOwner(), new Observer<List<RadioStation>>() {
+                repository.getTopVoteStationsAll().observe(getViewLifecycleOwner(), new Observer<List<RadioStation>>() {
                     @Override
                     public void onChanged(List<RadioStation> radioStations) {
                         if (radioStations != null && !radioStations.isEmpty()) {
@@ -183,10 +203,10 @@ public class FragmentTopVote extends FragmentBase implements IFragmentSearchable
                                 showContent(true);
                                 Log.d(TAG, "加载了 " + dataStations.size() + " 个投票排行电台");
                             } else {
-                                showError(true, "没有找到有效的投票排行数据");
+                                showError(true, getString(R.string.error_no_valid_top_vote_data));
                             }
                         } else {
-                            showError(true, "没有找到投票排行数据");
+                            showError(true, getString(R.string.error_no_top_vote_data));
                         }
                     }
                 });

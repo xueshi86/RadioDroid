@@ -223,7 +223,11 @@ public class FragmentPlayerSmall extends Fragment {
     private void setupStationIcon() {
         boolean useCircularIcons = PreferenceManager.getDefaultSharedPreferences(requireContext().getApplicationContext()).getBoolean("circular_icons", false);
         if (useCircularIcons) {
-            imageViewIcon.setBackgroundColor(requireContext().getResources().getColor(android.R.color.black));
+            if (Utils.isDarkTheme(requireContext())) {
+                imageViewIcon.setBackgroundColor(requireContext().getResources().getColor(R.color.windowBackgroundDark));
+            } else {
+                imageViewIcon.setBackgroundColor(requireContext().getResources().getColor(android.R.color.white));
+            }
         }
 
         ImageView transparentCircle = requireView().findViewById(R.id.transparentCircle);
@@ -238,20 +242,19 @@ public class FragmentPlayerSmall extends Fragment {
             // 为无障碍服务提供更多上下文
             DataRadioStation station = Utils.getCurrentOrLastStation(requireContext());
             if (station != null) {
-                buttonPlay.setContentDescription("暂停播放" + station.Name + "电台");
+                buttonPlay.setContentDescription(getString(R.string.content_desc_pause_station, station.Name));
             } else {
-                buttonPlay.setContentDescription("暂停播放");
+                buttonPlay.setContentDescription(getString(R.string.content_desc_pause));
             }
         } else {
             buttonPlay.setImageResource(R.drawable.ic_play_circle);
             buttonPlay.setContentDescription(getResources().getString(R.string.detail_play));
             
-            // 为无障碍服务提供更多上下文
             DataRadioStation station = Utils.getCurrentOrLastStation(requireContext());
             if (station != null) {
-                buttonPlay.setContentDescription("播放" + station.Name + "电台");
+                buttonPlay.setContentDescription(getString(R.string.content_desc_play_station, station.Name));
             } else {
-                buttonPlay.setContentDescription("播放电台");
+                buttonPlay.setContentDescription(getString(R.string.content_desc_play));
             }
         }
 
@@ -263,19 +266,19 @@ public class FragmentPlayerSmall extends Fragment {
         
         // 为无障碍服务提供更多上下文信息
         if (station != null) {
-            String stationDescription = stationName + "电台";
+            String stationDescription = getString(R.string.content_desc_station_format, stationName);
             if (!TextUtils.isEmpty(station.Country)) {
-                stationDescription += "，来自" + station.Country;
+                stationDescription += ", " + station.Country;
             }
             if (!TextUtils.isEmpty(station.TagsAll)) {
                 String[] tags = station.TagsAll.split(",");
                 if (tags.length > 0) {
-                    stationDescription += "，类型：" + tags[0];
+                    stationDescription += ", " + tags[0];
                 }
             }
             textViewStationName.setContentDescription(stationDescription);
         } else {
-            textViewStationName.setContentDescription("未选择电台");
+            textViewStationName.setContentDescription(getString(R.string.content_desc_no_station_selected));
         }
 
         StreamLiveInfo liveInfo = PlayerServiceUtil.getMetadataLive();
@@ -335,7 +338,10 @@ public class FragmentPlayerSmall extends Fragment {
             imageViewIcon.setVisibility(View.GONE);
         } else if (station != null && station.hasIcon()) {
             imageViewIcon.setVisibility(View.VISIBLE);
-            PlayerServiceUtil.getStationIcon(imageViewIcon, station.IconUrl);
+            PlayerServiceUtil.getStationIcon(imageViewIcon, station.IconUrl, station.HomePageUrl);
+        } else if (station != null && !TextUtils.isEmpty(station.HomePageUrl)) {
+            imageViewIcon.setVisibility(View.VISIBLE);
+            PlayerServiceUtil.getStationIcon(imageViewIcon, null, station.HomePageUrl);
         } else {
             imageViewIcon.setVisibility(View.VISIBLE);
             imageViewIcon.setImageResource(R.drawable.ic_launcher);

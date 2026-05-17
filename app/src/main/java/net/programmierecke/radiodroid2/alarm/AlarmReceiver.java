@@ -28,10 +28,12 @@ import net.programmierecke.radiodroid2.BuildConfig;
 import net.programmierecke.radiodroid2.IPlayerService;
 import net.programmierecke.radiodroid2.service.ConnectivityChecker;
 import net.programmierecke.radiodroid2.service.PlayerService;
+import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
 import net.programmierecke.radiodroid2.R;
 import net.programmierecke.radiodroid2.RadioDroidApp;
 import net.programmierecke.radiodroid2.Utils;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
+import net.programmierecke.radiodroid2.alarm.DataRadioStationAlarm;
 
 import okhttp3.OkHttpClient;
 
@@ -39,6 +41,7 @@ public class AlarmReceiver extends BroadcastReceiver {
     String url;
     int alarmId;
     DataRadioStation station;
+    boolean wasPlayingBeforeAlarm = false;
     PowerManager powerManager;
     PowerManager.WakeLock wakeLock;
     private WifiManager.WifiLock wifiLock;
@@ -60,17 +63,29 @@ public class AlarmReceiver extends BroadcastReceiver {
         RadioDroidApp radioDroidApp = (RadioDroidApp)context.getApplicationContext();
         RadioAlarmManager ram = radioDroidApp.getAlarmManager();
         station = ram.getStation(alarmId);
+
+        DataRadioStationAlarm alarm = ram.getById(alarmId);
+        if (alarm != null && !alarm.repeating) {
+            ram.setEnabled(alarmId, false);
+        }
+
         ram.resetAllAlarms();
+
+        wasPlayingBeforeAlarm = PlayerServiceUtil.isPlaying();
 
         if (station != null && alarmId >= 0) {
             if(BuildConfig.DEBUG) { Log.d(TAG,"radio id:"+alarmId); }
 
-            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(radioDroidApp);
-            final boolean warnOnMetered = sharedPref.getBoolean("warn_no_wifi", false);
-            if (warnOnMetered && ConnectivityChecker.getCurrentConnectionType(radioDroidApp) == ConnectivityChecker.ConnectionType.METERED) {
-                PlaySystemAlarm(context);
+            if (wasPlayingBeforeAlarm) {
+                stopPlayback(context);
             } else {
-                Play(context, station.StationUuid);
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(radioDroidApp);
+                final boolean warnOnMetered = sharedPref.getBoolean("warn_no_wifi", false);
+                if (warnOnMetered && ConnectivityChecker.getCurrentConnectionType(radioDroidApp) == ConnectivityChecker.ConnectionType.METERED) {
+                    PlaySystemAlarm(context);
+                } else {
+                    Play(context, station.StationUuid);
+                }
             }
         }else{
             toast = Toast.makeText(context, context.getResources().getText(R.string.alert_alarm_not_working), Toast.LENGTH_SHORT);
@@ -124,11 +139,14 @@ public class AlarmReceiver extends BroadcastReceiver {
             if(BuildConfig.DEBUG) { Log.d(TAG, "Service came online"); }
             itsPlayerService = IPlayerService.Stub.asInterface(binder);
             try {
-                station.playableUrl = url;
-                itsPlayerService.SetStation(station);
-                itsPlayerService.Play(true);
-                // default timeout 1 hour
-                itsPlayerService.addTimer(timeout*60);
+                if (wasPlayingBeforeAlarm) {
+                    itsPlayerService.Stop();
+                } else {
+                    station.playableUrl = url;
+                    itsPlayerService.SetStation(station);
+                    itsPlayerService.Play(true);
+                    itsPlayerService.addTimer(timeout*60);
+                }
             } catch (RemoteException e) {
                 Log.e(TAG,"play error:"+e);
             }
@@ -143,6 +161,28 @@ public class AlarmReceiver extends BroadcastReceiver {
     };
 
     int timeout = 10;
+
+    private void stopPlayback(final Context context) {
+        Intent anIntent = new Intent(context, PlayerService.class);
+        context.getApplicationContext().bindService(anIntent, new ServiceConnection() {
+            public void onServiceConnected(ComponentName className, IBinder binder) {
+                IPlayerService service = IPlayerService.Stub.asInterface(binder);
+                try {
+                    service.Stop();
+                } catch (RemoteException e) {
+                    Log.e(TAG, "stop error:" + e);
+                }
+                try {
+                    context.getApplicationContext().unbindService(this);
+                } catch (Exception ignored) {
+                }
+                releaseLocks();
+            }
+
+            public void onServiceDisconnected(ComponentName className) {
+            }
+        }, context.BIND_AUTO_CREATE);
+    }
 
     private void Play(final Context context, final String stationId) {
         RadioDroidApp radioDroidApp = (RadioDroidApp) context.getApplicationContext();

@@ -28,6 +28,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.squareup.picasso.Picasso;
 
 import net.programmierecke.radiodroid2.R;
+import net.programmierecke.radiodroid2.Utils;
 
 import java.text.DateFormat;
 import java.util.Objects;
@@ -40,6 +41,12 @@ public class TrackHistoryInfoDialog extends BottomSheetDialogFragment {
 
     public TrackHistoryInfoDialog(TrackHistoryEntry historyEntry) {
         this.historyEntry = historyEntry;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setStyle(STYLE_NORMAL, Utils.getBottomSheetDialogThemeResId(requireContext()));
     }
 
     @Nullable
@@ -59,7 +66,7 @@ public class TrackHistoryInfoDialog extends BottomSheetDialogFragment {
         final float px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 200, resource.getDisplayMetrics());
         Picasso.get()
                 .load(historyEntry.artUrl)
-                .placeholder(AppCompatResources.getDrawable(getContext(), R.drawable.ic_photo_24dp))
+                .placeholder(AppCompatResources.getDrawable(getContext(), R.mipmap.ic_launcher))
                 .resize((int) px, 0)
                 .into(imageViewTrackArt);
 

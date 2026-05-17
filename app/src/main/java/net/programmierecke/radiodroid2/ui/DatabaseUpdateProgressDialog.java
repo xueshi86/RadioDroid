@@ -14,6 +14,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 import java.io.File;
@@ -156,10 +157,12 @@ public class DatabaseUpdateProgressDialog {
     private Handler handler;
     private Runnable updateRunnable;
     private boolean isShowing = false;
-    
+    private boolean errorToastShown = false;
+
     // 用于检测进度卡死
     private int lastProgressValue = 0;
     private long lastProgressTime = 0;
+    private int mProgressPercentage = 0;
     
     public DatabaseUpdateProgressDialog(Context context) {
         this.context = context;
@@ -179,9 +182,11 @@ public class DatabaseUpdateProgressDialog {
      * 显示进度对话框
      */
     public void show() {
-        Log.d(TAG, "show() called, isShowing=" + isShowing + ", dialog=" + (dialog != null ? "not null" : "null") + 
+        Log.d(TAG, "show() called, isShowing=" + isShowing + ", dialog=" + (dialog != null ? "not null" : "null") +
                   ", dialog.isShowing=" + (dialog != null ? dialog.isShowing() : "N/A"));
-        
+
+        errorToastShown = false;
+
         if (dialog != null && dialog.isShowing()) {
             Log.d(TAG, "Dialog already showing, returning");
             return;
@@ -427,7 +432,9 @@ public class DatabaseUpdateProgressDialog {
         }
         
         // 检查是否是错误消息
-        boolean isError = progressMessage.contains(context.getString(R.string.update_failed)) || progressMessage.contains(context.getString(R.string.error_list_update));
+        boolean isError = progressMessage.toLowerCase().contains(context.getString(R.string.update_failed).toLowerCase()) || 
+                          progressMessage.contains(context.getString(R.string.error_list_update)) ||
+                          progressMessage.contains(context.getString(R.string.update_cancelled));
         
         // 检查取消标志，如果设置了取消标志，不显示"更新被系统暂停"消息
         SharedPreferences prefsCheck = context.getSharedPreferences("database_update_prefs", Context.MODE_PRIVATE);
@@ -610,22 +617,19 @@ public class DatabaseUpdateProgressDialog {
                 progressText.setVisibility(View.VISIBLE);
                 progressText.setText(String.format("%d/%d (%d%%)", 
                     progress.current, progress.total, progress.getPercentage()));
+                mProgressPercentage = progress.getPercentage();
             } else {
                 progressText.setVisibility(View.VISIBLE);
                 progressText.setText(context.getString(R.string.update_preparing));
             }
         }
         
-        // 如果是错误消息，延迟关闭对话框
         if (isError) {
-            Log.d(TAG, "Error detected, scheduling dialog dismissal");
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    Log.d(TAG, "Dismissing dialog after error");
-                    dismiss();
-                }
-            }, 5000); // 5秒后关闭对话框
+            if (!errorToastShown) {
+                Toast.makeText(context, progressMessage, Toast.LENGTH_LONG).show();
+                errorToastShown = true;
+            }
+            dismiss();
             return;
         }
         
@@ -645,8 +649,14 @@ public class DatabaseUpdateProgressDialog {
                     // 只有在对话框确实显示且确认不是更新状态时才关闭
                     if (!delayedProgress.isUpdating && dialogActuallyShowing && !finalWorkManagerUpdating) {
                         // 确认确实不是在更新状态，才关闭对话框
-                        Log.d(TAG, "Update confirmed finished, dismissing dialog");
+                        Log.d(TAG, "Update confirmed finished, dismissing dialog, progress=" + mProgressPercentage + "%");
                         dismiss();
+                        
+                        // 如果不是正常完成（进度不到99%），通知用户下载中断
+                        if (mProgressPercentage < 99) {
+                            Log.d(TAG, "Update was interrupted, showing toast notification");
+                            Toast.makeText(context, R.string.update_interrupted_message, Toast.LENGTH_LONG).show();
+                        }
                     } else if (isShowing && !dialogActuallyShowing && finalWorkManagerUpdating) {
                         // 内部状态显示应该显示，但对话框实际不可见，且WorkManager确认有任务在运行，尝试重新显示
                         Log.d(TAG, "Internal state shows should be showing but dialog not visible, trying to show again");

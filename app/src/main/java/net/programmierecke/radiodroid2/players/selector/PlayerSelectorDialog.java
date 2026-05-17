@@ -25,6 +25,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import net.programmierecke.radiodroid2.R;
 import net.programmierecke.radiodroid2.RadioDroidApp;
+import net.programmierecke.radiodroid2.Utils;
 import net.programmierecke.radiodroid2.players.mpd.MPDClient;
 import net.programmierecke.radiodroid2.players.mpd.MPDServerData;
 import net.programmierecke.radiodroid2.players.mpd.MPDServersRepository;
@@ -59,6 +60,12 @@ public class PlayerSelectorDialog extends BottomSheetDialogFragment {
     public PlayerSelectorDialog(@NonNull MPDClient mpdClient, @NonNull DataRadioStation stationToPlay) {
         this.mpdClient = mpdClient;
         this.stationToPlay = stationToPlay;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setStyle(STYLE_NORMAL, Utils.getBottomSheetDialogThemeResId(requireContext()));
     }
 
     @Nullable

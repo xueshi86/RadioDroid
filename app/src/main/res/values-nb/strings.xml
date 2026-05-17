@@ -167,15 +167,15 @@
   <string name="settings_seconds_format">%d sekunder</string>
   <string name="settings_milliseconds_format">%d millisekunder</string>
   
-  <string name="settings_pause_when_noisy">Pause når hodetelefoner kobles fra</string>
+  <string name="settings_pause_when_noisy">Pause når kablede hodetelefoner kobles fra</string>
 
   <string name="settings_auto_resume_do_not_resume">Ikke gjenoppta</string>
 
-  <string name="settings_auto_resume_on_wired_headset_connected">Gjenoppta ved trådet tilkobling</string>
-  <string name="settings_auto_resume_on_wired_headset_connected_on">Gjenoppta avspilling ved trådet hodetelefontilkobling plug-in</string>
+  <string name="settings_auto_resume_on_wired_headset_connected">Gjenoppta ved kablet hodetelefontilkobling</string>
+  <string name="settings_auto_resume_on_wired_headset_connected_on">Gjenoppta avspilling ved kablet hodetelefontilkobling</string>
 
   <string name="settings_auto_resume_on_bluetooth_a2dp_connected">Gjenoppta ved Bluetooth tilkobling</string>
-  <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Gjenoppta avspilling ved tilkobling av Bluetooth A2DP enheter</string>
+  <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Gjenoppta avspilling ved tilkobling av Bluetooth enheter</string>
   
   <string name="settings_warn_no_wifi">Vis advarsel når ikke tilkoblet wifi</string>
   <string name="settings_warn_no_wifi_on">Vis advarsel ved avspilling uten wifi tilkobling</string>

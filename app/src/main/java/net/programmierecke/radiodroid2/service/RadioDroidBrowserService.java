@@ -45,7 +45,7 @@ public class RadioDroidBrowserService extends MediaBrowserServiceCompat {
                     }
 
                     playTask = new GetRealLinkAndPlayTask(context, station, playerService);
-                    playTask.execute();
+                    playTask.executeOnExecutor(android.os.AsyncTask.THREAD_POOL_EXECUTOR);
                 }
             }
         }

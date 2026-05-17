@@ -19,7 +19,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import net.programmierecke.radiodroid2.R;
 import net.programmierecke.radiodroid2.Utils;
+import net.programmierecke.radiodroid2.database.RadioDroidDatabase;
+import net.programmierecke.radiodroid2.database.RadioStation;
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class TrackHistoryAdapter extends PagedListAdapter<TrackHistoryEntry, TrackHistoryAdapter.TrackHistoryItemViewHolder> {
     class TrackHistoryItemViewHolder extends RecyclerView.ViewHolder {
@@ -45,6 +50,8 @@ public class TrackHistoryAdapter extends PagedListAdapter<TrackHistoryEntry, Tra
     private final LayoutInflater inflater;
     private boolean shouldLoadIcons;
     private Drawable stationImagePlaceholder;
+    private RadioDroidDatabase database;
+    private final Map<String, String> homePageUrlCache = new HashMap<>();
 
     public TrackHistoryAdapter(FragmentActivity activity) {
         super(DIFF_CALLBACK);
@@ -52,7 +59,8 @@ public class TrackHistoryAdapter extends PagedListAdapter<TrackHistoryEntry, Tra
         this.context = activity;
         inflater = LayoutInflater.from(context);
 
-        stationImagePlaceholder = AppCompatResources.getDrawable(context, R.drawable.ic_photo_24dp);
+        stationImagePlaceholder = AppCompatResources.getDrawable(context, R.mipmap.ic_launcher);
+        database = RadioDroidDatabase.getDatabase(activity.getApplication());
     }
 
     @NonNull
@@ -67,15 +75,16 @@ public class TrackHistoryAdapter extends PagedListAdapter<TrackHistoryEntry, Tra
     public void onBindViewHolder(@NonNull final TrackHistoryItemViewHolder holder, int position) {
         final TrackHistoryEntry historyEntry = getItem(position);
 
-        // null if a placeholder
         if (historyEntry == null) {
             return;
         }
 
         if (shouldLoadIcons) {
-            if (!TextUtils.isEmpty(historyEntry.stationIconUrl)) {
-                //setupIcon(useCircularIcons, holder.imageViewIcon, holder.transparentImageView);
-                PlayerServiceUtil.getStationIcon(holder.imageViewStationIcon, historyEntry.stationIconUrl);
+            String iconUrl = historyEntry.stationIconUrl;
+            String homePageUrl = homePageUrlCache.get(historyEntry.stationUuid);
+
+            if (!TextUtils.isEmpty(iconUrl) || !TextUtils.isEmpty(homePageUrl)) {
+                PlayerServiceUtil.getStationIcon(holder.imageViewStationIcon, iconUrl, homePageUrl);
             } else {
                 holder.imageViewStationIcon.setImageDrawable(stationImagePlaceholder);
             }
@@ -83,11 +92,9 @@ public class TrackHistoryAdapter extends PagedListAdapter<TrackHistoryEntry, Tra
             holder.imageViewStationIcon.setVisibility(View.GONE);
         }
 
-        // 显示曲名和艺术家，如果存储的是英文的Unknown或中文的未知，则显示本地化的Unknown
         String trackName = historyEntry.track;
         String artistName = historyEntry.artist;
         
-        // 检查是否需要本地化显示
         if ("Unknown Track".equals(trackName) || "未知".equals(trackName)) {
             trackName = context.getString(R.string.unknown_track);
         }
@@ -108,6 +115,35 @@ public class TrackHistoryAdapter extends PagedListAdapter<TrackHistoryEntry, Tra
     public void submitList(PagedList<TrackHistoryEntry> pagedList) {
         shouldLoadIcons = Utils.shouldLoadIcons(context);
         super.submitList(pagedList);
+        preloadHomePageUrls(pagedList);
+    }
+
+    private void preloadHomePageUrls(final PagedList<TrackHistoryEntry> pagedList) {
+        if (pagedList == null || pagedList.size() == 0) {
+            return;
+        }
+        database.getQueryExecutor().execute(() -> {
+            boolean changed = false;
+            for (int i = 0; i < pagedList.size(); i++) {
+                TrackHistoryEntry entry = pagedList.get(i);
+                if (entry != null && !TextUtils.isEmpty(entry.stationUuid) && !homePageUrlCache.containsKey(entry.stationUuid)) {
+                    try {
+                        RadioStation station = database.radioStationDao().getStationById(entry.stationUuid);
+                        if (station != null && !TextUtils.isEmpty(station.homepage)) {
+                            homePageUrlCache.put(entry.stationUuid, station.homepage);
+                            changed = true;
+                        } else {
+                            homePageUrlCache.put(entry.stationUuid, "");
+                        }
+                    } catch (Exception e) {
+                        homePageUrlCache.put(entry.stationUuid, "");
+                    }
+                }
+            }
+            if (changed && activity != null && !activity.isFinishing()) {
+                activity.runOnUiThread(() -> notifyDataSetChanged());
+            }
+        });
     }
 
     private void showTrackInfoDialog(final TrackHistoryEntry historyEntry) {

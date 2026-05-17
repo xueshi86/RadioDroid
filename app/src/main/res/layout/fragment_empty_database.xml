@@ -14,14 +14,14 @@
         android:layout_marginBottom="16dp"
         android:src="@drawable/ic_database_outline"
         app:tint="?android:attr/textColorSecondary"
-        android:contentDescription="空数据库图标" />
+        android:contentDescription="@string/empty_database_icon_desc" />
 
     <TextView
         android:id="@+id/emptyDatabaseTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        android:text="本地数据库为空"
+        android:text="@string/empty_database_title"
         android:textSize="18sp"
         android:textStyle="bold" />
 
@@ -31,7 +31,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"
         android:gravity="center"
-        android:text="请先在设置中更新本地数据库"
+        android:text="@string/empty_database_message"
         android:textSize="14sp" />
 
     <com.google.android.material.button.MaterialButton
@@ -39,7 +39,7 @@
         style="@style/Widget.MaterialComponents.Button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="更新本地数据库"
+        android:text="@string/empty_database_button"
         app:icon="@drawable/ic_refresh"
         app:iconGravity="textStart" />
 

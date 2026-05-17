@@ -31,6 +31,7 @@
     <string name="action_stop">Стоп</string>
     <string name="action_search">Поиск</string>
     <string name="action_delete">Удалить</string>
+    <string name="action_retry">Повторить</string>
     <string name="action_delete_history">Удалить историю</string>
     <string name="action_delete_favorites">Удалить избранное</string>
     <string name="action_delete_stream_history">Очистить историю треков</string>
@@ -49,6 +50,7 @@
     <string name="action_copy_info">Копировать информацию</string>
     <string name="error_station_load">Не удалось подключиться к станции</string>
     <string name="error_list_update">Не удалось подключиться к серверу браузера радиостанций</string>
+    <string name="error_loading_data">Ошибка загрузки данных</string>
 
     <string name="share_action">Поделиться ссылкой на станцию с..</string>
 
@@ -95,6 +97,9 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
 
     <string name="sleep_timer" formatted="true">Таймер сна: %1$02d:%2$02d</string>
     <string name="sleep_timer_title">Остановить воспроизведение после выбранного минуты</string>
+    <string name="sleep_timer_set_title">Установить таймер сна (минуты)</string>
+    <string name="sleep_timer_minutes_label">минуты</string>
+    <string name="sleep_timer_hint">Введите минуты от 1 до 99</string>
     <string name="sleep_timer_apply">Применить</string>
     <string name="sleep_timer_clear">Очистить</string>
     <string name="nav_item_add_sleep">Таймер сна</string>
@@ -136,7 +141,11 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="language_system">Системный по умолчанию</string>
     <string name="language_english">English</string>
     <string name="language_chinese">中文</string>
+    <string name="language_spanish">Español</string>
     <string name="language_russian">Русский</string>
+    <string name="language_french">Français</string>
+    <string name="language_italian">Italiano</string>
+    <string name="language_brazilian_portuguese">Português (Brasil)</string>
     
     <string name="multi_search_title">Многокритериальный поиск</string>
     <string name="multi_search_country">Страна</string>
@@ -204,6 +213,9 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="database_status_from_fields">Статус базы данных обновлен из полей базы данных: %1$s</string>
     
     <string name="empty_database_message">Локальная база данных пуста, пожалуйста, сначала обновите локальную базу данных в настройках</string>
+    <string name="empty_database_title">Локальная база данных пуста</string>
+    <string name="empty_database_button">Обновить локальную базу данных</string>
+    <string name="empty_database_icon_desc">Иконка пустой базы данных</string>
     <string name="no_results_message">Не найдено категорий %s, обновление базы данных может быть неполным, попробуйте обновить локальную базу данных в настройках</string>
     <string name="settings_theme_selection_title">Тема</string>
     <string name="theme_light">Светлая</string>
@@ -287,7 +299,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="settings_seconds_format">%d секунд</string>
     <string name="settings_milliseconds_format">%d миллисекунд</string>
 
-    <string name="settings_pause_when_noisy">Пауза при отключении гарнитуры</string>
+    <string name="settings_pause_when_noisy">Пауза при отключении проводной гарнитуры</string>
 
     <string name="settings_auto_resume_do_not_resume">Не возобновлять</string>
 
@@ -295,7 +307,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="settings_auto_resume_on_wired_headset_connected_on">Возобновить воспроизведение при подключении проводной гарнитуры</string>
 
     <string name="settings_auto_resume_on_bluetooth_a2dp_connected">Возобновить при подключении Bluetooth</string>
-    <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Возобновить воспроизведение при подключении устройства Bluetooth A2DP</string>
+    <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Возобновить воспроизведение при подключении устройства Bluetooth</string>
 
     <string name="settings_warn_no_wifi">Предупреждение при отсутствии Wi-Fi</string>
     <string name="settings_warn_no_wifi_on">Предупреждать при воспроизведении без подключения Wi-Fi</string>
@@ -364,6 +376,37 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="error_grant_audiofocus">Запрос на аудио фокус не был предоставлен системой</string>
 
     <string name="error_no_equalizer_found">Не найдено приложение эквалайзера</string>
+    <string name="equalizer_enabled">Включить эквалайзер</string>
+    <string name="equalizer_bass_boost">Усиление басов</string>
+    <string name="equalizer_bass_boost_strength">Сила</string>
+    <string name="equalizer_preset">Пресет</string>
+    <string name="equalizer_custom">Пользовательский</string>
+    <string name="equalizer_preset_voice">Голос</string>
+    <string name="equalizer_preset_music">Музыка</string>
+    <string name="eq_preset_normal">Нормальный</string>
+    <string name="eq_preset_classical">Классика</string>
+    <string name="eq_preset_dance">Танцевальный</string>
+    <string name="eq_preset_flat">Плоский</string>
+    <string name="eq_preset_folk">Фолк</string>
+    <string name="eq_preset_heavy_metal">Хэви-метал</string>
+    <string name="eq_preset_hip_hop">Хип-хоп</string>
+    <string name="eq_preset_jazz">Джаз</string>
+    <string name="eq_preset_pop">Поп</string>
+    <string name="eq_preset_rock">Рок</string>
+    <string name="eq_preset_unknown">Пресет %d</string>
+    <string name="eq_preset_latin">Латин</string>
+    <string name="eq_preset_blues">Блюз</string>
+    <string name="eq_preset_electronic">Электронная</string>
+    <string name="eq_preset_rnb">R&amp;B</string>
+    <string name="eq_preset_country">Кантри</string>
+    <string name="equalizer_bands">Частотные полосы</string>
+    <string name="equalizer_not_playing">Сначала начните воспроизведение станции для использования эквалайзера</string>
+    <string name="equalizer_settings_saved_hint">Настройки вступят в силу при начале воспроизведения</string>
+    <string name="equalizer_init_failed">Не удалось инициализировать эквалайзер. Ваше устройство может не поддерживать эту функцию.</string>
+    <string name="equalizer_open_external">Открыть системный эквалайзер</string>
+    <string name="equalizer_open_external_summary">Открыть встроенную панель аудиоэффектов устройства (если доступна)</string>
+    <string name="equalizer_use_builtin">Использовать встроенный эквалайзер</string>
+    <string name="equalizer_no_external">Системный эквалайзер не найден. Используется встроенный эквалайзер.</string>
 
     <string name="player_info_status">Статус:&#160;</string>
     <string name="player_info_status_stopped">остановлено</string>
@@ -482,6 +525,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="progress_updating_database">Обновление базы данных</string>
     <string name="progress_completing_update">Завершение обновления</string>
     <string name="update_failed">Обновление не удалось</string>
+    <string name="update_failed_toast">Ошибка обновления базы данных. Проверьте подключение и попробуйте снова.</string>
     <string name="update_failed_message">Обновление не удалось: %s</string>
     <string name="progress_stalled">Обновление застало, попытка восстановления...</string>
     <string name="progress_downloading_data">Загрузка данных станций</string>
@@ -489,6 +533,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="update_dialog_title">Обновление радиобазы данных</string>
     <string name="update_cancelled">Обновление отменено</string>
     <string name="update_system_paused">Обновление приостановлено системой, ожидание возобновления...</string>
+    <string name="update_interrupted_message">Обновление базы данных было прервано. Пожалуйста, попробуйте снова или проверьте подключение к сети.</string>
     <string name="update_preparing">Подготовка...</string>
     <string name="update_confirm_cancel_title">Отмена обновления</string>
     <string name="update_confirm_cancel_message">Вы уверены, что хотите отменить обновление базы данных?</string>
@@ -546,4 +591,68 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="error_import_failed">Не удалось импортировать: %1$s</string>
     <string name="success_imported_stations">Импортировано %1$d станций из %2$s</string>
     
+    <string name="error_checking_database">Ошибка проверки локальной базы данных: %1$s</string>
+    <string name="error_no_valid_stations_in_db">В локальной базе данных не найдены корректные данные станций, попробуйте обновить локальную базу данных</string>
+    <string name="error_no_stations_in_db">В локальной базе данных не найдены станции, попробуйте обновить локальную базу данных</string>
+    <string name="error_no_valid_stations_data">Нет корректных данных станций в локальной базе данных</string>
+    <string name="error_no_stations_data">Нет данных станций в локальной базе данных</string>
+    <string name="error_repository_not_initialized">Репозиторий данных не инициализирован, перезапустите приложение</string>
+    <string name="no_recently_updated_stations">Не найдены недавно обновлённые станции</string>
+    <string name="db_update_incomplete_hint">Обновление базы данных может быть неполным, попробуйте обновить локальную базу данных в настройках</string>
+    <string name="error_context_not_available">Контекст приложения недоступен, перезапустите приложение</string>
+    <string name="error_activity_not_available">Activity недоступна, перезапустите приложение</string>
+    <string name="error_no_valid_stations_found">Корректные станции не найдены</string>
+    <string name="error_no_matching_stations">Соответствующие станции не найдены</string>
+    <string name="loading_all_stations_fallback">Станции на языке(%1$s) не найдены, загружаем все станции…</string>
+    <string name="loading_all_stations_country_fallback">Станции для страны(%1$s) не найдены, загружаем все станции…</string>
+    <string name="error_adapter_not_initialized">Адаптер не инициализирован, перезапустите приложение</string>
+    <string name="error_displaying_data">Ошибка отображения данных, попробуйте снова</string>
+    <string name="error_search_keyword_required">Введите ключевое слово для поиска</string>
+    <string name="error_during_search">Ошибка при поиске: %1$s</string>
+    <string name="error_processing_search_results">Ошибка обработки результатов поиска: %1$s</string>
+    <string name="error_no_valid_top_click_data">Корректные данные топ по кликам не найдены</string>
+    <string name="error_no_top_click_data">Данные топ по кликам не найдены</string>
+    <string name="error_no_valid_top_vote_data">Корректные данные топ по голосам не найдены</string>
+    <string name="error_no_top_vote_data">Данные топ по голосам не найдены</string>
+    <string name="content_desc_pause_station">Приостановить воспроизведение станции %1$s</string>
+    <string name="content_desc_pause">Приостановить</string>
+    <string name="content_desc_play_station">Воспроизвести станцию %1$s</string>
+    <string name="content_desc_play">Воспроизвести станцию</string>
+    <string name="content_desc_station_format">Станция %1$s</string>
+    <string name="content_desc_no_station_selected">Станция не выбрана</string>
+    <string name="content_desc_listening_station">Слушаем станцию %1$s</string>
+    <string name="db_status_summary">Последнее обновление: %1$s, Количество станций: %2$d</string>
+    <string name="db_status_never_updated">База данных ещё не обновлялась</string>
+    <string name="db_status_error">Не удалось получить статус: %1$s</string>
+    <string name="export_type_file">Файл</string>
+    <string name="about_fork_description">Форк RadioDroid от xueshi86</string>
+    <string name="about_github">GitHub: https://github.com/xueshi86/RadioDroid</string>
+    <string name="action_random_play">Случайное воспроизведение</string>
+    <string name="action_sort">Сортировка</string>
+    <string name="error_creating_shortcut">Не удалось создать ярлык</string>
+    <string name="settings_close_on_bluetooth_disconnect">Закрыть при отключении Bluetooth</string>
+    <string name="settings_close_on_bluetooth_disconnect_summary">Автоматически закрывать приложение при отключении аудиоустройства Bluetooth</string>
+    <string name="settings_close_when_noisy">Закрыть при отключении проводной гарнитуры</string>
+    <string name="settings_close_when_noisy_summary">Автоматически закрывать приложение при отключении проводной гарнитуры (требуется пауза при отключении проводной гарнитуры)</string>
+    <string name="settings_pause_on_bluetooth_disconnect">Пауза при отключении Bluetooth</string>
+    <string name="settings_pause_on_bluetooth_disconnect_summary">Автоматически приостанавливать воспроизведение при отключении аудиоустройства Bluetooth</string>
+    <string name="sort_ascending">По возрастанию ↑</string>
+    <string name="sort_by_click_count">По популярности</string>
+    <string name="sort_by_name">По названию</string>
+    <string name="sort_by_recent">По дате</string>
+    <string name="sort_by_votes">По голосам</string>
+    <string name="sort_descending">По убыванию ↓</string>
+    <string name="startup_show_player">Показать историю треков</string>
+    <string name="recording_delete_title">Удалить запись</string>
+    <string name="recording_delete_confirm">Вы уверены, что хотите удалить \"%s\"?</string>
+    <string name="recording_deleted">Запись удалена</string>
+    <string name="recording_delete_failed">Не удалось удалить запись</string>
+    <string name="recording_file_not_found">Файл записи не найден</string>
+    <string name="recording_play_error">Не удалось воспроизвести запись</string>
+    <string name="recording_details">Подробности</string>
+    <string name="recording_detail_name">Имя файла:</string>
+    <string name="recording_detail_path">Путь к файлу:</string>
+    <string name="recording_detail_size">Размер файла:</string>
+    <string name="recording_detail_duration">Длительность (прибл.):</string>
+    <string name="recording_detail_modified">Изменён:</string>
 </resources>

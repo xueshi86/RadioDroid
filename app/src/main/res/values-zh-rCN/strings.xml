@@ -5,6 +5,8 @@
     <string name="detail_tags">标签</string>
     <string name="detail_country">国家</string>
     <string name="detail_create_shortcut">添加到主屏幕</string>
+    <string name="detail_shortcut_requested">正在请求添加快捷方式到主屏幕</string>
+    <string name="error_creating_shortcut">创建快捷方式失败</string>
     <string name="detail_language">语言</string>
     <string name="detail_weblink">网络链接</string>
     <string name="detail_visit_website">@string/action_station_visit_website</string>
@@ -60,6 +62,8 @@
 
     <string name="about_text">此程序使用位于 https://www.radio-browser.info 的免费广播电台目录。\n任何人都可以添加电台到目录中，就像一个在线（流媒体）广播电台的维基一样。\n\n联系：\nsegler_alex@web.de\n\n漏洞跟踪：\nhttps://github.com/segler-alex/RadioDroid/issues\n\n如果您喜欢此软件并愿意提供帮助，敬请给本人发送邮件，我真的需要有绘图经验的朋友来让这个程序别太虐待眼睛了:)\n或许哪位朋友会画图标、图片...或者哪位程序员会修复漏洞，或者开发（功能，不是漏洞;）\n还有关于新功能的建议也一向非常感谢！\n\n此程序是在 GPLv3 授权下的免费软件。https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="about_version">版本：%1$s</string>
+    <string name="about_fork_description">Fork RadioDroid by xueshi86</string>
+    <string name="about_github">GitHub：https://github.com/xueshi86/RadioDroid</string>
     <string name="detail_star">添加到收藏</string>
     <string name="detail_unstar">从收藏删除</string>
     <string name="detail_play_in_external_player">@string/action_play_in_external</string>
@@ -127,6 +131,7 @@
     <string name="startup_show_favorites">显示收藏</string>
     <string name="startup_show_history">显示历史</string>
     <string name="startup_show_last_view">显示上次浏览</string>
+    <string name="startup_show_player">显示曲目历史</string>
 
     <string name="settings_load_icons">显示电台图标</string>
     <string name="settings_load_icons_on">下载电台图标</string>
@@ -183,15 +188,25 @@
     <string name="settings_seconds_format">%d 秒</string>
     <string name="settings_milliseconds_format">%d 毫秒</string>
     
-    <string name="settings_pause_when_noisy">耳机断开时暂停</string>
+    <string name="settings_pause_when_noisy">有线耳机断开时暂停</string>
+    <string name="settings_close_when_noisy">有线耳机断开时关闭应用</string>
+    <string name="settings_close_when_noisy_summary">拔出有线耳机时自动关闭应用（需开启"有线耳机断开时暂停"）</string>
+    <string name="settings_bluetooth_connect_permission">附近设备权限</string>
+    <string name="settings_bluetooth_connect_permission_summary">Android 12 及以上版本需要此权限来检测蓝牙音频设备的连接和断开。此权限属于"附近设备"权限类别。未授权时，蓝牙断开/连接相关功能将无法使用。</string>
+    <string name="settings_bluetooth_connect_permission_not_needed">当前安卓版本无需此权限</string>
+    <string name="settings_bluetooth_connect_permission_denied">权限被拒绝，蓝牙断开/连接功能不可用</string>
+    <string name="settings_pause_on_bluetooth_disconnect">蓝牙断开时暂停</string>
+    <string name="settings_pause_on_bluetooth_disconnect_summary">蓝牙音频设备断开连接时自动暂停播放</string>
+    <string name="settings_close_on_bluetooth_disconnect">蓝牙断开时关闭应用</string>
+    <string name="settings_close_on_bluetooth_disconnect_summary">蓝牙音频设备断开连接时自动关闭应用（需开启"蓝牙断开时暂停"）</string>
 
     <string name="settings_auto_resume_do_not_resume">不恢复</string>
 
-    <string name="settings_auto_resume_on_wired_headset_connected">有线连接时恢复</string>
+    <string name="settings_auto_resume_on_wired_headset_connected">有线耳机连接时恢复</string>
     <string name="settings_auto_resume_on_wired_headset_connected_on">有线耳机插入时恢复播放</string>
 
     <string name="settings_auto_resume_on_bluetooth_a2dp_connected">蓝牙连接时恢复</string>
-    <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">蓝牙 A2DP 设备连接时恢复播放</string>
+    <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">蓝牙设备连接时恢复播放</string>
     
     <string name="settings_warn_no_wifi">未使用 Wi-Fi 时警告</string>
     <string name="settings_warn_no_wifi_on">播放时无 Wi-Fi 连接警告</string>
@@ -241,6 +256,8 @@
     <string name="alert_alarm_working">闹钟时间到</string>
     <string name="alert_alarm_not_working">无足够信息启动闹钟</string>
     <string name="alert_select_external_alarm_app">选择音频播放器</string>
+    <string name="no_audio_apps_found">未在此设备上找到音频播放器应用</string>
+    <string name="settings_alarm_audio_player_not_selected">未选择</string>
 
     <string name="alert_press_back_to_exit">再按一次返回退出</string>
 
@@ -255,6 +272,44 @@
     <string name="error_grant_audiofocus">系统未授予音频焦点请求</string>
 
     <string name="error_no_equalizer_found">未发现均衡器程序</string>
+    <string name="equalizer_enabled">启用均衡器</string>
+    <string name="equalizer_bass_boost">低音增强</string>
+    <string name="equalizer_bass_boost_strength">强度</string>
+    <string name="equalizer_preset">预设</string>
+    <string name="equalizer_custom">自定义</string>
+    <string name="equalizer_preset_voice">人声</string>
+    <string name="equalizer_preset_music">音乐</string>
+    <string name="eq_preset_normal">正常</string>
+    <string name="eq_preset_classical">古典</string>
+    <string name="eq_preset_dance">舞曲</string>
+    <string name="eq_preset_flat">平坦</string>
+    <string name="eq_preset_folk">民谣</string>
+    <string name="eq_preset_heavy_metal">重金属</string>
+    <string name="eq_preset_hip_hop">嘻哈</string>
+    <string name="eq_preset_jazz">爵士</string>
+    <string name="eq_preset_pop">流行</string>
+    <string name="eq_preset_rock">摇滚</string>
+    <string name="eq_preset_unknown">预设 %d</string>
+    <string name="eq_preset_latin">拉丁</string>
+    <string name="eq_preset_blues">蓝调</string>
+    <string name="eq_preset_electronic">电子</string>
+    <string name="eq_preset_rnb">节奏蓝调</string>
+    <string name="eq_preset_country">乡村</string>
+    <string name="equalizer_bands">频段</string>
+    <string name="equalizer_not_playing">请先播放电台才能使用均衡器</string>
+    <string name="equalizer_settings_saved_hint">设置将在播放电台时生效</string>
+    <string name="equalizer_init_failed">均衡器初始化失败，您的设备可能不支持此功能</string>
+    <string name="equalizer_open_external">打开系统均衡器</string>
+    <string name="equalizer_open_external_summary">打开设备自带的音频效果面板（如可用）</string>
+    <string name="equalizer_use_builtin">使用内置均衡器</string>
+    <string name="equalizer_no_external">未找到系统均衡器，使用内置均衡器</string>
+    <string name="sort_by_name">按名称排序</string>
+    <string name="sort_by_click_count">按热度排序</string>
+    <string name="sort_by_votes">按投票排序</string>
+    <string name="sort_by_recent">按最近排序</string>
+    <string name="action_sort">排序</string>
+    <string name="sort_ascending">升序 ↑</string>
+    <string name="sort_descending">降序 ↓</string>
 
     <string name="player_info_status">状态：&#160;</string>
     <string name="player_info_status_stopped">已停止</string>
@@ -283,6 +338,7 @@
     <string name="image_button_less">减少</string>
     <string name="image_button_repeat">重复</string>
     <string name="image_button_dont_repeat">不重复</string>
+    <string name="alarm_repeat">重复</string>
     <string name="icon_click_trend_decreasing">热度正在下降</string>
     <string name="icon_click_trend_increasing">热度正在上升</string>
     <string name="icon_click_trend_stable">热度稳定</string>
@@ -358,6 +414,9 @@
     <string name="context_menu_delete">@string/action_delete</string>
     
     <string name="empty_database_message">本地数据库为空，请先在设置中更新本地数据库</string>
+    <string name="empty_database_title">本地数据库为空</string>
+    <string name="empty_database_button">更新本地数据库</string>
+    <string name="empty_database_icon_desc">空数据库图标</string>
     <string name="no_results_message">没有找到%s分类，可能数据库更新不完整，请尝试在设置中更新本地数据库</string>
     
     <string name="progress_checking_network">正在检查网络连接</string>
@@ -374,5 +433,72 @@
     <string name="update_completed">更新完成，共同步 %d 个电台，已切换到新数据</string>
     <string name="update_confirm_replace_message">新数据(%d个)比现有数据(%d个)少，是否替换？</string>
     <string name="update_completed_keep_existing">更新完成，但用户选择继续使用现有数据</string>
+    <string name="settings_language">界面语言</string>
+    <string name="settings_language_desc">选择应用界面的语言</string>
+    <string name="language_system">系统默认</string>
+    <string name="language_english">English</string>
+    <string name="language_chinese">中文</string>
+    <string name="language_spanish">Español</string>
     <string name="language_russian">Русский</string>
+    <string name="language_french">Français</string>
+    <string name="language_italian">Italiano</string>
+    <string name="language_brazilian_portuguese">Português (Brasil)</string>
+    
+    <string name="error_checking_database">检查本地数据库时出错：%1$s</string>
+    <string name="error_no_valid_stations_in_db">本地数据库中没有找到任何有效的电台数据，请尝试更新本地数据库</string>
+    <string name="error_no_stations_in_db">本地数据库中没有找到任何电台，请尝试更新本地数据库</string>
+    <string name="error_no_valid_stations_data">本地数据库中没有有效的电台数据</string>
+    <string name="error_no_stations_data">本地数据库中没有电台数据</string>
+    <string name="error_repository_not_initialized">数据仓库未初始化，请重启应用</string>
+    <string name="no_recently_updated_stations">没有找到最近更新的电台</string>
+    <string name="db_update_incomplete_hint">可能数据库更新不完整，请尝试在设置中更新本地数据库</string>
+    <string name="update_network_unavailable_warning">无法连接到电台浏览器服务器，请检查网络连接后重试。</string>
+    <string name="update_network_unstable_title">网络不稳定</string>
+    <string name="update_network_unstable_warning">网络连接较慢（最快响应：%1$d毫秒），更新可能反复失败。建议更换更稳定的网络或稍后再试。</string>
+    <string name="update_network_continue_anyway">仍然继续</string>
+    <string name="update_network_cancel">取消</string>
+    <string name="update_network_error_warning">网络检测失败：%1$s\n\n更新可能失败，是否继续？</string>
+    <string name="error_context_not_available">应用上下文不可用，请重启应用</string>
+    <string name="error_activity_not_available">Activity不可用，请重启应用</string>
+    <string name="error_no_valid_stations_found">没有找到有效的电台</string>
+    <string name="error_no_matching_stations">没有找到匹配的电台</string>
+    <string name="loading_all_stations_fallback">系统语言(%1$s)没有找到电台，正在尝试加载所有电台…</string>
+    <string name="loading_all_stations_country_fallback">国家(%1$s)没有找到电台，正在尝试加载所有电台…</string>
+    <string name="error_adapter_not_initialized">适配器未初始化，请重启应用</string>
+    <string name="error_displaying_data">显示数据时出错，请重试</string>
+    <string name="error_search_keyword_required">请输入搜索关键词</string>
+    <string name="error_during_search">搜索时发生错误：%1$s</string>
+    <string name="error_processing_search_results">处理搜索结果时发生错误：%1$s</string>
+    <string name="error_no_valid_top_click_data">没有找到有效的点击排行数据</string>
+    <string name="error_no_top_click_data">没有找到点击排行数据</string>
+    <string name="error_no_valid_top_vote_data">没有找到有效的投票排行数据</string>
+    <string name="error_no_top_vote_data">没有找到投票排行数据</string>
+    <string name="content_desc_pause_station">暂停播放%1$s电台</string>
+    <string name="content_desc_pause">暂停播放</string>
+    <string name="content_desc_play_station">播放%1$s电台</string>
+    <string name="content_desc_play">播放电台</string>
+    <string name="content_desc_station_format">%1$s电台</string>
+    <string name="content_desc_no_station_selected">未选择电台</string>
+    <string name="content_desc_listening_station">正在收听%1$s电台</string>
+    <string name="db_status_summary">上次更新：%1$s，电台数量：%2$d</string>
+    <string name="db_status_never_updated">数据库尚未更新</string>
+    <string name="db_status_error">获取状态失败：%1$s</string>
+    <string name="export_type_file">文件</string>
+    <string name="recording_delete_title">删除录音</string>
+    <string name="recording_delete_confirm">确定要删除\"%s\"吗？</string>
+    <string name="recording_deleted">录音已删除</string>
+    <string name="recording_delete_failed">删除录音失败</string>
+    <string name="recording_file_not_found">录音文件未找到</string>
+    <string name="recording_play_error">无法播放录音</string>
+    <string name="recording_details">详情</string>
+    <string name="recording_detail_name">文件名：</string>
+    <string name="recording_detail_path">保存路径：</string>
+    <string name="recording_detail_size">文件大小：</string>
+    <string name="recording_detail_duration">时长（估算）：</string>
+    <string name="recording_detail_modified">修改时间：</string>
+    <string name="recording_player_title">播放录音</string>
+    <string name="recording_play">播放</string>
+    <string name="recording_pause">暂停</string>
+    <string name="recording_play_external">使用外部播放器播放</string>
+    <string name="recording_empty_file">录音文件为空</string>
 </resources>
