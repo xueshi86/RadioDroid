@@ -363,6 +363,79 @@ Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elemen
 
 > Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+### v0.96
+*2025-05-18*
+
+**电台图标增强**
+- **新增**：电台图标多级回退获取机制 — 优先使用服务器提供的 `IconUrl`，失败后回退到网站通用图标（`favicon.ico` / `apple-touch-icon.png`），最终使用 Google Favicons 服务兜底
+- **优化**：Picasso 图片库重试机制（最多 3 次，间隔 1s/3s/5s）
+- **修复**：收藏电台列表（FragmentStarred）使用图标仅显示适配器（`ItemAdapterIconOnlyStation`），统一图标展示风格
+
+**音频体验增强**
+- **新增**：音频均衡器功能 — `EqualizerActivity` 提供完整均衡器控制界面
+- **新增**：双套预设方案 — 系统原生预设（各厂商效果不同）+ 应用内置预设（「人声」适合新闻/访谈/脱口秀，「音乐」适合音乐类电台）
+- **新增**：PlayerService 服务端均衡器实现，支持预设设置和频段级别控制
+
+**闹钟系统现代化**
+- **重构**：闹钟播放器选择器（`PlayerSelectorDialog`）现代化改造，优化应用和设备选择交互逻辑
+- **优化**：`AlarmReceiver` 闹钟触发和播放逻辑
+- **优化**：`ItemAdapterRadioAlarm` 闹钟列表适配器
+
+**音频设备管理**
+- **新增**：`AudioDeviceMonitor` 音频设备监控系统，自动检测耳机插拔、蓝牙 A2DP 连接/断开等音频输出设备变更
+- **新增**：`HeadsetConnectionReceiver` 增强的音频设备连接状态管理 — 支持蓝牙耳机(A2DP/Headset 协议)和有线耳机的连接/断开检测，防抖处理（2秒窗口），`isAudioBluetoothDevice` 智能识别音频类蓝牙设备
+- **新增**：`BecomingNoisyReceiver` 音频噪声事件处理 — 拔出耳机或蓝牙断开时自动暂停播放，支持「暂停」和「关闭应用」两种策略（设置中配置）
+- **新增**：有线耳机重连后自动恢复播放（设置开关）
+- **新增**：蓝牙断开可配置为暂停或关闭应用
+- **新增**：蓝牙重连后自动恢复播放（设置开关）
+
+**播放历史修复**
+- **修复**：`TrackHistoryAdapter` 中图标 URL 处理逻辑，提升曲目历史图标显示成功率
+- **修复**：`TrackHistoryInfoDialog` 对话框显示问题
+
+**排序功能**
+- **新增**：电台列表排序功能（`FragmentLocalStations`）— 支持按名称/点击量/投票数/最近变更四种模式排序
+- **新增**：排序方向切换（升序/降序），点击相同模式切换方向，偏好持久化保存
+
+**录音播放器**
+- **新增**：录音功能完整实现 — `RecordingsManager` 管理录音列表和排序
+- **新增**：`RecordingsAdapter` 录音列表显示、播放、详情和删除功能
+- **新增**：`RadioPlayer` 录音管理接口，PlayerService 录音控制
+- **新增**：大小播放器界面录音控制按钮（开始/停止录音）
+
+**多语言和界面优化**
+- **优化**：FragmentSettings 设置界面多语言同步和代码重构（546 行变更）
+- **优化**：ApplicationSelectorDialog 应用选择器对话框现代化（162 行变更）
+- **优化**：FragmentAbout 关于页面内容更新
+- **优化**：FragmentHistory 历史记录界面优化
+- **优化**：FragmentPlayerFull/FragmentPlayerSmall 大小播放器界面优化
+- **优化**：FragmentStarred 收藏界面重构（171 行变更）
+- **优化**：FragmentTabs 标签页逻辑优化
+- **优化**：ActivityMain 主界面逻辑优化（250 行变更）
+- **优化**：RadioDroidApp 应用初始化逻辑优化
+- **优化**：Utils 工具类更新
+
+**数据库和导出修复**
+- **修复**：导出数据库报错信息截断问题 — `exportDatabase` 数据库查询操作移至后台线程，避免主线程访问导致 `IllegalStateException`
+- **新增**：缺失的中文翻译（导出成功/失败提示、进度条文本等）
+- **修复**：`e.getMessage()` 为 null 时的显示问题
+- **新增**：`getDisplayPathFromUri` 方法，将 content URI 转换为友好的文件路径显示
+- **修复**：英文 `strings.xml` 中 `warning_low_external_storage` 混入中文问题
+
+**数据库结构更新**
+- **更新**：`RadioDroidDatabase` 数据库结构
+- **更新**：`RadioStationDao` 数据访问对象，新增查询方法
+- **更新**：`RadioStationRepository` 数据仓库重构（207 行变更）
+- **更新**：`IPlayerService.aidl` 接口定义
+
+**其他修复**
+- **优化**：ExoPlayerWrapper ExoPlayer 封装层更新（50 行变更）
+- **优化**：IcyDataSource ICY 数据源简化（137 行变更，减少冗余代码）
+- **优化**：RadioDataSourceFactory 数据源工厂
+- **优化**：StreamProxy 流代理元数据解析增强
+- **更新**：AndroidManifest.xml 权限和组件声明
+- **更新**：.gitignore 忽略规则
+
 ### v0.95
 *2025-05*
 
