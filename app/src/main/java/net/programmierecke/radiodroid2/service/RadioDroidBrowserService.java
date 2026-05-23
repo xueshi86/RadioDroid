@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v4.media.MediaBrowserCompat;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -24,6 +25,7 @@ import net.programmierecke.radiodroid2.utils.GetRealLinkAndPlayTask;
 import java.util.List;
 
 public class RadioDroidBrowserService extends MediaBrowserServiceCompat {
+    private static final String TAG = "RadioDroidBrowserSvc";
     private RadioDroidBrowser radioDroidBrowser;
     private ServiceConnection playerServiceConnection;
     private IPlayerService playerService;
@@ -68,7 +70,7 @@ public class RadioDroidBrowserService extends MediaBrowserServiceCompat {
                 try {
                     RadioDroidBrowserService.this.setSessionToken(playerService.getMediaSessionToken());
                 } catch (RemoteException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "Failed to set media session token", e);
                 }
             }
 

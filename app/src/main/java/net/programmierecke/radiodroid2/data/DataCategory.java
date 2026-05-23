@@ -2,6 +2,7 @@ package net.programmierecke.radiodroid2.data;
 
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DataCategory implements Comparable<DataCategory>{
+    private static final String TAG = "DataCategory";
     public String Name = "";
     public int UsedCount = 0;
     public String Label = null;
@@ -42,7 +44,7 @@ public class DataCategory implements Comparable<DataCategory>{
                     }
 
                 } catch (JSONException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "Failed to parse category JSON", e);
                 }
 
             }

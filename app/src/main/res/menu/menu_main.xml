@@ -49,7 +49,7 @@
         android:id="@+id/action_random_play"
         android:icon="@drawable/ic_shuffle_24dp"
         android:title="@string/action_random_play"
-        app:showAsAction="ifRoom"/>
+        app:showAsAction="always"/>
 
     <item
         android:id="@+id/action_save"

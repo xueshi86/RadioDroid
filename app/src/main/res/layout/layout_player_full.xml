@@ -106,9 +106,11 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginLeft="16dp"
                 android:layout_marginTop="8dp"
+                android:textSize="14sp"
+                android:textColor="?android:attr/textColorSecondary"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/space"
-                tools:text="3:44" />
+                tools:text="Duration: 3:44" />
 
             <TextView
                 android:id="@+id/textViewNetworkUsageInfo"
@@ -117,23 +119,24 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="16dp"
                 android:layout_marginRight="16dp"
+                android:textSize="14sp"
+                android:textColor="?android:attr/textColorSecondary"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/space"
-                tools:text="1mb" />
+                tools:text="Data: 1mb" />
 
             <TextView
                 android:id="@+id/textViewTimeCached"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginLeft="8dp"
                 android:layout_marginTop="8dp"
-                android:layout_marginEnd="8dp"
-                android:layout_marginRight="8dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
+                android:textSize="14sp"
+                android:textColor="?android:attr/textColorSecondary"
+                app:layout_constraintStart_toEndOf="@+id/textViewTimePlayed"
+                app:layout_constraintEnd_toStartOf="@+id/textViewNetworkUsageInfo"
+                app:layout_constraintHorizontal_bias="0.3"
                 app:layout_constraintTop_toBottomOf="@+id/space"
-                tools:text="-10s" />
+                tools:text="Buffered: -10s" />
 
             <View
                 android:id="@+id/divider1"

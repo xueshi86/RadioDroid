@@ -16,6 +16,7 @@ import com.squareup.picasso.Picasso;
 import net.programmierecke.radiodroid2.alarm.RadioAlarmManager;
 import net.programmierecke.radiodroid2.history.TrackHistoryRepository;
 import net.programmierecke.radiodroid2.players.mpd.MPDClient;
+import net.programmierecke.radiodroid2.service.StationIconCache;
 import net.programmierecke.radiodroid2.station.live.metadata.TrackMetadataSearcher;
 import net.programmierecke.radiodroid2.proxy.ProxySettings;
 import net.programmierecke.radiodroid2.recording.RecordingsManager;
@@ -107,6 +108,9 @@ public class RadioDroidApp extends MultiDexApplication {
         }
 
         trackHistoryRepository = new TrackHistoryRepository(this);
+
+        // 清理过期的半永久图标缓存
+        StationIconCache.getInstance(this).cleanExpiredSemiPermanentCache();
 
         mpdClient = new MPDClient(this);
 

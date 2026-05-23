@@ -25,6 +25,8 @@ public interface PlayerWrapper extends Recordable {
 
     void playRemote(@NonNull OkHttpClient httpClient, @NonNull String streamUrl, @NonNull Context context, boolean isAlarm);
 
+    void playRemote(@NonNull OkHttpClient httpClient, @NonNull String streamUrl, @NonNull Context context, boolean isAlarm, @NonNull String stationUuid);
+
     void pause();
 
     void stop();

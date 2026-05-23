@@ -27,7 +27,9 @@ import net.programmierecke.radiodroid2.interfaces.IApplicationSelected;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ApplicationSelectorDialog extends BottomSheetDialogFragment {
 
@@ -81,19 +83,39 @@ public class ApplicationSelectorDialog extends BottomSheetDialogFragment {
     private void loadApps() {
         appList.clear();
         PackageManager pm = requireContext().getPackageManager();
+        Set<String> seenPackages = new HashSet<>();
 
-        Intent mainIntent = new Intent(Intent.ACTION_VIEW);
-        mainIntent.setDataAndType(Uri.parse("http://example.com/test.mp3"), "audio/*");
-        List<ResolveInfo> resolveInfos = pm.queryIntentActivities(mainIntent, 0);
+        // Query 1: Using setType only (better compatibility with Android 11+ package visibility)
+        Intent typeIntent = new Intent(Intent.ACTION_VIEW);
+        typeIntent.setType("audio/*");
+        List<ResolveInfo> typeResults = pm.queryIntentActivities(typeIntent, 0);
 
-        for (ResolveInfo info : resolveInfos) {
-            ApplicationInfo applicationInfo = info.activityInfo.applicationInfo;
-            String appName = String.valueOf(pm.getApplicationLabel(applicationInfo));
-            Drawable icon = pm.getApplicationIcon(applicationInfo);
-            String packageName = info.activityInfo.packageName;
-            String activityName = info.activityInfo.name;
+        // Query 2: Using setDataAndType with http URI
+        Intent dataIntent = new Intent(Intent.ACTION_VIEW);
+        dataIntent.setDataAndType(Uri.parse("http://example.com/test.mp3"), "audio/*");
+        List<ResolveInfo> dataResults = pm.queryIntentActivities(dataIntent, 0);
 
-            appList.add(new AppInfo(appName, packageName, activityName, icon));
+        // Merge results, avoiding duplicates
+        for (ResolveInfo info : typeResults) {
+            if (seenPackages.add(info.activityInfo.packageName)) {
+                ApplicationInfo applicationInfo = info.activityInfo.applicationInfo;
+                String appName = String.valueOf(pm.getApplicationLabel(applicationInfo));
+                Drawable icon = pm.getApplicationIcon(applicationInfo);
+                String packageName = info.activityInfo.packageName;
+                String activityName = info.activityInfo.name;
+                appList.add(new AppInfo(appName, packageName, activityName, icon));
+            }
+        }
+
+        for (ResolveInfo info : dataResults) {
+            if (seenPackages.add(info.activityInfo.packageName)) {
+                ApplicationInfo applicationInfo = info.activityInfo.applicationInfo;
+                String appName = String.valueOf(pm.getApplicationLabel(applicationInfo));
+                Drawable icon = pm.getApplicationIcon(applicationInfo);
+                String packageName = info.activityInfo.packageName;
+                String activityName = info.activityInfo.name;
+                appList.add(new AppInfo(appName, packageName, activityName, icon));
+            }
         }
 
         Collections.sort(appList, Comparator.comparing(a -> a.appName.toLowerCase()));

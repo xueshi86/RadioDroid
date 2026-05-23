@@ -119,8 +119,8 @@
     <string name="startup_show_last_view">Dernière vue</string>
 
     <string name="settings_load_icons">Afficher les icônes des stations</string>
-    <string name="settings_load_icons_on">Les icônes seront téléchargées</string>
-    <string name="settings_load_icons_off">Les icônes ne seront pas téléchargées</string>
+    <string name="settings_load_icons_on">Télécharger et afficher les icônes des stations</string>
+    <string name="settings_load_icons_off">Aucune icône téléchargée, économise de l\'espace</string>
 
     <string name="settings_auto_favorite">Mise en favoris automatique</string>
     <string name="settings_auto_favorite_on">Ajoute automatiquement les stations en favoris lors de la lecture</string>

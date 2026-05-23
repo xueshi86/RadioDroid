@@ -402,12 +402,12 @@ public class Utils {
     public static boolean shouldLoadIcons(final Context context) {
         switch (loadIcons) {
             case -1:
-                if (PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext()).getBoolean("load_icons", false)) {
+                if (PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext()).getBoolean("load_icons", true)) {
                     loadIcons = 1;
                     return true;
                 } else {
                     loadIcons = 0;
-                    return true;
+                    return false;
                 }
             case 0:
                 return false;

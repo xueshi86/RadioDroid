@@ -39,8 +39,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
-import com.squareup.picasso.Callback;
-import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 
 import net.programmierecke.radiodroid2.history.TrackHistoryAdapter;
@@ -657,9 +655,9 @@ public class FragmentPlayerFull extends Fragment {
         if (TextUtils.isEmpty(liveInfo.getArtist()) || TextUtils.isEmpty(liveInfo.getTrack()) ||
                 LastFMApiKey.isEmpty()) {
             if (station.hasIcon()) {
-                loadStationIconWithFallback(artAndInfoPagerAdapter.imageViewArt, station.IconUrl, station.HomePageUrl);
+                loadStationIconWithFallback(artAndInfoPagerAdapter.imageViewArt, station.IconUrl, station.HomePageUrl, station.StationUuid);
             } else if (!TextUtils.isEmpty(station.HomePageUrl)) {
-                loadStationIconWithFallback(artAndInfoPagerAdapter.imageViewArt, null, station.HomePageUrl);
+                loadStationIconWithFallback(artAndInfoPagerAdapter.imageViewArt, null, station.HomePageUrl, station.StationUuid);
             } else {
                 artAndInfoPagerAdapter.imageViewArt.setImageResource(R.drawable.ic_launcher);
             }
@@ -746,9 +744,9 @@ public class FragmentPlayerFull extends Fragment {
                     DataRadioStation station = Utils.getCurrentOrLastStation(fragment.requireContext());
 
                     if (station != null && station.hasIcon()) {
-                        fragment.loadStationIconWithFallback(fragment.artAndInfoPagerAdapter.imageViewArt, station.IconUrl, station.HomePageUrl);
+                        fragment.loadStationIconWithFallback(fragment.artAndInfoPagerAdapter.imageViewArt, station.IconUrl, station.HomePageUrl, station.StationUuid);
                     } else if (station != null && !TextUtils.isEmpty(station.HomePageUrl)) {
-                        fragment.loadStationIconWithFallback(fragment.artAndInfoPagerAdapter.imageViewArt, null, station.HomePageUrl);
+                        fragment.loadStationIconWithFallback(fragment.artAndInfoPagerAdapter.imageViewArt, null, station.HomePageUrl, station.StationUuid);
                     } else {
                         fragment.artAndInfoPagerAdapter.imageViewArt.setImageResource(R.drawable.ic_launcher);
                     }
@@ -920,15 +918,18 @@ public class FragmentPlayerFull extends Fragment {
                     networkUsageInfo += " (" + shoutcastInfo.bitrate + " kbps)";
                 }
 
-                fragmentPlayerFull.textViewNetworkUsageInfo.setText(networkUsageInfo);
+                fragmentPlayerFull.textViewNetworkUsageInfo.setText(
+                        fragmentPlayerFull.getString(R.string.player_network_usage, networkUsageInfo));
 
                 final long now = System.currentTimeMillis();
                 final long startTime = PlayerServiceUtil.getLastPlayStartTime();
                 long deltaSeconds = startTime > 0 ? ((now - startTime) / 1000) : 0;
                 deltaSeconds = Math.max(deltaSeconds, 0);
-                fragmentPlayerFull.textViewTimePlayed.setText(DateUtils.formatElapsedTime(deltaSeconds));
+                fragmentPlayerFull.textViewTimePlayed.setText(
+                        fragmentPlayerFull.getString(R.string.player_play_time, DateUtils.formatElapsedTime(deltaSeconds)));
 
-                fragmentPlayerFull.textViewTimeCached.setText(DateUtils.formatElapsedTime(PlayerServiceUtil.getBufferedSeconds()));
+                fragmentPlayerFull.textViewTimeCached.setText(
+                        fragmentPlayerFull.getString(R.string.player_buffer_time, DateUtils.formatElapsedTime(PlayerServiceUtil.getBufferedSeconds())));
 
                 fragmentPlayerFull.updateRunningRecording();
             }
@@ -955,47 +956,10 @@ public class FragmentPlayerFull extends Fragment {
     }
 
     private void loadStationIconWithFallback(final ImageView target, final String iconUrl, final String homePageUrl) {
-        final List<String> urls = new ArrayList<>();
-        if (iconUrl != null && !iconUrl.trim().isEmpty()) {
-            urls.add(iconUrl);
-        }
-        if (homePageUrl != null && !homePageUrl.trim().isEmpty()) {
-            try {
-                java.net.URI uri = new java.net.URI(homePageUrl);
-                String domain = uri.getHost();
-                if (domain != null && !domain.isEmpty()) {
-                    String scheme = uri.getScheme() != null ? uri.getScheme() : "https";
-                    urls.add(scheme + "://" + domain + "/favicon.ico");
-                    urls.add(scheme + "://" + domain + "/apple-touch-icon.png");
-                    urls.add("https://www.google.com/s2/favicons?domain=" + domain + "&sz=128");
-                }
-            } catch (Exception ignored) {
-            }
-        }
-        if (urls.isEmpty()) {
-            target.setImageResource(R.drawable.ic_launcher);
-            return;
-        }
-        tryLoadUrl(target, urls, 0);
+        loadStationIconWithFallback(target, iconUrl, homePageUrl, null);
     }
 
-    private void tryLoadUrl(final ImageView target, final List<String> urls, final int index) {
-        if (index >= urls.size()) {
-            target.setImageResource(R.drawable.ic_launcher);
-            return;
-        }
-        Picasso.get()
-                .load(urls.get(index))
-                .networkPolicy(index == 0 ? NetworkPolicy.OFFLINE : NetworkPolicy.NO_CACHE)
-                .into(target, new Callback() {
-                    @Override
-                    public void onSuccess() {
-                    }
-
-                    @Override
-                    public void onError(Exception e) {
-                        tryLoadUrl(target, urls, index + 1);
-                    }
-                });
+    private void loadStationIconWithFallback(final ImageView target, final String iconUrl, final String homePageUrl, final String stationUuid) {
+        PlayerServiceUtil.getStationIcon(target, iconUrl, homePageUrl, stationUuid);
     }
 }

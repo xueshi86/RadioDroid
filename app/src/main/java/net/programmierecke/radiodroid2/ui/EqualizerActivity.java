@@ -1,5 +1,6 @@
 package net.programmierecke.radiodroid2.ui;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.MediaPlayer;
@@ -27,11 +28,16 @@ import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
 
 public class EqualizerActivity extends AppCompatActivity {
 
+    public static final String EXTRA_STATION_UUID = "station_uuid";
+    public static final String EXTRA_STATION_NAME = "station_name";
+
     private static final String PREF_EQ_ENABLED = "equalizer_enabled";
     private static final String PREF_EQ_PRESET = "equalizer_preset";
     private static final String PREF_BASS_BOOST_ENABLED = "bass_boost_enabled";
     private static final String PREF_BASS_BOOST_STRENGTH = "bass_boost_strength";
     private static final String PREF_BAND_LEVELS = "equalizer_band_levels";
+
+    private static final String STATION_PREF_PREFIX = "station_eq_";
 
     private static final String PREF_CACHE_NUM_BANDS = "eq_cache_num_bands";
     private static final String PREF_CACHE_CENTER_FREQS = "eq_cache_center_freqs";
@@ -83,6 +89,62 @@ public class EqualizerActivity extends AppCompatActivity {
 
     private SharedPreferences prefs;
 
+    private String stationUuid;
+
+    /**
+     * Get the SharedPreferences key for a setting, prefixed with station UUID if applicable.
+     */
+    private String key(String baseKey) {
+        if (stationUuid != null && !stationUuid.isEmpty()) {
+            return STATION_PREF_PREFIX + stationUuid + "_" + baseKey;
+        }
+        return baseKey;
+    }
+
+    /**
+     * Check if a station has custom equalizer settings.
+     */
+    public static boolean hasStationEqualizer(Context context, String stationUuid) {
+        if (stationUuid == null || stationUuid.isEmpty()) return false;
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        return prefs.contains(STATION_PREF_PREFIX + stationUuid + "_" + PREF_EQ_ENABLED);
+    }
+
+    /**
+     * Get the SharedPreferences key for station equalizer enabled setting.
+     */
+    public static String getStationEqEnabledKey(String stationUuid) {
+        return STATION_PREF_PREFIX + stationUuid + "_" + PREF_EQ_ENABLED;
+    }
+
+    /**
+     * Get the SharedPreferences key for station equalizer preset setting.
+     */
+    public static String getStationEqPresetKey(String stationUuid) {
+        return STATION_PREF_PREFIX + stationUuid + "_" + PREF_EQ_PRESET;
+    }
+
+    /**
+     * Get the SharedPreferences key for station band levels setting.
+     */
+    public static String getStationBandLevelsKey(String stationUuid) {
+        return STATION_PREF_PREFIX + stationUuid + "_" + PREF_BAND_LEVELS;
+    }
+
+    /**
+     * Get the SharedPreferences key for station bass boost enabled setting.
+     */
+    public static String getStationBassBoostEnabledKey(String stationUuid) {
+        return STATION_PREF_PREFIX + stationUuid + "_" + PREF_BASS_BOOST_ENABLED;
+    }
+
+    /**
+     * Get the SharedPreferences key for station bass boost strength setting.
+     */
+    public static String getStationBassBoostStrengthKey(String stationUuid) {
+        return STATION_PREF_PREFIX + stationUuid + "_" + PREF_BASS_BOOST_STRENGTH;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,8 +153,16 @@ public class EqualizerActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_equalizer);
 
+        // Read station-specific extras
+        stationUuid = getIntent().getStringExtra(EXTRA_STATION_UUID);
+        String stationName = getIntent().getStringExtra(EXTRA_STATION_NAME);
+
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
-        toolbar.setTitle(R.string.settings_equalizer);
+        if (stationName != null && !stationName.isEmpty()) {
+            toolbar.setTitle(getString(R.string.settings_equalizer) + " - " + stationName);
+        } else {
+            toolbar.setTitle(R.string.settings_equalizer);
+        }
         toolbar.setNavigationOnClickListener(v -> finish());
 
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -302,7 +372,7 @@ public class EqualizerActivity extends AppCompatActivity {
     }
 
     private void setupUI() {
-        boolean wasEnabled = prefs.getBoolean(PREF_EQ_ENABLED, false);
+        boolean wasEnabled = prefs.getBoolean(key(PREF_EQ_ENABLED), false);
         switchEnabled.setChecked(wasEnabled);
 
         if (hasLiveEqualizer) {
@@ -310,7 +380,7 @@ public class EqualizerActivity extends AppCompatActivity {
         }
 
         switchEnabled.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            prefs.edit().putBoolean(PREF_EQ_ENABLED, isChecked).apply();
+            prefs.edit().putBoolean(key(PREF_EQ_ENABLED), isChecked).apply();
             if (hasLiveEqualizer && equalizer != null) {
                 equalizer.setEnabled(isChecked);
                 if (bassBoost != null) {
@@ -340,7 +410,7 @@ public class EqualizerActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(R.layout.spinner_dropdown_item_eq);
         spinnerPreset.setAdapter(adapter);
 
-        int savedPreset = prefs.getInt(PREF_EQ_PRESET, -1);
+        int savedPreset = prefs.getInt(key(PREF_EQ_PRESET), -1);
         if (savedPreset == PRESET_VOICE) {
             spinnerPreset.setSelection(eqNumSystemPresets + 1);
         } else if (savedPreset == PRESET_MUSIC) {
@@ -351,13 +421,13 @@ public class EqualizerActivity extends AppCompatActivity {
                 try {
                     equalizer.usePreset((short) savedPreset);
                 } catch (Exception e) {
-                    prefs.edit().putInt(PREF_EQ_PRESET, -1).apply();
+                    prefs.edit().putInt(key(PREF_EQ_PRESET), -1).apply();
                     spinnerPreset.setSelection(0);
                 }
             }
         } else {
             if (savedPreset >= eqNumSystemPresets && savedPreset != PRESET_VOICE && savedPreset != PRESET_MUSIC) {
-                prefs.edit().putInt(PREF_EQ_PRESET, -1).apply();
+                prefs.edit().putInt(key(PREF_EQ_PRESET), -1).apply();
             }
             if (hasLiveEqualizer) {
                 restoreBandLevels();
@@ -369,32 +439,32 @@ public class EqualizerActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (position == 0) {
-                    prefs.edit().putInt(PREF_EQ_PRESET, -1).apply();
+                    prefs.edit().putInt(key(PREF_EQ_PRESET), -1).apply();
                     return;
                 }
                 if (position == finalNumSystemPresets + 1) {
-                    prefs.edit().putInt(PREF_EQ_PRESET, PRESET_VOICE).apply();
+                    prefs.edit().putInt(key(PREF_EQ_PRESET), PRESET_VOICE).apply();
                     applyVoicePreset();
                     updateBandSliders();
                     saveBandLevels();
                     return;
                 }
                 if (position == finalNumSystemPresets + 2) {
-                    prefs.edit().putInt(PREF_EQ_PRESET, PRESET_MUSIC).apply();
+                    prefs.edit().putInt(key(PREF_EQ_PRESET), PRESET_MUSIC).apply();
                     applyMusicPreset();
                     updateBandSliders();
                     saveBandLevels();
                     return;
                 }
                 short presetIndex = (short) (position - 1);
-                prefs.edit().putInt(PREF_EQ_PRESET, presetIndex).apply();
+                prefs.edit().putInt(key(PREF_EQ_PRESET), presetIndex).apply();
                 if (hasLiveEqualizer) {
                     try {
                         equalizer.usePreset(presetIndex);
                         updateBandSliders();
                         saveBandLevels();
                     } catch (Exception e) {
-                        prefs.edit().putInt(PREF_EQ_PRESET, -1).apply();
+                        prefs.edit().putInt(key(PREF_EQ_PRESET), -1).apply();
                         spinnerPreset.setSelection(0);
                     }
                 } else {
@@ -469,7 +539,7 @@ public class EqualizerActivity extends AppCompatActivity {
                         }
                         textLevel.setText(formatLevel(newLevel));
                         spinnerPreset.setSelection(0);
-                        prefs.edit().putInt(PREF_EQ_PRESET, -1).apply();
+                        prefs.edit().putInt(key(PREF_EQ_PRESET), -1).apply();
                         saveBandLevelsFromUI();
                     }
                 }
@@ -488,7 +558,7 @@ public class EqualizerActivity extends AppCompatActivity {
     }
 
     private short[] getInitialBandLevels() {
-        int savedPreset = prefs.getInt(PREF_EQ_PRESET, -1);
+        int savedPreset = prefs.getInt(key(PREF_EQ_PRESET), -1);
 
         if (savedPreset == PRESET_VOICE) {
             return computeVoiceBandLevels();
@@ -536,7 +606,7 @@ public class EqualizerActivity extends AppCompatActivity {
 
     private short[] loadSavedBandLevels() {
         short[] levels = new short[eqNumBands];
-        String levelsStr = prefs.getString(PREF_BAND_LEVELS, null);
+        String levelsStr = prefs.getString(key(PREF_BAND_LEVELS), null);
         if (levelsStr != null) {
             String[] parts = levelsStr.split(",");
             for (int i = 0; i < eqNumBands && i < parts.length; i++) {
@@ -626,7 +696,7 @@ public class EqualizerActivity extends AppCompatActivity {
 
     private void restoreBandLevels() {
         if (equalizer == null) return;
-        String levelsStr = prefs.getString(PREF_BAND_LEVELS, null);
+        String levelsStr = prefs.getString(key(PREF_BAND_LEVELS), null);
         if (levelsStr == null) return;
         String[] parts = levelsStr.split(",");
         for (short i = 0; i < eqNumBands && i < parts.length; i++) {
@@ -672,7 +742,7 @@ public class EqualizerActivity extends AppCompatActivity {
                 } catch (Exception ignored) {
                 }
             }
-            prefs.edit().putString(PREF_BAND_LEVELS, sb.toString()).apply();
+            prefs.edit().putString(key(PREF_BAND_LEVELS), sb.toString()).apply();
         } else {
             saveBandLevelsFromUI();
         }
@@ -690,12 +760,12 @@ public class EqualizerActivity extends AppCompatActivity {
                 sb.append(level);
             }
         }
-        prefs.edit().putString(PREF_BAND_LEVELS, sb.toString()).apply();
+        prefs.edit().putString(key(PREF_BAND_LEVELS), sb.toString()).apply();
     }
 
     private void setupBassBoost() {
-        boolean wasBassBoostEnabled = prefs.getBoolean(PREF_BASS_BOOST_ENABLED, false);
-        int savedStrength = prefs.getInt(PREF_BASS_BOOST_STRENGTH, 0);
+        boolean wasBassBoostEnabled = prefs.getBoolean(key(PREF_BASS_BOOST_ENABLED), false);
+        int savedStrength = prefs.getInt(key(PREF_BASS_BOOST_STRENGTH), 0);
 
         switchBassBoost.setChecked(wasBassBoostEnabled);
 
@@ -713,7 +783,7 @@ public class EqualizerActivity extends AppCompatActivity {
         textBassBoostValue.setText(String.valueOf(savedStrength / 10));
 
         switchBassBoost.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            prefs.edit().putBoolean(PREF_BASS_BOOST_ENABLED, isChecked).apply();
+            prefs.edit().putBoolean(key(PREF_BASS_BOOST_ENABLED), isChecked).apply();
             if (hasLiveEqualizer && bassBoost != null) {
                 bassBoost.setEnabled(isChecked && switchEnabled.isChecked());
             }
@@ -731,7 +801,7 @@ public class EqualizerActivity extends AppCompatActivity {
                         }
                     }
                     textBassBoostValue.setText(String.valueOf(progress / 10));
-                    prefs.edit().putInt(PREF_BASS_BOOST_STRENGTH, progress).apply();
+                    prefs.edit().putInt(key(PREF_BASS_BOOST_STRENGTH), progress).apply();
                 }
             }
 

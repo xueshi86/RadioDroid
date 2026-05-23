@@ -5,6 +5,7 @@
     <string name="detail_tags">Etiquetas</string>
     <string name="detail_country">País</string>
     <string name="detail_create_shortcut">Agregar a la pantalla de inicio</string>
+    <string name="detail_shortcut_requested">Solicitando agregar acceso directo a la pantalla de inicio</string>
     <string name="detail_language">Idioma</string>
     <string name="detail_weblink">Enlace web</string>
     <string name="detail_visit_website">@string/action_station_visit_website</string>
@@ -118,8 +119,8 @@
     <string name="startup_show_last_view">Última vista</string>
 
     <string name="settings_load_icons">Mostrar iconos de las estaciones</string>
-    <string name="settings_load_icons_on">Los iconos se descargarán</string>
-    <string name="settings_load_icons_off">Los iconos no se descargarán</string>
+    <string name="settings_load_icons_on">Descargar y mostrar iconos de las estaciones</string>
+    <string name="settings_load_icons_off">No descargar iconos, ahorra espacio de almacenamiento</string>
 
     <string name="settings_auto_favorite">Auto-favoritos</string>
     <string name="settings_auto_favorite_on">Las estaciones serán puestas automáticamente como favoritas cuando se reproduzcan</string>
@@ -167,6 +168,16 @@
     <string name="settings_milliseconds_format">%d milisegundos</string>
 
     <string name="settings_pause_when_noisy">Pausar al desconectar auriculares con cable</string>
+    <string name="settings_close_when_noisy">Cerrar la aplicación al desconectar auriculares con cable</string>
+    <string name="settings_close_when_noisy_summary">Cerrar automáticamente la aplicación cuando se desconectan los auriculares con cable (requiere pausar al desconectar auriculares con cable)</string>
+    <string name="settings_bluetooth_connect_permission">Permiso de dispositivos cercanos</string>
+    <string name="settings_bluetooth_connect_permission_summary">Requerido en Android 12+ para detectar conexiones de dispositivos de audio Bluetooth. Este permiso pertenece a la categoría \"Dispositivos cercanos\". Sin él, las funciones de desconexión/conexión Bluetooth no funcionarán.</string>
+    <string name="settings_bluetooth_connect_permission_not_needed">No requerido en esta versión de Android</string>
+    <string name="settings_bluetooth_connect_permission_denied">Permiso denegado. Las funciones de desconexión/conexión Bluetooth no están disponibles.</string>
+    <string name="settings_pause_on_bluetooth_disconnect">Pausar al desconectar Bluetooth</string>
+    <string name="settings_pause_on_bluetooth_disconnect_summary">Pausar automáticamente la reproducción cuando se desconecta un dispositivo de audio Bluetooth</string>
+    <string name="settings_close_on_bluetooth_disconnect">Cerrar la aplicación al desconectar Bluetooth</string>
+    <string name="settings_close_on_bluetooth_disconnect_summary">Cerrar automáticamente la aplicación cuando se desconecta un dispositivo de audio Bluetooth</string>
 
     <string name="settings_auto_resume_do_not_resume">No continuar</string>
 
@@ -224,6 +235,8 @@
     <string name="alert_alarm_working">Tiempo de alarma ahora</string>
     <string name="alert_alarm_not_working">No hay suficiente información para la alarma</string>
     <string name="alert_select_external_alarm_app">Elegir reproductor de audio</string>
+    <string name="no_audio_apps_found">No se encontraron aplicaciones de reproductor de audio en este dispositivo</string>
+    <string name="settings_alarm_audio_player_not_selected">No seleccionado</string>
 
     <string name="alert_press_back_to_exit">Presiona atrás una vez más para salir</string>
 
@@ -303,7 +316,7 @@
     <string name="app_id">5A97BAE4</string>
     <string name="app_name">RadioDroid</string>
 
-    <string name="settings_mpd">Demonio de reproductor de música (Music Player Daemon, MPD)</string>
+    <string name="settings_mpd">Servicio de reproductor de música (MPD)</string>
     <string name="settings_mpd_port">Puerto del MPD</string>
     <string name="settings_view_mpd_servers">Tus servidores</string>
     <string name="action_mpd_nok">MPD no conectado</string>
@@ -318,7 +331,7 @@
     <string name="action_play_in_external">Reproducir en reproductor externo</string>
     <string name="action_choose_external_player">Elegir reproductor externo</string>
 
-    <string name="settings_other">Otro</string>
+    <string name="settings_other">Otros</string>
     <string name="settings_statistics">Estadísticas</string>
     <string name="settings_about">Acerca de RadioDroid</string>
 
@@ -519,13 +532,6 @@ Esto sobrescribirá la base de datos principal actual, asegúrese de haber reali
     <string name="settings_auto_off_sleep_timer">Temporizador de auto-detención</string>
     <string name="settings_auto_off_sleep_timer_desc">Detener la reproducción después de %1$s minutos</string>
 
-    <string name="settings_close_when_noisy">Cerrar la aplicación al desconectar auriculares con cable</string>
-    <string name="settings_close_when_noisy_summary">Cerrar automáticamente la aplicación cuando se desconectan los auriculares con cable (requiere pausar al desconectar auriculares con cable)</string>
-    <string name="settings_pause_on_bluetooth_disconnect">Pausar al desconectar Bluetooth</string>
-    <string name="settings_pause_on_bluetooth_disconnect_summary">Pausar automáticamente la reproducción cuando se desconecta un dispositivo de audio Bluetooth</string>
-    <string name="settings_close_on_bluetooth_disconnect">Cerrar la aplicación al desconectar Bluetooth</string>
-    <string name="settings_close_on_bluetooth_disconnect_summary">Cerrar automáticamente la aplicación cuando se desconecta un dispositivo de audio Bluetooth</string>
-
     <string name="sort_by_name">Ordenar por nombre</string>
     <string name="sort_by_click_count">Ordenar por popularidad</string>
     <string name="sort_by_votes">Ordenar por votos</string>
@@ -639,4 +645,50 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="recording_detail_size">Tamaño del archivo:</string>
     <string name="recording_detail_duration">Duración (est.):</string>
     <string name="recording_detail_modified">Modificado:</string>
+
+    <string name="alarm_repeat">Repetir</string>
+
+    <string name="recording_player_title">Reproducir grabación</string>
+    <string name="recording_play">Reproducir</string>
+    <string name="recording_pause">Pausar</string>
+    <string name="recording_play_external">Reproducir con reproductor externo</string>
+    <string name="recording_empty_file">El archivo de grabación está vacío</string>
+
+    <string name="detail_equalizer_settings">Ajustes de ecualizador</string>
+    <string name="buffer_settings_title">Búfer de reproducción</string>
+    <string name="buffer_settings_min">0.5s</string>
+    <string name="buffer_settings_max">30s</string>
+    <string name="buffer_settings_default">Predeterminado</string>
+    <string name="buffer_settings_reset">Restablecer</string>
+    <string name="buffer_settings_apply">Aplicar</string>
+    <string name="buffer_settings_seconds">%1$.1f segundos</string>
+    <string name="buffer_settings_default_desc">Predeterminado (2.5s)</string>
+    <string name="buffer_settings_custom_desc">Personalizado (%1$.1fs)</string>
+
+    <string name="update_failed_db_migration">Error en la actualización: Versión de base de datos incompatible. La base de datos local se reconstruirá en la próxima actualización.</string>
+    <string name="update_failed_network">Error en la actualización: Error de conexión de red. Compruebe su red e inténtelo de nuevo.</string>
+    <string name="update_failed_storage">Error en la actualización: Espacio de almacenamiento insuficiente. Libere espacio e inténtelo de nuevo.</string>
+    <string name="update_network_unavailable_warning">No se puede conectar al servidor de directorio de radios. Compruebe su conexión de red e inténtelo más tarde.</string>
+    <string name="update_network_unstable_title">Red inestable</string>
+    <string name="update_network_unstable_warning">La conexión de red es lenta (respuesta más rápida: %1$dms). La actualización puede fallar repetidamente. Se recomienda cambiar a una red más estable o inténtelo más tarde.</string>
+    <string name="update_network_continue_anyway">Continuar de todos modos</string>
+    <string name="update_network_cancel">Cancelar</string>
+    <string name="update_network_error_warning">Error en la comprobación de red: %1$s\n\nLa actualización puede fallar. ¿Desea continuar?</string>
+
+    <!-- Buffer strategy -->
+    <string name="detail_buffer_settings">Estrategia de búfer</string>
+    <string name="buffer_strategy_title">Estrategia de búfer</string>
+    <string name="buffer_strategy_light">Búfer ligero</string>
+    <string name="buffer_strategy_light_desc">Reproduce tras 2.5 s de búfer, para redes estables, opción predeterminada</string>
+    <string name="buffer_strategy_enhanced">Búfer mejorado</string>
+    <string name="buffer_strategy_enhanced_desc">Reproduce tras 10 s de búfer, para redes ocasionalmente inestables</string>
+    <string name="buffer_strategy_extreme">Búfer extremo</string>
+    <string name="buffer_strategy_extreme_desc">Reproduce tras 30 s de búfer, para redes moderadamente inestables; si aún se interrumpe, considere usar un proxy</string>
+    <string name="buffer_strategy_apply_to_all">Aplicar a todas las estaciones</string>
+
+    <!-- Player full screen labels -->
+    <string name="player_play_time">Duración: %1$s</string>
+    <string name="player_network_usage">Datos: %1$s</string>
+    <string name="player_buffer_time">En búfer: %1$s</string>
+
 </resources>

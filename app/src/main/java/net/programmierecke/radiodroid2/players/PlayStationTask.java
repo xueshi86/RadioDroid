@@ -1,5 +1,6 @@
 package net.programmierecke.radiodroid2.players;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -59,9 +60,14 @@ public class PlayStationTask extends AsyncTask<Void, Void, String> {
 
     public static PlayStationTask playExternal(DataRadioStation stationToPlay, Context ctx) {
         return new PlayStationTask(stationToPlay, ctx, url -> {
-            Intent share = new Intent(Intent.ACTION_VIEW);
-            share.setDataAndType(Uri.parse(url), "audio/*");
-            ctx.startActivity(share);
+            try {
+                Intent share = new Intent(Intent.ACTION_VIEW);
+                share.setDataAndType(Uri.parse(url), "audio/*");
+                share.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                ctx.startActivity(share);
+            } catch (ActivityNotFoundException e) {
+                Toast.makeText(ctx, R.string.no_audio_apps_found, Toast.LENGTH_SHORT).show();
+            }
         }, null);
     }
 

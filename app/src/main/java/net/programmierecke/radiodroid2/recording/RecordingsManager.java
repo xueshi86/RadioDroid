@@ -147,7 +147,7 @@ public class RecordingsManager {
             try {
                 info.setOutputStream(new FileOutputStream(filePath));
             } catch (FileNotFoundException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Recording file not found: " + filePath, e);
                 return;
             }
 

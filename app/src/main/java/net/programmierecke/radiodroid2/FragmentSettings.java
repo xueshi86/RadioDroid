@@ -70,6 +70,7 @@ import static net.programmierecke.radiodroid2.service.PlayerService.PLAYER_SERVI
 import android.os.PowerManager;
 
 public class FragmentSettings extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener, IApplicationSelected, PreferenceFragmentCompat.OnPreferenceStartScreenCallback  {
+    private static final String TAG = "FragmentSettings";
     
     private DatabaseUpdateProgressDialog updateDialog;
     private ActivityResultLauncher<String[]> filePickerLauncher;
@@ -250,7 +251,8 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 }
             }
         );
-        
+
+
         refreshToolbar();
         if (s == null) {
             refreshToplevelIcons();
@@ -1280,7 +1282,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 });
                 
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Failed to export data", e);
                 requireActivity().runOnUiThread(() -> {
                     progressDialog.dismiss();
                     String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();

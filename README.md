@@ -68,7 +68,7 @@
 |------|------|
 |   首次初始化 | 全量下载 5 万+ 电台，耗时约 1-20 分钟（取决于网络质量） |
 |   数据时效性 | 电台数据为更新时的快照，新增/变更需手动触发更新 |
-|   存储空间 | 本地数据库约 30MB |
+| 存储空间 | 本地数据库约 40MB |
 | ️ 更新方式 | 非自动实时同步，需用户主动触发更新 |
 
 ####  预置数据库文件
@@ -142,13 +142,31 @@
 
 ####   电台图标
 
-电台列表和播放界面支持显示电台 Logo。图标获取采用多渠道三步回退策略：
+应用采用智能多级缓存策略加载电台图标，确保两个核心体验：**尽快显示图标，尽量显示主图标**。
 
-1. **优先使用服务器提供的图标 URL**：若电台有 `IconUrl` 字段，尝试加载
-2. **回退到网站通用图标**：从电台主页域名构造 `favicon.ico` 和 `apple-touch-icon.png` 地址尝试加载
-3. **使用 Google Favicons 服务兜底**：通过 `google.com/s2/favicons` 服务获取站点图标
+**图标获取渠道**（三级回退）：
 
-每步失败后自动回退到下一步，全部失败则显示默认图标。使用 Picasso 图片库缓存图标，内置重试机制（最多 3 次，间隔 1s / 3s / 5s）。
+1. **主图标**：服务器提供的 `IconUrl`（最优先）
+2. **回退图标**：从电台主页域名构造的 `favicon.ico` 和 `apple-touch-icon.png`
+3. **兜底图标**：Google Favicons 服务
+
+**缓存策略**：
+
+| 特性 | 说明 |
+|------|------|
+| 分层缓存 | 收藏电台图标存入永久缓存（不删除），其他电台图标存入半永久缓存（7天过期） |
+| 快速显示 | 打开页面时，有缓存的图标立即显示（不管来源），保证用户第一眼看到图标 |
+| 智能升级 | 缓存为回退图标的电台，后台每4小时静默尝试获取主图标，成功后自动替换显示 |
+| 来源标记 | 系统会标记每个缓存图标的来源（主图标/回退），主图标永不再重试，回退图标定时升级 |
+| 用户控制 | 设置中可关闭电台图标显示，减少缓存占用，适合存储空间紧张的用户 |
+
+**流程示意**：
+```
+打开页面 → 缓存图标立即显示（保证速度）
+        → 缓存是回退图标的电台，4小时后后台静默尝试主图标
+        → 主图标获取成功 → 自动替换缓存和显示
+        → 主图标获取失败 → 维持现有图标，下次再试
+```
 
 ####   播放器
 
@@ -160,6 +178,45 @@
 - 支持通过 LastFM API 补充曲目封面等元数据
 
 同时支持：外部播放器调用、MPD（Music Player Daemon）协议、Chromecast 投屏（仅 Play 版）。
+
+####   MPD 播放器支持
+
+MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通常运行在 Linux 服务器、NAS 或树莓派等设备上。RadioDroid 支持将电台流推送到远程 MPD 服务器进行播放，适用于以下场景：
+
+- **家庭音响系统**：在家庭服务器上运行 MPD，通过 RadioDroid 将电台推送到家中音响播放
+- **NAS/树莓派音乐中心**：利用闲置的 NAS 或树莓派作为音频输出终端
+- **多房间同步播放**：通过 MPD 的多客户端特性实现多个房间同步收听同一电台
+- **远程控制**：手机作为遥控器，通过 MPD 控制远端设备的播放
+
+**使用方法**：
+
+1. 确保已有一台运行中的 MPD 服务器（需与手机在同一局域网或可通过公网访问）
+2. 进入应用「设置 → 外部播放器 → Music Player Daemon」
+3. 开启「启用 MPD」开关
+4. 点击「你的服务器」添加 MPD 服务器信息：
+   - **名称**：自定义标识名（如"客厅音响"、"书房 NAS"）
+   - **主机**：MPD 服务器的 IP 地址或域名
+   - **端口**：MPD 监听端口（默认 `6600`）
+   - **密码**：如果 MPD 配置了密码认证则填写，否则留空
+5. 保存后点击对应服务器条目测试连接状态
+6. 在播放器选择界面中选择 MPD 作为目标播放器
+
+**技术说明**：
+
+| 项目 | 说明 |
+|------|------|
+| 协议 | MPD 原生文本协议（非 HTTP），基于 TCP Socket 直连 |
+| 认证 | 支持 MPD 密码认证（可选） |
+| 连接方式 | 应用直接与 MPD 服务器建立 TCP 连接，不经过中间代理 |
+| 支持操作 | 播放、暂停、恢复、停止、音量调节 |
+| 多服务器 | 支持保存多个 MPD 服务器配置并自由切换 |
+| 适用网络 | 局域网优先；公网访问需确保防火墙开放 MPD 端口 |
+
+**注意事项**：
+- MPD 功能为原版 RadioDroid 已有功能，本分支未对其进行修改测试，仅添加介绍
+- 手机与 MPD 服务器之间需要网络连通性（同一 WiFi 或 VPN）
+- 首次使用建议先确认 MPD 服务器可从手机正常访问（可用终端工具 `telnet <IP> 6600` 测试）
+- 如连接失败，请检查：MPD 服务是否运行、端口是否正确、防火墙规则、密码是否匹配
 
 ####  代理支持
 
@@ -173,6 +230,28 @@
 
 支持亮色和暗色主题，可在设置中切换。修正了原版暗色模式下部分界面元素和字体颜色显示不正确的问题。常用界面元素（标题、标签、描述等）根据主题自动调整文字颜色。
 
+####   均衡器
+
+提供双套预设方案。一套调用 Android 系统原生均衡器预设，不同设备厂商的预设名称和调音效果可能存在差异；另一套为应用内置预设，包含「人声」（适合新闻、访谈、脱口秀等以人声为主的节目）和「音乐」（适合音乐类电台的通用调音方案）。
+
+同时支持电台个性化均衡器设置：在电台详情中点击均衡器按钮，可为单个电台单独配置均衡器参数，实现不同电台自动切换不同音效的个性化体验。
+
+####   电台缓存策略
+
+电台详情中提供「缓存策略」配置按钮，允许为每个电台单独设置播放缓冲策略，实现个性化的播放体验：
+
+| 策略 | 说明 | 适用场景 |
+|------|------|------|
+| 轻度缓冲 | 缓冲 2.5 秒后开始播放，内存占用小、延迟低 | 网络稳定、追求快速播放 |
+| 增强缓冲 | 缓冲 10 秒后开始播放，有效吸收网络波动 | 网络偶尔不稳定 |
+| 极限缓冲 | 缓冲 30 秒后开始播放，最大限度抵御网络中断 | 网络中度不稳定 |
+
+**使用方式**：在电台详情界面点击「缓存策略」按钮，选择适合该电台的策略，配置自动保存并立即生效（若当前正在播放该电台则自动重启播放）。
+
+**为什么需要按电台单独设置**：不同电台的流媒体服务器质量参差不齐——有些服务器稳定流畅，适合轻度缓冲快速响应；有些服务器波动频繁，需要更长缓冲时间来平滑播放中断。为每个电台单独设置策略，可在播放速度和稳定性之间取得最佳平衡。
+
+**注意事项**：缓冲时间越长，曲目历史记录与当前实际播放的内容可能出现时间差。因为曲目历史显示的是电台流当前的歌曲信息，而你的播放器由于较长的缓冲，实际播放的内容还在"排队"中——你可能听到的还是上一首歌，但曲目历史已经显示了下一首歌的标题。缓冲时间越长，这个时间差就越大。轻度缓冲（2.5 秒）基本不会出现此问题。
+
 ####  ️ 其他功能
 
 - **收藏电台**：支持添加/移除收藏，滑动删除，撤销操作（Snackbar），M3U 导入/导出
@@ -180,7 +259,6 @@
 - **睡眠定时器**：SeekBar 设置分钟数，终点自动停止播放，保存默认值
 - **闹钟**：支持设置指定时间自动播放指定电台。闹钟默认仅生效一次，如需每天重复请在闹钟编辑界面开启「重复」开关
 - **录音功能**：录制当前播放的电台流为音频文件
-- **均衡器**：提供双套预设方案。一套调用 Android 系统原生均衡器预设，不同设备厂商的预设名称和调音效果可能存在差异；另一套为应用内置预设，包含「人声」（适合新闻、访谈、脱口秀等以人声为主的节目）和「音乐」（适合音乐类电台的通用调音方案）
 - **电台详情展开**：点击展开按钮显示网站访问、分享、添加闹钟、创建桌面快捷方式等操作
 - **趋势图标**：电台列表显示点击量趋势（上升/下降/持平）
 - **国家图标**：电台列表显示所属国家的国旗图标
@@ -238,7 +316,7 @@ Core functionality is identical across both variants. The difference is the avai
 |--------|-------------|
 |    Initial Setup | Full download of 50K+ stations takes 1-20 minutes (network-dependent) |
 |    Data Freshness | Station data is a snapshot; new/modified stations require manual refresh |
-|    Storage | Local database uses approximately 30MB |
+|    Storage | Local database uses approximately 40MB |
 |  ️  Updates | Not real-time; manual user trigger required |
 
 ####    Pre-built Database Files
@@ -312,13 +390,31 @@ Original RadioDroid already had track history. This version optimizes the parsin
 
 ####   Station Icons
 
-Multi-channel three-step fallback icon loading:
+The app uses a smart multi-level caching strategy to ensure two core experiences: **show icons as fast as possible, show primary icons whenever possible**.
 
-1. Server-provided `IconUrl`
-2. Domain-derived `favicon.ico` and `apple-touch-icon.png`
-3. Google Favicons service (`google.com/s2/favicons`)
+**Icon Sources** (three-level fallback):
 
-With retry mechanism (3 retries with 1s/3s/5s delays) and Picasso image caching.
+1. **Primary Icon**: Server-provided `IconUrl` (highest priority)
+2. **Fallback Icon**: `favicon.ico` and `apple-touch-icon.png` derived from the station's homepage domain
+3. **Last Resort Icon**: Google Favicons service (small site favicon)
+
+**Caching Strategy**:
+
+| Feature | Description |
+|---------|-------------|
+| Layered Cache | Favorite station icons go into permanent cache (never deleted), others go into semi-permanent cache (7-day expiry) |
+| Fast Display | When opening a page, cached icons display immediately regardless of source, ensuring users see icons at first glance |
+| Smart Upgrade | Stations with fallback icons will silently retry fetching the primary icon every 4 hours in the background, replacing the display upon success |
+| Source Tracking | Each cached icon is marked with its source (primary/fallback). Primary icons are never retried; fallback icons are periodically upgraded |
+| User Control | Icons can be disabled in Settings to reduce cache size, ideal for users with limited storage |
+
+**Flow Diagram**:
+```
+Open page → Cached icons display immediately (speed first)
+         → Stations with fallback icons retry primary icon after 4h in background
+         → Primary icon fetched → Auto-replace cache and display
+         → Primary icon failed → Keep current icon, retry next time
+```
 
 ####   Player
 
@@ -331,9 +427,70 @@ Dual-engine playback:
 
 Also supports: external player, MPD protocol, Chromecast (Play variant only).
 
+####   MPD (Music Player Daemon) Support
+
+MPD (Music Player Daemon) is an open-source audio playback server program that typically runs on Linux servers, NAS devices, or Raspberry Pi. RadioDroid supports streaming radio stations to a remote MPD server for playback. This feature is useful for:
+
+- **Home Audio System**: Run MPD on a home server and push radio streams to your home speakers via RadioDroid
+- **NAS/Raspberry Pi Music Center**: Use idle NAS or Raspberry Pi as an audio output device
+- **Multi-Room Sync**: Leverage MPD's multi-client capabilities to sync the same radio across multiple rooms
+- **Remote Control**: Use your phone as a remote control for playback on distant devices via MPD
+
+**How to Use**:
+
+1. Ensure you have a running MPD server (must be accessible from your phone on the same LAN or via public network)
+2. Go to **Settings → External Player → Music Player Daemon**
+3. Enable the "Enable MPD" toggle
+4. Tap **"Your servers"** to add an MPD server:
+   - **Name**: Custom identifier (e.g., "Living Room", "Office NAS")
+   - **Host**: IP address or domain name of the MPD server
+   - **Port**: MPD listening port (default `6600`)
+   - **Password**: Fill in if MPD has password authentication configured; leave blank otherwise
+5. After saving, tap the server entry to test connection status
+6. Select MPD as the target player in the player selector dialog
+
+**Technical Details**:
+
+| Item | Description |
+|------|-------------|
+| Protocol | Native MPD text protocol (not HTTP), direct TCP Socket connection |
+| Authentication | Supports optional MPD password authentication |
+| Connection | App establishes direct TCP connection to MPD server, no intermediate proxy |
+| Supported Operations | Play, Pause, Resume, Stop, Volume Control |
+| Multi-Server | Save and switch between multiple MPD server configurations |
+| Network | LAN recommended; public access requires firewall rule for MPD port |
+
+**Notes**:
+- MPD is an existing feature from the original RadioDroid; this fork has not modified or tested it, documentation is provided for reference only
+- Network connectivity between phone and MPD server is required (same WiFi or VPN)
+- Before first use, verify MPD is reachable from your phone (test with `telnet <IP> 6600` in terminal)
+- If connection fails, check: MPD service running?, correct port?, firewall rules?, password match?
+
 ####   Proxy Support
 
 HTTP and SOCKS5 proxy with username/password authentication. Settings serialized via Gson. Uses `proxyAuthenticator` (fixed from the original's incorrect `authenticator`).
+
+####   Equalizer
+
+Two sets of presets available. One uses the Android system's built-in equalizer presets, whose names and sound profiles may vary across device manufacturers; the other is built into the app, featuring "Vocal" (optimized for news, talk shows, podcasts) and "Music" (general-purpose tuning for music stations).
+
+Also supports per-station equalizer customization: tap the equalizer button in station details to configure equalizer parameters for individual stations, enabling automatic switching to different sound profiles when switching stations.
+
+####   Per-Station Buffer Strategy
+
+The station details page provides a **Buffer Strategy** configuration button, allowing you to set a specific playback buffering strategy for each individual station:
+
+| Strategy | Description | Best For |
+|----------|-------------|----------|
+| Light Buffer | Plays after 2.5s buffering, low memory usage, low latency | Stable networks, fast playback |
+| Enhanced Buffer | Plays after 10s buffering, absorbs network fluctuations | Occasionally unstable networks |
+| Extreme Buffer | Plays after 30s buffering, maximum resilience against interruptions | Moderately unstable networks |
+
+**How to Use**: Open station details, tap the "Buffer Strategy" button, and select the strategy that best fits the station. Settings are saved automatically and take effect immediately (if the station is currently playing, playback restarts with the new strategy).
+
+**Why per-station?**: Different radio stations have vastly different stream server quality — some are rock-solid and benefit from light buffering for quick response, while others experience frequent interruptions and need longer buffers to play smoothly. Setting a strategy per station gives you the best balance between playback speed and stability.
+
+**Note**: Longer buffer times may cause the track history to get out of sync with what you're actually hearing. This is because the track history shows the current song from the radio stream, while your player — due to the longer buffer — is still playing content that entered the queue earlier. For example, you might still be hearing Song A, but the track history already shows Song B's title. The longer the buffer, the larger this gap becomes. Light buffer (2.5s) essentially avoids this issue.
 
 ####  ️ Multi-Language UI
 
@@ -350,7 +507,6 @@ Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elemen
 - **Sleep Timer**: SeekBar dialog, auto-stops playback, saves default
 - **Alarm**: Schedule a station to play at a specified time. Alarms are one-time by default; enable the "repeat" toggle in the alarm editor for daily recurrence
 - **Recording**: Record live radio streams to audio files
-- **Equalizer**: Two sets of presets available. One uses the Android system's built-in equalizer presets, whose names and sound profiles may vary across device manufacturers; the other is built into the app, featuring "Vocal" (optimized for news, talk shows, podcasts) and "Music" (general-purpose tuning for music stations)
 - **Station Detail Expansion**: Website visit, share, alarm, desktop shortcut creation
 - **Trend Icons**: Click trend indicators (rising/falling/flat)
 - **Country Flags**: Flag icons per station in list view
@@ -362,6 +518,49 @@ Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elemen
 ##  ️ Changelog
 
 > Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+
+### v0.97
+*2026-05-23*
+
+**播放爆音修复**
+- **修复**：RadioPlayer 音量控制改用指数曲线映射（ratio²），低音量端变化更精细，避免爆音
+- **新增**：`setMaxGain()` 动态增益控制 — PlayerService 根据系统音量动态调整播放增益系数（0.1~4.0），低系统音量更安静，高系统音量可超增益提升响度
+
+**电台图标文件缓存系统**
+- **重构**：PlayerServiceUtil 图标加载流程重构为三级缓存：文件缓存 → Picasso 内存/磁盘缓存 → 网络加载
+- **新增**：`StationIconCache` 文件缓存层 — 收藏电台图标永久缓存，其他电台图标7天过期
+- **优化**：打开页面时优先从文件缓存加载图标，保证第一眼看到图标
+- **新增**：后台静默升级机制 — 缓存为回退图标的电台，500ms 延迟批量执行后台主图标重试，成功后自动替换显示
+- **优化**：网络加载失败后立即尝试回退 URL，不再等待重试延迟
+
+**电台个性化均衡器**
+- **新增**：EqualizerActivity 支持电台级别均衡器设置 — 每个电台可单独配置开关、预设、频段级别、低音增强
+- **新增**：`hasStationEqualizer()` / `getStationEqEnabledKey()` 等静态方法，支持 PlayerService 按电台切换均衡器参数
+- **优化**：均衡器标题栏显示电台名称，区分全局和电台专属设置
+
+**播放器界面优化**
+- **优化**：大播放器信息栏统一样式 — 播放时长、数据用量、缓冲时间三栏布局，添加标签前缀（Duration/Data/Buffered），统一字号和颜色
+- **优化**：缓冲时间显示位置调整，与播放时长和数据用量水平排列
+
+**播放服务增强**
+- **重构**：PlayerService 大幅增强（+254 行）— 均衡器与播放联动、音量控制优化、电台 UUID 传递
+- **重构**：PlayerServiceUtil 图标缓存系统重构（+411 行）
+- **新增**：`PlayerWrapper.playRemote()` 支持 stationUuid 参数传递
+- **新增**：RadioPlayer 记录当前电台 UUID，支持按电台切换均衡器
+
+**多语言更新**
+- **新增**：缓冲策略、均衡器设置相关中英文字符串
+- **优化**：电台图标设置描述更准确（"下载并显示电台图标" / "不下载图标，节省存储空间"）
+- **更新**：西班牙语、俄语翻译同步
+
+**代码质量与清理**
+- **清理**：移除 ExoPlayerWrapper 中 80+ 处调试日志（Log.d/Log.i），保留必要的运行状态日志
+- **清理**：移除 BufferSettingsDialog 中 6 处调试日志
+- **清理**：移除 PlayerService 中 rawMetadata 遍历调试日志
+- **修复**：12 处 `e.printStackTrace()` 替换为 `Log.e(TAG, message, e)`，统一异常日志输出
+- **删除**：废弃文件 `dialogs/DatabaseUpdateProgressDialog.java`（与 `ui.DatabaseUpdateProgressDialog` 重复）
+- **删除**：调试残留文档 `GRADLE_INSTALLATION_GUIDE.md`
+- **优化**：ExoPlayerWrapper 从 2864 行精简至 2596 行，功能逻辑不变
 
 ### v0.96
 *2025-05-18*

@@ -31,6 +31,7 @@ import net.programmierecke.radiodroid2.RadioDroidApp;
 import net.programmierecke.radiodroid2.Utils;
 import net.programmierecke.radiodroid2.alarm.TimePickerFragment;
 import net.programmierecke.radiodroid2.players.selector.PlayerType;
+import net.programmierecke.radiodroid2.service.StationIconCache;
 import net.programmierecke.radiodroid2.views.ItemListDialog;
 
 import java.lang.ref.WeakReference;
@@ -134,6 +135,9 @@ public class StationActions {
         final RadioDroidApp radioDroidApp = (RadioDroidApp) context.getApplicationContext();
         radioDroidApp.getFavouriteManager().add(station);
 
+        // 收藏时，将半永久缓存中的图标移入永久缓存
+        StationIconCache.getInstance(context).onStationFavorited(station.StationUuid);
+
         Toast toast = Toast.makeText(context, context.getString(R.string.notify_starred), Toast.LENGTH_SHORT);
         toast.show();
     }
@@ -143,13 +147,20 @@ public class StationActions {
         final FavouriteManager favouriteManager = radioDroidApp.getFavouriteManager();
         final int removedIdx = favouriteManager.remove(station.StationUuid);
 
+        // 取消收藏时，将永久缓存中的图标移入半永久缓存
+        StationIconCache.getInstance(context).onStationUnfavorited(station.StationUuid);
+
         if (view != null) {
             final View viewAttachTo = view.getRootView().findViewById(R.id.fragment_player_small);
 
             Snackbar snackbar = Snackbar
                     .make(viewAttachTo, R.string.notify_station_removed_from_list, 6000);
             snackbar.setAnchorView(viewAttachTo);
-            snackbar.setAction(R.string.action_station_removed_from_list_undo, view1 -> favouriteManager.restore(station, removedIdx));
+            snackbar.setAction(R.string.action_station_removed_from_list_undo, view1 -> {
+                favouriteManager.restore(station, removedIdx);
+                // 撤销删除时，将图标移回永久缓存
+                StationIconCache.getInstance(context).onStationFavorited(station.StationUuid);
+            });
             snackbar.show();
         }
     }

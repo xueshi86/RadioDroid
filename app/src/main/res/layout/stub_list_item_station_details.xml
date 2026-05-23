@@ -77,6 +77,26 @@
                 app:tint="?attr/iconsInItemBackgroundColor"
                 app:srcCompat="@drawable/ic_back_arrow_24dp" />
 
+        <ImageButton
+                android:id="@+id/buttonBufferSettings"
+                style="@style/IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/detail_buffer_settings"
+                app:tint="?attr/iconsInItemBackgroundColor"
+                app:srcCompat="@drawable/ic_buffer_settings_24dp" />
+
+        <ImageButton
+                android:id="@+id/buttonEqualizerSettings"
+                style="@style/IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/detail_equalizer_settings"
+                app:tint="?attr/iconsInItemBackgroundColor"
+                app:srcCompat="@drawable/ic_equalizer_24dp" />
+
         <View
             android:layout_width="0dp"
             android:layout_height="0dp"

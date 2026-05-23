@@ -254,8 +254,8 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="startup_show_player">Show track history</string>
 
     <string name="settings_load_icons">Show station icons</string>
-    <string name="settings_load_icons_on">Icons will be downloaded</string>
-    <string name="settings_load_icons_off">Icons will not be downloaded</string>
+    <string name="settings_load_icons_on">Download and display station icons</string>
+    <string name="settings_load_icons_off">No icons downloaded, saves storage space</string>
 
     <string name="settings_auto_favorite">Auto-favorites</string>
     <string name="settings_auto_favorite_on">Add stations automatically to favorites when playing</string>
@@ -659,5 +659,33 @@ The app will automatically restart to load the new database.</string>
     <string name="recording_pause">Pause</string>
     <string name="recording_play_external">Play with external player</string>
     <string name="recording_empty_file">Recording file is empty</string>
+
+    <!-- Buffer settings -->
+    <string name="detail_buffer_settings">Buffer strategy</string>
+    <string name="detail_equalizer_settings">Equalizer settings</string>
+    <string name="buffer_settings_title">Playback Buffer</string>
+    <string name="buffer_settings_min">0.5s</string>
+    <string name="buffer_settings_max">30s</string>
+    <string name="buffer_settings_default">Default</string>
+    <string name="buffer_settings_reset">Reset</string>
+    <string name="buffer_settings_apply">Apply</string>
+    <string name="buffer_settings_seconds">%1$.1f seconds</string>
+    <string name="buffer_settings_default_desc">Default (2.5s)</string>
+    <string name="buffer_settings_custom_desc">Custom (%1$.1fs)</string>
+
+    <!-- Buffer strategy -->
+    <string name="buffer_strategy_title">Buffer Strategy</string>
+    <string name="buffer_strategy_light">Light Buffer</string>
+    <string name="buffer_strategy_light_desc">Plays after 2.5s buffering, suitable for stable networks, default option</string>
+    <string name="buffer_strategy_enhanced">Enhanced Buffer</string>
+    <string name="buffer_strategy_enhanced_desc">Plays after 10s buffering, suitable for occasionally unstable networks</string>
+    <string name="buffer_strategy_extreme">Extreme Buffer</string>
+    <string name="buffer_strategy_extreme_desc">Plays after 30s buffering, suitable for moderately unstable networks; if still interrupted, consider using a proxy</string>
+    <string name="buffer_strategy_apply_to_all">Apply to all stations</string>
+
+    <!-- Player full screen labels -->
+    <string name="player_play_time">Duration: %1$s</string>
+    <string name="player_network_usage">Data: %1$s</string>
+    <string name="player_buffer_time">Buffered: %1$s</string>
 
 </resources>

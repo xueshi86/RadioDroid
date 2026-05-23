@@ -1,6 +1,7 @@
 package net.programmierecke.radiodroid2.data;
 
 import android.text.TextUtils;
+import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -10,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class DataStatistics {
+    private static final String TAG = "DataStatistics";
     public String Name = "";
     public String Value = "";
 
@@ -31,7 +33,7 @@ public class DataStatistics {
                         aList.add(aData);
                     }
                 } catch (JSONException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "Failed to parse statistics JSON", e);
                 }
 
             }

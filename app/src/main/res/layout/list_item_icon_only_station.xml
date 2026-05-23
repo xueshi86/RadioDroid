@@ -4,7 +4,6 @@
     android:id="@+id/station_icon_foreground"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
     android:descendantFocusability="blocksDescendants"
     android:orientation="vertical">
 
@@ -16,16 +15,15 @@
 
         <ImageView
             android:id="@+id/iconImageViewIcon"
-            android:layout_width="70dp"
-            android:layout_height="70dp"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
             android:layout_gravity="center"
-            android:layout_margin="20dp" />
+            android:scaleType="fitCenter" />
 
         <ImageView
             android:id="@+id/iconTransparentCircle"
-            android:layout_width="70dp"
-            android:layout_height="70dp"
-            android:layout_margin="20dp"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
             android:layout_gravity="center"
             android:visibility="gone"
             app:srcCompat="@drawable/ic_transparent_circle"

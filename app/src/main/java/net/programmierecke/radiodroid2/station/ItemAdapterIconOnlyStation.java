@@ -1,6 +1,8 @@
 package net.programmierecke.radiodroid2.station;
 
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
@@ -78,10 +80,10 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
 
         if (station.hasIcon()) {
             setupIcon(useCircularIcons, holder.imageViewIcon, holder.transparentImageView);
-            PlayerServiceUtil.getStationIcon(holder.imageViewIcon, station.IconUrl, station.HomePageUrl);
+            PlayerServiceUtil.getStationIcon(holder.imageViewIcon, station.IconUrl, station.HomePageUrl, station.StationUuid);
         } else if (!TextUtils.isEmpty(station.HomePageUrl)) {
             setupIcon(useCircularIcons, holder.imageViewIcon, holder.transparentImageView);
-            PlayerServiceUtil.getStationIcon(holder.imageViewIcon, null, station.HomePageUrl);
+            PlayerServiceUtil.getStationIcon(holder.imageViewIcon, null, station.HomePageUrl, station.StationUuid);
         } else {
             holder.imageViewIcon.setImageDrawable(stationImagePlaceholder);
             if (Utils.isDarkTheme(getContext())) {
@@ -95,14 +97,20 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
             }
         }
 
-        TypedValue tv = new TypedValue();
         if (playingStationPosition == position) {
+            TypedValue tv = new TypedValue();
             getContext().getTheme().resolveAttribute(android.R.attr.colorPrimary, tv, true);
-            holder.frameLayout.setBackgroundColor(tv.data);
+            GradientDrawable borderDrawable = new GradientDrawable();
+            borderDrawable.setShape(GradientDrawable.RECTANGLE);
+            borderDrawable.setCornerRadius(4 * getContext().getResources().getDisplayMetrics().density);
+            borderDrawable.setStroke(3, tv.data);
+            borderDrawable.setColor(Color.TRANSPARENT);
+            holder.frameLayout.setBackground(borderDrawable);
+            holder.transparentImageView.setVisibility(View.VISIBLE);
             holder.transparentImageView.setColorFilter(tv.data);
         } else {
-            getContext().getTheme().resolveAttribute(android.R.attr.colorSecondary, tv, true);
-            holder.frameLayout.setBackgroundColor(tv.data);
+            holder.frameLayout.setBackground(null);
+            holder.transparentImageView.setVisibility(View.GONE);
         }
     }
 

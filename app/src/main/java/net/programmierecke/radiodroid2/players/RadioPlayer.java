@@ -50,9 +50,11 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
     }
 
     private PlayerWrapper currentPlayer;
+    private float maxGain = 1.0f;  // 最大增益系数，由 PlayerService 根据系统音量动态调整
     private Context mainContext;
 
     private String streamName;
+    private String currentStationUuid = "";
 
     private HandlerThread playerThread;
     private Handler playerThreadHandler;
@@ -98,9 +100,14 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
     }
 
     public final void play(final String stationURL, final String streamName, final boolean isAlarm) {
+        play(stationURL, streamName, isAlarm, "");
+    }
+
+    public final void play(final String stationURL, final String streamName, final boolean isAlarm, final String stationUuid) {
         setState(PlayState.PrePlaying, -1);
 
         this.streamName = streamName;
+        this.currentStationUuid = stationUuid;
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mainContext.getApplicationContext());
         final int connectTimeout = prefs.getInt("stream_connect_timeout", 4);
@@ -115,14 +122,14 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
                 .readTimeout(readTimeout, TimeUnit.SECONDS)
                 .build();
 
-        playerThreadHandler.post(() -> currentPlayer.playRemote(customizedHttpClient, stationURL, mainContext, isAlarm));
+        playerThreadHandler.post(() -> currentPlayer.playRemote(customizedHttpClient, stationURL, mainContext, isAlarm, stationUuid));
     }
 
     public final void play(final DataRadioStation station, final boolean isAlarm) {
         setState(PlayState.PrePlaying, -1);
 
         playStationTask = new PlayStationTask(station, mainContext,
-                (url) -> RadioPlayer.this.play(station.playableUrl, station.Name, isAlarm),
+                (url) -> RadioPlayer.this.play(station.playableUrl, station.Name, isAlarm, station.StationUuid),
                 (executionResult) -> {
                     RadioPlayer.this.playStationTask = null;
 
@@ -201,8 +208,41 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
         return currentPlayer.getAudioSessionId();
     }
 
+    private static final float VOLUME_RANGE = 100f;
+
+    /**
+     * 设置播放音量。
+     * 外部使用 0-100 范围，内部通过指数曲线映射为 ExoPlayer 增益。
+     *
+     * 指数曲线使人耳感知的音量变化更均匀：
+     * - 低音量端（0-30）：增益变化缓慢，避免最小音量仍然太大
+     * - 高音量端（70-100）：增益变化加快，允许超过 1.0 增益提升最大音量
+     *
+     * 映射公式：gain = maxGain * (volume/100)^2
+     * - volume=0  → gain=0（静音）
+     * - volume=50 → gain=maxGain*0.25
+     * - volume=100→ gain=maxGain
+     */
     public final void setVolume(float volume) {
-        currentPlayer.setVolume(volume);
+        float ratio = Math.max(0f, Math.min(1f, volume / VOLUME_RANGE));
+        // 指数曲线：ratio^2 使低音量端更精细
+        float gain = maxGain * ratio * ratio;
+        currentPlayer.setVolume(gain);
+    }
+
+    /**
+     * 设置最大增益系数。
+     * 由 PlayerService 根据系统音量动态调整：
+     * - 低系统音量 → maxGain < 1.0（更安静）
+     * - 中系统音量 → maxGain = 1.0（不变）
+     * - 高系统音量 → maxGain > 1.0（更响）
+     */
+    public void setMaxGain(float gain) {
+        maxGain = Math.max(0.1f, Math.min(4.0f, gain));
+    }
+
+    public float getMaxGain() {
+        return maxGain;
     }
 
     @Override

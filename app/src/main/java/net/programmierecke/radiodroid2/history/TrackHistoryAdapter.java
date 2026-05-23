@@ -84,7 +84,7 @@ public class TrackHistoryAdapter extends PagedListAdapter<TrackHistoryEntry, Tra
             String homePageUrl = homePageUrlCache.get(historyEntry.stationUuid);
 
             if (!TextUtils.isEmpty(iconUrl) || !TextUtils.isEmpty(homePageUrl)) {
-                PlayerServiceUtil.getStationIcon(holder.imageViewStationIcon, iconUrl, homePageUrl);
+                PlayerServiceUtil.getStationIcon(holder.imageViewStationIcon, iconUrl, homePageUrl, historyEntry.stationUuid);
             } else {
                 holder.imageViewStationIcon.setImageDrawable(stationImagePlaceholder);
             }

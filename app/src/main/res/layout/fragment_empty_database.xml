@@ -40,6 +40,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/empty_database_button"
+        app:backgroundTint="?attr/colorAccent"
         app:icon="@drawable/ic_refresh"
         app:iconGravity="textStart" />
 

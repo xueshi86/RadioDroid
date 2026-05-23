@@ -50,6 +50,11 @@ public class MediaPlayerWrapper implements PlayerWrapper, StreamProxyListener {
 
     @Override
     public void playRemote(@NonNull OkHttpClient httpClient, @NonNull String streamUrl, @NonNull Context context, boolean isAlarm) {
+        playRemote(httpClient, streamUrl, context, isAlarm, "");
+    }
+
+    @Override
+    public void playRemote(@NonNull OkHttpClient httpClient, @NonNull String streamUrl, @NonNull Context context, boolean isAlarm, @NonNull String stationUuid) {
         if (!streamUrl.equals(this.streamUrl)) {
             currentPlaybackTransferredBytes = 0;
         }

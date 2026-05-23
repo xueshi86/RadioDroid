@@ -134,8 +134,8 @@
     <string name="startup_show_player">显示曲目历史</string>
 
     <string name="settings_load_icons">显示电台图标</string>
-    <string name="settings_load_icons_on">下载电台图标</string>
-    <string name="settings_load_icons_off">不下载电台图标</string>
+    <string name="settings_load_icons_on">下载并显示电台图标</string>
+    <string name="settings_load_icons_off">不下载图标，节省存储空间</string>
 
     <string name="settings_auto_favorite">自动收藏</string>
     <string name="settings_auto_favorite_on">播放时自动收藏电台</string>
@@ -501,4 +501,17 @@
     <string name="recording_pause">暂停</string>
     <string name="recording_play_external">使用外部播放器播放</string>
     <string name="recording_empty_file">录音文件为空</string>
+
+    <!-- Buffer settings -->
+    <string name="detail_buffer_settings">缓冲设置</string>
+    <string name="detail_equalizer_settings">均衡器设置</string>
+    <string name="buffer_settings_title">播放缓冲</string>
+    <string name="buffer_settings_min">0.5秒</string>
+    <string name="buffer_settings_max">30秒</string>
+    <string name="buffer_settings_default">默认</string>
+    <string name="buffer_settings_reset">重置</string>
+    <string name="buffer_settings_apply">应用</string>
+    <string name="buffer_settings_seconds">%1$.1f 秒</string>
+    <string name="buffer_settings_default_desc">默认 (2.5秒)</string>
+    <string name="buffer_settings_custom_desc">自定义 (%1$.1f秒)</string>
 </resources>

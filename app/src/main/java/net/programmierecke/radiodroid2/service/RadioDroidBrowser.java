@@ -30,6 +30,7 @@ import com.squareup.picasso.Target;
 
 import net.programmierecke.radiodroid2.R;
 import net.programmierecke.radiodroid2.RadioDroidApp;
+import net.programmierecke.radiodroid2.service.StationIconCache;
 import net.programmierecke.radiodroid2.Utils;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
 
@@ -90,10 +91,31 @@ public class RadioDroidBrowser {
                     break;
                 }
 
+                // 优先从缓存加载
+                StationIconCache iconCache = StationIconCache.getInstance(context);
+                String cachedPath = iconCache.getIconPath(station.StationUuid);
+                if (cachedPath != null) {
+                    try {
+                        Bitmap cachedBitmap = iconCache.getIconBitmap(station.StationUuid);
+                        if (cachedBitmap != null) {
+                            stationIdToIcon.put(station.StationUuid, cachedBitmap);
+                            countDownLatch.countDown();
+                            continue;
+                        }
+                    } catch (Exception ignored) {}
+                }
+
                 Target imageLoadTarget = new Target() {
                     @Override
                     public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
                         stationIdToIcon.put(station.StationUuid, bitmap);
+                        // 保存到缓存
+                        boolean isFavorite = false;
+                        try {
+                            RadioDroidApp app = (RadioDroidApp) contextRef.get().getApplicationContext();
+                            isFavorite = app.getFavouriteManager().has(station.StationUuid);
+                        } catch (Exception ignored) {}
+                        StationIconCache.getInstance(contextRef.get()).saveIcon(station.StationUuid, bitmap, isFavorite);
                         countDownLatch.countDown();
                     }
 
@@ -124,7 +146,7 @@ public class RadioDroidBrowser {
             try {
                 countDownLatch.await(IMAGE_LOAD_TIMEOUT_MS, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Interrupted while waiting for image load", e);
             }
 
             return null;

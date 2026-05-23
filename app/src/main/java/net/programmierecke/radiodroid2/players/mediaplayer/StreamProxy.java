@@ -192,7 +192,7 @@ public class StreamProxy implements Recordable {
             try {
                 proxyServer = new ServerSocket(0, 1, InetAddress.getLocalHost());
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Failed to create proxy server socket", e);
                 return;
             }
 

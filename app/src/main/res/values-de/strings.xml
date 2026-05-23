@@ -80,8 +80,8 @@
 
 
     <string name="settings_load_icons">Stationslogos</string>
-    <string name="settings_load_icons_on">Die Stationslogos werden im Hintergrund heruntergeladen; es kann einige Zeit dauern, bis alle Logos angezeigt werden.</string>
-    <string name="settings_load_icons_off">Es werden keine Stationslogos heruntergeladen.</string>
+    <string name="settings_load_icons_on">Stationslogos herunterladen und anzeigen</string>
+    <string name="settings_load_icons_off">Keine Logos herunterladen, Speicherplatz sparen</string>
 
     <string name="settings_auto_favorite">Auto-Favoriten</string>
     <string name="settings_auto_favorite_on">Stationen werden beim Abspielen automatisch als Favoriten gesetzt.</string>

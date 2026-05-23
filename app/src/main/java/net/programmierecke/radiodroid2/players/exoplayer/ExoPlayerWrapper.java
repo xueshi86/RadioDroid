@@ -37,10 +37,12 @@ import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
+import com.google.android.exoplayer2.DefaultLoadControl;
 
-import net.programmierecke.radiodroid2.BuildConfig;
 import net.programmierecke.radiodroid2.R;
 import net.programmierecke.radiodroid2.Utils;
+import net.programmierecke.radiodroid2.station.BufferSettingsDialog;
+import net.programmierecke.radiodroid2.station.BufferStrategy;
 import net.programmierecke.radiodroid2.players.PlayState;
 import net.programmierecke.radiodroid2.players.PlayerWrapper;
 import net.programmierecke.radiodroid2.recording.RecordableListener;
@@ -78,7 +80,13 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
     private Context context;
     private MediaSource audioSource;
 
+    // Current buffer strategy for this playback session
+    private BufferStrategy currentStrategy = BufferStrategy.LIGHT;
+
     private Runnable fullStopTask;
+    private Runnable playbackDelayRunnable;
+
+    // 音量渐入由 PlayerService 统一控制，ExoPlayerWrapper 只负责静音启动
 
     private final BroadcastReceiver networkChangedReceiver = new BroadcastReceiver() {
         @Override
@@ -97,6 +105,11 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
 
     @Override
     public void playRemote(@NonNull OkHttpClient httpClient, @NonNull String streamUrl, @NonNull Context context, boolean isAlarm) {
+        playRemote(httpClient, streamUrl, context, isAlarm, "");
+    }
+
+    @Override
+    public void playRemote(@NonNull OkHttpClient httpClient, @NonNull String streamUrl, @NonNull Context context, boolean isAlarm, @NonNull String stationUuid) {
         // I don't know why, but it is still possible that streamUrl is null,
         // I still get exceptions from this from google
         if (!streamUrl.equals(this.streamUrl)) {
@@ -107,21 +120,52 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         this.streamUrl = streamUrl;
 
         cancelStopTask();
+        cancelPlaybackDelay();
 
         stateListener.onStateChanged(PlayState.PrePlaying);
 
+        // Always release existing player and recreate with current buffer settings
+        // This ensures per-station buffer strategy takes effect on every playback
         if (player != null) {
             player.stop();
+            player.release();
+            player = null;
         }
 
-        if (player == null) {
-            player = new ExoPlayer.Builder(context).build();
-            player.setAudioAttributes(new AudioAttributes.Builder().setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
-                    .setUsage(C.USAGE_MEDIA).build(), false);
+        // Get per-station buffer strategy
+        BufferStrategy strategy = BufferSettingsDialog.getStationStrategy(context, stationUuid);
+        currentStrategy = strategy;
+        Log.i(TAG, "playRemote: stationUuid=" + stationUuid + ", strategy=" + strategy.name()
+                + ", minBufferMs=" + strategy.minBufferMs + ", maxBufferMs=" + strategy.maxBufferMs);
 
-            player.addListener(this);
-            player.addAnalyticsListener(new AnalyticEventListener());
-        }
+        int minBufferMs;
+        int maxBufferMs;
+        int bufferForPlaybackMs;
+        int bufferForPlaybackAfterRebufferMs;
+
+        // All strategies use fixed parameters
+        bufferForPlaybackMs = strategy.bufferForPlaybackMs;
+        bufferForPlaybackAfterRebufferMs = strategy.bufferForPlaybackAfterRebufferMs;
+        minBufferMs = strategy.minBufferMs;
+        maxBufferMs = strategy.maxBufferMs;
+
+        DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
+                .setBufferDurationsMs(
+                        minBufferMs,
+                        maxBufferMs,
+                        bufferForPlaybackMs,
+                        bufferForPlaybackAfterRebufferMs
+                )
+                .build();
+
+        player = new ExoPlayer.Builder(context)
+                .setLoadControl(loadControl)
+                .build();
+        player.setAudioAttributes(new AudioAttributes.Builder().setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                .setUsage(C.USAGE_MEDIA).build(), false);
+
+        player.addListener(this);
+        player.addAnalyticsListener(new AnalyticEventListener());
 
         if (playerThreadHandler == null) {
             playerThreadHandler = new Handler(Looper.getMainLooper());
@@ -149,7 +193,26 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             player.prepare();
         }
 
-        player.setPlayWhenReady(true);
+        // 静音启动，渐入由 PlayerService 统一控制
+        player.setVolume(0f);
+
+        // Real-time delay before playback starts.
+        // bufferForPlaybackMs is media-time (how much audio duration to buffer),
+        // not wall-clock time. For low-bitrate streams (e.g., 32kbps), 10s of audio
+        // is only ~40KB and can be downloaded in under 1 second. So we add a real-time
+        // delay to ensure the player buffers for the intended duration before playing.
+        int playbackDelayMs = bufferForPlaybackMs;
+        cancelPlaybackDelay();
+
+        player.setPlayWhenReady(false); // Don't play yet, just buffer
+
+        playbackDelayRunnable = () -> {
+            if (player != null) {
+                player.setPlayWhenReady(true);
+            }
+            playbackDelayRunnable = null;
+        };
+        playerThreadHandler.postDelayed(playbackDelayRunnable, playbackDelayMs);
 
         context.registerReceiver(networkChangedReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
@@ -161,6 +224,7 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         Log.i(TAG, "Pause. Stopping exoplayer.");
 
         cancelStopTask();
+        cancelPlaybackDelay();
 
         if (player != null) {
             context.unregisterReceiver(networkChangedReceiver);
@@ -175,6 +239,7 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         Log.i(TAG, "Stopping exoplayer.");
 
         cancelStopTask();
+        cancelPlaybackDelay();
 
         if (player != null) {
             context.unregisterReceiver(networkChangedReceiver);
@@ -247,7 +312,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
 
     @Override
     public void onMetadata(@NonNull Metadata metadata) {
-        if (BuildConfig.DEBUG) Log.d(TAG, "META: " + metadata);
         final int length = metadata.length();
         if (length > 0) {
             for (int i = 0; i < length; i++) {
@@ -257,104 +321,32 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                 }
                 if (entry instanceof IcyInfo) {
                     final IcyInfo icyInfo = ((IcyInfo) entry);
-                    Log.d(TAG, "IcyInfo: " + icyInfo);
                     if (icyInfo.title != null) {
-                        // 总是输出调试信息，以便诊断乱码问题
-                        Log.d(TAG, "原始IcyInfo标题: " + icyInfo.title);
-                        Log.d(TAG, "原始IcyInfo标题长度: " + icyInfo.title.length());
-                        
-                        // 检查原始标题中是否包含问号
-                        if (icyInfo.title.contains("?")) {
-                            Log.w(TAG, "ExoPlayer原始IcyInfo标题中包含问号: " + icyInfo.title);
-                            
-                            // 打印问号字符的详细信息
-                            StringBuilder questionMarks = new StringBuilder();
-                            for (int k = 0; k < icyInfo.title.length(); k++) {
-                                char c = icyInfo.title.charAt(k);
-                                if (c == '?') {
-                                    questionMarks.append(String.format("位置%d ", k));
-                                }
-                            }
-                            Log.w(TAG, "ExoPlayer原始IcyInfo标题问号位置: " + questionMarks.toString());
-                        }
-                        
-                        // 打印原始标题中每个字符的Unicode值
-                        StringBuilder charCodes = new StringBuilder();
-                        for (int k = 0; k < Math.min(icyInfo.title.length(), 50); k++) {
-                            char c = icyInfo.title.charAt(k);
-                            charCodes.append(String.format("'%c'(%04X) ", c, (int) c));
-                        }
-                        Log.d(TAG, "ExoPlayer原始IcyInfo标题的前50个字符的Unicode值: " + charCodes.toString());
-                        
-                        // 打印原始字节数据（用于调试）
-                        byte[] titleBytes = icyInfo.title.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
-                        StringBuilder hexString = new StringBuilder();
-                        for (int j = 0; j < titleBytes.length && j < 100; j++) { // 只打印前100个字节
-                            hexString.append(String.format("%02X ", titleBytes[j]));
-                        }
-                        Log.d(TAG, "原始IcyInfo标题字节（前100字节）: " + hexString.toString());
-                        
                         // 处理16字节块和填充问题
+                        byte[] titleBytes = icyInfo.title.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
                         byte[] processedTitleBytes = processMetadataBlocks(titleBytes);
-                        
+
                         // 尝试使用多种编码方式解析元数据，以支持不同语言的字符集
                         String decodedTitle = decodeMetadataWithCharsetDetection(processedTitleBytes);
-                        
+
                         // 如果解码后仍包含问号，尝试额外的解码方法
                         if (decodedTitle.contains("?")) {
-                            Log.w(TAG, "ExoPlayer解码后标题中包含问号，尝试额外解码: " + decodedTitle);
                             String alternativeDecodedTitle = tryAlternativeDecoding(icyInfo.title);
                             if (!alternativeDecodedTitle.equals(decodedTitle)) {
                                 decodedTitle = alternativeDecodedTitle;
-                                Log.d(TAG, "额外解码成功，结果: " + decodedTitle);
-                            } else {
-                                Log.d(TAG, "额外解码结果相同，使用原始解码结果");
                             }
                         }
-                        
-                        // 总是输出调试信息，以便诊断乱码问题
-                        Log.i(TAG, "解码后的标题: " + decodedTitle);
-                        Log.i(TAG, "解码后的标题长度: " + decodedTitle.length());
-                        
-                        // 检查解码后标题中是否包含问号
-                        if (decodedTitle.contains("?")) {
-                            Log.w(TAG, "ExoPlayer解码后标题中包含问号: " + decodedTitle);
-                            
-                            // 打印问号字符的详细信息
-                            StringBuilder questionMarksDecoded = new StringBuilder();
-                            for (int k = 0; k < decodedTitle.length(); k++) {
-                                char c = decodedTitle.charAt(k);
-                                if (c == '?') {
-                                    questionMarksDecoded.append(String.format("位置%d ", k));
-                                }
-                            }
-                            Log.w(TAG, "ExoPlayer解码后标题问号位置: " + questionMarksDecoded.toString());
-                        }
-                        
-                        // 打印解码后标题中每个字符的Unicode值
-                        if (!decodedTitle.isEmpty()) {
-                            StringBuilder charCodesDecoded = new StringBuilder();
-                            for (int k = 0; k < Math.min(decodedTitle.length(), 50); k++) {
-                                char c = decodedTitle.charAt(k);
-                                charCodesDecoded.append(String.format("'%c'(%04X) ", c, (int) c));
-                            }
-                            Log.i(TAG, "ExoPlayer解码后标题的前50个字符的Unicode值: " + charCodesDecoded.toString());
-                        }
+
                         Map<String, String> rawMetadata = new HashMap<String, String>();
                         rawMetadata.put("StreamTitle", decodedTitle);
                         StreamLiveInfo streamLiveInfo = new StreamLiveInfo(rawMetadata);
-                        Log.i(TAG, "StreamLiveInfo标题: " + streamLiveInfo.getTitle());
-                        Log.i(TAG, "StreamLiveInfo艺术家: " + streamLiveInfo.getArtist());
-                        Log.i(TAG, "StreamLiveInfo完整信息: " + streamLiveInfo.toString());
                         onDataSourceStreamLiveInfo(streamLiveInfo);
                     }
                 } else if (entry instanceof IcyHeaders) {
                     final IcyHeaders icyHeaders = ((IcyHeaders) entry);
-                    Log.d(TAG, "IcyHeaders: " + icyHeaders);
                     onDataSourceShoutcastInfo(new ShoutcastInfo(icyHeaders));
                 } else if (entry instanceof Id3Frame) {
                     final Id3Frame id3Frame = ((Id3Frame) entry);
-                    Log.d(TAG, "id3 metadata: " + id3Frame);
                 }
             }
         }
@@ -370,7 +362,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
             int resumeWithin = sharedPref.getInt("settings_resume_within", 60);
             if (resumeWithin > 0) {
-                Log.d(TAG, "Trying to resume playback within " + resumeWithin + "s.");
 
                 // We want user to be able to paused during connection loss.
                 // TODO: Find a way to notify user that even if current state is Playing
@@ -406,7 +397,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         stateListener.onDataSourceStreamLiveInfo(streamLiveInfo);
     }
 
-    private long recordableBytesLogged;
     private boolean recordableListenerNullLogged;
 
     @Override
@@ -417,11 +407,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         RecordableListener listener = recordableListener;
         if (listener != null) {
             listener.onBytesAvailable(buffer, offset, length);
-            recordableBytesLogged += length;
-            if (BuildConfig.DEBUG && recordableBytesLogged >= 65536) {
-                Log.d(TAG, "Recording bytes sent to listener, total: " + (recordableBytesLogged));
-                recordableBytesLogged = 0;
-            }
         } else {
             if (!recordableListenerNullLogged) {
                 Log.w(TAG, "onDataSourceBytesRead: recordableListener is NULL, bytes not recorded");
@@ -442,7 +427,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
 
     @Override
     public void startRecording(@NonNull RecordableListener recordableListener) {
-        Log.d(TAG, "startRecording called, setting recordableListener");
         this.recordableListener = recordableListener;
         this.recordableListenerNullLogged = false;
     }
@@ -495,6 +479,13 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         }
     }
 
+    private void cancelPlaybackDelay() {
+        if (playbackDelayRunnable != null) {
+            playerThreadHandler.removeCallbacks(playbackDelayRunnable);
+            playbackDelayRunnable = null;
+        }
+    }
+
     @Override
     public void onRepeatModeChanged(int repeatMode) {
         // Do nothing
@@ -502,7 +493,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
 
     @Override
     public void onPlayerErrorChanged(PlaybackException error) {
-        Log.d(TAG, "Player error: ", error);
         // Stop playing since it is either irrecoverable error in the player or our data source failed to reconnect.
         if (fullStopTask != null) {
             stop();
@@ -545,12 +535,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                 }
             }
 
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Providing retry delay of " + retryDelay + "ms " +
-                        "error count: " + loadErrorInfo.errorCount + ", " +
-                        "exception " + exception.getClass() + ", " +
-                        "message: " + exception.getMessage());
-            }
             return retryDelay;
         }
 
@@ -599,7 +583,7 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
 
         @Override
         public void onBandwidthEstimate(@NonNull EventTime eventTime, int totalLoadTimeMs, long totalBytesLoaded, long bitrateEstimate) {
-
+            // Not used - all strategies use fixed buffer parameters
         }
 
         @Override
@@ -663,15 +647,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             return originalBytes;
         }
         
-        // 记录原始字节数据
-        if (BuildConfig.DEBUG) {
-            StringBuilder hexString = new StringBuilder();
-            for (int j = 0; j < Math.min(originalBytes.length, 100); j++) {
-                hexString.append(String.format("%02X ", originalBytes[j]));
-            }
-            Log.d(TAG, "processMetadataBlocks - 原始字节数据（前100字节）: " + hexString.toString());
-        }
-        
         // 创建输出流
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         
@@ -698,16 +673,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         
         byte[] result = outputStream.toByteArray();
         
-        // 记录处理后的字节数据
-        if (BuildConfig.DEBUG) {
-            StringBuilder hexString = new StringBuilder();
-            for (int j = 0; j < Math.min(result.length, 100); j++) {
-                hexString.append(String.format("%02X ", result[j]));
-            }
-            Log.d(TAG, "processMetadataBlocks - 处理后字节数据（前100字节）: " + hexString.toString());
-            Log.d(TAG, "processMetadataBlocks - 原始长度: " + originalBytes.length + ", 处理后长度: " + result.length);
-        }
-        
         return result;
     }
 
@@ -724,11 +689,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         if (metadataBytes == null || metadataBytes.length == 0) {
             return context.getString(R.string.unknown);
         }
-        
-        // 调试信息
-        if (BuildConfig.DEBUG) {
-            logMetadataBytes(metadataBytes);
-        }
 
         // 检查原始数据是否已损坏
         if (checkIfDataIsCorrupted(metadataBytes)) {
@@ -741,15 +701,10 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             try {
                 String utf8Result = new String(metadataBytes, "UTF-8");
                 if (isValidDecodedText(utf8Result) && !containsObviousGarbledCharacters(utf8Result)) {
-                    if (BuildConfig.DEBUG) {
-                        Log.i(TAG, "检测到有效UTF-8序列，使用UTF-8编码成功解码: " + utf8Result);
-                    }
                     return utf8Result;
                 }
             } catch (Exception e) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "UTF-8编码解码失败: " + e.getMessage());
-                }
+                // UTF-8 decoding failed, try other encodings
             }
         }
         
@@ -775,23 +730,15 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             try {
                 String result = new String(metadataBytes, charset);
                 if (isValidDecodedText(result) && !containsObviousGarbledCharacters(result)) {
-                    if (BuildConfig.DEBUG) {
-                        Log.i(TAG, "使用" + charset + "编码成功解码: " + result);
-                    }
                     return result;
                 }
             } catch (Exception e) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, charset + "编码解码失败: " + e.getMessage());
-                }
+                // Continue trying next charset
             }
         }
         
         // 如果首选编码都失败，尝试全面编码检测
         String bestResult = tryAllEncodings(metadataBytes);
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG, "全面编码尝试结果: " + bestResult);
-        }
         
         return bestResult;
     }
@@ -809,11 +756,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
 
         // 获取原始字节数据
         byte[] originalBytes = cleanedMetadata.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
-        
-        // 调试信息
-        if (BuildConfig.DEBUG) {
-            logMetadataBytes(originalBytes);
-        }
 
         // 检查原始数据是否已损坏
         if (checkIfDataIsCorrupted(originalBytes)) {
@@ -832,15 +774,10 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             try {
                 String utf8Result = new String(originalBytes, "UTF-8");
                 if (isValidDecodedText(utf8Result) && !containsObviousGarbledCharacters(utf8Result)) {
-                    if (BuildConfig.DEBUG) {
-                        Log.i(TAG, "检测到有效UTF-8序列，使用UTF-8编码成功解码: " + utf8Result);
-                    }
                     return utf8Result;
                 }
             } catch (Exception e) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "UTF-8编码解码失败: " + e.getMessage());
-                }
+                // UTF-8 decoding failed, try other encodings
             }
         }
         
@@ -860,23 +797,15 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             try {
                 String result = new String(originalBytes, charset);
                 if (isValidDecodedText(result) && !containsObviousGarbledCharacters(result)) {
-                    if (BuildConfig.DEBUG) {
-                        Log.i(TAG, "使用" + charset + "编码成功解码: " + result);
-                    }
                     return result;
                 }
             } catch (Exception e) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, charset + "编码解码失败: " + e.getMessage());
-                }
+                // Continue trying next charset
             }
         }
         
         // 如果首选编码都失败，尝试全面编码检测
         String bestResult = tryAllEncodings(originalBytes);
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG, "全面编码尝试结果: " + bestResult);
-        }
         
         return bestResult;
     }
@@ -1040,19 +969,7 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         
         // 只有超过95%的字节是问号，才认为数据已损坏（更加宽容）
         double ratio = (double) questionMarkCount / bytes.length;
-        boolean isCorrupted = ratio > 0.95;
-        
-        if (BuildConfig.DEBUG && isCorrupted) {
-            Log.d(TAG, "checkIfDataIsCorrupted - 检测到损坏数据: " + 
-                  questionMarkCount + "/" + bytes.length + 
-                  " 字节是问号(0x3F), 比例: " + String.format("%.2f", ratio));
-        } else if (BuildConfig.DEBUG && ratio > 0.7) {
-            Log.d(TAG, "checkIfDataIsCorrupted - 数据包含较多问号但未达到损坏阈值: " + 
-                  questionMarkCount + "/" + bytes.length + 
-                  " 字节是问号(0x3F), 比例: " + String.format("%.2f", ratio));
-        }
-        
-        return isCorrupted;
+        return ratio > 0.95;
     }
 
     /**
@@ -1081,8 +998,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             // 根据替换字符的比例扣分
             double replacementRatio = (double) replacementCharCount / text.length();
             score -= (int)(replacementRatio * 300); // 最多扣300分
-            Log.i(TAG, charset + "解码包含替换字符: " + replacementCharCount + "/" + text.length() + 
-                  ", 比例: " + String.format("%.2f", replacementRatio) + ", 扣分: " + (int)(replacementRatio * 300));
         }
         
         // 检查是否包含过多的问号字符
@@ -1095,7 +1010,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         double questionMarkRatio = (double) questionMarkCount / text.length();
         if (questionMarkRatio > 0.2) {
             score -= 80; // 问号过多，严重扣分
-            Log.i(TAG, "ExoPlayer " + charset + "解码结果包含过多问号: " + questionMarkCount + "/" + text.length());
         }
         
         // 检查控制字符比例
@@ -1141,19 +1055,16 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             // 如果有替换字符，严重扣分
             if (utf8ReplacementCharCount > 0) {
                 score -= 100; // 有替换字符，严重扣分
-                Log.i(TAG, "ExoPlayer UTF-8解码产生替换字符，严重扣分");
             }
             
             // 如果UTF-8解码产生了合理的中文字符，大幅加分
             if (chineseCharCount > 0) {
                 score += chineseCharCount * 40; // 增加加分权重
-                Log.i(TAG, "ExoPlayer UTF-8解码成功识别中文字符数: " + chineseCharCount + ", 大幅加分");
                 
                 // 如果中文字符比例较高，额外加分
                 double chineseCharRatio = (double) chineseCharCount / text.length();
                 if (chineseCharRatio > 0.1) { // 降低阈值
                     score += 50; // 中文字符比例高，额外加分
-                    Log.i(TAG, "ExoPlayer UTF-8解码结果中文字符比例高: " + String.format("%.2f", chineseCharRatio));
                 }
             }
             
@@ -1161,7 +1072,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             double europeanCharRatio = (double) europeanCharCount / text.length();
             if (europeanCharRatio > 0.6 && chineseCharCount == 0) { // 提高阈值，只有当没有中文字符时才扣分
                 score -= 20; // 降低扣分，避免过度惩罚
-                Log.i(TAG, "ExoPlayer UTF-8解码结果包含大量欧洲字符但没有中文字符，可能是错误编码");
             }
             
             // 对于UTF-8编码，如果包含任何非ASCII字符，给予额外加分
@@ -1190,13 +1100,11 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             }
             if (chineseCharCount > 0) {
                 score += chineseCharCount * 20; // 中文字符大幅加分，提高权重
-                Log.i(TAG, "ExoPlayer " + charset + "解码成功识别中文字符数: " + chineseCharCount);
                 
                 // 如果中文字符比例较高，额外加分
                 double chineseCharRatio = (double) chineseCharCount / text.length();
                 if (chineseCharRatio > 0.3) {
                     score += 100; // 中文字符比例高，大幅加分
-                    Log.i(TAG, "ExoPlayer " + charset + "解码结果中文字符比例高: " + String.format("%.2f", chineseCharRatio));
                 }
             }
             
@@ -1243,19 +1151,16 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             
             if (japaneseCharCount > 0) {
                 score += japaneseCharCount * 10; // 日文字符大幅加分
-                Log.i(TAG, "ExoPlayer " + charset + "解码成功识别日文字符数: " + japaneseCharCount);
             }
             
             // 如果包含大量片假名，额外加分
             if (fullWidthKatakanaCount > 0) {
                 score += fullWidthKatakanaCount * 5;
-                Log.i(TAG, "ExoPlayer " + charset + "解码成功识别全角片假名字符数: " + fullWidthKatakanaCount);
             }
             
             // 如果包含半角片假名，可能是Shift_JIS编码的标志
             if (halfWidthKatakanaCount > 0) {
                 score += halfWidthKatakanaCount * 15; // 半角片假名是Shift_JIS的强特征
-                Log.i(TAG, "ExoPlayer " + charset + "解码成功识别半角片假名字符数: " + halfWidthKatakanaCount + "，可能是Shift_JIS编码");
             }
         }
         
@@ -1275,9 +1180,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             }
             if (koreanCharCount > 0) {
                 score += koreanCharCount * 10; // 韩文字符大幅加分
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "ExoPlayer " + charset + "解码成功识别韩文字符数: " + koreanCharCount);
-                }
             }
         }
         
@@ -1341,23 +1243,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
     }
     
     /**
-     * 记录元数据字节信息用于调试
-     */
-    private void logMetadataBytes(byte[] bytes) {
-        if (!BuildConfig.DEBUG || bytes == null) {
-            return;
-        }
-        
-        StringBuilder hexString = new StringBuilder();
-        int limit = Math.min(bytes.length, 100); // 只打印前100个字节
-        for (int i = 0; i < limit; i++) {
-            hexString.append(String.format("%02X ", bytes[i]));
-        }
-        Log.d(TAG, "原始元数据字节（前100字节）: " + hexString.toString());
-        Log.d(TAG, "元数据长度: " + bytes.length);
-    }
-    
-    /**
      * 尝试UTF-8解码
      */
     private String tryUtf8Decoding(byte[] bytes) {
@@ -1395,31 +1280,26 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                 
                 // 如果有替换字符，说明UTF-8解码失败
                 if (replacementCharCount > 0) {
-                    Log.i(TAG, "UTF-8解码产生替换字符，解码失败");
                     return null;
                 }
                 
                 // 如果UTF-8解码产生了中文字符，且没有明显的编码错误标志，直接返回结果
                 if (chineseCharCount > 0 && halfWidthKatakanaCount == 0 && invalidCharCount == 0) {
-                    Log.i(TAG, "UTF-8解码成功，检测到中文字符数: " + chineseCharCount + ", 结果: " + result);
                     return result;
                 }
                 
                 // 如果检测到半角片假名字符，可能是编码问题，尝试其他编码
                 if (halfWidthKatakanaCount > 0) {
-                    Log.i(TAG, "UTF-8解码检测到半角片假名字符，尝试其他编码");
                     return null;
                 }
                 
                 // 如果检测到无效字符但包含中文字符，仍然尝试使用UTF-8
                 if (chineseCharCount > 0 && invalidCharCount <= 5) { // 提高阈值
-                    Log.i(TAG, "UTF-8解码检测到无效字符但包含中文字符，仍使用UTF-8解码结果: " + result);
                     return result;
                 }
                 
                 // 如果没有中文字符，但有少量无效字符，可能是非中文的UTF-8文本
                 if (chineseCharCount == 0 && invalidCharCount <= 3) {
-                    Log.i(TAG, "UTF-8解码成功，无中文字符但无效字符数量可接受: " + result);
                     return result;
                 }
                 
@@ -1428,7 +1308,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                     // 尝试修复常见的编码问题
                     String repaired = tryRepairCommonEncodingIssues(bytes);
                     if (repaired != null && containsChineseCharacters(repaired)) {
-                        Log.i(TAG, "修复编码问题成功，检测到中文字符: " + repaired);
                         return repaired;
                     }
                 }
@@ -1438,7 +1317,7 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                 }
             }
         } catch (Exception e) {
-            Log.d(TAG, "UTF-8解码失败: " + e.getMessage());
+            // UTF-8 decoding failed
         }
         return null;
     }
@@ -1518,7 +1397,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                         i += 2;
                     } else {
                         // 不完整的2字节序列，跳过
-                        Log.d(TAG, "跳过不完整的2字节UTF-8序列");
                         i++;
                     }
                 } else if ((b & 0xF0) == 0xE0) {
@@ -1534,12 +1412,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                             // 有2个字节，尝试猜测第三个字节
                             byte firstByte = b;
                             byte secondByte = bytes[i + 1];
-                            
-                            // 对于常见的中文字符，尝试补全第三个字节
-                            if (BuildConfig.DEBUG) {
-                                Log.d(TAG, "尝试修复不完整的3字节UTF-8序列: " + 
-                                      String.format("%02X %02X", firstByte, secondByte));
-                            }
                             
                             // 尝试几种常见的第三字节，优先选择能组成有效中文字符的字节
                             byte[] possibleThirdBytes = { (byte)0x86, (byte)0x87, (byte)0x88, (byte)0x89, (byte)0x8A, (byte)0x8B, (byte)0x8C, (byte)0x8D, (byte)0x8E, (byte)0x8F, (byte)0x90, (byte)0x91, (byte)0x92, (byte)0x93, (byte)0x94, (byte)0x95, (byte)0x96, (byte)0x97, (byte)0x98, (byte)0x99, (byte)0x9A, (byte)0x9B, (byte)0x9C, (byte)0x9D, (byte)0x9E, (byte)0x9F, (byte)0xA0, (byte)0xA1, (byte)0xA2, (byte)0xA3, (byte)0xA4, (byte)0xA5, (byte)0xA6, (byte)0xA7, (byte)0xA8, (byte)0xA9, (byte)0xAA, (byte)0xAB, (byte)0xAC, (byte)0xAD, (byte)0xAE, (byte)0xAF, (byte)0xB0, (byte)0xB1, (byte)0xB2, (byte)0xB3, (byte)0xB4, (byte)0xB5, (byte)0xB6, (byte)0xB7, (byte)0xB8, (byte)0xB9, (byte)0xBA, (byte)0xBB, (byte)0xBC, (byte)0xBD, (byte)0xBE, (byte)0xBF };
@@ -1569,14 +1441,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                                 repairedBytes.write(firstByte);
                                 repairedBytes.write(secondByte);
                                 repairedBytes.write(bestThirdByte);
-                                if (BuildConfig.DEBUG) {
-                                    Log.d(TAG, "成功修复3字节UTF-8序列: " + bestResult);
-                                }
-                            } else {
-                                // 无法修复，跳过这两个字节
-                                if (BuildConfig.DEBUG) {
-                                    Log.d(TAG, "无法修复3字节UTF-8序列，跳过");
-                                }
                             }
                         }
                         i += 2; // 跳过这两个字节
@@ -1591,7 +1455,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                         i += 4;
                     } else {
                         // 不完整的4字节序列，跳过
-                        Log.d(TAG, "跳过不完整的4字节UTF-8序列");
                         i += Math.min(4, bytes.length - i);
                     }
                 } else {
@@ -1600,14 +1463,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                     if (i > 0 && (bytes[i-1] & 0x80) != 0 && (bytes[i-1] & 0xC0) != 0xC0) {
                         // 前一个字节是多字节序列的起始字节，这个字节可能是后续字节
                         repairedBytes.write(b);
-                        if (BuildConfig.DEBUG) {
-                            Log.d(TAG, "处理多字节序列的后续字节: " + String.format("%02X", b));
-                        }
-                    } else {
-                        // 真正的无效字节，跳过
-                        if (BuildConfig.DEBUG) {
-                            Log.d(TAG, "跳过无效的UTF-8起始字节: " + String.format("%02X", b));
-                        }
                     }
                     i++;
                 }
@@ -1619,14 +1474,8 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             
             // 检查结果是否有效
             if (!result.contains("\uFFFD") && containsChineseCharacters(result)) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "UTF-8序列修复成功: " + result);
-                }
                 return result;
             } else {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "UTF-8序列修复失败，结果仍包含替换字符");
-                }
                 return null;
             }
         } catch (Exception e) {
@@ -1707,17 +1556,9 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                                 repairedBytes.write(b);
                                 repairedBytes.write(secondByte);
                                 repairedBytes.write(inferredByte);
-                                if (BuildConfig.DEBUG) {
-                                    Log.d(TAG, "基于上下文修复3字节UTF-8序列: " + 
-                                          String.format("%02X %02X -> %02X", b, secondByte, inferredByte));
-                                }
                                 i += 2;
                             } else {
                                 // 尝试其他修复策略
-                                if (BuildConfig.DEBUG) {
-                                    Log.d(TAG, "无法修复3字节UTF-8序列，尝试其他策略: " + 
-                                          String.format("%02X %02X %02X", b, secondByte, thirdByte));
-                                }
                                 
                                 // 如果第二个字节是有效的UTF-8起始字节，可能是两个独立的字符
                                 if ((secondByte & 0x80) == 0) {
@@ -1752,16 +1593,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                                 repairedBytes.write(firstByte);
                                 repairedBytes.write(secondByte);
                                 repairedBytes.write(thirdByte);
-                                if (BuildConfig.DEBUG) {
-                                    Log.d(TAG, "基于上下文修复不完整3字节UTF-8序列: " + 
-                                          String.format("%02X %02X -> %02X", firstByte, secondByte, thirdByte));
-                                }
-                            } else {
-                                // 无法推断，跳过这两个字节
-                                if (BuildConfig.DEBUG) {
-                                    Log.d(TAG, "无法推断缺失的字节，跳过: " + 
-                                          String.format("%02X %02X", firstByte, secondByte));
-                                }
                             }
                         }
                         i += 2; // 跳过这两个字节
@@ -1790,14 +1621,8 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             
             // 检查结果是否有效
             if (!result.contains("\uFFFD") && containsChineseCharacters(result)) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "基于上下文的修复成功: " + result);
-                }
                 return result;
             } else {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "基于上下文的修复失败，结果仍包含替换字符");
-                }
                 return null;
             }
         } catch (Exception e) {
@@ -1917,7 +1742,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         // 对于UTF-8，使用专门的检测方法
         String utf8Result = tryUtf8Decoding(bytes);
         if (utf8Result != null) {
-            Log.i(TAG, "UTF-8编码检测成功: " + utf8Result);
             return utf8Result;
         }
         
@@ -1941,23 +1765,19 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                     double chineseCharRatio = (double) chineseCharCount / result.length();
                     // 如果中文字符比例超过5%，认为这是一个有效的中文编码结果
                     if (chineseCharRatio > 0.05) {
-                        Log.i(TAG, "检测到中文编码: " + charset + ", 结果: " + result + 
-                              ", 中文字符比例: " + String.format("%.2f", chineseCharRatio));
                         return result;
                     }
                 }
             } catch (Exception e) {
-                Log.d(TAG, "尝试" + charset + "编码失败: " + e.getMessage());
+                // Continue trying next charset
             }
         }
         
         // 如果所有中文编码都失败，尝试直接使用UTF-8解码（不进行额外检查）
         try {
-            String result = new String(bytes, "UTF-8");
-            Log.i(TAG, "所有中文编码检测失败，使用原始UTF-8解码: " + result);
-            return result;
+            return new String(bytes, "UTF-8");
         } catch (Exception e) {
-            Log.d(TAG, "原始UTF-8解码也失败: " + e.getMessage());
+            // UTF-8 decoding failed
         }
         
         return null;
@@ -1973,9 +1793,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             try {
                 String result = new String(bytes, charset);
                 if (containsJapaneseCharacters(result) && isValidDecodedText(result)) {
-                    if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "检测到日语编码: " + charset + ", 结果: " + result);
-                    }
                     return result;
                 }
             } catch (Exception e) {
@@ -1996,9 +1813,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             try {
                 String result = new String(bytes, charset);
                 if (containsKoreanCharacters(result) && isValidDecodedText(result)) {
-                    if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "检测到韩语编码: " + charset + ", 结果: " + result);
-                    }
                     return result;
                 }
             } catch (Exception e) {
@@ -2019,9 +1833,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             try {
                 String result = new String(bytes, charset);
                 if (containsWesternCharacters(result) && isValidDecodedText(result)) {
-                    if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "检测到西欧编码: " + charset + ", 结果: " + result);
-                    }
                     return result;
                 }
             } catch (Exception e) {
@@ -2048,18 +1859,8 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         int bestScore = -1;
         String bestCharset = "";
         
-        // 打印原始字节数据，用于调试
-        StringBuilder hexString = new StringBuilder();
-        for (int j = 0; j < Math.min(bytes.length, 50); j++) {
-            hexString.append(String.format("%02X ", bytes[j]));
-        }
-        Log.i(TAG, "tryAllEncodings - 原始字节数据（前50字节）: " + hexString.toString());
-        
         // 首先检查是否是有效的UTF-8序列
         boolean isValidUtf8 = isValidUTF8Sequence(bytes);
-        if (isValidUtf8) {
-            Log.i(TAG, "检测到有效UTF-8序列，将优先考虑UTF-8编码");
-        }
         
         for (String charset : allCharsets) {
             try {
@@ -2069,34 +1870,20 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                 // 如果是有效的UTF-8序列，大幅提高UTF-8编码的优先级
                 if (isValidUtf8 && charset.equals("UTF-8")) {
                     score += 200; // 大幅加分，确保UTF-8优先
-                    Log.i(TAG, "检测到有效UTF-8序列，UTF-8编码额外加分200");
                 }
-                
-                // 总是输出调试信息，以便诊断编码问题
-                Log.i(TAG, charset + "解码结果: " + result + ", 分数: " + score);
                 
                 // 检查是否包含中文字符
                 boolean hasChinese = containsChineseCharacters(result);
                 if (hasChinese) {
-                    Log.i(TAG, charset + "解码结果包含中文字符");
                     // 对于中文编码，如果包含中文字符，额外加分
                     if (charset.equals("GBK") || charset.equals("GB2312") || charset.equals("Big5")) {
                         score += 50; // 中文编码成功解码中文字符，大幅加分
-                        Log.i(TAG, charset + "是中文编码且成功解码中文字符，额外加分50");
                     }
                 }
-                
-                // 检查是否包含大量特殊字符（可能是错误编码的标志）
-                int specialCharCount = countSpecialCharacters(result);
-                double specialRatio = (double) specialCharCount / result.length();
-                Log.i(TAG, charset + "解码结果特殊字符比例: " + String.format("%.2f", specialRatio));
                 
                 if (score > bestScore) {
                     // 在选择最佳结果前，检查是否包含明显的乱码字符
                     if (containsObviousGarbledCharacters(result)) {
-                        if (BuildConfig.DEBUG) {
-                            Log.i(TAG, charset + "解码结果包含明显的乱码字符，跳过: " + result);
-                        }
                         // 如果包含明显的乱码，大幅降低分数
                         score -= 200;
                     }
@@ -2108,18 +1895,12 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                     }
                 }
             } catch (Exception e) {
-                Log.i(TAG, charset + "解码失败: " + e.getMessage());
+                // Continue trying next charset
             }
         }
         
-        // 总是输出最佳编码选择信息
-        Log.i(TAG, "选择最佳编码: " + bestCharset + ", 分数: " + bestScore + ", 结果: " + bestResult);
-        
         // 最终检查：如果最佳结果仍然包含明显的乱码字符，返回"Unknown"
         if (containsObviousGarbledCharacters(bestResult)) {
-            if (BuildConfig.DEBUG) {
-                Log.w(TAG, "最佳编码结果仍然包含明显的乱码字符，返回Unknown: " + bestResult);
-            }
             return context.getString(R.string.unknown);
         }
         
@@ -2252,32 +2033,19 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         // 获取原始字节数据
         byte[] originalBytes = metadata.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
         
-        // 记录原始数据中的问号位置
-        StringBuilder questionMarkPositions = new StringBuilder();
-        for (int i = 0; i < originalBytes.length; i++) {
-            if (originalBytes[i] == 0x3F) { // 问号的ASCII值
-                questionMarkPositions.append(i).append(" ");
-            }
-        }
-        Log.d(TAG, "tryAlternativeDecoding - 原始数据中问号位置: " + questionMarkPositions.toString());
-        
         // 尝试修复常见的编码问题
         String repaired = tryRepairCommonEncodingIssues(originalBytes);
         if (repaired != null && !repaired.contains("?")) {
-            Log.d(TAG, "tryAlternativeDecoding - 修复编码问题成功: " + repaired);
             return repaired;
         }
         
         // 尝试特殊字符替换
         String withReplacements = replaceProblematicCharacters(metadata);
-        Log.d(TAG, "tryAlternativeDecoding - 特殊字符替换结果: " + withReplacements);
         
         // 如果仍然包含大量问号，尝试更激进的修复方法
         if (containsTooManyQuestionMarks(withReplacements)) {
-            Log.d(TAG, "tryAlternativeDecoding - 检测到大量问号，尝试激进修复");
             String aggressiveResult = tryAggressiveQuestionMarkRepair(originalBytes);
             if (aggressiveResult != null && !aggressiveResult.equals(withReplacements)) {
-                Log.d(TAG, "tryAlternativeDecoding - 激进修复结果: " + aggressiveResult);
                 return aggressiveResult;
             }
         }
@@ -2295,11 +2063,10 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             try {
                 String utf8Result = new String(bytes, "UTF-8");
                 if (isValidDecodedText(utf8Result)) {
-                    Log.d(TAG, "tryRepairCommonEncodingIssues - 检测到有效UTF-8序列，UTF-8解码成功: " + utf8Result);
                     return utf8Result;
                 }
             } catch (Exception e) {
-                Log.d(TAG, "tryRepairCommonEncodingIssues - UTF-8解码失败: " + e.getMessage());
+                // UTF-8 decoding failed
             }
         }
         
@@ -2314,12 +2081,11 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             if (isValidUTF8Sequence(originalBytes)) {
                 String utf8Result = new String(originalBytes, "UTF-8");
                 if (isValidDecodedText(utf8Result)) {
-                    Log.d(TAG, "tryRepairCommonEncodingIssues - 修复ISO-8859-1误处理的UTF-8成功: " + utf8Result);
                     return utf8Result;
                 }
             }
         } catch (Exception e) {
-            Log.d(TAG, "tryRepairCommonEncodingIssues - 修复ISO-8859-1误处理的UTF-8失败: " + e.getMessage());
+            // ISO-8859-1 to UTF-8 conversion failed
         }
         
         // 优先尝试中文编码修复
@@ -2330,11 +2096,10 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             
             // 检查结果是否有效
             if (isValidDecodedText(gbkResult) && containsChineseCharacters(gbkResult)) {
-                Log.d(TAG, "tryRepairCommonEncodingIssues - GBK解码成功: " + gbkResult);
                 return gbkResult;
             }
         } catch (Exception e) {
-            Log.d(TAG, "tryRepairCommonEncodingIssues - GBK解码失败: " + e.getMessage());
+            // GBK decoding failed
         }
         
         // 尝试修复GB2312被误解析为UTF-8的问题
@@ -2344,11 +2109,10 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             
             // 检查结果是否有效
             if (isValidDecodedText(gb2312Result) && containsChineseCharacters(gb2312Result)) {
-                Log.d(TAG, "tryRepairCommonEncodingIssues - GB2312解码成功: " + gb2312Result);
                 return gb2312Result;
             }
         } catch (Exception e) {
-            Log.d(TAG, "tryRepairCommonEncodingIssues - GB2312解码失败: " + e.getMessage());
+            // GB2312 decoding failed
         }
         
         // 尝试修复Big5被误解析为UTF-8的问题
@@ -2358,11 +2122,10 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             
             // 检查结果是否有效
             if (isValidDecodedText(big5Result) && containsChineseCharacters(big5Result)) {
-                Log.d(TAG, "tryRepairCommonEncodingIssues - Big5解码成功: " + big5Result);
                 return big5Result;
             }
         } catch (Exception e) {
-            Log.d(TAG, "tryRepairCommonEncodingIssues - Big5解码失败: " + e.getMessage());
+            // Big5 decoding failed
         }
         
         // 尝试修复双编码问题（例如UTF-8被错误地编码为ISO-8859-1，然后又作为UTF-8处理）
@@ -2376,11 +2139,10 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             
             // 检查结果是否有效
             if (isValidDecodedText(result) && !result.contains("?")) {
-                Log.d(TAG, "tryRepairCommonEncodingIssues - 双UTF-8编码修复成功: " + result);
                 return result;
             }
         } catch (Exception e) {
-            Log.d(TAG, "tryRepairCommonEncodingIssues - 双UTF-8编码修复失败: " + e.getMessage());
+            // Double encoding repair failed
         }
         
         // 尝试修复Shift_JIS编码问题（仅在检测到可能的日文字符时）
@@ -2390,11 +2152,10 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             
             // 检查结果是否有效且包含日文字符
             if (isValidDecodedText(shiftJisResult) && containsJapaneseCharacters(shiftJisResult)) {
-                Log.d(TAG, "tryRepairCommonEncodingIssues - Shift_JIS解码成功: " + shiftJisResult);
                 return shiftJisResult;
             }
         } catch (Exception e) {
-            Log.d(TAG, "tryRepairCommonEncodingIssues - Shift_JIS解码失败: " + e.getMessage());
+            // Shift_JIS decoding failed
         }
         
         // 尝试修复EUC-JP编码问题（仅在检测到可能的日文字符时）
@@ -2404,11 +2165,10 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             
             // 检查结果是否有效且包含日文字符
             if (isValidDecodedText(eucJpResult) && containsJapaneseCharacters(eucJpResult)) {
-                Log.d(TAG, "tryRepairCommonEncodingIssues - EUC-JP解码成功: " + eucJpResult);
                 return eucJpResult;
             }
         } catch (Exception e) {
-            Log.d(TAG, "tryRepairCommonEncodingIssues - EUC-JP解码失败: " + e.getMessage());
+            // EUC-JP decoding failed
         }
         
         return null;
@@ -2490,13 +2250,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         // 如果问号比例超过30%，认为包含过多问号
         double ratio = (double) questionMarkCount / text.length();
         
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG, "containsTooManyQuestionMarks - 问号数量: " + questionMarkCount + 
-                  ", 总长度: " + text.length() + 
-                  ", 比例: " + String.format("%.2f", ratio) + 
-                  ", 阈值: 0.30");
-        }
-        
         return ratio > 0.3;
     }
     
@@ -2513,33 +2266,22 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             try {
                 String utf8Result = new String(originalBytes, "UTF-8");
                 if (isValidDecodedText(utf8Result) && !containsObviousGarbledCharacters(utf8Result)) {
-                    if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "tryAggressiveQuestionMarkRepair - 检测到有效UTF-8序列，使用UTF-8解码: " + utf8Result);
-                    }
                     return utf8Result;
                 }
             } catch (Exception e) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "tryAggressiveQuestionMarkRepair - UTF-8解码失败: " + e.getMessage());
-                }
+                // UTF-8 decoding failed
             }
         }
         
         // 尝试修复不完整的UTF-8序列
         String repairedUtf8 = repairIncompleteUtf8Sequences(originalBytes);
         if (repairedUtf8 != null && isValidDecodedText(repairedUtf8) && !containsObviousGarbledCharacters(repairedUtf8)) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "tryAggressiveQuestionMarkRepair - 修复不完整UTF-8序列成功: " + repairedUtf8);
-            }
             return repairedUtf8;
         }
         
         // 尝试基于上下文修复
         String contextRepaired = repairBasedOnContext(originalBytes);
         if (contextRepaired != null && isValidDecodedText(contextRepaired) && !containsObviousGarbledCharacters(contextRepaired)) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "tryAggressiveQuestionMarkRepair - 基于上下文修复成功: " + contextRepaired);
-            }
             return contextRepaired;
         }
         
@@ -2568,12 +2310,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                             
                             // 如果问号比例低于原始数据，认为修复有效
                             if (ratio < 0.5) {
-                                if (BuildConfig.DEBUG) {
-                                    Log.d(TAG, "tryAggressiveQuestionMarkRepair - 编码组合成功: " + 
-                                          encoding1 + " -> " + encoding2 + 
-                                          ", 结果: " + result + 
-                                          ", 问号比例: " + String.format("%.2f", ratio));
-                                }
                                 return result;
                             }
                         }
@@ -2623,15 +2359,10 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             
             String repaired = result.toString();
             if (!repaired.equals(baseString)) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "tryAggressiveQuestionMarkRepair - 智能替换结果: " + repaired);
-                }
                 return repaired;
             }
         } catch (Exception e) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "tryAggressiveQuestionMarkRepair - 智能替换失败: " + e.getMessage());
-            }
+            // Smart replacement failed
         }
         
         return null;
@@ -2685,10 +2416,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         
         // 如果乱码字符比例超过20%，认为文本包含明显的乱码
         double garbledRatio = (double) garbledCharCount / totalCharCount;
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG, "containsObviousGarbledCharacters - 乱码字符数: " + garbledCharCount + 
-                  "/" + totalCharCount + ", 比例: " + String.format("%.2f", garbledRatio));
-        }
         
         return garbledRatio > 0.2;
     }
@@ -2710,9 +2437,7 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                 return standardResult;
             }
         } catch (Exception e) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "标准UTF-8解码失败: " + e.getMessage());
-            }
+            // Standard UTF-8 decoding failed
         }
         
         // 尝试修复常见的UTF-8编码问题
@@ -2725,31 +2450,21 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             if (isValidUTF8Sequence(reencodedBytes)) {
                 String repairedResult = new String(reencodedBytes, "UTF-8");
                 if (isValidDecodedText(repairedResult) && !containsObviousGarbledCharacters(repairedResult)) {
-                    if (BuildConfig.DEBUG) {
-                        Log.i(TAG, "通过Latin1->UTF-8转换成功修复编码: " + repairedResult);
-                    }
                     return repairedResult;
                 }
             }
         } catch (Exception e) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Latin1->UTF-8转换失败: " + e.getMessage());
-            }
+            // Latin1->UTF-8 conversion failed
         }
         
         // 尝试逐字节修复UTF-8序列
         try {
             String repairedResult = repairUTF8Sequences(bytes);
             if (repairedResult != null && isValidDecodedText(repairedResult) && !containsObviousGarbledCharacters(repairedResult)) {
-                if (BuildConfig.DEBUG) {
-                    Log.i(TAG, "通过逐字节修复成功解码UTF-8: " + repairedResult);
-                }
                 return repairedResult;
             }
         } catch (Exception e) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "逐字节修复UTF-8失败: " + e.getMessage());
-            }
+            // Byte-by-byte UTF-8 repair failed
         }
         
         return null;
@@ -2850,9 +2565,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             if (isValidUTF8Sequence(utf8Bytes)) {
                 String result = new String(utf8Bytes, "UTF-8");
                 if (isValidDecodedText(result) && !containsObviousGarbledCharacters(result)) {
-                    if (BuildConfig.DEBUG) {
-                        Log.i(TAG, "检测到服务器Latin1处理问题，已修复: " + result);
-                    }
                     return result;
                 }
             }
@@ -2860,9 +2572,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             // 尝试另一种常见情况：UTF-8字节被当作Latin1编码，然后又当作GBK编码
             String gbkDecoded = new String(utf8Bytes, "GBK");
             if (isValidDecodedText(gbkDecoded) && !containsObviousGarbledCharacters(gbkDecoded)) {
-                if (BuildConfig.DEBUG) {
-                    Log.i(TAG, "检测到服务器Latin1->GBK处理问题，已修复: " + gbkDecoded);
-                }
                 return gbkDecoded;
             }
             
@@ -2873,17 +2582,12 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             if (isValidUTF8Sequence(win1252ToUtf8)) {
                 String result = new String(win1252ToUtf8, "UTF-8");
                 if (isValidDecodedText(result) && !containsObviousGarbledCharacters(result)) {
-                    if (BuildConfig.DEBUG) {
-                        Log.i(TAG, "检测到服务器Windows-1252处理问题，已修复: " + result);
-                    }
                     return result;
                 }
             }
             
         } catch (Exception e) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "修复服务器Latin1处理失败: " + e.getMessage());
-            }
+            // Server Latin1 handling repair failed
         }
         
         return null;

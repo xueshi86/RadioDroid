@@ -149,7 +149,7 @@
   <string name="settings_play_external_desc_on">Spill kanaler i ekstern avspiller</string>
   <string name="settings_play_external_desc_off">Spill kanaler i RadioDroid</string>
   <string name="settings_equalizer">Equalizer</string>
-  
+
   <string name="settings_connectivity">Tilkobling</string>
   <string name="settings_connect_timeout">Tidsavbrudd ved tilkobling</string>
   <string name="settings_read_timeout">Tidsavbrudd ved lesing</string>

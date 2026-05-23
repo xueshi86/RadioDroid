@@ -22,6 +22,7 @@ import okhttp3.Response;
  */
 
 public class RadioBrowserServerManager {
+    private static final String TAG = "RadioBrowserServerMgr";
     static String currentServer = null;
     static String[] serverList = null;
 
@@ -46,7 +47,7 @@ public class RadioBrowserServerManager {
                 }
             }
         } catch (UnknownHostException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Failed to resolve radio browser server hosts", e);
         }
         if (listResult.size() == 0){
             // should we inform people that their internet provider is not able to do reverse lookups? (= is shit)

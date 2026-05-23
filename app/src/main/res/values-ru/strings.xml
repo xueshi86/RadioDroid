@@ -655,4 +655,21 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="recording_detail_size">Размер файла:</string>
     <string name="recording_detail_duration">Длительность (прибл.):</string>
     <string name="recording_detail_modified">Изменён:</string>
+
+    <!-- Buffer strategy -->
+    <string name="detail_buffer_settings">Стратегия буферизации</string>
+    <string name="buffer_strategy_title">Стратегия буферизации</string>
+    <string name="buffer_strategy_light">Лёгкий буфер</string>
+    <string name="buffer_strategy_light_desc">Воспроизведение через 2.5 с, для стабильных сетей, по умолчанию</string>
+    <string name="buffer_strategy_enhanced">Усиленный буфер</string>
+    <string name="buffer_strategy_enhanced_desc">Воспроизведение через 10 с, для периодически нестабильных сетей</string>
+    <string name="buffer_strategy_extreme">Экстремальный буфер</string>
+    <string name="buffer_strategy_extreme_desc">Воспроизведение через 30 с, для умеренно нестабильных сетей; при прерываниях используйте прокси</string>
+    <string name="buffer_strategy_apply_to_all">Применить ко всем станциям</string>
+
+    <!-- Player full screen labels -->
+    <string name="player_play_time">Длительность: %1$s</string>
+    <string name="player_network_usage">Трафик: %1$s</string>
+    <string name="player_buffer_time">Буфер: %1$s</string>
+
 </resources>

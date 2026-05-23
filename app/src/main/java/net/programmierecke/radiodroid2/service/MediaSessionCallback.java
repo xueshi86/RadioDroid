@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.util.Log;
 import android.view.KeyEvent;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -15,6 +16,7 @@ import net.programmierecke.radiodroid2.station.DataRadioStation;
 import net.programmierecke.radiodroid2.utils.GetRealLinkAndPlayTask;
 
 public class MediaSessionCallback extends MediaSessionCompat.Callback {
+    private static final String TAG = "MediaSessionCallback";
     public static final String BROADCAST_PLAY_STATION_BY_ID = "PLAY_STATION_BY_ID";
     public static final String EXTRA_STATION_ID = "STATION_ID";
     public static final String ACTION_PLAY_STATION_BY_UUID = "PLAY_STATION_BY_UUID";
@@ -41,7 +43,7 @@ public class MediaSessionCallback extends MediaSessionCompat.Callback {
                         playerService.Resume();
                     }
                 } catch (RemoteException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "Failed to handle media button event", e);
                 }
             }
             return true;
@@ -55,7 +57,7 @@ public class MediaSessionCallback extends MediaSessionCompat.Callback {
         try {
             playerService.Pause(PauseReason.USER);
         } catch (RemoteException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Failed to pause playback", e);
         }
     }
 
@@ -64,7 +66,7 @@ public class MediaSessionCallback extends MediaSessionCompat.Callback {
         try {
             playerService.Resume();
         } catch (RemoteException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Failed to resume playback", e);
         }
     }
 
@@ -73,7 +75,7 @@ public class MediaSessionCallback extends MediaSessionCompat.Callback {
         try {
             playerService.SkipToNext();
         } catch (RemoteException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Failed to skip to next", e);
         }
     }
 
@@ -82,7 +84,7 @@ public class MediaSessionCallback extends MediaSessionCompat.Callback {
         try {
             playerService.SkipToPrevious();
         } catch (RemoteException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Failed to skip to previous", e);
         }
     }
 
@@ -91,7 +93,7 @@ public class MediaSessionCallback extends MediaSessionCompat.Callback {
         try {
             playerService.Stop();
         } catch (RemoteException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Failed to stop playback", e);
         }
     }
 

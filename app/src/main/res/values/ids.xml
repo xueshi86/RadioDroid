@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 用于 ImageView 标记当前显示的电台 UUID，后台图标升级时验证身份 -->
+    <id name="tag_station_uuid" />
+</resources>

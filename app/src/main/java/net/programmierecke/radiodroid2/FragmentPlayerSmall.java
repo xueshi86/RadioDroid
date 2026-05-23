@@ -338,10 +338,10 @@ public class FragmentPlayerSmall extends Fragment {
             imageViewIcon.setVisibility(View.GONE);
         } else if (station != null && station.hasIcon()) {
             imageViewIcon.setVisibility(View.VISIBLE);
-            PlayerServiceUtil.getStationIcon(imageViewIcon, station.IconUrl, station.HomePageUrl);
+            PlayerServiceUtil.getStationIcon(imageViewIcon, station.IconUrl, station.HomePageUrl, station.StationUuid);
         } else if (station != null && !TextUtils.isEmpty(station.HomePageUrl)) {
             imageViewIcon.setVisibility(View.VISIBLE);
-            PlayerServiceUtil.getStationIcon(imageViewIcon, null, station.HomePageUrl);
+            PlayerServiceUtil.getStationIcon(imageViewIcon, null, station.HomePageUrl, station.StationUuid);
         } else {
             imageViewIcon.setVisibility(View.VISIBLE);
             imageViewIcon.setImageResource(R.drawable.ic_launcher);

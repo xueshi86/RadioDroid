@@ -1,7 +1,9 @@
 package net.programmierecke.radiodroid2.service;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import android.app.Notification;
@@ -22,6 +24,7 @@ import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.media.audiofx.AudioEffect;
+import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.CountDownTimer;
@@ -53,6 +56,7 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 
+import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
@@ -108,6 +112,10 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
     private static final float FULL_VOLUME = 100f;
     private static final float DUCK_VOLUME = 40f;
+
+    // 音量曲线补偿：监听系统音量变化，动态调整播放器最大增益
+    // 低系统音量 → maxGain < 1.0（更安静），高系统音量 → maxGain > 1.0（更响）
+    private BroadcastReceiver volumeChangeReceiver;
 
     private static final int METERED_CONNECTION_WARNING_COOLDOWN = 20 * 1000; // 20 seconds
 
@@ -394,7 +402,8 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                                 resume();
                             }
 
-                            radioPlayer.setVolume(FULL_VOLUME);
+                            // 渐变恢复到满音量，避免瞬间音量突增
+                            fadeInVolume(radioPlayer, DUCK_VOLUME, FULL_VOLUME, 200);
                             break;
                         case AudioManager.AUDIOFOCUS_LOSS:
 
@@ -413,7 +422,8 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                         case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
                             if (BuildConfig.DEBUG)
 
-                            radioPlayer.setVolume(DUCK_VOLUME);
+                            // 渐变降低到duck音量
+                            fadeInVolume(radioPlayer, FULL_VOLUME, DUCK_VOLUME, 100);
                             break;
                     }
                 }
@@ -513,6 +523,10 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         audioDeviceMonitor = new AudioDeviceMonitor(this);
         audioDeviceMonitor.register();
 
+        // 注册系统音量变化监听，动态调整播放器增益
+        registerVolumeChangeReceiver();
+        updateVolumeGain();
+
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel notificationChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, "RadioDroid2 Player", NotificationManager.IMPORTANCE_LOW);
@@ -535,13 +549,14 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         radioPlayer.destroy();
 
         unregisterReceiver(eqActivityReceiver);
+        unregisterVolumeChangeReceiver();
         if (audioDeviceMonitor != null) {
             audioDeviceMonitor.unregister();
             audioDeviceMonitor = null;
         }
 
         releaseServiceEqualizer();
-        
+
         // Clean up handler to prevent memory leaks
         if (handler != null) {
             handler.removeCallbacksAndMessages(null);
@@ -1038,20 +1053,55 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         });
     }
 
+    /**
+     * 应用均衡器设置并渐入音量。
+     */
+    private void applyEqualizerAndFadeIn(int audioSessionId) {
+        if (radioPlayer != null) {
+            radioPlayer.setVolume(0f);
+        }
+
+        applyEqualizerSettings(audioSessionId);
+
+        if (radioPlayer != null) {
+            fadeInVolume(radioPlayer, 0f, FULL_VOLUME, 300);
+        }
+    }
+
     private void applyEqualizerSettings(int audioSessionId) {
         releaseServiceEqualizer();
 
         if (eqActivityOpen) return;
 
         SharedPreferences eqPrefs = PreferenceManager.getDefaultSharedPreferences(itsContext);
-        boolean eqEnabled = eqPrefs.getBoolean("equalizer_enabled", false);
+
+        // Check for station-specific equalizer settings first
+        String stationUuid = currentStation != null ? currentStation.StationUuid : null;
+        boolean hasStationEq = stationUuid != null && EqualizerActivity.hasStationEqualizer(itsContext, stationUuid);
+
+        String prefEnabled, prefPreset, prefBandLevels, prefBassBoostEnabled, prefBassBoostStrength;
+        if (hasStationEq) {
+            prefEnabled = EqualizerActivity.getStationEqEnabledKey(stationUuid);
+            prefPreset = EqualizerActivity.getStationEqPresetKey(stationUuid);
+            prefBandLevels = EqualizerActivity.getStationBandLevelsKey(stationUuid);
+            prefBassBoostEnabled = EqualizerActivity.getStationBassBoostEnabledKey(stationUuid);
+            prefBassBoostStrength = EqualizerActivity.getStationBassBoostStrengthKey(stationUuid);
+        } else {
+            prefEnabled = "equalizer_enabled";
+            prefPreset = "equalizer_preset";
+            prefBandLevels = "equalizer_band_levels";
+            prefBassBoostEnabled = "bass_boost_enabled";
+            prefBassBoostStrength = "bass_boost_strength";
+        }
+
+        boolean eqEnabled = eqPrefs.getBoolean(prefEnabled, false);
         if (!eqEnabled || audioSessionId == 0) return;
 
         try {
             serviceEqualizer = new android.media.audiofx.Equalizer(0, audioSessionId);
             serviceEqualizer.setEnabled(true);
 
-            int savedPreset = eqPrefs.getInt("equalizer_preset", -1);
+            int savedPreset = eqPrefs.getInt(prefPreset, -1);
             short numPresets = serviceEqualizer.getNumberOfPresets();
             short numBands = serviceEqualizer.getNumberOfBands();
 
@@ -1107,7 +1157,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                 } catch (Exception ignored) {
                 }
             } else {
-                String levelsStr = eqPrefs.getString("equalizer_band_levels", null);
+                String levelsStr = eqPrefs.getString(prefBandLevels, null);
                 if (levelsStr != null) {
                     String[] parts = levelsStr.split(",");
                     for (short i = 0; i < numBands && i < parts.length; i++) {
@@ -1120,12 +1170,12 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                 }
             }
 
-            boolean bassBoostEnabled = eqPrefs.getBoolean("bass_boost_enabled", false);
+            boolean bassBoostEnabled = eqPrefs.getBoolean(prefBassBoostEnabled, false);
             if (bassBoostEnabled) {
                 try {
                     serviceBassBoost = new android.media.audiofx.BassBoost(0, audioSessionId);
                     serviceBassBoost.setEnabled(true);
-                    short strength = (short) eqPrefs.getInt("bass_boost_strength", 0);
+                    short strength = (short) eqPrefs.getInt(prefBassBoostStrength, 0);
                     if (strength > 0) {
                         serviceBassBoost.setStrength(strength);
                     }
@@ -1134,6 +1184,35 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
             }
         } catch (Exception ignored) {
         }
+    }
+
+    // 取消上一次渐入的所有待执行任务，避免切换电台时旧回调乱入造成爆音
+    private final List<Runnable> pendingFadeInTasks = new java.util.ArrayList<>();
+
+    /**
+     * 音量渐变，避免音量突变产生爆音。
+     * 每次调用会先取消上一次未完成的渐入任务。
+     */
+    private void fadeInVolume(final RadioPlayer player, final float fromVolume, final float toVolume, final int durationMs) {
+        cancelPendingFadeIn();
+
+        final int steps = 15;
+        final long stepInterval = durationMs / steps;
+        final float volumeStep = (toVolume - fromVolume) / steps;
+
+        for (int i = 1; i <= steps; i++) {
+            final float volume = fromVolume + volumeStep * i;
+            Runnable task = () -> player.setVolume(volume);
+            pendingFadeInTasks.add(task);
+            handler.postDelayed(task, stepInterval * i);
+        }
+    }
+
+    private void cancelPendingFadeIn() {
+        for (Runnable task : pendingFadeInTasks) {
+            handler.removeCallbacks(task);
+        }
+        pendingFadeInTasks.clear();
     }
 
     private void releaseServiceEqualizer() {
@@ -1216,15 +1295,78 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     private void downloadRadioIcon() {
         final float px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 70, getResources().getDisplayMetrics());
 
-        if (!currentStation.hasIcon()) {
+        if (!currentStation.hasIcon() && TextUtils.isEmpty(currentStation.HomePageUrl)) {
+            radioIcon = (BitmapDrawable) ResourcesCompat.getDrawable(getResources(), R.drawable.ic_launcher, null);
+            updateNotification();
+            return;
+        }
+
+        // 优先从缓存加载
+        StationIconCache iconCache = StationIconCache.getInstance(itsContext);
+        String cachedPath = iconCache.getIconPath(currentStation.StationUuid);
+        if (cachedPath != null) {
+            Picasso.get()
+                    .load(Uri.fromFile(new java.io.File(cachedPath)))
+                    .resize((int) px, 0)
+                    .into(new Target() {
+                        @Override
+                        public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                            final boolean useCircularIcons = Utils.useCircularIcons(itsContext);
+                            if (!useCircularIcons)
+                                radioIcon = new BitmapDrawable(getResources(), bitmap);
+                            else {
+                                RoundedBitmapDrawable rb = RoundedBitmapDrawableFactory.create(getResources(), bitmap);
+                                rb.setCircular(true);
+                                radioIcon = new BitmapDrawable(getResources(), rb.getBitmap());
+                            }
+                            updateNotification();
+                        }
+
+                        @Override
+                        public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+                            radioIcon = (BitmapDrawable) ResourcesCompat.getDrawable(getResources(), R.drawable.ic_launcher, null);
+                            updateNotification();
+                        }
+
+                        @Override
+                        public void onPrepareLoad(Drawable placeHolderDrawable) {
+                        }
+                    });
+            return;
+        }
+
+        // 缓存未命中，使用多渠道回退策略
+        List<String> urlsToTry = new ArrayList<>();
+        if (currentStation.hasIcon()) {
+            urlsToTry.add(currentStation.IconUrl);
+        }
+        if (!TextUtils.isEmpty(currentStation.HomePageUrl)) {
+            try {
+                java.net.URI uri = new java.net.URI(currentStation.HomePageUrl);
+                String domain = uri.getHost();
+                if (domain != null && !domain.isEmpty()) {
+                    String scheme = uri.getScheme() != null ? uri.getScheme() : "https";
+                    urlsToTry.add(scheme + "://" + domain + "/favicon.ico");
+                    urlsToTry.add(scheme + "://" + domain + "/apple-touch-icon.png");
+                    urlsToTry.add("https://www.google.com/s2/favicons?domain=" + domain + "&sz=128");
+                }
+            } catch (Exception ignored) {}
+        }
+
+        tryLoadIconForNotification(urlsToTry, 0, px);
+    }
+
+    private void tryLoadIconForNotification(final List<String> urls, final int index, final float px) {
+        if (index >= urls.size()) {
             radioIcon = (BitmapDrawable) ResourcesCompat.getDrawable(getResources(), R.drawable.ic_launcher, null);
             updateNotification();
             return;
         }
 
         Picasso.get()
-                .load(currentStation.IconUrl)
+                .load(urls.get(index))
                 .resize((int) px, 0)
+                .networkPolicy(index == 0 ? NetworkPolicy.OFFLINE : NetworkPolicy.NO_CACHE)
                 .into(new Target() {
                     @Override
                     public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
@@ -1232,24 +1374,35 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                         if (!useCircularIcons)
                             radioIcon = new BitmapDrawable(getResources(), bitmap);
                         else {
-                            // Icon is not circular with this code. So we need to create custom notification view and then use RoundedBitmapDrawable there
                             RoundedBitmapDrawable rb = RoundedBitmapDrawableFactory.create(getResources(), bitmap);
                             rb.setCircular(true);
                             radioIcon = new BitmapDrawable(getResources(), rb.getBitmap());
                         }
+                        // 保存到缓存
+                        boolean isFavorite = isStationFavorited(currentStation.StationUuid);
+                        StationIconCache.getInstance(itsContext).saveIcon(currentStation.StationUuid, bitmap, isFavorite);
                         updateNotification();
                     }
 
                     @Override
                     public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-
+                        tryLoadIconForNotification(urls, index + 1, px);
                     }
 
                     @Override
                     public void onPrepareLoad(Drawable placeHolderDrawable) {
-
                     }
                 });
+    }
+
+    private boolean isStationFavorited(String stationUuid) {
+        try {
+            RadioDroidApp app = (RadioDroidApp) itsContext.getApplicationContext();
+            FavouriteManager favMgr = app.getFavouriteManager();
+            return favMgr != null && favMgr.has(stationUuid);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private void warnAboutMeteredConnection(PlayerType playerType) {
@@ -1341,7 +1494,8 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                         i.putExtra(AudioEffect.EXTRA_PACKAGE_NAME, getPackageName());
                         itsContext.sendBroadcast(i);
 
-                        applyEqualizerSettings(audioSessionId);
+                        // 应用均衡器并渐入音量（ExoPlayerWrapper 静音启动，渐入统一在此控制）
+                        applyEqualizerAndFadeIn(audioSessionId);
                         break;
                     }
                     default: {
@@ -1427,13 +1581,6 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         StreamLiveInfo oldLiveInfo = this.liveInfo;
         this.liveInfo = liveInfo;
 
-        if (BuildConfig.DEBUG) {
-            Map<String, String> rawMetadata = liveInfo.getRawMetadata();
-            for (String key : rawMetadata.keySet()) {
-                Log.i(TAG, "INFO:" + key + "=" + rawMetadata.get(key));
-            }
-        }
-
         if (oldLiveInfo == null || !oldLiveInfo.getTitle().equals(liveInfo.getTitle())) {
             sendBroadCast(PLAYER_SERVICE_META_UPDATE);
             updateNotification();
@@ -1466,5 +1613,70 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
     @Override
     protected void onHandleWork(@NonNull Intent intent) {
+    }
+
+    // ============ 音量曲线补偿 ============
+    // 监听系统音量变化，动态调整播放器最大增益
+    // 解决：安静环境最小音量仍太大、嘈杂环境最大音量仍太小
+
+    /**
+     * 根据系统音量计算播放器最大增益。
+     *
+     * 补偿曲线（分段线性）：
+     * - 系统音量 0%-45%：maxGain 从 0.05 线性升至 1.0（加倍衰减，低音量更安静）
+     * - 系统音量 45%-70%：maxGain = 1.0（不调整）
+     * - 系统音量 70%-100%：maxGain 从 1.0 线性升至 2.0（嘈杂环境提升音量）
+     *
+     * 效果：
+     * - 最低系统音量(1/15≈7%)：maxGain≈0.08，实际增益极低（非常安静）
+     * - 系统音量 45%：maxGain=1.0（正常）
+     * - 系统音量 70%：maxGain=1.0（不变）
+     * - 最高系统音量(100%)：maxGain=2.0（2倍提升）
+     */
+    private void updateVolumeGain() {
+        int maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        int curVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        if (maxVol <= 0) return;
+
+        float ratio = (float) curVol / maxVol;  // 0.0 ~ 1.0
+        float maxGain;
+
+        if (ratio < 0.45f) {
+            // 低音量端：加倍衰减，从0.05线性升至1.0
+            maxGain = 0.05f + 0.95f * (ratio / 0.45f);
+        } else if (ratio <= 0.7f) {
+            // 中等音量：不调整
+            maxGain = 1.0f;
+        } else {
+            // 高音量端：1.0 → 2.0 的线性映射
+            maxGain = 1.0f + 1.0f * ((ratio - 0.7f) / 0.3f);
+        }
+
+        if (radioPlayer != null) {
+            radioPlayer.setMaxGain(maxGain);
+        }
+    }
+
+    private void registerVolumeChangeReceiver() {
+        if (volumeChangeReceiver != null) return;
+
+        volumeChangeReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                updateVolumeGain();
+            }
+        };
+
+        IntentFilter filter = new IntentFilter("android.media.VOLUME_CHANGED_ACTION");
+        registerReceiver(volumeChangeReceiver, filter);
+    }
+
+    private void unregisterVolumeChangeReceiver() {
+        if (volumeChangeReceiver != null) {
+            try {
+                unregisterReceiver(volumeChangeReceiver);
+            } catch (Exception ignored) {}
+            volumeChangeReceiver = null;
+        }
     }
 }

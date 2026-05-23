@@ -46,6 +46,7 @@ import net.programmierecke.radiodroid2.players.selector.PlayerType;
 import net.programmierecke.radiodroid2.utils.RecyclerItemMoveAndSwipeHelper;
 import net.programmierecke.radiodroid2.service.PlayerService;
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
+import net.programmierecke.radiodroid2.ui.EqualizerActivity;
 import net.programmierecke.radiodroid2.utils.RecyclerItemSwipeHelper;
 import net.programmierecke.radiodroid2.utils.SwipeableViewHolder;
 import net.programmierecke.radiodroid2.views.TagsView;
@@ -128,6 +129,8 @@ public class ItemAdapterStation
         ImageButton buttonAddAlarm;
         TagsView viewTags;
         ImageButton buttonCreateShortcut;
+        ImageButton buttonBufferSettings;
+        ImageButton buttonEqualizerSettings;
         ImageButton buttonPlayInternalOrExternal;
 
         StationViewHolder(View itemView) {
@@ -292,10 +295,10 @@ public class ItemAdapterStation
         } else {
             if (station.hasIcon()) {
                 setupIcon(useCircularIcons, holder.imageViewIcon, holder.transparentImageView);
-                PlayerServiceUtil.getStationIcon(holder.imageViewIcon, station.IconUrl, station.HomePageUrl);
+                PlayerServiceUtil.getStationIcon(holder.imageViewIcon, station.IconUrl, station.HomePageUrl, station.StationUuid);
             } else if (!TextUtils.isEmpty(station.HomePageUrl)) {
                 setupIcon(useCircularIcons, holder.imageViewIcon, holder.transparentImageView);
-                PlayerServiceUtil.getStationIcon(holder.imageViewIcon, null, station.HomePageUrl);
+                PlayerServiceUtil.getStationIcon(holder.imageViewIcon, null, station.HomePageUrl, station.StationUuid);
             } else {
                 holder.imageViewIcon.setImageDrawable(stationImagePlaceholder);
                 if (Utils.isDarkTheme(getContext())) {
@@ -435,6 +438,8 @@ public class ItemAdapterStation
             holder.buttonBookmark = holder.viewDetails.findViewById(R.id.buttonBookmark);
             holder.buttonAddAlarm = holder.viewDetails.findViewById(R.id.buttonAddAlarm);
             holder.buttonCreateShortcut = holder.viewDetails.findViewById(R.id.buttonCreateShortcut);
+            holder.buttonBufferSettings = holder.viewDetails.findViewById(R.id.buttonBufferSettings);
+            holder.buttonEqualizerSettings = holder.viewDetails.findViewById(R.id.buttonEqualizerSettings);
             holder.buttonPlayInternalOrExternal = holder.viewDetails.findViewById(R.id.buttonPlayInRadioDroid);
 
             holder.buttonVisitWebsite.setOnClickListener(new View.OnClickListener() {
@@ -468,6 +473,28 @@ public class ItemAdapterStation
                 @Override
                 public void onClick(View view) {
                     station.prepareShortcut(getContext(), new CreatePinShortcutListener());
+                }
+            });
+
+            holder.buttonBufferSettings.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                        BufferSettingsDialog dialog = BufferSettingsDialog.newInstance(station.StationUuid, station.Name);
+                        dialog.show(activity.getSupportFragmentManager(), "buffer_settings_dialog");
+                    }
+                }
+            });
+
+            holder.buttonEqualizerSettings.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                        Intent intent = new Intent(activity, net.programmierecke.radiodroid2.ui.EqualizerActivity.class);
+                        intent.putExtra(EqualizerActivity.EXTRA_STATION_UUID, station.StationUuid);
+                        intent.putExtra(EqualizerActivity.EXTRA_STATION_NAME, station.Name);
+                        activity.startActivity(intent);
+                    }
                 }
             });
 
