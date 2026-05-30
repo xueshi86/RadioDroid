@@ -34,6 +34,7 @@ String getCurrentRecordFileName();
 long getTransferredBytes();
 long getBufferedSeconds();
 long getLastPlayStartTime();
+long getTotalPlayTime();
 boolean getIsHls();
 PauseReason getPauseReason();
 boolean isNotificationActive();

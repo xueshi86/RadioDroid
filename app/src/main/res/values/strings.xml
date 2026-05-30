@@ -234,6 +234,13 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="settings_compact_style_desc_off">Large icon adopted with station details</string>
     <string name="settings_compact_style_desc_on">Small icon adopted without station details</string>
     <string name="settings_bottom_navigation">Bottom navigation</string>
+    <string name="settings_toolbar_buttons_category">Toolbar buttons</string>
+    <string name="settings_toolbar_show_search">Search</string>
+    <string name="settings_toolbar_show_sort">Sort</string>
+    <string name="settings_toolbar_show_sleep_timer">Sleep timer</string>
+    <string name="settings_toolbar_show_random_play">Random play</string>
+    <string name="settings_toolbar_show_toggle_view">Toggle view</string>
+    <string name="settings_toolbar_show_cast">Cast</string>
 
     <string name="settings_interaction">Interaction</string>
     <string name="settings_single_use_tags">Show rarely-used tags</string>
@@ -684,7 +691,8 @@ The app will automatically restart to load the new database.</string>
     <string name="buffer_strategy_apply_to_all">Apply to all stations</string>
 
     <!-- Player full screen labels -->
-    <string name="player_play_time">Duration: %1$s</string>
+    <string name="player_total_play_time">Total: %1$s</string>
+    <string name="player_current_play_time">Current: %1$s</string>
     <string name="player_network_usage">Data: %1$s</string>
     <string name="player_buffer_time">Buffered: %1$s</string>
 

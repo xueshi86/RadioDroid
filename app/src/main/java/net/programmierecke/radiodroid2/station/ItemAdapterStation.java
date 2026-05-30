@@ -4,18 +4,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import android.annotation.TargetApi;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.app.PendingIntent;
-import android.content.pm.ShortcutInfo;
-import android.content.pm.ShortcutManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.text.TextUtils;
 
@@ -26,7 +23,6 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.ItemTouchHelper;
 
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -115,6 +111,7 @@ public class ItemAdapterStation
         ImageView imageViewIcon;
         ImageView transparentImageView;
         ImageView starredStatusIcon;
+        ImageView playingOverlay;
         TextView textViewTitle;
         TextView textViewShortDescription;
         TextView textViewTags;
@@ -128,7 +125,6 @@ public class ItemAdapterStation
         ImageView imageTrend;
         ImageButton buttonAddAlarm;
         TagsView viewTags;
-        ImageButton buttonCreateShortcut;
         ImageButton buttonBufferSettings;
         ImageButton buttonEqualizerSettings;
         ImageButton buttonPlayInternalOrExternal;
@@ -144,6 +140,7 @@ public class ItemAdapterStation
             imageTrend = itemView.findViewById(R.id.trendStatusIcon);
             transparentImageView = itemView.findViewById(R.id.transparentCircle);
             starredStatusIcon = itemView.findViewById(R.id.starredStatusIcon);
+            playingOverlay = itemView.findViewById(R.id.playingOverlay);
             textViewTitle = itemView.findViewById(R.id.textViewTitle);
             textViewShortDescription = itemView.findViewById(R.id.textViewShortDescription);
             textViewTags = itemView.findViewById(R.id.textViewTags);
@@ -363,26 +360,29 @@ public class ItemAdapterStation
         
         // 设置文本颜色，确保与背景有足够对比度
         boolean isDarkTheme = Utils.isDarkTheme(getContext());
+        int highlightColor = Color.parseColor("#FF9800");
+
         if (playingStationPosition == position) {
-            // 播放中的电台
-            if (isDarkTheme) {
-                // 暗色主题下使用白色粗体
-                holder.textViewTitle.setTextColor(Color.WHITE);
-            } else {
-                // 亮色主题下使用黑色粗体
-                holder.textViewTitle.setTextColor(Color.BLACK);
-            }
+            holder.textViewTitle.setTextColor(highlightColor);
             holder.textViewTitle.setTypeface(null, Typeface.BOLD);
+            GradientDrawable borderDrawable = new GradientDrawable();
+            borderDrawable.setShape(GradientDrawable.RECTANGLE);
+            borderDrawable.setCornerRadius(8 * getContext().getResources().getDisplayMetrics().density);
+            borderDrawable.setStroke(3, highlightColor);
+            borderDrawable.setColor(Color.TRANSPARENT);
+            holder.frameLayout.setBackground(borderDrawable);
+            int overlayColor = Color.argb(50, Color.red(highlightColor), Color.green(highlightColor), Color.blue(highlightColor));
+            holder.playingOverlay.setBackgroundColor(overlayColor);
+            holder.playingOverlay.setVisibility(View.VISIBLE);
         } else {
-            // 未播放的电台
             if (isDarkTheme) {
-                // 暗色主题下使用浅灰色
                 holder.textViewTitle.setTextColor(Color.LTGRAY);
             } else {
-                // 亮色主题下使用深灰色
                 holder.textViewTitle.setTextColor(Color.DKGRAY);
             }
             holder.textViewTitle.setTypeface(holder.textViewShortDescription.getTypeface());
+            holder.frameLayout.setBackground(null);
+            holder.playingOverlay.setVisibility(View.GONE);
         }
 
         holder.textViewShortDescription.setText(station.getShortDetails(getContext()));
@@ -437,7 +437,6 @@ public class ItemAdapterStation
             holder.buttonShare = holder.viewDetails.findViewById(R.id.buttonShare);
             holder.buttonBookmark = holder.viewDetails.findViewById(R.id.buttonBookmark);
             holder.buttonAddAlarm = holder.viewDetails.findViewById(R.id.buttonAddAlarm);
-            holder.buttonCreateShortcut = holder.viewDetails.findViewById(R.id.buttonCreateShortcut);
             holder.buttonBufferSettings = holder.viewDetails.findViewById(R.id.buttonBufferSettings);
             holder.buttonEqualizerSettings = holder.viewDetails.findViewById(R.id.buttonEqualizerSettings);
             holder.buttonPlayInternalOrExternal = holder.viewDetails.findViewById(R.id.buttonPlayInRadioDroid);
@@ -467,14 +466,6 @@ public class ItemAdapterStation
                     notifyItemChanged(position1);
                 });
             }
-
-            holder.buttonCreateShortcut.setVisibility(View.VISIBLE);
-            holder.buttonCreateShortcut.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    station.prepareShortcut(getContext(), new CreatePinShortcutListener());
-                }
-            });
 
             holder.buttonBufferSettings.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -524,63 +515,6 @@ public class ItemAdapterStation
         }
         if (holder.viewDetails != null)
             holder.viewDetails.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
-    }
-
-    @TargetApi(26)
-    public class CreatePinShortcutListener implements DataRadioStation.ShortcutReadyListener {
-        @Override
-        public void onShortcutReadyListener(ShortcutInfo shortcut) {
-            if (shortcut == null) {
-                createShortcutLegacy(null);
-                return;
-            }
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-                    ShortcutManager shortcutManager = getContext().getApplicationContext().getSystemService(ShortcutManager.class);
-                    if (shortcutManager != null && shortcutManager.isRequestPinShortcutSupported()) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            Intent intent = new Intent(getContext(), getClass().getClassLoader() != null ? getClass() : ItemAdapterStation.class);
-                            intent.setAction("net.programmierecke.radiodroid2.SHORTCUT_PINNED");
-                            PendingIntent successCallback = PendingIntent.getBroadcast(getContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
-                            shortcutManager.requestPinShortcut(shortcut, successCallback.getIntentSender());
-                        } else {
-                            shortcutManager.requestPinShortcut(shortcut, null);
-                        }
-                        Toast.makeText(getContext(), R.string.detail_shortcut_requested, Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                }
-                createShortcutLegacy(shortcut);
-            } catch (Exception e) {
-                createShortcutLegacy(shortcut);
-            }
-        }
-
-        private void createShortcutLegacy(ShortcutInfo shortcut) {
-            try {
-                Intent playIntent;
-                String shortcutName;
-                if (shortcut != null) {
-                    playIntent = shortcut.getIntent();
-                    shortcutName = shortcut.getShortLabel().toString();
-                } else {
-                    DataRadioStation station = filteredStationsList.get(expandedPosition);
-                    playIntent = new Intent(net.programmierecke.radiodroid2.service.MediaSessionCallback.ACTION_PLAY_STATION_BY_UUID, null, getContext(), ActivityMain.class)
-                            .putExtra(net.programmierecke.radiodroid2.service.MediaSessionCallback.EXTRA_STATION_UUID, station.StationUuid);
-                    shortcutName = station.Name;
-                }
-                Intent addIntent = new Intent();
-                addIntent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, playIntent);
-                addIntent.putExtra(Intent.EXTRA_SHORTCUT_NAME, shortcutName);
-                addIntent.setAction("com.android.launcher.action.INSTALL_SHORTCUT");
-                addIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE,
-                        Intent.ShortcutIconResource.fromContext(getContext(), R.mipmap.ic_launcher));
-                getContext().sendBroadcast(addIntent);
-                Toast.makeText(getContext(), R.string.detail_create_shortcut, Toast.LENGTH_SHORT).show();
-            } catch (Exception e) {
-                Toast.makeText(getContext(), R.string.error_creating_shortcut, Toast.LENGTH_SHORT).show();
-            }
-        }
     }
 
     @Override

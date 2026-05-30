@@ -144,6 +144,7 @@ public class CastHandler {
 
     fun onCreate(context: Context) {
         if (castState is CastAvailable) {
+            Log.i(TAG, "Cast already initialized, skipping.")
             return
         }
 
@@ -151,8 +152,12 @@ public class CastHandler {
             val googleAPI = GoogleApiAvailability.getInstance()
             val result = googleAPI.isGooglePlayServicesAvailable(context)
 
+            Log.i(TAG, "Google Play Services availability result: $result (SUCCESS=${ConnectionResult.SUCCESS})")
+
             if (result == ConnectionResult.SUCCESS) {
+                Log.i(TAG, "Google Play Services available, trying to initialize CastContext...")
                 val castContext = CastContext.getSharedInstance(context)
+                Log.i(TAG, "CastContext initialized successfully. CastState: ${castContext.castState}")
                 val castState = CastAvailable(
                         castContext = castContext,
                         sessionManager = castContext.sessionManager,
@@ -163,9 +168,18 @@ public class CastHandler {
                 castState.sessionManager.addSessionManagerListener(castState.sessionManagerListener)
 
                 this.castState = castState
+                Log.i(TAG, "Cast initialized successfully.")
+            } else {
+                Log.w(TAG, "Google Play Services not available (result=$result), Cast will not be available.")
+                val errorString = googleAPI.getErrorString(result)
+                Log.w(TAG, "Google Play Services error: $errorString")
             }
+        } catch (e: IllegalStateException) {
+            Log.e(TAG, "CastContext initialization failed (IllegalStateException): ${e.message}")
+            e.printStackTrace()
         } catch (e: Exception) {
-            Log.e(TAG, e.toString())
+            Log.e(TAG, "CastContext initialization failed: ${e.javaClass.simpleName}: ${e.message}")
+            e.printStackTrace()
         }
     }
 
@@ -217,7 +231,7 @@ public class CastHandler {
         }
 
         override fun onSessionResumed(session: Session, wasSuspended: Boolean) {
-            Log.i(TAG, "onSessionStarting")
+            Log.i(TAG, "onSessionResuming")
 
             castState.onSessionResumed(session)
         }

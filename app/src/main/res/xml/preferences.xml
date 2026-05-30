@@ -76,6 +76,42 @@
             android:key="bottom_navigation"
             android:title="@string/settings_bottom_navigation" />
 
+        <PreferenceCategory
+            android:title="@string/settings_toolbar_buttons_category"
+            search:ignore="true">
+
+            <CheckBoxPreference
+                android:defaultValue="true"
+                android:key="toolbar_show_search"
+                android:title="@string/settings_toolbar_show_search" />
+
+            <CheckBoxPreference
+                android:defaultValue="true"
+                android:key="toolbar_show_sort"
+                android:title="@string/settings_toolbar_show_sort" />
+
+            <CheckBoxPreference
+                android:defaultValue="true"
+                android:key="toolbar_show_sleep_timer"
+                android:title="@string/settings_toolbar_show_sleep_timer" />
+
+            <CheckBoxPreference
+                android:defaultValue="true"
+                android:key="toolbar_show_random_play"
+                android:title="@string/settings_toolbar_show_random_play" />
+
+            <CheckBoxPreference
+                android:defaultValue="true"
+                android:key="toolbar_show_toggle_view"
+                android:title="@string/settings_toolbar_show_toggle_view" />
+
+            <CheckBoxPreference
+                android:defaultValue="true"
+                android:key="toolbar_show_cast"
+                android:title="@string/settings_toolbar_show_cast" />
+
+        </PreferenceCategory>
+
     </PreferenceScreen>
 
     <PreferenceScreen android:title="@string/settings_startup_behaviour"

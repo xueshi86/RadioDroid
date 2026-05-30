@@ -717,9 +717,9 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         menuItemMpd.setVisible(mpd_is_visible);
 
         if (selectedMenuItem == R.id.nav_item_stations) {
-            menuItemSleepTimer.setVisible(true);
-            menuItemSearch.setVisible(true);
-            menuItemRandomPlay.setVisible(true);
+            if (sharedPref.getBoolean("toolbar_show_sleep_timer", true)) menuItemSleepTimer.setVisible(true);
+            if (sharedPref.getBoolean("toolbar_show_search", true)) menuItemSearch.setVisible(true);
+            if (sharedPref.getBoolean("toolbar_show_random_play", true)) menuItemRandomPlay.setVisible(true);
             boolean shouldShowSort = true;
             Fragment topFragment = mFragmentManager.findFragmentById(R.id.containerView);
             if (topFragment instanceof FragmentTabs) {
@@ -728,20 +728,22 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
                     shouldShowSort = false;
                 }
             }
-            menuItemSort.setVisible(shouldShowSort);
+            if (shouldShowSort && sharedPref.getBoolean("toolbar_show_sort", true)) menuItemSort.setVisible(true);
             myToolbar.setTitle(R.string.nav_item_stations);
         } else if (selectedMenuItem == R.id.nav_item_starred) {
-            menuItemSleepTimer.setVisible(true);
-            menuItemSort.setVisible(true);
+            if (sharedPref.getBoolean("toolbar_show_sleep_timer", true)) menuItemSleepTimer.setVisible(true);
+            if (sharedPref.getBoolean("toolbar_show_sort", true)) menuItemSort.setVisible(true);
             //menuItemSearch.setVisible(true);
             menuItemSave.setVisible(true);
             menuItemLoad.setVisible(true);
             menuItemSave.setTitle(R.string.nav_item_save_playlist);
 
-            if (sharedPref.getBoolean("icons_only_favorites_style", false)) {
-                menuItemListView.setVisible(true);
-            } else if (sharedPref.getBoolean("load_icons", false)) {
-                menuItemIconsView.setVisible(true);
+            if (sharedPref.getBoolean("toolbar_show_toggle_view", true)) {
+                if (sharedPref.getBoolean("icons_only_favorites_style", false)) {
+                    menuItemListView.setVisible(true);
+                } else if (sharedPref.getBoolean("load_icons", false)) {
+                    menuItemIconsView.setVisible(true);
+                }
             }
             if (radioDroidApp.getFavouriteManager().isEmpty()) {
                 menuItemDelete.setVisible(false);
@@ -750,7 +752,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             }
             myToolbar.setTitle(R.string.nav_item_starred);
         } else if (selectedMenuItem == R.id.nav_item_history) {
-            menuItemSleepTimer.setVisible(true);
+            if (sharedPref.getBoolean("toolbar_show_sleep_timer", true)) menuItemSleepTimer.setVisible(true);
             menuItemSort.setVisible(false);
             //menuItemSearch.setVisible(true);
             menuItemSave.setVisible(true);
@@ -773,6 +775,13 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
 
         ((RadioDroidApp) getApplication()).getCastHandler().getRouteItem(getApplicationContext(), menu);
 
+        if (!sharedPref.getBoolean("toolbar_show_cast", true)) {
+            MenuItem castItem = menu.findItem(R.id.media_route_menu_item);
+            if (castItem != null) {
+                castItem.setVisible(false);
+            }
+        }
+
         return true;
     }
 
@@ -782,7 +791,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             menuItemRandomPlay = menu.findItem(R.id.action_random_play);
         }
 
-        menuItemRandomPlay.setVisible(selectedMenuItem == R.id.nav_item_stations);
+        menuItemRandomPlay.setVisible(selectedMenuItem == R.id.nav_item_stations && sharedPref.getBoolean("toolbar_show_random_play", true));
 
         return super.onPrepareOptionsMenu(menu);
     }

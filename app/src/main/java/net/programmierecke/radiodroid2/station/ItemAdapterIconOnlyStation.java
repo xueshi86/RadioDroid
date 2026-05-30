@@ -2,10 +2,10 @@ package net.programmierecke.radiodroid2.station;
 
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.widget.PopupMenu;
+import android.widget.TextView;
 
 import net.programmierecke.radiodroid2.R;
 import net.programmierecke.radiodroid2.Utils;
@@ -38,6 +39,8 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
 
             imageViewIcon = itemView.findViewById(R.id.iconImageViewIcon);
             transparentImageView = itemView.findViewById(R.id.iconTransparentCircle);
+            playingOverlay = itemView.findViewById(R.id.playingOverlay);
+            textViewTitle = itemView.findViewById(R.id.textViewStationName);
             itemView.setOnCreateContextMenuListener(this);
         }
 
@@ -54,7 +57,7 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
                 return;
             int pos = getAdapterPosition();
             DataRadioStation station = filteredStationsList.get(pos);
-            contextMenu = StationPopupMenu.INSTANCE.open(v, getContext(), activity, station, ItemAdapterIconOnlyStation.this);
+            contextMenu = StationPopupMenu.INSTANCE.open(v, getContext(), activity, station);
         }
     }
 
@@ -98,20 +101,25 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
         }
 
         if (playingStationPosition == position) {
-            TypedValue tv = new TypedValue();
-            getContext().getTheme().resolveAttribute(android.R.attr.colorPrimary, tv, true);
+            int highlightColor = Color.parseColor("#FF9800");
             GradientDrawable borderDrawable = new GradientDrawable();
             borderDrawable.setShape(GradientDrawable.RECTANGLE);
-            borderDrawable.setCornerRadius(4 * getContext().getResources().getDisplayMetrics().density);
-            borderDrawable.setStroke(3, tv.data);
+            borderDrawable.setCornerRadius(8 * getContext().getResources().getDisplayMetrics().density);
+            borderDrawable.setStroke(3, highlightColor);
             borderDrawable.setColor(Color.TRANSPARENT);
             holder.frameLayout.setBackground(borderDrawable);
-            holder.transparentImageView.setVisibility(View.VISIBLE);
-            holder.transparentImageView.setColorFilter(tv.data);
+            int overlayColor = Color.argb(50, Color.red(highlightColor), Color.green(highlightColor), Color.blue(highlightColor));
+            holder.playingOverlay.setBackgroundColor(overlayColor);
+            holder.playingOverlay.setVisibility(View.VISIBLE);
+            holder.textViewTitle.setTextColor(highlightColor);
+            holder.textViewTitle.setTypeface(null, Typeface.BOLD);
         } else {
             holder.frameLayout.setBackground(null);
-            holder.transparentImageView.setVisibility(View.GONE);
+            holder.playingOverlay.setVisibility(View.GONE);
+            holder.textViewTitle.setTypeface(null, Typeface.NORMAL);
         }
+
+        holder.textViewTitle.setText(station.Name);
     }
 
     public void enableItemMove(RecyclerView recyclerView) {

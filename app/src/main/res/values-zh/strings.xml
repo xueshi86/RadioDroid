@@ -132,6 +132,13 @@
     <string name="settings_compact_style_desc_off">采用大图标并显示电台详细信息</string>
     <string name="settings_compact_style_desc_on">采用小图标不显示电台详细信息</string>
     <string name="settings_bottom_navigation">底部导航</string>
+    <string name="settings_toolbar_buttons_category">工具栏按钮</string>
+    <string name="settings_toolbar_show_search">搜索</string>
+    <string name="settings_toolbar_show_sort">排序</string>
+    <string name="settings_toolbar_show_sleep_timer">定时关闭</string>
+    <string name="settings_toolbar_show_random_play">随机播放</string>
+    <string name="settings_toolbar_show_toggle_view">切换视图</string>
+    <string name="settings_toolbar_show_cast">投屏</string>
 
     <string name="settings_interaction">交互</string>
     <string name="settings_single_use_tags">显示不常用标签</string>
@@ -640,5 +647,22 @@
     <string name="recording_detail_size">檔案大小：</string>
     <string name="recording_detail_duration">時長（估算）：</string>
     <string name="recording_detail_modified">修改時間：</string>
+
+    <!-- Buffer strategy -->
+    <string name="detail_buffer_settings">缓存策略</string>
+    <string name="buffer_strategy_title">缓存策略</string>
+    <string name="buffer_strategy_light">轻量缓存</string>
+    <string name="buffer_strategy_light_desc">缓冲2.5秒后播放，适合网络稳定，默认选项</string>
+    <string name="buffer_strategy_enhanced">增强缓存</string>
+    <string name="buffer_strategy_enhanced_desc">缓冲10秒后播放，适合网络偶尔不稳定</string>
+    <string name="buffer_strategy_extreme">极限缓存</string>
+    <string name="buffer_strategy_extreme_desc">缓冲30秒后播放，适合中度不稳定网络，仍播放中断建议使用代理</string>
+    <string name="buffer_strategy_apply_to_all">应用于所有电台</string>
+
+    <!-- Player full screen labels -->
+    <string name="player_total_play_time">总时长: %1$s</string>
+    <string name="player_current_play_time">当前时长: %1$s</string>
+    <string name="player_network_usage">流量: %1$s</string>
+    <string name="player_buffer_time">缓冲时长: %1$s</string>
 
 </resources>

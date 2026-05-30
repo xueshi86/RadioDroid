@@ -30,6 +30,8 @@ import com.google.android.exoplayer2.metadata.icy.IcyInfo;
 import com.google.android.exoplayer2.metadata.id3.Id3Frame;
 
 import java.io.ByteArrayOutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
@@ -57,10 +59,33 @@ import okhttp3.OkHttpClient;
 
 public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSourceListener, Player.Listener {
 
+    // #region debug-point A:debug-logger
+    private static void dbg(String hypothesisId, String location, String msg, java.util.Map<String, Object> data) {
+        new Thread(() -> {
+            try {
+                URL url = new URL("http://127.0.0.1:7777/event");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setDoOutput(true);
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setConnectTimeout(500);
+                conn.setReadTimeout(500);
+                String json = "{\"sessionId\":\"volume-pop\",\"runId\":\"pre\",\"hypothesisId\":\"" + hypothesisId + "\",\"location\":\"" + location + "\",\"msg\":\"[DEBUG] " + msg.replace("\"", "'") + "\",\"data\":" + (data != null ? new org.json.JSONObject(data).toString() : "{}") + ",\"ts\":" + System.currentTimeMillis() + "}";
+                conn.getOutputStream().write(json.getBytes("UTF-8"));
+                conn.getResponseCode();
+                conn.disconnect();
+            } catch (Exception ignored) {}
+        }).start();
+    }
+    // #endregion
+
     final private String TAG = "ExoPlayerWrapper";
 
     private ExoPlayer player;
     private PlayListener stateListener;
+
+    private int playSessionId;
+    private Runnable pendingPlaybackInnerCallback;
 
     private String streamUrl;
 
@@ -122,14 +147,24 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         cancelStopTask();
         cancelPlaybackDelay();
 
+        if (playerThreadHandler == null) {
+            playerThreadHandler = new Handler(Looper.getMainLooper());
+        }
+
+        final int sessionId = ++playSessionId;
+
         stateListener.onStateChanged(PlayState.PrePlaying);
 
-        // Always release existing player and recreate with current buffer settings
-        // This ensures per-station buffer strategy takes effect on every playback
+        // 优雅释放旧播放器：先静音并停止渲染，延迟释放避免 AudioTrack 硬件撕裂爆音
         if (player != null) {
-            player.stop();
-            player.release();
+            player.setVolume(0f);
+            player.setPlayWhenReady(false);
+            final ExoPlayer oldPlayer = player;
             player = null;
+            playerThreadHandler.postDelayed(() -> {
+                oldPlayer.stop();
+                oldPlayer.release();
+            }, 100);
         }
 
         // Get per-station buffer strategy
@@ -161,11 +196,15 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         player = new ExoPlayer.Builder(context)
                 .setLoadControl(loadControl)
                 .build();
+        // #region debug-point A:player-create
+        dbg("A", "ExoPlayerWrapper:183", "ExoPlayer created, setting volume to 0", java.util.Collections.singletonMap("volume", 0f));
+        // #endregion
+        player.setVolume(0f);
         player.setAudioAttributes(new AudioAttributes.Builder().setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
                 .setUsage(C.USAGE_MEDIA).build(), false);
 
         player.addListener(this);
-        player.addAnalyticsListener(new AnalyticEventListener());
+        player.addAnalyticsListener(new AnalyticEventListener(sessionId));
 
         if (playerThreadHandler == null) {
             playerThreadHandler = new Handler(Looper.getMainLooper());
@@ -194,6 +233,9 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         }
 
         // 静音启动，渐入由 PlayerService 统一控制
+        // #region debug-point A:set-volume-zero
+        dbg("A", "ExoPlayerWrapper:223", "setVolume(0f) before play", java.util.Collections.singletonMap("currentVolume", player.getVolume()));
+        // #endregion
         player.setVolume(0f);
 
         // Real-time delay before playback starts.
@@ -207,8 +249,27 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         player.setPlayWhenReady(false); // Don't play yet, just buffer
 
         playbackDelayRunnable = () -> {
+            if (playSessionId != sessionId) return;
             if (player != null) {
+                // #region debug-point A:play-when-ready
+                dbg("A", "ExoPlayerWrapper:240", "BEFORE setPlayWhenReady(true)", java.util.Collections.singletonMap("currentVolume", player.getVolume()));
+                // #endregion
+                player.setVolume(0f);
                 player.setPlayWhenReady(true);
+                // #region debug-point A:play-when-ready-after
+                dbg("A", "ExoPlayerWrapper:240b", "AFTER setPlayWhenReady(true), delaying 100ms for AudioTrack stabilization", java.util.Collections.singletonMap("currentVolume", player.getVolume()));
+                // #endregion
+                pendingPlaybackInnerCallback = () -> {
+                    if (playSessionId != sessionId) return;
+                    if (player != null) {
+                        player.setVolume(0f);
+                        if (stateListener != null) {
+                            stateListener.onStateChanged(PlayState.Playing);
+                        }
+                    }
+                    pendingPlaybackInnerCallback = null;
+                };
+                playerThreadHandler.postDelayed(pendingPlaybackInnerCallback, 100);
             }
             playbackDelayRunnable = null;
         };
@@ -290,6 +351,9 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
 
     @Override
     public void setVolume(float newVolume) {
+        // #region debug-point A:set-volume
+        dbg("A", "ExoPlayerWrapper:324", "setVolume called", java.util.Collections.singletonMap("volume", newVolume));
+        // #endregion
         if (player != null) {
             player.setVolume(newVolume);
         }
@@ -484,6 +548,10 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             playerThreadHandler.removeCallbacks(playbackDelayRunnable);
             playbackDelayRunnable = null;
         }
+        if (pendingPlaybackInnerCallback != null) {
+            playerThreadHandler.removeCallbacks(pendingPlaybackInnerCallback);
+            pendingPlaybackInnerCallback = null;
+        }
     }
 
     @Override
@@ -545,16 +613,30 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
     }
 
     private class AnalyticEventListener implements AnalyticsListener {
+        private final int sessionId;
+
+        AnalyticEventListener(int sessionId) {
+            this.sessionId = sessionId;
+        }
+
         @Override
         public void onPlayerStateChanged(EventTime eventTime, boolean playWhenReady, int playbackState) {
+            /* -- don't inline the whole intent right here, we just need to guard -- */
+            if (playSessionId != sessionId) return;
             isPlayingFlag = playbackState == Player.STATE_READY || playbackState == Player.STATE_BUFFERING;
 
             switch (playbackState) {
                 case Player.STATE_READY:
+                    // #region debug-point A:state-ready
+                    dbg("A", "ExoPlayerWrapper:585", "STATE_READY, notifying Playing", java.util.Map.of("volume", player != null ? player.getVolume() : -1, "playWhenReady", player != null && player.getPlayWhenReady()));
+                    // #endregion
                     cancelStopTask();
                     stateListener.onStateChanged(PlayState.Playing);
                     break;
                 case Player.STATE_BUFFERING:
+                    // #region debug-point A:state-buffering
+                    dbg("A", "ExoPlayerWrapper:590", "STATE_BUFFERING", java.util.Map.of("volume", player != null ? player.getVolume() : -1, "playWhenReady", player != null && player.getPlayWhenReady()));
+                    // #endregion
                     stateListener.onStateChanged(PlayState.PrePlaying);
                     break;
             }

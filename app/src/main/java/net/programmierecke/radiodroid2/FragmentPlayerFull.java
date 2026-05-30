@@ -117,7 +117,8 @@ public class FragmentPlayerFull extends Fragment {
     private ArtAndInfoPagerAdapter artAndInfoPagerAdapter;
 
     private TextView textViewGeneralInfo;
-    private TextView textViewTimePlayed;
+    private TextView textViewTotalPlayTime;
+    private TextView textViewCurrentPlayTime;
     private TextView textViewNetworkUsageInfo;
     private TextView textViewTimeCached;
 
@@ -229,7 +230,8 @@ public class FragmentPlayerFull extends Fragment {
         });
 
         textViewGeneralInfo = view.findViewById(R.id.textViewGeneralInfo);
-        textViewTimePlayed = view.findViewById(R.id.textViewTimePlayed);
+        textViewTotalPlayTime = view.findViewById(R.id.textViewTotalPlayTime);
+        textViewCurrentPlayTime = view.findViewById(R.id.textViewCurrentPlayTime);
         textViewNetworkUsageInfo = view.findViewById(R.id.textViewNetworkUsageInfo);
         textViewTimeCached = view.findViewById(R.id.textViewTimeCached);
 
@@ -925,8 +927,12 @@ public class FragmentPlayerFull extends Fragment {
                 final long startTime = PlayerServiceUtil.getLastPlayStartTime();
                 long deltaSeconds = startTime > 0 ? ((now - startTime) / 1000) : 0;
                 deltaSeconds = Math.max(deltaSeconds, 0);
-                fragmentPlayerFull.textViewTimePlayed.setText(
-                        fragmentPlayerFull.getString(R.string.player_play_time, DateUtils.formatElapsedTime(deltaSeconds)));
+                fragmentPlayerFull.textViewCurrentPlayTime.setText(
+                        fragmentPlayerFull.getString(R.string.player_current_play_time, DateUtils.formatElapsedTime(deltaSeconds)));
+
+                long totalPlayTime = PlayerServiceUtil.getTotalPlayTime();
+                fragmentPlayerFull.textViewTotalPlayTime.setText(
+                        fragmentPlayerFull.getString(R.string.player_total_play_time, DateUtils.formatElapsedTime(totalPlayTime)));
 
                 fragmentPlayerFull.textViewTimeCached.setText(
                         fragmentPlayerFull.getString(R.string.player_buffer_time, DateUtils.formatElapsedTime(PlayerServiceUtil.getBufferedSeconds())));

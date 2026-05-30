@@ -763,6 +763,17 @@ public class PlayerServiceUtil {
         return 0;
     }
 
+    public static long getTotalPlayTime() {
+        if (itsPlayerService != null) {
+            try {
+                return itsPlayerService.getTotalPlayTime();
+            } catch (RemoteException e) {
+                Log.e("", "" + e);
+            }
+        }
+        return 0;
+    }
+
     public static PauseReason getPauseReason() {
         if (itsPlayerService != null) {
             try {

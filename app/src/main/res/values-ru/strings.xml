@@ -225,6 +225,13 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="settings_compact_style_desc_off">Большая иконка с деталями станции</string>
     <string name="settings_compact_style_desc_on">Малая иконка без деталей станции</string>
     <string name="settings_bottom_navigation">Нижняя навигация</string>
+    <string name="settings_toolbar_buttons_category">Кнопки панели инструментов</string>
+    <string name="settings_toolbar_show_search">Поиск</string>
+    <string name="settings_toolbar_show_sort">Сортировка</string>
+    <string name="settings_toolbar_show_sleep_timer">Таймер сна</string>
+    <string name="settings_toolbar_show_random_play">Случайное воспроизведение</string>
+    <string name="settings_toolbar_show_toggle_view">Переключить вид</string>
+    <string name="settings_toolbar_show_cast">Трансляция</string>
 
     <string name="settings_interaction">Взаимодействие</string>
     <string name="settings_single_use_tags">Показывать редко используемые теги</string>
@@ -668,7 +675,8 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="buffer_strategy_apply_to_all">Применить ко всем станциям</string>
 
     <!-- Player full screen labels -->
-    <string name="player_play_time">Длительность: %1$s</string>
+    <string name="player_total_play_time">Всего: %1$s</string>
+    <string name="player_current_play_time">Текущее: %1$s</string>
     <string name="player_network_usage">Трафик: %1$s</string>
     <string name="player_buffer_time">Буфер: %1$s</string>
 

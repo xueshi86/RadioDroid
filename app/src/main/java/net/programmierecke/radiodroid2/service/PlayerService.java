@@ -48,6 +48,9 @@ import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.widget.Toast;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.res.ResourcesCompat;
@@ -83,6 +86,27 @@ import net.programmierecke.radiodroid2.ui.EqualizerActivity;
 import static android.content.Intent.ACTION_MEDIA_BUTTON;
 
 public class PlayerService extends JobIntentService implements RadioPlayer.PlayerListener {
+
+    // #region debug-point B:debug-logger
+    private static void dbg(String hypothesisId, String location, String msg, java.util.Map<String, Object> data) {
+        new Thread(() -> {
+            try {
+                URL url = new URL("http://127.0.0.1:7777/event");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setDoOutput(true);
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setConnectTimeout(500);
+                conn.setReadTimeout(500);
+                String json = "{\"sessionId\":\"volume-pop\",\"runId\":\"pre\",\"hypothesisId\":\"" + hypothesisId + "\",\"location\":\"" + location + "\",\"msg\":\"[DEBUG] " + msg.replace("\"", "'") + "\",\"data\":" + (data != null ? new org.json.JSONObject(data).toString() : "{}") + ",\"ts\":" + System.currentTimeMillis() + "}";
+                conn.getOutputStream().write(json.getBytes("UTF-8"));
+                conn.getResponseCode();
+                conn.disconnect();
+            } catch (Exception ignored) {}
+        }).start();
+    }
+    // #endregion
+
     protected static final int NOTIFY_ID = 1;
     private static final String NOTIFICATION_CHANNEL_ID = "default";
 
@@ -186,6 +210,9 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     private boolean isHls = false;
 
     private long lastPlayStartTime = 0;
+    private long totalPlayTimeAccumulatedMillis = 0;
+    private long currentPlayingSessionStart = 0;
+    private boolean playStateIsPlaying = false;
 
     private boolean notificationIsActive = false;
 
@@ -383,6 +410,15 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
             }
             return 0;
         }
+
+        @Override
+        public long getTotalPlayTime() throws RemoteException {
+            long total = totalPlayTimeAccumulatedMillis;
+            if (playStateIsPlaying && currentPlayingSessionStart > 0) {
+                total += System.currentTimeMillis() - currentPlayingSessionStart;
+            }
+            return total / 1000;
+        }
     };
 
     private MediaSessionCompat.Callback mediaSessionCallback = null;
@@ -390,6 +426,9 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     private AudioManager.OnAudioFocusChangeListener afChangeListener =
             new AudioManager.OnAudioFocusChangeListener() {
                 public void onAudioFocusChange(int focusChange) {
+                    // #region debug-point B:focus-change
+                    dbg("B", "PlayerService:416", "onAudioFocusChange", java.util.Map.of("focusChange", focusChange, "isLocal", radioPlayer != null && radioPlayer.isLocal()));
+                    // #endregion
                     if (!radioPlayer.isLocal()) {
                         return;
                     }
@@ -679,6 +718,11 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
             downloadRadioIcon();
 
         int result = acquireAudioFocus();
+        // #region debug-point B:audio-focus-result
+        int streamMaxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        int streamCurVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        dbg("B", "PlayerService:705", "acquireAudioFocus result", java.util.Map.of("result", result, "granted", result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED, "streamMaxVol", streamMaxVol, "streamCurVol", streamCurVol, "streamRatio", (float)streamCurVol / streamMaxVol));
+        // #endregion
         if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
             // Start playback.
             enableMediaSession();
@@ -804,6 +848,8 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         radioPlayer.stop();
         releaseWakeLockAndWifiLock();
         clearTimer();
+        totalPlayTimeAccumulatedMillis = 0;
+        currentPlayingSessionStart = 0;
 
         stopForeground(true);
 
@@ -880,6 +926,9 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
     private int acquireAudioFocus() {
         int result;
+        // #region debug-point B:audio-focus-request
+        dbg("B", "PlayerService:905", "requestAudioFocus called", null);
+        // #endregion
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             AudioAttributes audioAttributes = new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -1057,6 +1106,11 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
      * 应用均衡器设置并渐入音量。
      */
     private void applyEqualizerAndFadeIn(int audioSessionId) {
+        // #region debug-point B:apply-equalizer
+        int streamMaxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        int streamCurVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        dbg("B", "PlayerService:1083", "applyEqualizerAndFadeIn called", java.util.Map.of("audioSessionId", audioSessionId, "maxGain", radioPlayer != null ? radioPlayer.getMaxGain() : -1, "streamCurVol", streamCurVol, "streamMaxVol", streamMaxVol));
+        // #endregion
         if (radioPlayer != null) {
             radioPlayer.setVolume(0f);
         }
@@ -1200,9 +1254,20 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         final long stepInterval = durationMs / steps;
         final float volumeStep = (toVolume - fromVolume) / steps;
 
+        // #region debug-point B:fadein-start
+        dbg("B", "PlayerService:1220", "fadeInVolume START", java.util.Map.of("from", fromVolume, "to", toVolume, "stepInterval", stepInterval));
+        // #endregion
+        player.setVolume(fromVolume);
+
         for (int i = 1; i <= steps; i++) {
             final float volume = fromVolume + volumeStep * i;
-            Runnable task = () -> player.setVolume(volume);
+            final int stepIndex = i;
+            Runnable task = () -> {
+                // #region debug-point B:fadein-step
+                dbg("B", "PlayerService:1228", "fadeInVolume step", java.util.Map.of("step", stepIndex, "volume", volume, "totalSteps", steps));
+                // #endregion
+                player.setVolume(volume);
+            };
             pendingFadeInTasks.add(task);
             handler.postDelayed(task, stepInterval * i);
         }
@@ -1482,19 +1547,25 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                     case Paused:
                         break;
                     case Playing: {
+                        if (playStateIsPlaying) {
+                            currentPlayingSessionStart = System.currentTimeMillis();
+                            lastPlayStartTime = currentPlayingSessionStart;
+                            applyEqualizerAndFadeIn(audioSessionId);
+                            break;
+                        }
+
                         enableMediaSession();
 
                         if (BuildConfig.DEBUG) {
                         }
 
-                        lastPlayStartTime = System.currentTimeMillis();
+                        playStateIsPlaying = true;
 
                         Intent i = new Intent(AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION);
                         i.putExtra(AudioEffect.EXTRA_AUDIO_SESSION, audioSessionId);
                         i.putExtra(AudioEffect.EXTRA_PACKAGE_NAME, getPackageName());
                         itsContext.sendBroadcast(i);
 
-                        // 应用均衡器并渐入音量（ExoPlayerWrapper 静音启动，渐入统一在此控制）
                         applyEqualizerAndFadeIn(audioSessionId);
                         break;
                     }
@@ -1521,6 +1592,14 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
                         break;
                     }
+                }
+
+                if (state != PlayState.Playing && playStateIsPlaying && currentPlayingSessionStart > 0) {
+                    totalPlayTimeAccumulatedMillis += System.currentTimeMillis() - currentPlayingSessionStart;
+                    currentPlayingSessionStart = 0;
+                }
+                if (state != PlayState.Playing) {
+                    playStateIsPlaying = false;
                 }
 
                 if (state != PlayState.Paused && state != PlayState.Idle) {

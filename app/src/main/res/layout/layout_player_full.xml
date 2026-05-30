@@ -100,43 +100,68 @@
                 app:layout_constraintTop_toBottomOf="@+id/pagerArtAndInfo" />
 
             <TextView
-                android:id="@+id/textViewTimePlayed"
-                android:layout_width="wrap_content"
+                android:id="@+id/textViewCurrentPlayTime"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
-                android:layout_marginLeft="16dp"
-                android:layout_marginTop="8dp"
-                android:textSize="14sp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginTop="4dp"
+                android:textSize="13sp"
                 android:textColor="?android:attr/textColorSecondary"
+                android:ellipsize="end"
+                android:maxLines="1"
                 app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/textViewTotalPlayTime"
                 app:layout_constraintTop_toBottomOf="@+id/space"
-                tools:text="Duration: 3:44" />
+                tools:text="Current: 3:44" />
+
+            <TextView
+                android:id="@+id/textViewTotalPlayTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginTop="4dp"
+                android:textSize="13sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:ellipsize="end"
+                android:maxLines="1"
+                app:layout_constraintStart_toEndOf="@+id/textViewCurrentPlayTime"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/space"
+                tools:text="Total: 1:23:45" />
+
+            <TextView
+                android:id="@+id/textViewTimeCached"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginTop="2dp"
+                android:textSize="13sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:ellipsize="end"
+                android:maxLines="1"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/textViewNetworkUsageInfo"
+                app:layout_constraintTop_toBottomOf="@+id/textViewCurrentPlayTime"
+                tools:text="Buffered: 0:10" />
 
             <TextView
                 android:id="@+id/textViewNetworkUsageInfo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginStart="8dp"
                 android:layout_marginEnd="16dp"
-                android:layout_marginRight="16dp"
-                android:textSize="14sp"
+                android:layout_marginTop="2dp"
+                android:textSize="13sp"
                 android:textColor="?android:attr/textColorSecondary"
+                android:ellipsize="end"
+                android:maxLines="1"
+                app:layout_constraintStart_toEndOf="@+id/textViewTimeCached"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/space"
+                app:layout_constraintTop_toBottomOf="@+id/textViewCurrentPlayTime"
                 tools:text="Data: 1mb" />
-
-            <TextView
-                android:id="@+id/textViewTimeCached"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textSize="14sp"
-                android:textColor="?android:attr/textColorSecondary"
-                app:layout_constraintStart_toEndOf="@+id/textViewTimePlayed"
-                app:layout_constraintEnd_toStartOf="@+id/textViewNetworkUsageInfo"
-                app:layout_constraintHorizontal_bias="0.3"
-                app:layout_constraintTop_toBottomOf="@+id/space"
-                tools:text="Buffered: -10s" />
 
             <View
                 android:id="@+id/divider1"
@@ -145,7 +170,7 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="8dp"
                 android:background="?android:attr/dividerVertical"
-                app:layout_constraintTop_toBottomOf="@+id/textViewTimeCached" />
+                app:layout_constraintTop_toBottomOf="@+id/textViewNetworkUsageInfo" />
 
             <ImageView
                 android:id="@+id/imgRecordingIcon"

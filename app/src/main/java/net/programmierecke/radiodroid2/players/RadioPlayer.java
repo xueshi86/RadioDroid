@@ -27,10 +27,32 @@ import net.programmierecke.radiodroid2.recording.RecordableListener;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import okhttp3.OkHttpClient;
 
 public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
+
+    // #region debug-point C:debug-logger
+    private static void dbg(String hypothesisId, String location, String msg, java.util.Map<String, Object> data) {
+        new Thread(() -> {
+            try {
+                URL url = new URL("http://127.0.0.1:7777/event");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setDoOutput(true);
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setConnectTimeout(500);
+                conn.setReadTimeout(500);
+                String json = "{\"sessionId\":\"volume-pop\",\"runId\":\"pre\",\"hypothesisId\":\"" + hypothesisId + "\",\"location\":\"" + location + "\",\"msg\":\"[DEBUG] " + msg.replace("\"", "'") + "\",\"data\":" + (data != null ? new org.json.JSONObject(data).toString() : "{}") + ",\"ts\":" + System.currentTimeMillis() + "}";
+                conn.getOutputStream().write(json.getBytes("UTF-8"));
+                conn.getResponseCode();
+                conn.disconnect();
+            } catch (Exception ignored) {}
+        }).start();
+    }
+    // #endregion
 
     final private String TAG = "RadioPlayer";
 
@@ -227,6 +249,9 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
         float ratio = Math.max(0f, Math.min(1f, volume / VOLUME_RANGE));
         // 指数曲线：ratio^2 使低音量端更精细
         float gain = maxGain * ratio * ratio;
+        // #region debug-point C:set-volume
+        dbg("C", "RadioPlayer:248", "RadioPlayer.setVolume", java.util.Map.of("inputVolume", volume, "ratio", ratio, "gain", gain, "maxGain", maxGain));
+        // #endregion
         currentPlayer.setVolume(gain);
     }
 
@@ -320,6 +345,9 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
     private void setState(PlayState state, int audioSessionId) {
 
         if (playState == state) {
+            if (state == PlayState.Playing) {
+                playerListener.onStateChanged(state, audioSessionId);
+            }
             return;
         }
 
