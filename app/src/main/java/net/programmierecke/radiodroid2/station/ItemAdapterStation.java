@@ -243,6 +243,7 @@ public class ItemAdapterStation
                 // 对于小的变化，使用更高效的更新方式
                 this.stationsList = stationsList;
                 this.filteredStationsList = stationsList;
+                highlightCurrentStation();
                 notifyDataSetChanged();
             }
         }
@@ -611,10 +612,19 @@ public class ItemAdapterStation
     }
 
     private void highlightCurrentStation() {
-        if (!PlayerServiceUtil.isPlaying()) return;
+        if (!PlayerServiceUtil.isPlaying()) {
+            if (playingStationPosition != -1) {
+                int oldPosition = playingStationPosition;
+                playingStationPosition = -1;
+                if (oldPosition > -1)
+                    notifyItemChanged(oldPosition);
+            }
+            return;
+        }
         if (filteredStationsList == null) return;
 
         int oldPlayingStationPosition = playingStationPosition;
+        playingStationPosition = -1;
 
         String currentStationUuid = PlayerServiceUtil.getStationId();
         for (int i = 0; i < filteredStationsList.size(); i++) {

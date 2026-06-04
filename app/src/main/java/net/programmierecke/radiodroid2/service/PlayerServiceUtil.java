@@ -36,12 +36,24 @@ import net.programmierecke.radiodroid2.station.DataRadioStation;
 import net.programmierecke.radiodroid2.station.live.ShoutcastInfo;
 import net.programmierecke.radiodroid2.station.live.StreamLiveInfo;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class PlayerServiceUtil {
 
@@ -316,45 +328,61 @@ public class PlayerServiceUtil {
     public static void getStationIcon(final ImageView holder, final String iconUrl, final String homePageUrl, final String stationUuid) {
         Resources r = mainContext.getResources();
         final float px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 70, r.getDisplayMetrics());
+        final int targetPxSize = (int) px;
+        final int maxPxSize = Math.min(targetPxSize * 3, 512);
         final Drawable placeholder = AppCompatResources.getDrawable(holder.getContext(), R.mipmap.ic_launcher);
 
-        // 标记当前 ImageView 对应的电台 UUID，后台图标升级时用于验证身份
+        holder.setScaleType(ImageView.ScaleType.FIT_CENTER);
+
         if (stationUuid != null && !stationUuid.isEmpty()) {
             holder.setTag(R.id.tag_station_uuid, stationUuid);
         }
 
-        // 第1步：优先从文件缓存加载 —— 保证速度
         if (stationUuid != null && !stationUuid.isEmpty()) {
             StationIconCache iconCache = StationIconCache.getInstance(mainContext);
             String cachedPath = iconCache.getIconPath(stationUuid);
             if (cachedPath != null) {
-                // 立即显示缓存图标（resize 填满 ImageView，小图放大、大图缩小）
                 Picasso.get()
                         .load(Uri.fromFile(new java.io.File(cachedPath)))
                         .placeholder(placeholder)
-                        .resize((int) px, 0)
+                        .resize(maxPxSize, 0)
+                        .onlyScaleDown()
                         .noFade()
-                        .into(holder);
+                        .into(holder, new Callback() {
+                            @Override
+                            public void onSuccess() {
+                                applySmartDisplayLogic(holder, targetPxSize, stationUuid);
+                            }
+
+                            @Override
+                            public void onError(Exception e) {}
+                        });
 
                 Log.d(TAG, "File cache HIT: " + stationUuid + " path=" + cachedPath);
 
-                // 缓存来自回退URL，且电台有主图标，且距上次重试超4小时 → 加入待重试队列
-                if (iconCache.isFallbackCached(stationUuid)
-                        && iconUrl != null && !iconUrl.trim().isEmpty()
-                        && iconCache.shouldRetryIconUrl(stationUuid)) {
-                    synchronized (pendingRetries) {
-                        pendingRetries.add(new RetryRequest(iconUrl, stationUuid, holder, (int) px));
+                if (iconCache.isFallbackCached(stationUuid)) {
+                    if (iconUrl != null && !iconUrl.trim().isEmpty()
+                            && iconCache.shouldRetryIconUrl(stationUuid)) {
+                        synchronized (pendingRetries) {
+                            pendingRetries.add(new RetryRequest(iconUrl, stationUuid, holder, targetPxSize, maxPxSize, homePageUrl));
+                        }
+                        flushHandler.removeCallbacks(flushRunnable);
+                        flushHandler.postDelayed(flushRunnable, FLUSH_DELAY_MS);
+                    } else if ((iconUrl == null || iconUrl.trim().isEmpty())
+                            && homePageUrl != null && !homePageUrl.trim().isEmpty()
+                            && !hdDiscoveryAttempted.contains(stationUuid)) {
+                        synchronized (pendingHdDiscoveries) {
+                            pendingHdDiscoveries.add(new HdDiscoveryRequest(homePageUrl, stationUuid, holder, targetPxSize, maxPxSize));
+                        }
+                        flushHandler.removeCallbacks(flushRunnable);
+                        flushHandler.postDelayed(flushRunnable, FLUSH_DELAY_MS);
                     }
-                    // 重置刷新定时器：最后一次 getStationIcon 后 500ms 统一执行后台重试
-                    flushHandler.removeCallbacks(flushRunnable);
-                    flushHandler.postDelayed(flushRunnable, FLUSH_DELAY_MS);
                 }
                 return;
             }
             Log.d(TAG, "File cache MISS: " + stationUuid);
         }
 
-        // 第2步：文件缓存未命中，构建回退URL列表
         final List<String> urlsToTry = new ArrayList<>();
         if (iconUrl != null && !iconUrl.trim().isEmpty()) {
             urlsToTry.add(iconUrl);
@@ -367,34 +395,32 @@ public class PlayerServiceUtil {
             return;
         }
 
-        // 第3步：先尝试 Picasso 内存/磁盘缓存（可能秒出，无需网络）
         if (iconUrl != null && !iconUrl.trim().isEmpty()) {
             Picasso.get()
                     .load(iconUrl)
                     .placeholder(placeholder)
-                    .resize((int) px, 0)
+                    .resize(maxPxSize, 0)
+                    .onlyScaleDown()
                     .networkPolicy(NetworkPolicy.OFFLINE)
                     .into(holder, new Callback() {
                         @Override
                         public void onSuccess() {
-                            // Picasso 缓存命中，保存到文件缓存
                             Log.d(TAG, "Picasso cache HIT: " + stationUuid + " url=" + iconUrl);
                             if (stationUuid != null && !stationUuid.isEmpty()) {
                                 saveIconToCacheFromView(holder, stationUuid);
                                 StationIconCache.getInstance(mainContext).clearFallbackMark(stationUuid);
                             }
+                            applySmartDisplayLogic(holder, targetPxSize, stationUuid);
                         }
 
                         @Override
                         public void onError(Exception e) {
-                            // Picasso 缓存未命中，联网加载（不延迟，快速失败）
                             Log.d(TAG, "Picasso cache MISS, loading from network: " + stationUuid);
-                            loadIconFromNetwork(holder, urlsToTry, placeholder, (int) px, stationUuid);
+                            loadIconFromNetwork(holder, urlsToTry, placeholder, targetPxSize, maxPxSize, homePageUrl, stationUuid);
                         }
                     });
         } else {
-            // 没有 IconUrl，直接尝试回退URL
-            tryFallbackUrls(holder, urlsToTry, 0, placeholder, (int) px, stationUuid);
+            tryFallbackUrls(holder, urlsToTry, 0, placeholder, targetPxSize, maxPxSize, homePageUrl, stationUuid);
         }
     }
 
@@ -402,7 +428,8 @@ public class PlayerServiceUtil {
      * 联网加载图标：先尝试 IconUrl，失败后立即尝试回退URL（不延迟等待）。
      */
     private static void loadIconFromNetwork(final ImageView holder, final List<String> urls,
-                                             final Drawable placeholder, final int pxSize,
+                                             final Drawable placeholder, final int targetPxSize,
+                                             final int maxPxSize, final String homePageUrl,
                                              final String stationUuid) {
         final String iconUrl = urls.get(0);
         Log.d(TAG, "Network load IconUrl: " + stationUuid + " url=" + iconUrl);
@@ -410,7 +437,8 @@ public class PlayerServiceUtil {
         Picasso.get()
                 .load(iconUrl)
                 .placeholder(placeholder)
-                .resize(pxSize, 0)
+                .resize(maxPxSize, 0)
+                .onlyScaleDown()
                 .networkPolicy(NetworkPolicy.NO_CACHE)
                 .into(holder, new Callback() {
                     @Override
@@ -422,18 +450,17 @@ public class PlayerServiceUtil {
                             cache.clearFallbackMark(stationUuid);
                             cache.recordIconUrlRetryTime(stationUuid);
                         }
+                        applySmartDisplayLogic(holder, targetPxSize, stationUuid);
                     }
 
                     @Override
                     public void onError(Exception e) {
                         Log.d(TAG, "Network load FAILED: " + stationUuid + " url=" + iconUrl + " err=" + e.getMessage());
-                        // 记录重试时间
                         if (stationUuid != null && !stationUuid.isEmpty()) {
                             StationIconCache.getInstance(mainContext).recordIconUrlRetryTime(stationUuid);
                         }
-                        // 立即尝试回退URL，不等待
                         if (urls.size() > 1) {
-                            tryFallbackUrls(holder, urls, 1, placeholder, pxSize, stationUuid);
+                            tryFallbackUrls(holder, urls, 1, placeholder, targetPxSize, maxPxSize, homePageUrl, stationUuid);
                         } else {
                             holder.setImageDrawable(placeholder);
                         }
@@ -446,7 +473,8 @@ public class PlayerServiceUtil {
      */
     private static void tryFallbackUrls(final ImageView holder, final List<String> urls,
                                          final int startIndex, final Drawable placeholder,
-                                         final int pxSize, final String stationUuid) {
+                                         final int targetPxSize, final int maxPxSize,
+                                         final String homePageUrl, final String stationUuid) {
         if (startIndex >= urls.size()) {
             holder.setImageDrawable(placeholder);
             return;
@@ -458,7 +486,8 @@ public class PlayerServiceUtil {
         Picasso.get()
                 .load(url)
                 .placeholder(placeholder)
-                .resize(pxSize, 0)
+                .resize(maxPxSize, 0)
+                .onlyScaleDown()
                 .networkPolicy(NetworkPolicy.NO_CACHE)
                 .into(holder, new Callback() {
                     @Override
@@ -468,12 +497,22 @@ public class PlayerServiceUtil {
                             saveIconToCacheFromView(holder, stationUuid);
                             StationIconCache.getInstance(mainContext).markAsFallback(stationUuid);
                         }
+                        applySmartDisplayLogic(holder, targetPxSize, stationUuid);
+
+                        if (homePageUrl != null && !homePageUrl.trim().isEmpty()
+                                && !hdDiscoveryAttempted.contains(stationUuid)) {
+                            synchronized (pendingHdDiscoveries) {
+                                pendingHdDiscoveries.add(new HdDiscoveryRequest(homePageUrl, stationUuid, holder, targetPxSize, maxPxSize));
+                            }
+                            flushHandler.removeCallbacks(flushRunnable);
+                            flushHandler.postDelayed(flushRunnable, FLUSH_DELAY_MS);
+                        }
                     }
 
                     @Override
                     public void onError(Exception e) {
                         Log.d(TAG, "Fallback[" + startIndex + "] FAILED: " + stationUuid + " url=" + url);
-                        tryFallbackUrls(holder, urls, startIndex + 1, placeholder, pxSize, stationUuid);
+                        tryFallbackUrls(holder, urls, startIndex + 1, placeholder, targetPxSize, maxPxSize, homePageUrl, stationUuid);
                     }
                 });
     }
@@ -483,20 +522,54 @@ public class PlayerServiceUtil {
         final String iconUrl;
         final String stationUuid;
         final ImageView holder;
-        final int pxSize;
+        final int targetPxSize;
+        final int maxPxSize;
+        final String homePageUrl;
 
-        RetryRequest(String iconUrl, String stationUuid, ImageView holder, int pxSize) {
+        RetryRequest(String iconUrl, String stationUuid, ImageView holder,
+                     int targetPxSize, int maxPxSize, String homePageUrl) {
             this.iconUrl = iconUrl;
             this.stationUuid = stationUuid;
             this.holder = holder;
-            this.pxSize = pxSize;
+            this.targetPxSize = targetPxSize;
+            this.maxPxSize = maxPxSize;
+            this.homePageUrl = homePageUrl;
         }
     }
 
-    // 待重试队列：缓存图标显示完毕后统一执行后台重试
+    private static class HdDiscoveryRequest {
+        final String homePageUrl;
+        final String stationUuid;
+        final ImageView holder;
+        final int targetPxSize;
+        final int maxPxSize;
+
+        HdDiscoveryRequest(String homePageUrl, String stationUuid, ImageView holder,
+                           int targetPxSize, int maxPxSize) {
+            this.homePageUrl = homePageUrl;
+            this.stationUuid = stationUuid;
+            this.holder = holder;
+            this.targetPxSize = targetPxSize;
+            this.maxPxSize = maxPxSize;
+        }
+    }
+
+    private static class DiscoveredIcon {
+        final String url;
+        final int size;
+
+        DiscoveredIcon(String url, int size) {
+            this.url = url;
+            this.size = size;
+        }
+    }
+
     private static final List<RetryRequest> pendingRetries = new ArrayList<>();
+    private static final List<HdDiscoveryRequest> pendingHdDiscoveries = new ArrayList<>();
+    private static final Set<String> hdDiscoveryAttempted = Collections.synchronizedSet(new HashSet<>());
+    private static final ExecutorService discoveryExecutor = Executors.newSingleThreadExecutor();
     private static final android.os.Handler flushHandler = new android.os.Handler(android.os.Looper.getMainLooper());
-    private static final long FLUSH_DELAY_MS = 500; // 最后一次图标加载后500ms统一刷新
+    private static final long FLUSH_DELAY_MS = 500;
     private static final Runnable flushRunnable = () -> flushPendingRetries();
 
     /**
@@ -511,7 +584,16 @@ public class PlayerServiceUtil {
             pendingRetries.clear();
         }
         for (RetryRequest req : toProcess) {
-            retryIconUrlInBackground(req.iconUrl, req.stationUuid, req.holder, req.pxSize);
+            retryIconUrlInBackground(req.iconUrl, req.stationUuid, req.holder, req.targetPxSize, req.maxPxSize);
+        }
+
+        List<HdDiscoveryRequest> hdToProcess;
+        synchronized (pendingHdDiscoveries) {
+            hdToProcess = new ArrayList<>(pendingHdDiscoveries);
+            pendingHdDiscoveries.clear();
+        }
+        for (HdDiscoveryRequest req : hdToProcess) {
+            discoverHdIconInBackground(req.homePageUrl, req.stationUuid, req.holder, req.targetPxSize, req.maxPxSize);
         }
     }
 
@@ -530,9 +612,11 @@ public class PlayerServiceUtil {
             }
             String scheme = uri.getScheme() != null ? uri.getScheme() : "https";
 
-            fallbacks.add(scheme + "://" + domain + "/favicon.ico");
             fallbacks.add(scheme + "://" + domain + "/apple-touch-icon.png");
-            fallbacks.add("https://www.google.com/s2/favicons?domain=" + domain + "&sz=128");
+            fallbacks.add(scheme + "://" + domain + "/apple-touch-icon-precomposed.png");
+            fallbacks.add(scheme + "://" + domain + "/android-chrome-192x192.png");
+            fallbacks.add(scheme + "://" + domain + "/favicon.ico");
+            fallbacks.add("https://www.google.com/s2/favicons?domain=" + domain + "&sz=256");
         } catch (Exception e) {
             Log.w("PlayerServiceUtil", "Failed to build fallback URLs from: " + homePageUrl, e);
         }
@@ -551,7 +635,8 @@ public class PlayerServiceUtil {
      * @param pxSize      图标尺寸
      */
     private static void retryIconUrlInBackground(final String iconUrl, final String stationUuid,
-                                                  final ImageView holder, final int pxSize) {
+                                                  final ImageView holder, final int targetPxSize,
+                                                  final int maxPxSize) {
         final Target target = new Target() {
             @Override
             public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
@@ -563,13 +648,24 @@ public class PlayerServiceUtil {
                     cache.recordIconUrlRetryTime(stationUuid);
                     Log.d("PlayerServiceUtil", "Background IconUrl upgrade succeeded for: " + stationUuid);
 
-                    // 刷新 ImageView 显示主图标
                     if (holder != null) {
                         holder.post(() -> {
-                            // 验证 holder 仍显示同一电台（通过 tag 中的 uuid 比对）
                             Object tag = holder.getTag(R.id.tag_station_uuid);
-                            if (tag != null && tag.equals(stationUuid)) {
+                            if (tag == null || !tag.equals(stationUuid)) return;
+
+                            Drawable currentDrawable = holder.getDrawable();
+                            int currentWidth = 0;
+                            if (currentDrawable instanceof android.graphics.drawable.BitmapDrawable) {
+                                currentWidth = ((android.graphics.drawable.BitmapDrawable) currentDrawable).getBitmap().getWidth();
+                            }
+
+                            // 只有新图标 >= 当前图标时才替换显示，避免用更小的主图覆盖清晰的回退图
+                            if (bitmap.getWidth() >= currentWidth) {
                                 holder.setImageBitmap(bitmap);
+                                applySmartDisplayLogic(holder, targetPxSize, stationUuid);
+                            } else {
+                                Log.d("PlayerServiceUtil", "Background IconUrl smaller than current display (" +
+                                        bitmap.getWidth() + " vs " + currentWidth + "), keeping current for: " + stationUuid);
                             }
                         });
                     }
@@ -579,10 +675,9 @@ public class PlayerServiceUtil {
 
             @Override
             public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-                // 记录重试时间，24小时内不再尝试
                 StationIconCache.getInstance(mainContext).recordIconUrlRetryTime(stationUuid);
                 Log.d("PlayerServiceUtil", "Background IconUrl upgrade failed for: "
-                        + stationUuid + ", will retry tomorrow");
+                        + stationUuid + ", will retry later");
                 backgroundTargets.remove(this);
             }
 
@@ -590,12 +685,12 @@ public class PlayerServiceUtil {
             public void onPrepareLoad(Drawable placeHolderDrawable) {}
         };
 
-        // 持有强引用防止 Picasso 的弱引用导致 Target 被 GC
         backgroundTargets.add(target);
 
         Picasso.get()
                 .load(iconUrl)
-                .resize(pxSize, 0)
+                .resize(maxPxSize, 0)
+                .onlyScaleDown()
                 .networkPolicy(NetworkPolicy.NO_CACHE)
                 .into(target);
     }
@@ -651,6 +746,301 @@ public class PlayerServiceUtil {
         drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         drawable.draw(canvas);
         return bitmap;
+    }
+
+    /**
+     * 智能图标显示逻辑。
+     *
+     * 核心原则：尽量显示高清图标。
+     *
+     * 如果图片宽度占显示区域宽度 50% 以上 → 原图显示（CENTER_INSIDE，清晰）
+     * 如果图片宽度占显示区域宽度 50% 以下 → 放大显示（模糊但起标识作用）
+     *
+     * @param holder        目标ImageView
+     * @param targetPxSize  目标显示区域宽度（像素）
+     * @param stationUuid   电台UUID，用于验证ImageView身份
+     */
+    private static void applySmartDisplayLogic(final ImageView holder, final int targetPxSize,
+                                                final String stationUuid) {
+        if (holder == null) return;
+
+        Object tag = holder.getTag(R.id.tag_station_uuid);
+        if (stationUuid != null && !stationUuid.isEmpty() && tag != null && !tag.equals(stationUuid)) {
+            return;
+        }
+
+        Drawable drawable = holder.getDrawable();
+        if (drawable == null) return;
+
+        Bitmap bitmap;
+        if (drawable instanceof android.graphics.drawable.BitmapDrawable) {
+            bitmap = ((android.graphics.drawable.BitmapDrawable) drawable).getBitmap();
+        } else {
+            bitmap = drawableToBitmap(drawable);
+        }
+
+        if (bitmap == null || bitmap.isRecycled()) return;
+
+        // 强制 ImageView 保持正方形，防止因图片尺寸变化导致行高变形、叠加图标错位
+        holder.getLayoutParams().height = holder.getLayoutParams().width;
+
+        float widthRatio = (float) bitmap.getWidth() / targetPxSize;
+
+        if (widthRatio >= 0.5f) {
+            // 图片 ≥ 显示区域 50% → 原图显示，清晰不模糊
+            holder.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        } else {
+            // 图片 < 显示区域 50% → 放大显示，模糊但起标识作用
+            int scaledWidth = targetPxSize;
+            int scaledHeight = (int) ((float) bitmap.getHeight() * targetPxSize / bitmap.getWidth());
+            if (scaledHeight <= 0) scaledHeight = targetPxSize;
+            Bitmap scaled = Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true);
+            holder.setImageBitmap(scaled);
+            holder.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        }
+    }
+
+    private static void discoverHdIconInBackground(final String homePageUrl, final String stationUuid,
+                                                    final ImageView holder, final int targetPxSize,
+                                                    final int maxPxSize) {
+        if (hdDiscoveryAttempted.contains(stationUuid)) return;
+        hdDiscoveryAttempted.add(stationUuid);
+
+        discoveryExecutor.execute(() -> {
+            try {
+                List<DiscoveredIcon> discoveredIcons = new ArrayList<>();
+
+                String html = fetchUrlContent(homePageUrl);
+                if (html != null) {
+                    discoveredIcons.addAll(parseHtmlForIconUrls(html, homePageUrl));
+                }
+
+                try {
+                    URI uri = new URI(homePageUrl);
+                    String domain = uri.getHost();
+                    String scheme = uri.getScheme() != null ? uri.getScheme() : "https";
+                    String manifestUrl = scheme + "://" + domain + "/site.webmanifest";
+                    String manifestJson = fetchUrlContent(manifestUrl);
+                    if (manifestJson != null) {
+                        discoveredIcons.addAll(parseWebManifestForIconUrls(manifestJson, manifestUrl));
+                    }
+                } catch (Exception ignored) {}
+
+                if (discoveredIcons.isEmpty()) return;
+
+                Collections.sort(discoveredIcons, (a, b) -> b.size - a.size);
+
+                List<DiscoveredIcon> filtered = new ArrayList<>();
+                for (DiscoveredIcon icon : discoveredIcons) {
+                    if (icon.size >= targetPxSize) {
+                        filtered.add(icon);
+                    }
+                }
+                if (filtered.isEmpty()) {
+                    filtered.add(discoveredIcons.get(0));
+                }
+
+                if (holder != null) {
+                    holder.post(() -> tryDiscoveredIconUrls(filtered, 0, stationUuid, holder, targetPxSize, maxPxSize));
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "HD icon discovery failed for: " + stationUuid, e);
+            }
+        });
+    }
+
+    private static void tryDiscoveredIconUrls(final List<DiscoveredIcon> icons, final int startIndex,
+                                               final String stationUuid, final ImageView holder,
+                                               final int targetPxSize, final int maxPxSize) {
+        if (startIndex >= icons.size()) return;
+
+        final String url = icons.get(startIndex).url;
+        Log.d(TAG, "HD discovery[" + startIndex + "]: " + stationUuid + " url=" + url + " size=" + icons.get(startIndex).size);
+
+        final Target target = new Target() {
+            @Override
+            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                if (bitmap != null) {
+                    boolean isFavorite = isStationFavorited(stationUuid);
+                    StationIconCache cache = StationIconCache.getInstance(mainContext);
+
+                    if (holder != null) {
+                        Object tag = holder.getTag(R.id.tag_station_uuid);
+                        if (tag == null || !tag.equals(stationUuid)) {
+                            backgroundTargets.remove(this);
+                            return;
+                        }
+
+                        Drawable currentDrawable = holder.getDrawable();
+                        int currentWidth = 0;
+                        if (currentDrawable instanceof android.graphics.drawable.BitmapDrawable) {
+                            currentWidth = ((android.graphics.drawable.BitmapDrawable) currentDrawable).getBitmap().getWidth();
+                        }
+
+                        // 只有新图标 >= 当前图标时才替换显示
+                        if (bitmap.getWidth() >= currentWidth) {
+                            cache.saveIcon(stationUuid, bitmap, isFavorite);
+                            cache.clearFallbackMark(stationUuid);
+                            Log.d(TAG, "HD discovery succeeded for: " + stationUuid);
+                            holder.setImageBitmap(bitmap);
+                            applySmartDisplayLogic(holder, targetPxSize, stationUuid);
+                        } else {
+                            Log.d(TAG, "HD discovery icon smaller than current (" +
+                                    bitmap.getWidth() + " vs " + currentWidth + "), skipping for: " + stationUuid);
+                        }
+                    }
+                }
+                backgroundTargets.remove(this);
+            }
+
+            @Override
+            public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+                Log.d(TAG, "HD discovery[" + startIndex + "] FAILED: " + stationUuid + " url=" + url);
+                tryDiscoveredIconUrls(icons, startIndex + 1, stationUuid, holder, targetPxSize, maxPxSize);
+                backgroundTargets.remove(this);
+            }
+
+            @Override
+            public void onPrepareLoad(Drawable placeHolderDrawable) {}
+        };
+
+        backgroundTargets.add(target);
+
+        Picasso.get()
+                .load(url)
+                .resize(maxPxSize, 0)
+                .onlyScaleDown()
+                .networkPolicy(NetworkPolicy.NO_CACHE)
+                .into(target);
+    }
+
+    private static String fetchUrlContent(String urlStr) {
+        HttpURLConnection conn = null;
+        try {
+            URL url = new URL(urlStr);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+            conn.setInstanceFollowRedirects(true);
+            conn.setRequestProperty("User-Agent", "RadioDroid");
+            int responseCode = conn.getResponseCode();
+            if (responseCode != 200) {
+                conn.disconnect();
+                return null;
+            }
+            InputStream is = conn.getInputStream();
+            ByteArrayOutputStream result = new ByteArrayOutputStream();
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = is.read(buffer)) != -1) {
+                result.write(buffer, 0, bytesRead);
+                if (result.size() > 1024 * 1024) break;
+            }
+            is.close();
+            conn.disconnect();
+            return result.toString("UTF-8");
+        } catch (Exception e) {
+            return null;
+        } finally {
+            if (conn != null) {
+                try { conn.disconnect(); } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    private static List<DiscoveredIcon> parseHtmlForIconUrls(String html, String baseUrl) {
+        List<DiscoveredIcon> icons = new ArrayList<>();
+        try {
+            Pattern linkPattern = Pattern.compile("<link[^>]+>", Pattern.CASE_INSENSITIVE);
+            Matcher matcher = linkPattern.matcher(html);
+
+            while (matcher.find()) {
+                String linkTag = matcher.group();
+                String rel = extractHtmlAttribute(linkTag, "rel");
+                if (rel == null) continue;
+
+                String relLower = rel.toLowerCase();
+                if (!relLower.contains("icon") && !relLower.contains("apple-touch-icon")) continue;
+
+                String href = extractHtmlAttribute(linkTag, "href");
+                if (href == null || href.trim().isEmpty()) continue;
+
+                String absoluteUrl = resolveUrl(baseUrl, href);
+                if (absoluteUrl == null) continue;
+
+                int size = parseSizeAttribute(extractHtmlAttribute(linkTag, "sizes"));
+                icons.add(new DiscoveredIcon(absoluteUrl, size));
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to parse HTML for icon URLs", e);
+        }
+        return icons;
+    }
+
+    private static List<DiscoveredIcon> parseWebManifestForIconUrls(String json, String manifestUrl) {
+        List<DiscoveredIcon> icons = new ArrayList<>();
+        try {
+            JSONObject manifest = new JSONObject(json);
+            JSONArray iconsArray = manifest.optJSONArray("icons");
+            if (iconsArray == null) return icons;
+
+            for (int i = 0; i < iconsArray.length(); i++) {
+                JSONObject iconObj = iconsArray.getJSONObject(i);
+                String src = iconObj.optString("src", "");
+                if (src.isEmpty()) continue;
+
+                String absoluteUrl = resolveUrl(manifestUrl, src);
+                if (absoluteUrl == null) continue;
+
+                String sizes = iconObj.optString("sizes", "");
+                int size = parseSizeString(sizes);
+                icons.add(new DiscoveredIcon(absoluteUrl, size));
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to parse webmanifest", e);
+        }
+        return icons;
+    }
+
+    private static String extractHtmlAttribute(String tag, String attrName) {
+        Pattern pattern = Pattern.compile(attrName + "\\s*=\\s*[\"']([^\"']*)[\"']", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(tag);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
+    }
+
+    private static int parseSizeAttribute(String sizesStr) {
+        if (sizesStr == null || sizesStr.isEmpty()) return 0;
+        String[] sizeParts = sizesStr.split("\\s+");
+        int maxSize = 0;
+        for (String part : sizeParts) {
+            int size = parseSizeString(part);
+            if (size > maxSize) maxSize = size;
+        }
+        return maxSize;
+    }
+
+    private static int parseSizeString(String sizeStr) {
+        if (sizeStr == null || sizeStr.isEmpty()) return 0;
+        try {
+            String[] parts = sizeStr.toLowerCase().split("x");
+            if (parts.length >= 1) {
+                return Integer.parseInt(parts[0].trim());
+            }
+        } catch (NumberFormatException ignored) {}
+        return 0;
+    }
+
+    private static String resolveUrl(String baseUrl, String relativeUrl) {
+        try {
+            URI base = new URI(baseUrl);
+            URI resolved = base.resolve(relativeUrl);
+            return resolved.toString();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**

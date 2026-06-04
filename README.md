@@ -10,8 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="#-中文">中文介绍</a> ·
-  <a href="#-english">English</a> ·
+  <a href="#中文">中文介绍</a> ·
+  <a href="#english">English</a> ·
   <a href="#changelog">Changelog</a>
 </p>
 
@@ -144,11 +144,23 @@
 
 应用采用智能多级缓存策略加载电台图标，确保两个核心体验：**尽快显示图标，尽量显示主图标**。
 
-**图标获取渠道**（三级回退）：
+**图标获取渠道**（渐进回退）：
 
 1. **主图标**：服务器提供的 `IconUrl`（最优先）
-2. **回退图标**：从电台主页域名构造的 `favicon.ico` 和 `apple-touch-icon.png`
-3. **兜底图标**：Google Favicons 服务
+2. **渐进回退**：按顺序尝试以下 URL，失败立即跳到下一个：
+   - `apple-touch-icon.png`
+   - `apple-touch-icon-precomposed.png`
+   - `android-chrome-192x192.png`
+   - `favicon.ico`
+   - Google Favicons 服务（兜底）
+3. **HD 图标发现**（新增）：当仅有主页 URL 但无图标 URL 的回退图标加载成功后，后台解析主页 HTML 查找 Apple Touch Icon 等高分辨率 `<link>` 标签图标
+
+**智能显示逻辑**：
+
+图标加载后根据实际尺寸自动适配显示：
+- 图标 ≥ 显示区域 50% → 原图 `CENTER_INSIDE` 显示，清晰不模糊
+- 图标 < 显示区域 50% → 放大至显示区域尺寸，模糊但起标识作用
+- ImageView 强制保持正方形，防止行高变形
 
 **缓存策略**：
 
@@ -156,16 +168,25 @@
 |------|------|
 | 分层缓存 | 收藏电台图标存入永久缓存（不删除），其他电台图标存入半永久缓存（7天过期） |
 | 快速显示 | 打开页面时，有缓存的图标立即显示（不管来源），保证用户第一眼看到图标 |
-| 智能升级 | 缓存为回退图标的电台，后台每4小时静默尝试获取主图标，成功后自动替换显示 |
+| 智能升级 | 缓存为回退图标的电台，后台每4小时静默尝试获取主图标；无主图标时尝试 HD 发现 |
+| 尺寸保护 | 后台获取的新图标尺寸小于当前显示图标时不替换，避免用更小的图覆盖清晰的大图 |
 | 来源标记 | 系统会标记每个缓存图标的来源（主图标/回退），主图标永不再重试，回退图标定时升级 |
 | 用户控制 | 设置中可关闭电台图标显示，减少缓存占用，适合存储空间紧张的用户 |
 
 **流程示意**：
 ```
 打开页面 → 缓存图标立即显示（保证速度）
-        → 缓存是回退图标的电台，4小时后后台静默尝试主图标
-        → 主图标获取成功 → 自动替换缓存和显示
-        → 主图标获取失败 → 维持现有图标，下次再试
+        → 缓存是回退图标的电台：
+          ├─ 有 IconUrl → 4小时后后台静默重试主图标
+          │  ├─ 成功且≥当前尺寸 → 替换缓存和显示
+          │  └─ 失败或<当前尺寸 → 维持现有图标
+          └─ 无 IconUrl → 后台解析主页 HTML 查找 HD 图标
+             └─ 成功 → 自动替换缓存和显示
+
+无缓存 → 联网加载 IconUrl → 成功 → 保存文件缓存 + 智能显示
+                            → 失败 → 立即渐进回退（5级URL）
+                                   → 任意成功 → 保存文件缓存 + 标记回退来源 + 智能显示
+                                   → 全部失败 → 显示占位图标
 ```
 
 ####   播放器
@@ -392,11 +413,23 @@ Original RadioDroid already had track history. This version optimizes the parsin
 
 The app uses a smart multi-level caching strategy to ensure two core experiences: **show icons as fast as possible, show primary icons whenever possible**.
 
-**Icon Sources** (three-level fallback):
+**Icon Sources** (progressive fallback):
 
 1. **Primary Icon**: Server-provided `IconUrl` (highest priority)
-2. **Fallback Icon**: `favicon.ico` and `apple-touch-icon.png` derived from the station's homepage domain
-3. **Last Resort Icon**: Google Favicons service (small site favicon)
+2. **Progressive Fallback**: Tries each URL in sequence, jumping to the next on failure:
+   - `apple-touch-icon.png`
+   - `apple-touch-icon-precomposed.png`
+   - `android-chrome-192x192.png`
+   - `favicon.ico`
+   - Google Favicons service (last resort)
+3. **HD Icon Discovery** (new): When a fallback icon loads for a station with homepage URL but no icon URL, the app parses the homepage HTML in the background to find high-resolution `<link>` tag icons
+
+**Smart Display Logic**:
+
+After loading, icons are automatically adapted based on actual size:
+- Icon ≥ 50% of display area → `CENTER_INSIDE` original display, crisp and clear
+- Icon < 50% of display area → Scaled up to display size, blurry but identifiable
+- ImageView forced to square aspect ratio to prevent row height distortion
 
 **Caching Strategy**:
 
@@ -404,16 +437,25 @@ The app uses a smart multi-level caching strategy to ensure two core experiences
 |---------|-------------|
 | Layered Cache | Favorite station icons go into permanent cache (never deleted), others go into semi-permanent cache (7-day expiry) |
 | Fast Display | When opening a page, cached icons display immediately regardless of source, ensuring users see icons at first glance |
-| Smart Upgrade | Stations with fallback icons will silently retry fetching the primary icon every 4 hours in the background, replacing the display upon success |
+| Smart Upgrade | Stations with fallback icons silently retry the primary icon every 4 hours; if no primary icon exists, attempt HD discovery |
+| Size Protection | A newly fetched icon smaller than the currently displayed one will not replace it, preventing degradation |
 | Source Tracking | Each cached icon is marked with its source (primary/fallback). Primary icons are never retried; fallback icons are periodically upgraded |
 | User Control | Icons can be disabled in Settings to reduce cache size, ideal for users with limited storage |
 
 **Flow Diagram**:
 ```
 Open page → Cached icons display immediately (speed first)
-         → Stations with fallback icons retry primary icon after 4h in background
-         → Primary icon fetched → Auto-replace cache and display
-         → Primary icon failed → Keep current icon, retry next time
+         → Stations with fallback icons:
+           ├─ Has IconUrl → Retry primary icon after 4h in background
+           │  ├─ Success & ≥ current size → Replace cache and display
+           │  └─ Failed or < current size → Keep current icon
+           └─ No IconUrl → Parse homepage HTML for HD icons in background
+              └─ Success → Auto-replace cache and display
+
+No cache → Load IconUrl from network → Success → Save to file cache + smart display
+                                       → Failed → Progressive fallback (5 URLs)
+                                              → Any success → Save file cache + mark fallback source + smart display
+                                              → All failed → Show placeholder icon
 ```
 
 ####   Player
@@ -550,6 +592,27 @@ Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elemen
 
 **版本更新**
 - 版本号升级至 v0.98 (versionCode 107)
+
+### v0.99
+*2026-06-02*
+
+**均衡器爆音修复**
+- **修复**：均衡器频段参数在全部配置完成后再启用（`setEnabled(true)`），避免中间态频段配置导致 Android 音频管道产生脉冲爆音
+- **修复**：BassBoost 增强器在设置强度值后再启用，与均衡器同理
+- **修复**：淡入渐入任务改用 `pendingFadeInTasks` 队列管理，50ms 延迟执行；每次新渐入前取消上一次未完成的任务，防止任务重叠引发音量突变爆音
+
+**播放电台高亮修复**
+- **修复**：`highlightCurrentStation()` 遍历查找前将 `playingStationPosition` 重置为 -1，确保列表变更（拖拽排序、取消收藏）后播放电台高亮始终绑定电台 UUID 而非列表位置
+- **修复**：`updateList()` 小变化分支在 `notifyDataSetChanged()` 前先调用 `highlightCurrentStation()`，确保高亮位置实时同步
+
+**电台图标显示优化**
+- **新增**：HD 图标发现机制 — 对仅有主页 URL 但无图标 URL 的电台，自动解析主页 HTML 查找 Apple Touch Icon 等高分辨率图标，成功后自动替换缓存和显示
+- **新增**：`applySmartDisplayLogic()` 图标智能显示逻辑，根据图标实际尺寸优化 ImageView 适配
+- **新增**：图标回退 URL 自动构建系统，根据主页域名自动构造 `favicon.ico` 和 `apple-touch-icon.png` 路径
+- **优化**：后台重试机制增强，回退图标缓存 4 小时后静默重试主图标
+
+**文档修复**
+- **修复**：README.md 目录锚点链接跳转错误
 
 ### v0.97
 *2026-05-23*

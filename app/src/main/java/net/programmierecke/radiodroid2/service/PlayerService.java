@@ -1117,8 +1117,12 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
         applyEqualizerSettings(audioSessionId);
 
-        if (radioPlayer != null) {
-            fadeInVolume(radioPlayer, 0f, FULL_VOLUME, 300);
+        cancelPendingFadeIn();
+        final RadioPlayer player = radioPlayer;
+        if (player != null) {
+            Runnable fadeInTask = () -> fadeInVolume(player, 0f, FULL_VOLUME, 300);
+            pendingFadeInTasks.add(fadeInTask);
+            handler.postDelayed(fadeInTask, 50);
         }
     }
 
@@ -1129,7 +1133,6 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
         SharedPreferences eqPrefs = PreferenceManager.getDefaultSharedPreferences(itsContext);
 
-        // Check for station-specific equalizer settings first
         String stationUuid = currentStation != null ? currentStation.StationUuid : null;
         boolean hasStationEq = stationUuid != null && EqualizerActivity.hasStationEqualizer(itsContext, stationUuid);
 
@@ -1153,7 +1156,6 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
         try {
             serviceEqualizer = new android.media.audiofx.Equalizer(0, audioSessionId);
-            serviceEqualizer.setEnabled(true);
 
             int savedPreset = eqPrefs.getInt(prefPreset, -1);
             short numPresets = serviceEqualizer.getNumberOfPresets();
@@ -1224,15 +1226,17 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                 }
             }
 
+            serviceEqualizer.setEnabled(true);
+
             boolean bassBoostEnabled = eqPrefs.getBoolean(prefBassBoostEnabled, false);
             if (bassBoostEnabled) {
                 try {
                     serviceBassBoost = new android.media.audiofx.BassBoost(0, audioSessionId);
-                    serviceBassBoost.setEnabled(true);
                     short strength = (short) eqPrefs.getInt(prefBassBoostStrength, 0);
                     if (strength > 0) {
                         serviceBassBoost.setStrength(strength);
                     }
+                    serviceBassBoost.setEnabled(true);
                 } catch (Exception ignored) {
                 }
             }
@@ -1411,9 +1415,11 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                 String domain = uri.getHost();
                 if (domain != null && !domain.isEmpty()) {
                     String scheme = uri.getScheme() != null ? uri.getScheme() : "https";
-                    urlsToTry.add(scheme + "://" + domain + "/favicon.ico");
                     urlsToTry.add(scheme + "://" + domain + "/apple-touch-icon.png");
-                    urlsToTry.add("https://www.google.com/s2/favicons?domain=" + domain + "&sz=128");
+                    urlsToTry.add(scheme + "://" + domain + "/apple-touch-icon-precomposed.png");
+                    urlsToTry.add(scheme + "://" + domain + "/android-chrome-192x192.png");
+                    urlsToTry.add(scheme + "://" + domain + "/favicon.ico");
+                    urlsToTry.add("https://www.google.com/s2/favicons?domain=" + domain + "&sz=256");
                 }
             } catch (Exception ignored) {}
         }
