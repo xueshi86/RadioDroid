@@ -21,6 +21,10 @@
         android:title="@string/context_menu_add_alarm"
         android:icon="@drawable/ic_add_alarm_black_24dp" />
     <item
+        android:id="@+id/menu_refresh_icon"
+        android:title="@string/context_menu_refresh_icon"
+        android:icon="@drawable/ic_refresh_black_24dp" />
+    <item
         android:id="@+id/menu_delete"
         android:title="@string/context_menu_delete"
         android:icon="@drawable/ic_delete_black_24dp" />

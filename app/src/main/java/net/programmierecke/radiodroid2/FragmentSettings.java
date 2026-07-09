@@ -269,8 +269,21 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     return true;
                 }
             });
-
             setupBluetoothPermissionPreference();
+        } else if (s.equals("pref_category_interaction")) {
+            Preference clearIconCachePref = findPreference("clear_icon_cache");
+            if (clearIconCachePref != null) {
+                clearIconCachePref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                    @Override
+                    public boolean onPreferenceClick(Preference preference) {
+                        int count = net.programmierecke.radiodroid2.service.PlayerServiceUtil.clearAllIconCache();
+                        android.widget.Toast.makeText(getContext(),
+                                getString(R.string.icon_cache_cleared),
+                                android.widget.Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                });
+            }
 
 
         } else if (s.equals("pref_category_connectivity")) {

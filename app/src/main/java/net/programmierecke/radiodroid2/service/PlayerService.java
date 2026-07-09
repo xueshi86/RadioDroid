@@ -27,6 +27,7 @@ import android.media.audiofx.AudioEffect;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Build;
+import android.os.AsyncTask;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
@@ -74,6 +75,7 @@ import net.programmierecke.radiodroid2.Utils;
 import net.programmierecke.radiodroid2.history.TrackHistoryEntry;
 import net.programmierecke.radiodroid2.history.TrackHistoryRepository;
 import net.programmierecke.radiodroid2.players.PlayState;
+import net.programmierecke.radiodroid2.playlist.PlaylistParser;
 import net.programmierecke.radiodroid2.players.selector.PlayerType;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
 import net.programmierecke.radiodroid2.station.live.ShoutcastInfo;
@@ -138,7 +140,9 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     private static final float DUCK_VOLUME = 40f;
 
     // 音量曲线补偿：监听系统音量变化，动态调整播放器最大增益
-    // 低系统音量 → maxGain < 1.0（更安静），高系统音量 → maxGain > 1.0（更响）
+    // 低系统音量（<35%）→ maxGain = 0.5 ~ 1.0（降低 1 倍）
+    // 中系统音量（35%-65%）→ maxGain = 1.0（不变）
+    // 高系统音量（65%-100%）→ maxGain = 1.0 ~ 2.0（提升 1 倍）
     private BroadcastReceiver volumeChangeReceiver;
 
     private static final int METERED_CONNECTION_WARNING_COOLDOWN = 20 * 1000; // 20 seconds
@@ -146,6 +150,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     private static final int AUDIO_WARNING_DURATION = 2000;
 
     private SharedPreferences sharedPref;
+    private SharedPreferences.OnSharedPreferenceChangeListener preferenceChangeListener;
 
     private TrackHistoryRepository trackHistoryRepository;
 
@@ -540,6 +545,22 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
         radioPlayer = new RadioPlayer(PlayerService.this);
         radioPlayer.setPlayerListener(this);
+        radioPlayer.setVolumeMappingEnabled(sharedPref.getBoolean("enable_volume_mapping", true));
+
+        preferenceChangeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                if ("enable_volume_mapping".equals(key)) {
+                    boolean enabled = sharedPreferences.getBoolean(key, true);
+                    if (radioPlayer != null) {
+                        radioPlayer.setVolumeMappingEnabled(enabled);
+                        updateVolumeGain();
+                        radioPlayer.refreshVolume();
+                    }
+                }
+            }
+        };
+        sharedPref.registerOnSharedPreferenceChangeListener(preferenceChangeListener);
 
         mediaSessionCallback = new MediaSessionCallback(this, itsBinder);
 
@@ -592,6 +613,10 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         if (audioDeviceMonitor != null) {
             audioDeviceMonitor.unregister();
             audioDeviceMonitor = null;
+        }
+
+        if (sharedPref != null && preferenceChangeListener != null) {
+            sharedPref.unregisterOnSharedPreferenceChangeListener(preferenceChangeListener);
         }
 
         releaseServiceEqualizer();
@@ -714,6 +739,10 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     }
 
     public void playCurrentStation(final boolean isAlarm) {
+        if (currentStation == null) {
+            return;
+        }
+
         if (Utils.shouldLoadIcons(itsContext))
             downloadRadioIcon();
 
@@ -732,7 +761,12 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
             acquireWakeLockAndWifiLock();
 
-            radioPlayer.play(currentStation, isAlarm);
+            final DataRadioStation stationToPlay = currentStation;
+            if (stationToPlay.StreamUrl != null && PlaylistParser.isPlaylistUrl(stationToPlay.StreamUrl)) {
+                new PlaylistResolveTask(stationToPlay, isAlarm).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            } else {
+                radioPlayer.play(currentStation, isAlarm);
+            }
         }
     }
 
@@ -856,6 +890,32 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         stopMeteredConnectionListener();
 
         //sendBroadCast(PLAYER_SERVICE_STATE_CHANGE);
+    }
+
+    private class PlaylistResolveTask extends AsyncTask<Void, Void, String> {
+        private final DataRadioStation station;
+        private final boolean isAlarm;
+
+        PlaylistResolveTask(DataRadioStation station, boolean isAlarm) {
+            this.station = station;
+            this.isAlarm = isAlarm;
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+            RadioDroidApp app = (RadioDroidApp) getApplication();
+            return PlaylistParser.resolvePlaylistUrl(app.getHttpClient(), station.StreamUrl);
+        }
+
+        @Override
+        protected void onPostExecute(String resolvedUrl) {
+            if (resolvedUrl != null) {
+                station.playableUrl = resolvedUrl;
+                radioPlayer.play(station, isAlarm);
+            } else {
+                Toast.makeText(itsContext, R.string.error_station_load, Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void setMediaPlaybackState(int state) {
@@ -1708,33 +1768,38 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
      * 根据系统音量计算播放器最大增益。
      *
      * 补偿曲线（分段线性）：
-     * - 系统音量 0%-45%：maxGain 从 0.05 线性升至 1.0（加倍衰减，低音量更安静）
-     * - 系统音量 45%-70%：maxGain = 1.0（不调整）
-     * - 系统音量 70%-100%：maxGain 从 1.0 线性升至 2.0（嘈杂环境提升音量）
+     * - 系统音量 0%-35%：maxGain 从 0.5 线性升至 1.0（低音量降低 1 倍）
+     * - 系统音量 35%-65%：maxGain = 1.0（不调整）
+     * - 系统音量 65%-100%：maxGain 从 1.0 线性升至 2.0（嘈杂环境提升音量）
      *
      * 效果：
-     * - 最低系统音量(1/15≈7%)：maxGain≈0.08，实际增益极低（非常安静）
-     * - 系统音量 45%：maxGain=1.0（正常）
-     * - 系统音量 70%：maxGain=1.0（不变）
-     * - 最高系统音量(100%)：maxGain=2.0（2倍提升）
+     * - 系统音量 0%：maxGain=0.5（降低 1 倍）
+     * - 系统音量 35%：maxGain=1.0（正常）
+     * - 系统音量 65%：maxGain=1.0（不变）
+     * - 系统音量 100%：maxGain=2.0（提升 1 倍）
      */
     private void updateVolumeGain() {
         int maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         int curVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         if (maxVol <= 0) return;
 
-        float ratio = (float) curVol / maxVol;  // 0.0 ~ 1.0
         float maxGain;
-
-        if (ratio < 0.45f) {
-            // 低音量端：加倍衰减，从0.05线性升至1.0
-            maxGain = 0.05f + 0.95f * (ratio / 0.45f);
-        } else if (ratio <= 0.7f) {
-            // 中等音量：不调整
-            maxGain = 1.0f;
+        boolean volumeMappingEnabled = sharedPref != null && sharedPref.getBoolean("enable_volume_mapping", true);
+        if (volumeMappingEnabled) {
+            float ratio = (float) curVol / maxVol;  // 0.0 ~ 1.0
+            if (ratio < 0.35f) {
+                // 低音量端：降低 1 倍，从 0.5 线性升至 1.0
+                maxGain = 0.5f + 0.5f * (ratio / 0.35f);
+            } else if (ratio <= 0.65f) {
+                // 中等音量：不调整
+                maxGain = 1.0f;
+            } else {
+                // 高音量端：1.0 → 2.0 的线性映射
+                maxGain = 1.0f + 1.0f * ((ratio - 0.65f) / 0.35f);
+            }
         } else {
-            // 高音量端：1.0 → 2.0 的线性映射
-            maxGain = 1.0f + 1.0f * ((ratio - 0.7f) / 0.3f);
+            // 关闭双层音量映射时使用原始线性控制，保持 maxGain 为 1.0
+            maxGain = 1.0f;
         }
 
         if (radioPlayer != null) {
@@ -1749,11 +1814,40 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
             @Override
             public void onReceive(Context context, Intent intent) {
                 updateVolumeGain();
+                checkHeadsetZeroVolumePause();
             }
         };
 
         IntentFilter filter = new IntentFilter("android.media.VOLUME_CHANGED_ACTION");
         registerReceiver(volumeChangeReceiver, filter);
+    }
+
+    /**
+     * 当系统音量调至 0 且对应耳机连接时，根据设置自动暂停播放。
+     */
+    private void checkHeadsetZeroVolumePause() {
+        if (audioManager == null) return;
+
+        int curVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        if (curVol > 0) return;
+
+        if (!PlayerServiceUtil.isPlaying()) return;
+
+        boolean pauseOnWiredZero = sharedPref != null && sharedPref.getBoolean("pause_on_wired_headset_zero_volume", false);
+        boolean pauseOnBluetoothZero = sharedPref != null && sharedPref.getBoolean("pause_on_bluetooth_headset_zero_volume", false);
+
+        if (!pauseOnWiredZero && !pauseOnBluetoothZero) return;
+
+        if (pauseOnWiredZero && audioDeviceMonitor != null && audioDeviceMonitor.isWiredHeadsetConnected()) {
+            Log.d(TAG, "Wired headset volume reached 0, pausing playback");
+            PlayerServiceUtil.pause(PauseReason.USER);
+            return;
+        }
+
+        if (pauseOnBluetoothZero && audioDeviceMonitor != null && audioDeviceMonitor.isBluetoothAudioConnected()) {
+            Log.d(TAG, "Bluetooth headset volume reached 0, pausing playback");
+            PlayerServiceUtil.pause(PauseReason.USER);
+        }
     }
 
     private void unregisterVolumeChangeReceiver() {

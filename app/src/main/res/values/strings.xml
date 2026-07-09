@@ -229,6 +229,7 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="settings_theme_selection_title">Theme</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
+    <string name="theme_auto">Auto</string>
     <string name="settings_circular_icons">Use circular icons</string>
     <string name="settings_compact_style">Compact mode</string>
     <string name="settings_compact_style_desc_off">Large icon adopted with station details</string>
@@ -297,6 +298,9 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="settings_play_external_desc_on">Play stations with external player</string>
     <string name="settings_play_external_desc_off">Play stations with RadioDroid</string>
     <string name="settings_equalizer">Equalizer</string>
+    <string name="settings_enable_volume_mapping">Volume mapping boost</string>
+    <string name="settings_enable_volume_mapping_summary_on">On: automatically optimize low and high volume based on system volume</string>
+    <string name="settings_enable_volume_mapping_summary_off">Off: use plain linear volume control</string>
 
     <string name="settings_connectivity">Connectivity</string>
     <string name="settings_connect_timeout">Connection timeout</string>
@@ -334,6 +338,12 @@ This will overwrite the current main database, please ensure you have backed up 
 
     <string name="settings_auto_resume_on_bluetooth_a2dp_connected">Resume on Bluetooth connection</string>
     <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Resume playback on Bluetooth device connection</string>
+    <string name="settings_pause_on_wired_headset_zero_volume">Pause on wired headset zero volume</string>
+    <string name="settings_pause_on_wired_headset_zero_volume_summary_on">On: automatically pause when wired headset volume reaches 0</string>
+    <string name="settings_pause_on_wired_headset_zero_volume_summary_off">Off: do not auto-pause when volume reaches 0</string>
+    <string name="settings_pause_on_bluetooth_headset_zero_volume">Pause on Bluetooth headset zero volume</string>
+    <string name="settings_pause_on_bluetooth_headset_zero_volume_summary_on">On: automatically pause when Bluetooth headset volume reaches 0</string>
+    <string name="settings_pause_on_bluetooth_headset_zero_volume_summary_off">Off: do not auto-pause when volume reaches 0</string>
 
     <string name="settings_warn_no_wifi">Off-Wi-Fi warning</string>
     <string name="settings_warn_no_wifi_on">Warn when playing without Wi-Fi connection</string>
@@ -544,6 +554,10 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="context_menu_add_alarm">@string/action_alarm</string>
     <string name="context_menu_create_shortcut">@string/detail_create_shortcut</string>
     <string name="context_menu_delete">@string/action_delete</string>
+    <string name="context_menu_refresh_icon">Refresh icon</string>
+    <string name="settings_clear_icon_cache">Clear icon cache</string>
+    <string name="settings_clear_icon_cache_summary">Delete all cached station icons. Icons will be re-downloaded when needed.</string>
+    <string name="icon_cache_cleared">Icon cache cleared</string>
     
     <string name="export_success_title">Export Successful</string>
     <string name="export_success_message">Main database has been successfully exported to:

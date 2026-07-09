@@ -29,6 +29,7 @@ android {
     buildToolsVersion "36.1.0"
 
     compileOptions {
+        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
@@ -49,7 +50,7 @@ android {
         targetSdkVersion 33
 
         versionCode 109
-        versionName "1.00beta"
+        versionName "1.00"
 
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
@@ -138,6 +139,8 @@ ext {
 }
 
 dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+
     implementation 'androidx.multidex:multidex:2.0.1'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.appcompat:appcompat:1.5.1'

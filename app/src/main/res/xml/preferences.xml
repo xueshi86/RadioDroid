@@ -51,7 +51,7 @@
             android:summary="%s"/>
 
         <ListPreference
-            android:defaultValue="@string/theme_light"
+            android:defaultValue="@string/theme_auto"
             android:entries="@array/theme_entries"
             android:entryValues="@array/theme_values"
             android:key="theme_name"
@@ -119,7 +119,7 @@
         android:key="pref_category_startup">
 
         <ListPreference
-            android:defaultValue="@string/startup_show_history"
+            android:defaultValue="@string/startup_show_all_stations"
             android:entries="@array/startup_action_entries"
             android:entryValues="@array/startup_action_entryvalues"
             android:key="startup_action"
@@ -165,8 +165,14 @@
             android:summaryOn="@string/settings_load_icons_on"
             android:title="@string/settings_load_icons" />
 
+        <Preference
+            android:key="clear_icon_cache"
+            android:dependency="load_icons"
+            android:title="@string/settings_clear_icon_cache"
+            android:summary="@string/settings_clear_icon_cache_summary" />
+
         <CheckBoxPreference
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:dependency="load_icons"
             android:key="icon_click_toggles_favorite"
             android:summaryOff="@string/settings_icon_click_toggles_favorite_off"
@@ -188,7 +194,7 @@
             android:title="@string/settings_show_broken" />
 
         <CheckBoxPreference
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:key="click_trend_icon_visible"
             android:summaryOff="@string/settings_click_trend_icon_visible_off"
             android:summaryOn="@string/settings_click_trend_icon_visible_on"
@@ -242,6 +248,13 @@
             android:title="@string/settings_auto_resume_on_wired_headset_connected" />
 
         <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="pause_on_wired_headset_zero_volume"
+            android:title="@string/settings_pause_on_wired_headset_zero_volume"
+            android:summaryOn="@string/settings_pause_on_wired_headset_zero_volume_summary_on"
+            android:summaryOff="@string/settings_pause_on_wired_headset_zero_volume_summary_off" />
+
+        <SwitchPreferenceCompat
             android:key="bluetooth_connect_permission"
             android:title="@string/settings_bluetooth_connect_permission"
             android:summary="@string/settings_bluetooth_connect_permission_summary"
@@ -267,6 +280,20 @@
             android:summaryOff="@string/settings_auto_resume_do_not_resume"
             android:summaryOn="@string/settings_auto_resume_on_bluetooth_a2dp_connected_on"
             android:title="@string/settings_auto_resume_on_bluetooth_a2dp_connected" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="pause_on_bluetooth_headset_zero_volume"
+            android:title="@string/settings_pause_on_bluetooth_headset_zero_volume"
+            android:summaryOn="@string/settings_pause_on_bluetooth_headset_zero_volume_summary_on"
+            android:summaryOff="@string/settings_pause_on_bluetooth_headset_zero_volume_summary_off" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="enable_volume_mapping"
+            android:title="@string/settings_enable_volume_mapping"
+            android:summaryOn="@string/settings_enable_volume_mapping_summary_on"
+            android:summaryOff="@string/settings_enable_volume_mapping_summary_off" />
 
         <Preference
             android:key="equalizer"

@@ -90,6 +90,8 @@ public class ItemAdapterStation
 
     private FavouriteManager favouriteManager;
 
+    private RecyclerView snackbarRecyclerView;
+
     private StationsFilter filter;
 
     private TagsView.TagSelectionCallback tagSelectionCallback = new TagsView.TagSelectionCallback() {
@@ -128,6 +130,7 @@ public class ItemAdapterStation
         ImageButton buttonBufferSettings;
         ImageButton buttonEqualizerSettings;
         ImageButton buttonPlayInternalOrExternal;
+        ImageButton buttonRefreshIcon;
 
         StationViewHolder(View itemView) {
             super(itemView);
@@ -210,6 +213,7 @@ public class ItemAdapterStation
     public void enableItemRemoval(RecyclerView recyclerView) {
         if (!supportsStationRemoval) {
             supportsStationRemoval = true;
+            this.snackbarRecyclerView = recyclerView;
 
             RecyclerItemSwipeHelper<StationViewHolder> swipeHelper = new RecyclerItemSwipeHelper<>(getContext(), 0, ItemTouchHelper.LEFT + ItemTouchHelper.RIGHT, this);
             new ItemTouchHelper(swipeHelper).attachToRecyclerView(recyclerView);
@@ -219,8 +223,9 @@ public class ItemAdapterStation
     public void enableItemMoveAndRemoval(RecyclerView recyclerView) {
         if (!supportsStationRemoval) {
             supportsStationRemoval = true;
+            this.snackbarRecyclerView = recyclerView;
 
-            RecyclerItemMoveAndSwipeHelper<StationViewHolder> swipeAndMoveHelper = new RecyclerItemMoveAndSwipeHelper<>(getContext(), ItemTouchHelper.UP | ItemTouchHelper.DOWN, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT, this);
+            RecyclerItemMoveAndSwipeHelper<StationViewHolder> swipeAndMoveHelper = new RecyclerItemMoveAndSwipeHelper<>(getContext(), ItemTouchHelper.UP | ItemTouchHelper.DOWN, ItemTouchHelper.LEFT + ItemTouchHelper.RIGHT, this);
             new ItemTouchHelper(swipeAndMoveHelper).attachToRecyclerView(recyclerView);
         }
     }
@@ -321,7 +326,7 @@ public class ItemAdapterStation
                     @Override
                     public void onClick(View view) {
                         if (favouriteManager.has(station.StationUuid)) {
-                            StationActions.removeFromFavourites(getContext(), view, station);
+                            StationActions.removeFromFavourites(getContext(), view, snackbarRecyclerView, station);
                         } else {
                             StationActions.markAsFavourite(getContext(), station);
                         }
@@ -441,6 +446,7 @@ public class ItemAdapterStation
             holder.buttonBufferSettings = holder.viewDetails.findViewById(R.id.buttonBufferSettings);
             holder.buttonEqualizerSettings = holder.viewDetails.findViewById(R.id.buttonEqualizerSettings);
             holder.buttonPlayInternalOrExternal = holder.viewDetails.findViewById(R.id.buttonPlayInRadioDroid);
+            holder.buttonRefreshIcon = holder.viewDetails.findViewById(R.id.buttonRefreshIcon);
 
             holder.buttonVisitWebsite.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -510,6 +516,10 @@ public class ItemAdapterStation
                 holder.buttonPlayInternalOrExternal.setOnClickListener(v -> Utils.playAndWarnIfMetered((RadioDroidApp) context.getApplicationContext(), station,
                         PlayerType.EXTERNAL, () -> PlayStationTask.playExternal(station, context).execute()));
             }
+
+            holder.buttonRefreshIcon.setOnClickListener(v -> {
+                PlayerServiceUtil.forceRefreshStationIcon(station, holder.imageViewIcon);
+            });
             String[] tags = station.TagsAll.split(",");
             holder.viewTags.setTags(Arrays.asList(tags));
             holder.viewTags.setTagSelectionCallback(tagSelectionCallback);

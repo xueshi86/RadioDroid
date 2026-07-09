@@ -142,7 +142,7 @@ public class StationActions {
         toast.show();
     }
 
-    public static void removeFromFavourites(final @NonNull Context context, final @Nullable View view, final @NonNull DataRadioStation station) {
+    public static void removeFromFavourites(final @NonNull Context context, final @Nullable View view, final @Nullable View snackbarView, final @NonNull DataRadioStation station) {
         final RadioDroidApp radioDroidApp = (RadioDroidApp) context.getApplicationContext();
         final FavouriteManager favouriteManager = radioDroidApp.getFavouriteManager();
         final int removedIdx = favouriteManager.remove(station.StationUuid);
@@ -150,12 +150,10 @@ public class StationActions {
         // 取消收藏时，将永久缓存中的图标移入半永久缓存
         StationIconCache.getInstance(context).onStationUnfavorited(station.StationUuid);
 
-        if (view != null) {
-            final View viewAttachTo = view.getRootView().findViewById(R.id.fragment_player_small);
-
+        final View effectiveSnackbarView = snackbarView != null ? snackbarView : view;
+        if (effectiveSnackbarView != null) {
             Snackbar snackbar = Snackbar
-                    .make(viewAttachTo, R.string.notify_station_removed_from_list, 6000);
-            snackbar.setAnchorView(viewAttachTo);
+                    .make(effectiveSnackbarView, R.string.notify_station_removed_from_list, 6000);
             snackbar.setAction(R.string.action_station_removed_from_list_undo, view1 -> {
                 favouriteManager.restore(station, removedIdx);
                 // 撤销删除时，将图标移回永久缓存

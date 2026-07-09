@@ -113,6 +113,7 @@ public class StationIconCache {
     /**
      * 获取电台图标的缓存路径。优先查永久缓存，再查半永久缓存。
      * 从半永久缓存命中时，自动重置TTL为7天。
+     * 如果检测到缓存文件为截断的损坏位图，自动删除并返回null。
      *
      * @return 缓存文件路径，无缓存返回null
      */
@@ -125,8 +126,15 @@ public class StationIconCache {
         // 优先查永久缓存
         File permanentFile = new File(permanentDir, fileName);
         if (permanentFile.exists() && permanentFile.length() > 0) {
-            Log.d(TAG, "getIconPath HIT permanent: " + stationUuid + " size=" + permanentFile.length() + "B");
-            return permanentFile.getAbsolutePath();
+            if (isCachedIconTruncated(permanentFile)) {
+                Log.w(TAG, "getIconPath: truncated permanent cache detected, deleting: " + stationUuid);
+                permanentFile.delete();
+                clearFallbackMark(stationUuid);
+                clearIconUrlRetryTime(stationUuid);
+            } else {
+                Log.d(TAG, "getIconPath HIT permanent: " + stationUuid + " size=" + permanentFile.length() + "B");
+                return permanentFile.getAbsolutePath();
+            }
         }
 
         // 查半永久缓存
@@ -141,6 +149,13 @@ public class StationIconCache {
                 semiFile.delete();
                 return null;
             }
+            if (isCachedIconTruncated(semiFile)) {
+                Log.w(TAG, "getIconPath: truncated semipermanent cache detected, deleting: " + stationUuid);
+                semiFile.delete();
+                clearFallbackMark(stationUuid);
+                clearIconUrlRetryTime(stationUuid);
+                return null;
+            }
             // 命中半永久缓存，重置TTL
             semiFile.setLastModified(now);
             Log.d(TAG, "getIconPath HIT semipermanent: " + stationUuid + " size=" + semiFile.length() + "B");
@@ -149,6 +164,48 @@ public class StationIconCache {
 
         Log.d(TAG, "getIconPath MISS: " + stationUuid);
         return null;
+    }
+
+    /**
+     * 检测缓存文件中的位图是否为截断下载导致的半截黑图。
+     * 扫描位图底部 1/4 区域，如果超过 80% 为纯黑色像素则判定为截断。
+     */
+    private boolean isCachedIconTruncated(File file) {
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(file);
+            Bitmap bitmap = BitmapFactory.decodeStream(fis);
+            if (bitmap == null) return true;
+
+            int width = bitmap.getWidth();
+            int height = bitmap.getHeight();
+            if (width <= 0 || height <= 0) {
+                bitmap.recycle();
+                return true;
+            }
+
+            int startY = height * 3 / 4;
+            int totalPixels = width * (height - startY);
+            int blackPixels = 0;
+            int[] pixels = new int[width];
+            for (int y = startY; y < height; y++) {
+                bitmap.getPixels(pixels, 0, width, 0, y, width, 1);
+                for (int px : pixels) {
+                    if (px == 0xFF000000) {
+                        blackPixels++;
+                    }
+                }
+            }
+            bitmap.recycle();
+            float blackRatio = (float) blackPixels / totalPixels;
+            return blackRatio > 0.8f;
+        } catch (Exception e) {
+            return true;
+        } finally {
+            if (fis != null) {
+                try { fis.close(); } catch (IOException ignored) {}
+            }
+        }
     }
 
     /**
@@ -299,6 +356,31 @@ public class StationIconCache {
         new File(semiPermanentDir, fileName).delete();
         clearFallbackMark(stationUuid);
         clearIconUrlRetryTime(stationUuid);
+    }
+
+    /**
+     * 清除所有图标缓存（永久 + 半永久），包括 fallback 标记和重试时间戳。
+     *
+     * @return 删除的文件数量
+     */
+    public int clearAllCache() {
+        int count = 0;
+        count += deleteAllFilesInDir(permanentDir);
+        count += deleteAllFilesInDir(semiPermanentDir);
+        return count;
+    }
+
+    private int deleteAllFilesInDir(File dir) {
+        int count = 0;
+        if (dir == null || !dir.exists()) return 0;
+        File[] files = dir.listFiles();
+        if (files == null) return 0;
+        for (File file : files) {
+            if (file.isFile() && file.delete()) {
+                count++;
+            }
+        }
+        return count;
     }
 
     // ==================== Fallback 标记管理 ====================

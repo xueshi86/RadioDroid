@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
 import android.graphics.drawable.Icon;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -426,8 +427,18 @@ public class Utils {
         String selectedTheme = getTheme(context);
         if (selectedTheme.equals(context.getResources().getString(R.string.theme_dark)))
             return R.style.MyMaterialTheme_Dark;
+        if (selectedTheme.equals(context.getResources().getString(R.string.theme_auto)))
+            return isSystemInDarkTheme(context) ? R.style.MyMaterialTheme_Dark : R.style.MyMaterialTheme;
         else
             return R.style.MyMaterialTheme;
+    }
+
+    private static boolean isSystemInDarkTheme(final Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            int nightModeFlags = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+            return nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
+        }
+        return false;
     }
 
     public static boolean isDarkTheme(final Context context) {

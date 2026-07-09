@@ -13,6 +13,7 @@ import net.programmierecke.radiodroid2.RadioDroidApp
 import net.programmierecke.radiodroid2.Utils
 import net.programmierecke.radiodroid2.players.PlayStationTask
 import net.programmierecke.radiodroid2.players.selector.PlayerType
+import net.programmierecke.radiodroid2.service.PlayerServiceUtil
 
 object StationPopupMenu {
     fun open(view: View, context: Context, activity: FragmentActivity, station: DataRadioStation): PopupMenu {
@@ -56,8 +57,21 @@ object StationPopupMenu {
                     StationActions.setAsAlarm(activity, station)
                     true
                 }
+                R.id.menu_refresh_icon -> {
+                    // 刷新图标需要 ImageView，从长按的 view 中查找
+                    val imageView = view.findViewById<android.widget.ImageView>(R.id.imageViewIcon)
+                        ?: view.findViewById<android.widget.ImageView>(R.id.iconImageViewIcon)
+                    if (imageView != null) {
+                        PlayerServiceUtil.forceRefreshStationIcon(station, imageView)
+                    } else {
+                        // 没有 ImageView 时仅清除缓存，下次显示时自动重新加载
+                        net.programmierecke.radiodroid2.service.StationIconCache
+                            .getInstance(context).removeIcon(station.StationUuid)
+                    }
+                    true
+                }
                 R.id.menu_delete -> {
-                    StationActions.removeFromFavourites(context, rootView, station)
+                    StationActions.removeFromFavourites(context, rootView, rootView, station)
                     true
                 }
                 else -> false

@@ -37,6 +37,7 @@ import net.programmierecke.radiodroid2.station.live.ShoutcastInfo;
 import net.programmierecke.radiodroid2.station.live.StreamLiveInfo;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -343,7 +344,7 @@ public class PlayerServiceUtil {
             String cachedPath = iconCache.getIconPath(stationUuid);
             if (cachedPath != null) {
                 Picasso.get()
-                        .load(Uri.fromFile(new java.io.File(cachedPath)))
+                        .load(Uri.fromFile(new File(cachedPath)))
                         .placeholder(placeholder)
                         .resize(maxPxSize, 0)
                         .onlyScaleDown()
@@ -641,6 +642,11 @@ public class PlayerServiceUtil {
             @Override
             public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
                 if (bitmap != null) {
+                    if (isTruncatedBitmap(bitmap)) {
+                        Log.w("PlayerServiceUtil", "Background IconUrl load truncated, skipping for: " + stationUuid);
+                        backgroundTargets.remove(this);
+                        return;
+                    }
                     boolean isFavorite = isStationFavorited(stationUuid);
                     StationIconCache cache = StationIconCache.getInstance(mainContext);
                     cache.saveIcon(stationUuid, bitmap, isFavorite);
@@ -696,6 +702,45 @@ public class PlayerServiceUtil {
     }
 
     /**
+     * 检测位图是否可能为截断下载导致的半截黑图。
+     *
+     * 判断逻辑：扫描位图底部 1/4 区域的像素，如果超过 80% 为纯黑色（0xFF000000），
+     * 则认为该位图很可能是下载不完整导致的损坏图标。
+     *
+     * @param bitmap 待检测的位图
+     * @return true 表示位图可能已损坏（半截黑图）
+     */
+    private static boolean isTruncatedBitmap(Bitmap bitmap) {
+        if (bitmap == null || bitmap.getWidth() <= 0 || bitmap.getHeight() <= 0) {
+            return true;
+        }
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        // 扫描底部 1/4 区域
+        int startY = height * 3 / 4;
+        int endY = height;
+        int totalPixels = width * (endY - startY);
+        int blackPixels = 0;
+        int[] pixels = new int[width];
+        for (int y = startY; y < endY; y++) {
+            bitmap.getPixels(pixels, 0, width, 0, y, width, 1);
+            for (int px : pixels) {
+                // 纯黑色：alpha=FF, R=G=B=0
+                if (px == 0xFF000000) {
+                    blackPixels++;
+                }
+            }
+        }
+        float blackRatio = (float) blackPixels / totalPixels;
+        if (blackRatio > 0.8f) {
+            Log.w(TAG, "Detected truncated bitmap: " + width + "x" + height
+                    + " bottomQuarterBlackRatio=" + String.format("%.2f", blackRatio));
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * 从 ImageView 同步获取当前显示的 Bitmap 并保存到文件缓存。
      *
      * 在 Picasso Callback.onSuccess 中调用，此时 ImageView 的 Drawable 一定有效
@@ -716,6 +761,10 @@ public class PlayerServiceUtil {
                 bitmap = drawableToBitmap(drawable);
             }
             if (bitmap != null && stationUuid != null && !stationUuid.isEmpty()) {
+                if (isTruncatedBitmap(bitmap)) {
+                    Log.w(TAG, "saveIconToCacheFromView: skipping save, bitmap appears truncated for " + stationUuid);
+                    return;
+                }
                 boolean isFavorite = isStationFavorited(stationUuid);
                 StationIconCache.getInstance(mainContext).saveIcon(stationUuid, bitmap, isFavorite);
             } else {
@@ -861,6 +910,12 @@ public class PlayerServiceUtil {
             @Override
             public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
                 if (bitmap != null) {
+                    if (isTruncatedBitmap(bitmap)) {
+                        Log.w(TAG, "HD discovery truncated, skipping for: " + stationUuid);
+                        tryDiscoveredIconUrls(icons, startIndex + 1, stationUuid, holder, targetPxSize, maxPxSize);
+                        backgroundTargets.remove(this);
+                        return;
+                    }
                     boolean isFavorite = isStationFavorited(stationUuid);
                     StationIconCache cache = StationIconCache.getInstance(mainContext);
 
@@ -1054,6 +1109,58 @@ public class PlayerServiceUtil {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * 强制刷新指定电台的图标。删除文件缓存后重新从网络加载。
+     *
+     * @param station 电台对象，包含 iconUrl、homePageUrl、stationUuid
+     * @param holder  目标ImageView，刷新成功后更新显示
+     */
+    public static void forceRefreshStationIcon(DataRadioStation station, ImageView holder) {
+        if (station == null || station.StationUuid == null) return;
+
+        String stationUuid = station.StationUuid;
+        Log.d(TAG, "Force refresh icon for: " + stationUuid);
+
+        // 删除文件缓存
+        StationIconCache.getInstance(mainContext).removeIcon(stationUuid);
+
+        // 清除 Picasso 内存缓存中该图标的引用
+        if (station.IconUrl != null && !station.IconUrl.trim().isEmpty()) {
+            Picasso.get().invalidate(station.IconUrl);
+        }
+
+        // 重新加载图标
+        getStationIcon(holder, station.IconUrl, station.HomePageUrl, stationUuid);
+    }
+
+    /**
+     * 清除所有电台图标缓存（文件缓存 + Picasso 磁盘缓存）。
+     *
+     * @return 清除的文件数量
+     */
+    public static int clearAllIconCache() {
+        StationIconCache cache = StationIconCache.getInstance(mainContext);
+        int count = cache.clearAllCache();
+
+        // 清除 Picasso 磁盘缓存
+        try {
+            File picassoCacheDir = new File(mainContext.getCacheDir(), "picasso-cache");
+            if (picassoCacheDir.exists() && picassoCacheDir.isDirectory()) {
+                File[] files = picassoCacheDir.listFiles();
+                if (files != null) {
+                    for (File f : files) {
+                        f.delete();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to clear Picasso disk cache", e);
+        }
+
+        Log.d(TAG, "Cleared all icon cache, removed " + count + " files");
+        return count;
     }
 
     public static ShoutcastInfo getShoutcastInfo() {

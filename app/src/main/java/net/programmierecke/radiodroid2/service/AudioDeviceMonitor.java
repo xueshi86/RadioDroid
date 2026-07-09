@@ -157,7 +157,7 @@ public class AudioDeviceMonitor {
         lastWiredConnected = wiredNow;
     }
 
-    private boolean isBluetoothAudioConnected() {
+    public boolean isBluetoothAudioConnected() {
         if (audioManager == null) {
             Log.w(TAG, "isBluetoothAudioConnected: audioManager is null!");
             return false;
@@ -263,7 +263,7 @@ public class AudioDeviceMonitor {
         }
     }
 
-    private boolean isWiredHeadsetConnected() {
+    public boolean isWiredHeadsetConnected() {
         if (audioManager == null) return false;
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

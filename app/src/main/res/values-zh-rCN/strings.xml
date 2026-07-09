@@ -109,6 +109,7 @@
     <string name="settings_theme_selection_title">主题</string>
     <string name="theme_light">亮色</string>
     <string name="theme_dark">暗色</string>
+    <string name="theme_auto">自动</string>
     <string name="settings_circular_icons">使用圆形图标</string>
     <string name="settings_compact_style">精简模式</string>
     <string name="settings_compact_style_desc_off">使用大图标并显示电台详情</string>
@@ -177,6 +178,9 @@
     <string name="settings_play_external_desc_on">使用外部播放器播放电台</string>
     <string name="settings_play_external_desc_off">使用睿卓播放电台</string>
     <string name="settings_equalizer">均衡器</string>
+    <string name="settings_enable_volume_mapping">音量映射增强</string>
+    <string name="settings_enable_volume_mapping_summary_on">开启：根据系统音量自动优化低/高音量，听感更均匀</string>
+    <string name="settings_enable_volume_mapping_summary_off">关闭：使用原始线性音量控制</string>
 
     <string name="settings_connectivity">连接</string>
     <string name="settings_connect_timeout">连接超时</string>
@@ -214,6 +218,12 @@
 
     <string name="settings_auto_resume_on_bluetooth_a2dp_connected">蓝牙连接时恢复</string>
     <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">蓝牙设备连接时恢复播放</string>
+    <string name="settings_pause_on_wired_headset_zero_volume">有线耳机零音量暂停</string>
+    <string name="settings_pause_on_wired_headset_zero_volume_summary_on">开启：有线耳机音量调至 0 时自动暂停播放</string>
+    <string name="settings_pause_on_wired_headset_zero_volume_summary_off">关闭：音量调至 0 时不自动暂停</string>
+    <string name="settings_pause_on_bluetooth_headset_zero_volume">蓝牙耳机零音量暂停</string>
+    <string name="settings_pause_on_bluetooth_headset_zero_volume_summary_on">开启：蓝牙耳机音量调至 0 时自动暂停播放</string>
+    <string name="settings_pause_on_bluetooth_headset_zero_volume_summary_off">关闭：音量调至 0 时不自动暂停</string>
     
     <string name="settings_warn_no_wifi">未使用 Wi-Fi 时警告</string>
     <string name="settings_warn_no_wifi_on">播放时无 Wi-Fi 连接警告</string>

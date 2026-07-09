@@ -118,6 +118,19 @@
             android:contentDescription="@string/detail_play_in_radiodroid"
             app:tint="?attr/iconsInItemBackgroundColor"
             app:srcCompat="@drawable/ic_play_in_radiodroid" />
+
+        <ImageButton
+                android:id="@+id/buttonRefreshIcon"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minWidth="36dp"
+                android:minHeight="36dp"
+                android:padding="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/context_menu_refresh_icon"
+                app:tint="?attr/iconsInItemBackgroundColor"
+                app:srcCompat="@drawable/ic_refresh_black_24dp" />
     </LinearLayout>
 
 </LinearLayout>

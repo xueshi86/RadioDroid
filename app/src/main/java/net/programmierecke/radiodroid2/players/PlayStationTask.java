@@ -20,6 +20,7 @@ import net.programmierecke.radiodroid2.HistoryManager;
 import net.programmierecke.radiodroid2.R;
 import net.programmierecke.radiodroid2.RadioDroidApp;
 import net.programmierecke.radiodroid2.Utils;
+import net.programmierecke.radiodroid2.playlist.PlaylistParser;
 import net.programmierecke.radiodroid2.players.mpd.MPDClient;
 import net.programmierecke.radiodroid2.players.mpd.MPDServerData;
 import net.programmierecke.radiodroid2.players.mpd.tasks.MPDPlayTask;
@@ -110,25 +111,39 @@ public class PlayStationTask extends AsyncTask<Void, Void, String> {
     protected String doInBackground(Void... params) {
         Context ctx = contextWeakReference.get();
         if (ctx != null) {
+            String streamUrl = null;
+
             // 优先使用本地存储的StreamUrl
             if (stationToPlay.StreamUrl != null && !stationToPlay.StreamUrl.isEmpty()) {
-                return stationToPlay.StreamUrl;
-            }
+                streamUrl = stationToPlay.StreamUrl;
+            } else {
+                RadioDroidApp radioDroidApp = (RadioDroidApp) ctx.getApplicationContext();
 
-            RadioDroidApp radioDroidApp = (RadioDroidApp) ctx.getApplicationContext();
+                if (!stationToPlay.hasValidUuid()) {
+                    if (!stationToPlay.refresh(radioDroidApp.getHttpClient(), ctx)) {
+                        return null;
+                    }
+                }
 
-            if (!stationToPlay.hasValidUuid()) {
-                if (!stationToPlay.refresh(radioDroidApp.getHttpClient(), ctx)) {
+                if (isCancelled()) {
                     return null;
                 }
+
+                // 只有当本地StreamUrl不可用时，才访问远程服务器获取真实链接
+                streamUrl = Utils.getRealStationLink(radioDroidApp.getHttpClient(), ctx.getApplicationContext(), stationToPlay.StationUuid);
             }
 
-            if (isCancelled()) {
+            if (streamUrl == null) {
                 return null;
             }
 
-            // 只有当本地StreamUrl不可用时，才访问远程服务器获取真实链接
-            return Utils.getRealStationLink(radioDroidApp.getHttpClient(), ctx.getApplicationContext(), stationToPlay.StationUuid);
+            // 如果URL是PLS/M3U播放列表，先解析出真实的音频流地址
+            if (PlaylistParser.isPlaylistUrl(streamUrl)) {
+                RadioDroidApp radioDroidApp = (RadioDroidApp) ctx.getApplicationContext();
+                streamUrl = PlaylistParser.resolvePlaylistUrl(radioDroidApp.getHttpClient(), streamUrl);
+            }
+
+            return streamUrl;
         } else {
             return null;
         }

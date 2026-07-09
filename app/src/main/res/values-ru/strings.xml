@@ -220,6 +220,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="settings_theme_selection_title">Тема</string>
     <string name="theme_light">Светлая</string>
     <string name="theme_dark">Темная</string>
+    <string name="theme_auto">Авто</string>
     <string name="settings_circular_icons">Использовать круглые иконки</string>
     <string name="settings_compact_style">Компактный режим</string>
     <string name="settings_compact_style_desc_off">Большая иконка с деталями станции</string>
@@ -287,6 +288,9 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="settings_play_external_desc_on">Воспроизводить станции с помощью внешнего плеера</string>
     <string name="settings_play_external_desc_off">Воспроизводить станции с помощью RadioDroid</string>
     <string name="settings_equalizer">Эквалайзер</string>
+    <string name="settings_enable_volume_mapping">Усиление громкости</string>
+    <string name="settings_enable_volume_mapping_summary_on">Вкл.: автоматическая оптимизация низкой и высокой громкости</string>
+    <string name="settings_enable_volume_mapping_summary_off">Выкл.: обычное линейное управление громкостью</string>
 
     <string name="settings_connectivity">Соединение</string>
     <string name="settings_connect_timeout">Тайм-аут подключения</string>
@@ -315,6 +319,12 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
 
     <string name="settings_auto_resume_on_bluetooth_a2dp_connected">Возобновить при подключении Bluetooth</string>
     <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Возобновить воспроизведение при подключении устройства Bluetooth</string>
+    <string name="settings_pause_on_wired_headset_zero_volume">Пауза при нулевой громкости проводной гарнитуры</string>
+    <string name="settings_pause_on_wired_headset_zero_volume_summary_on">Вкл.: автоматическая пауза при нулевой громкости проводной гарнитуры</string>
+    <string name="settings_pause_on_wired_headset_zero_volume_summary_off">Выкл.: не ставить на паузу при нулевой громкости</string>
+    <string name="settings_pause_on_bluetooth_headset_zero_volume">Пауза при нулевой громкости Bluetooth-гарнитуры</string>
+    <string name="settings_pause_on_bluetooth_headset_zero_volume_summary_on">Вкл.: автоматическая пауза при нулевой громкости Bluetooth-гарнитуры</string>
+    <string name="settings_pause_on_bluetooth_headset_zero_volume_summary_off">Выкл.: не ставить на паузу при нулевой громкости</string>
 
     <string name="settings_warn_no_wifi">Предупреждение при отсутствии Wi-Fi</string>
     <string name="settings_warn_no_wifi_on">Предупреждать при воспроизведении без подключения Wi-Fi</string>

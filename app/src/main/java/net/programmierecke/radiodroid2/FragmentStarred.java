@@ -196,8 +196,8 @@ public class FragmentStarred extends Fragment implements IAdapterRefreshable, Ob
 
                 @Override
                 public void onStationSwiped(final DataRadioStation station) {
-                    if (getContext() != null && getView() != null) {
-                        StationActions.removeFromFavourites(getContext(), getView(), station);
+                    if (getContext() != null && rvStations != null) {
+                        StationActions.removeFromFavourites(getContext(), rvStations, rvStations, station);
                     }
                 }
 

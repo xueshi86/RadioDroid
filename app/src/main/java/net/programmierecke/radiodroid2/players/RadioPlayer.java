@@ -73,6 +73,8 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
 
     private PlayerWrapper currentPlayer;
     private float maxGain = 1.0f;  // 最大增益系数，由 PlayerService 根据系统音量动态调整
+    private boolean volumeMappingEnabled = true; // 是否启用双层音量映射
+    private float lastVolume = 100f; // 最后一次设置的音量，用于开关切换后刷新
     private Context mainContext;
 
     private String streamName;
@@ -234,21 +236,32 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
 
     /**
      * 设置播放音量。
-     * 外部使用 0-100 范围，内部通过指数曲线映射为 ExoPlayer 增益。
+     * 外部使用 0-100 范围，内部通过对称指数曲线映射为 ExoPlayer 增益。
      *
-     * 指数曲线使人耳感知的音量变化更均匀：
-     * - 低音量端（0-30）：增益变化缓慢，避免最小音量仍然太大
-     * - 高音量端（70-100）：增益变化加快，允许超过 1.0 增益提升最大音量
+     * 以 50% 为对称点的指数曲线，保持低音量区和高音量区曲度一致：
+     * - 低音量端（0-50）：gain 低于线性，最低为 maxGain 的 0.5 倍（降低 1 倍）
+     * - 高音量端（50-100）：gain 高于线性，最高可达 maxGain 的 2 倍（提升 1 倍）
      *
-     * 映射公式：gain = maxGain * (volume/100)^2
+     * 映射公式：gain = maxGain * 2^((volume/100)*2 - 1)
      * - volume=0  → gain=0（静音）
-     * - volume=50 → gain=maxGain*0.25
-     * - volume=100→ gain=maxGain
+     * - volume=25 → gain=maxGain*2^(-0.5)≈maxGain*0.707
+     * - volume=50 → gain=maxGain（正常）
+     * - volume=100→ gain=maxGain*2
      */
     public final void setVolume(float volume) {
+        lastVolume = volume;
         float ratio = Math.max(0f, Math.min(1f, volume / VOLUME_RANGE));
-        // 指数曲线：ratio^2 使低音量端更精细
-        float gain = maxGain * ratio * ratio;
+        float gain;
+        if (ratio <= 0f) {
+            gain = 0f;
+        } else if (volumeMappingEnabled) {
+            // 对称指数曲线：以 50% 为中心，低音量降低 1 倍，高音量提升 1 倍
+            float normalized = ratio * 2f - 1f; // -1 ~ 1
+            gain = maxGain * (float) Math.pow(2.0, normalized);
+        } else {
+            // 关闭增强时：使用原始线性音量控制
+            gain = maxGain * ratio;
+        }
         // #region debug-point C:set-volume
         dbg("C", "RadioPlayer:248", "RadioPlayer.setVolume", java.util.Map.of("inputVolume", volume, "ratio", ratio, "gain", gain, "maxGain", maxGain));
         // #endregion
@@ -258,9 +271,9 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
     /**
      * 设置最大增益系数。
      * 由 PlayerService 根据系统音量动态调整：
-     * - 低系统音量 → maxGain < 1.0（更安静）
-     * - 中系统音量 → maxGain = 1.0（不变）
-     * - 高系统音量 → maxGain > 1.0（更响）
+     * - 低系统音量（<35%）→ maxGain = 0.5 ~ 1.0（降低 1 倍）
+     * - 中系统音量（35%-65%）→ maxGain = 1.0（不变）
+     * - 高系统音量（65%-100%）→ maxGain = 1.0 ~ 2.0（提升 1 倍）
      */
     public void setMaxGain(float gain) {
         maxGain = Math.max(0.1f, Math.min(4.0f, gain));
@@ -268,6 +281,22 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
 
     public float getMaxGain() {
         return maxGain;
+    }
+
+    /**
+     * 启用或禁用双层音量映射。
+     * 禁用后将使用原始线性音量控制（gain = maxGain * ratio）。
+     */
+    public void setVolumeMappingEnabled(boolean enabled) {
+        volumeMappingEnabled = enabled;
+    }
+
+    /**
+     * 使用最后一次记录的音量重新应用当前音量映射设置。
+     * 在开关状态变化后调用，可立即生效。
+     */
+    public void refreshVolume() {
+        setVolume(lastVolume);
     }
 
     @Override

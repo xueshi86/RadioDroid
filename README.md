@@ -200,6 +200,32 @@
 
 同时支持：外部播放器调用、MPD（Music Player Daemon）协议、Chromecast 投屏（仅 Play 版）。
 
+####   音量指数级控制
+
+播放器提供「音量映射增强」开关（在「设置 → 播放器」中），用于在指数级音量控制和默认线性音量控制之间切换。
+
+- **开启（默认）**：启用双层音量映射策略。先根据系统音量动态调整最大增益系数，再对应用内音量滑杆应用以 50% 为对称点的指数曲线，从而在安静环境获得足够低的最小音量、在嘈杂环境获得足够高的最大音量，同时让中间档位的音量变化更符合人耳听觉特性。
+- **关闭**：恢复默认线性音量控制（增益 = maxGain × volume / 100），不做系统音量补偿和指数曲线处理。
+
+**系统音量补偿**（开启时生效，分段线性）：
+
+| 系统音量区间 | 增益系数范围 | 效果 |
+|-------------|-------------|------|
+| < 35% | 0.5× → 1.0× | 降低 1 倍，安静环境不吵 |
+| 35% ~ 65% | 1.0× | 正常 |
+| > 65% | 1.0× → 2.0× | 提升 1 倍，嘈杂环境更易听清 |
+
+**应用内音量曲线**（开启时生效，以 50% 为对称点的指数曲线）：
+
+| 应用音量 | 输出增益 |
+|---------|---------|
+| 0 | 静音 |
+| 25% | maxGain × 0.5 |
+| 50% | maxGain × 1.0 |
+| 100% | maxGain × 2.0 |
+
+低音量端增益低于线性（最低减半），高音量端增益高于线性（最高翻倍），全范围保持平滑过渡。
+
 ####   MPD 播放器支持
 
 MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通常运行在 Linux 服务器、NAS 或树莓派等设备上。RadioDroid 支持将电台流推送到远程 MPD 服务器进行播放，适用于以下场景：
@@ -469,6 +495,32 @@ Dual-engine playback:
 
 Also supports: external player, MPD protocol, Chromecast (Play variant only).
 
+####   Exponential Volume Control
+
+The player provides a **Volume Mapping Boost** toggle in **Settings → Player**, which switches between exponential volume control and default linear volume control.
+
+- **On (default)**: Enables a two-stage volume mapping strategy. The maximum gain coefficient is first adjusted based on system volume, and then an exponential curve (symmetric around 50%) is applied to the in-app volume slider. This keeps the minimum volume low enough for quiet environments while making the maximum volume loud enough for noisy environments, with a natural perceived loudness curve across the whole range.
+- **Off**: Restores the default linear volume control (gain = maxGain × volume / 100) without system volume compensation or exponential curve processing.
+
+**System Volume Compensation** (active when toggled on, piecewise linear):
+
+| System Volume Range | Gain Coefficient Range | Effect |
+|--------------------|----------------------|--------|
+| < 35% | 0.5× → 1.0× | Reduced by half, quiet enough for silent environments |
+| 35% ~ 65% | 1.0× | Normal |
+| > 65% | 1.0× → 2.0× | Doubled, easier to hear in noisy environments |
+
+**In-App Volume Curve** (active when toggled on, symmetric exponential curve centered at 50%):
+
+| App Volume | Output Gain |
+|-----------|-------------|
+| 0 | Mute |
+| 25% | maxGain × 0.5 |
+| 50% | maxGain × 1.0 |
+| 100% | maxGain × 2.0 |
+
+Lower volumes fall below the linear curve (minimum halved), while higher volumes rise above it (maximum doubled), maintaining smooth transitions throughout.
+
 ####   MPD (Music Player Daemon) Support
 
 MPD (Music Player Daemon) is an open-source audio playback server program that typically runs on Linux servers, NAS devices, or Raspberry Pi. RadioDroid supports streaming radio stations to a remote MPD server for playback. This feature is useful for:
@@ -561,6 +613,57 @@ Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elemen
 
 > Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+### v1.00
+*2026-07-08*
+
+**PLS 播放列表支持**
+- **新增**：`PlaylistParser` 播放列表解析工具类，支持 PLS 与 M3U 格式识别与解析
+- **新增**：播放流程（`PlayerService`、`PlayStationTask`）自动检测 `.pls/.m3u` 流地址，下载并解析为真实音频流 URL 后再播放，解决大量 PLS 格式电台无法播放的问题
+
+**播放音量控制重构**
+- **重构**：RadioPlayer 音量映射改为以 50% 为对称点的指数曲线，低音量端降低 1 倍、高音量端提升 1 倍，人耳听感更均匀
+- **重构**：PlayerService 系统音量补偿区间调整为 <35% / 35%-65% / >65% 三段式，低音量更安静、高音量在嘈杂环境更易听清
+- **新增**：设置 → 播放器 → 音量映射增强开关，默认开启；关闭后恢复原始线性音量控制
+
+**收藏交互修复**
+- **修复**：列表项展开状态下的收藏/撤销收藏按钮状态与点击逻辑，避免撤销收藏按钮失效或状态不刷新
+
+**主题与显示**
+- **新增**：设置 → 外观 → 主题增加「自动」模式，可跟随系统暗色/亮色状态自动切换
+- **优化**：主题默认选项改为「自动」，新安装用户首次启动即可适配系统主题
+
+**音频设备控制**
+- **新增**：设置 → 播放器 → 有线耳机零音量暂停开关
+- **新增**：设置 → 播放器 → 蓝牙耳机零音量暂停开关
+- **优化**：AudioDeviceMonitor 耳机连接检测方法暴露给 PlayerService，音量变化监听中实现零音量自动暂停逻辑
+
+**老版本兼容性修复**
+- **修复**：数据库初始化流程增加用户设置备份/恢复机制，重建数据库时保留原有偏好设置，避免老版本升级后配置丢失
+
+**版本更新**
+- 版本号升级至 v1.00 (versionCode 109)
+
+### v0.99
+*2026-06-02*
+
+**均衡器爆音修复**
+- **修复**：均衡器频段参数在全部配置完成后再启用（`setEnabled(true)`），避免中间态频段配置导致 Android 音频管道产生脉冲爆音
+- **修复**：BassBoost 增强器在设置强度值后再启用，与均衡器同理
+- **修复**：淡入渐入任务改用 `pendingFadeInTasks` 队列管理，50ms 延迟执行；每次新渐入前取消上一次未完成的任务，防止任务重叠引发音量突变爆音
+
+**播放电台高亮修复**
+- **修复**：`highlightCurrentStation()` 遍历查找前将 `playingStationPosition` 重置为 -1，确保列表变更（拖拽排序、取消收藏）后播放电台高亮始终绑定电台 UUID 而非列表位置
+- **修复**：`updateList()` 小变化分支在 `notifyDataSetChanged()` 前先调用 `highlightCurrentStation()`，确保高亮位置实时同步
+
+**电台图标显示优化**
+- **新增**：HD 图标发现机制 — 对仅有主页 URL 但无图标 URL 的电台，自动解析主页 HTML 查找 Apple Touch Icon 等高分辨率图标，成功后自动替换缓存和显示
+- **新增**：`applySmartDisplayLogic()` 图标智能显示逻辑，根据图标实际尺寸优化 ImageView 适配
+- **新增**：图标回退 URL 自动构建系统，根据主页域名自动构造 `favicon.ico` 和 `apple-touch-icon.png` 路径
+- **优化**：后台重试机制增强，回退图标缓存 4 小时后静默重试主图标
+
+**文档修复**
+- **修复**：README.md 目录锚点链接跳转错误
+
 ### v0.98
 *2026-05-30*
 
@@ -592,27 +695,6 @@ Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elemen
 
 **版本更新**
 - 版本号升级至 v0.98 (versionCode 107)
-
-### v0.99
-*2026-06-02*
-
-**均衡器爆音修复**
-- **修复**：均衡器频段参数在全部配置完成后再启用（`setEnabled(true)`），避免中间态频段配置导致 Android 音频管道产生脉冲爆音
-- **修复**：BassBoost 增强器在设置强度值后再启用，与均衡器同理
-- **修复**：淡入渐入任务改用 `pendingFadeInTasks` 队列管理，50ms 延迟执行；每次新渐入前取消上一次未完成的任务，防止任务重叠引发音量突变爆音
-
-**播放电台高亮修复**
-- **修复**：`highlightCurrentStation()` 遍历查找前将 `playingStationPosition` 重置为 -1，确保列表变更（拖拽排序、取消收藏）后播放电台高亮始终绑定电台 UUID 而非列表位置
-- **修复**：`updateList()` 小变化分支在 `notifyDataSetChanged()` 前先调用 `highlightCurrentStation()`，确保高亮位置实时同步
-
-**电台图标显示优化**
-- **新增**：HD 图标发现机制 — 对仅有主页 URL 但无图标 URL 的电台，自动解析主页 HTML 查找 Apple Touch Icon 等高分辨率图标，成功后自动替换缓存和显示
-- **新增**：`applySmartDisplayLogic()` 图标智能显示逻辑，根据图标实际尺寸优化 ImageView 适配
-- **新增**：图标回退 URL 自动构建系统，根据主页域名自动构造 `favicon.ico` 和 `apple-touch-icon.png` 路径
-- **优化**：后台重试机制增强，回退图标缓存 4 小时后静默重试主图标
-
-**文档修复**
-- **修复**：README.md 目录锚点链接跳转错误
 
 ### v0.97
 *2026-05-23*

@@ -95,6 +95,7 @@
     <string name="settings_theme_selection_title">Tema</string>
     <string name="theme_light">Claro</string>
     <string name="theme_dark">Oscuro</string>
+    <string name="theme_auto">Automático</string>
     <string name="settings_circular_icons">Usar iconos circulares</string>
     <string name="settings_compact_style">Modo compacto</string>
     <string name="settings_compact_style_desc_off">Adoptar icono grande con los detalles de la estación</string>
@@ -156,6 +157,9 @@
     <string name="settings_play_external_desc_on">Reproducir estaciones con reproductor externo</string>
     <string name="settings_play_external_desc_off">Reproducir estaciones con RadioDroid</string>
     <string name="settings_equalizer">Ecualizador</string>
+    <string name="settings_enable_volume_mapping">Mapeo de volumen</string>
+    <string name="settings_enable_volume_mapping_summary_on">Activado: optimizar volumen bajo y alto según el volumen del sistema</string>
+    <string name="settings_enable_volume_mapping_summary_off">Desactivado: control de volumen lineal sin procesar</string>
 
     <string name="settings_connectivity">Conexión</string>
     <string name="settings_connect_timeout">Tiempo de espera de conexión de la transmisión</string>
@@ -193,8 +197,14 @@
 
     <string name="settings_auto_resume_on_bluetooth_a2dp_connected">Continuar con conexión Bluetooth</string>
     <string name="settings_auto_resume_on_bluetooth_a2dp_connected_on">Continuar la reproducción al conectar dispositivos Bluetooth</string>
+    <string name="settings_pause_on_wired_headset_zero_volume">Pausar al volumen cero de auriculares con cable</string>
+    <string name="settings_pause_on_wired_headset_zero_volume_summary_on">Activado: pausar automáticamente cuando el volumen de auriculares con cable sea cero</string>
+    <string name="settings_pause_on_wired_headset_zero_volume_summary_off">Desactivado: no pausar automáticamente</string>
+    <string name="settings_pause_on_bluetooth_headset_zero_volume">Pausar al volumen cero de auriculares Bluetooth</string>
+    <string name="settings_pause_on_bluetooth_headset_zero_volume_summary_on">Activado: pausar automáticamente cuando el volumen de auriculares Bluetooth sea cero</string>
+    <string name="settings_pause_on_bluetooth_headset_zero_volume_summary_off">Desactivado: no pausar automáticamente</string>
 
-    <string name="settings_warn_no_wifi">Avisar cuando no haya Wi-Fi</string>
+    <string name="settings_warn_no_wifi">Aviso sin Wi-Fi</string>
     <string name="settings_warn_no_wifi_on">Avisar cuando se reproduzca sin conexión Wi-Fi</string>
     <string name="settings_warn_no_wifi_off">No avisar cuando se reproduzca sin conexión Wi-Fi</string>
 
