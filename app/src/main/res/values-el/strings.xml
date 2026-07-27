@@ -109,8 +109,8 @@
     <string name="settings_alarm">Ξυπνητήρι</string>
     <string name="settings_alarm_external">Άνοιγμα εξωτερικού</string>
     <string name="settings_alarm_audio_player">Αναπαραγωγός Ήχου</string>
-    <string name="settings_alarm_sleep_timer">Χρονόμετρο ύπνου</string>
-    <string name="settings_alarm_sleep_timer_desc">Σταμάτημα της αναπαραγωγής μετά από %1$s λεπτά</string>
+    <string name="settings_sleep_timer">Χρονόμετρο ύπνου</string>
+    <string name="settings_sleep_timer_desc">Σταμάτημα της αναπαραγωγής μετά από %1$s λεπτά</string>
     <string name="settings_play">Αναπαραγωγός</string>
     <string name="settings_play_external">Άνοιγμα εξωτερικού</string>
     <string name="settings_equalizer">Ισοσταθμιστής</string>

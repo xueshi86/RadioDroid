@@ -310,7 +310,7 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 - **趋势图标**：电台列表显示点击量趋势（上升/下降/持平）
 - **国家图标**：电台列表显示所属国家的国旗图标
 - **Android TV 支持**：检测 TV 设备自动启用频道管理
-- **流量提醒**：使用计量网络时弹出提醒，防止意外消耗流量
+- **网络类型指示器**：播放时显示当前使用的 Wi-Fi 或移动数据图标，直观了解网络类型
 
 ---
 
@@ -605,13 +605,70 @@ Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elemen
 - **Trend Icons**: Click trend indicators (rising/falling/flat)
 - **Country Flags**: Flag icons per station in list view
 - **Android TV**: Auto-detect TV devices, channel management
-- **Metered Connection Warning**: Alerts before playing on metered networks
+- **Network Type Indicator**: Shows Wi-Fi or mobile data icon during playback for at-a-glance network awareness
 
 ---
 
 ## Changelog
 
 > Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+
+### v1.01
+*2026-07-27*
+
+**网络类型指示器（替代 Wi-Fi 警告弹窗）**
+- **新增**：迷你播放栏和完整播放界面显示 Wi-Fi 或移动数据图标，直观了解当前网络类型
+- **新增**：`ic_network_wifi` / `ic_network_mobile` 矢量图标资源
+- **重构**：移除计量连接警告对话框、提示音、自动暂停逻辑，改为非打断式信息展示
+- **重构**：设置项"未使用 Wi-Fi 时警告"更名为"显示网络类型指示器"，语义从警告变为指示
+- **新增**：`PLAYER_SERVICE_CONNECTION_TYPE_CHANGED` 广播，实时通知网络类型变化
+- **新增**：`ConnectivityChecker.ConnectionType.NONE` 枚举值，标识无网络状态
+- **修复**：`PauseReason` 反序列化增加序号越界保护，防止旧版本跨进程数据导致 `ArrayIndexOutOfBoundsException`
+
+**闹钟音量渐增**
+- **新增**：闹钟响铃时系统媒体音量从起始音量线性渐增至目标音量（默认 0%→50%，30 秒），不再突然全音量播放
+- **新增**：闹钟编辑对话框 — 点击闹钟列表项可编辑时间、起始音量、目标音量、渐增时长
+- **新增**：闹钟列表项显示渐增参数摘要（如"0% → 50% / 30 s"）
+- **新增**：`PlayerService.setAlarmFade()` / `startAlarmVolumeOverride()` / `startSystemVolumeFade()` / `stopAlarmVolumeOverride()` 闹钟音量控制系统
+- **新增**：闹钟结束后自动恢复响铃前的系统媒体音量
+- **优化**：闹钟播放期间跳过应用层音量映射和零音量自动暂停，避免干扰渐增
+- **优化**：闹钟播放期间不受短暂音频焦点丢失影响（不 duck、不暂停）
+- **优化**：ExoPlayer / MediaPlayer 音频流统一使用 `STREAM_MUSIC`，覆盖扬声器/有线/蓝牙所有输出
+- **优化**：`ExoPlayerWrapper` 新增 `volumeHandedOff` 标志，防止播放器内部逻辑重置 PlayerService 设定的音量
+
+**睡眠定时器重定位**
+- **重构**：睡眠定时器从"闹钟"设置页移至"播放器"设置页，不再依赖外部闹钟应用开关
+- **重构**：字符串 key 从 `settings_alarm_sleep_timer` 重命名为 `settings_sleep_timer`
+- **优化**：描述从"Stop playing after"改为"Stop current playback after"，更准确
+
+**扬声器零音量暂停**
+- **新增**：设置 → 播放器 → 扬声器零音量暂停开关 — 未连接耳机时，扬声器音量调至 0 自动暂停
+
+**导入/导出兼容性修复（Android 4.x）**
+- **修复**：Android 4.x (API 16-18) 设备上数据库导入/导出无法选择文件 — 低于 API 19 时回退到传统文件对话框（`OpenFileDialog` / `SaveFileDialog`）+ 运行时权限申请
+- **新增**：权限被拒绝时显示提示
+
+**收藏导入去重**
+- **修复**：从 M3U 文件导入收藏时，M3U 内部相同 UUID 的电台不再产生重复条目
+
+**播放器 Bug 修复**
+- **修复**：`RadioPlayer` HTTP 客户端丢失 User-Agent 拦截器，导致部分流媒体服务器拒绝请求 — 改用 `getHttpClient().newBuilder()` 保留全局拦截器
+- **修复**：HLS 流检测增强 — 增加 null 检查、`/hls/` 路径和 `.hls` 扩展名匹配、大小写不敏感
+- **修复**：取消收藏后 Snackbar 被底部播放面板遮挡 — 锚定到播放面板上方
+- **修复**：电台列表向右滑动背景边界错误 — 修正 `RecyclerItemSwipeHelper` bounds 计算
+- **修复**：电台列表滑动方向运算符错误 — `LEFT + RIGHT`（算术加=8）改为 `LEFT | RIGHT`（位或=12）
+- **修复**：全屏播放器取消收藏时 Snackbar 无锚点 — 传入实际 View 而非 null
+- **修复**：`RadioDroidBrowserService` 内存泄漏 — `onDestroy()` 注销广播接收器
+- **修复**：`AndroidManifest.xml` 恢复 `RadioDroidBrowserService` 声明（支持 Android Auto / 媒体浏览器）
+
+**翻译与清理**
+- **新增**：清除图标缓存功能的中英德繁翻译
+- **新增**：权限被拒绝提示的多语言字符串
+- **清理**：删除所有语言中不再使用的 `notify_metered_connection` 字符串资源
+- **清理**：删除 `Utils.playAndWarnIfMetered()` / `MeteredWarningCallback` 及所有调用点
+
+**版本更新**
+- 版本号升级至 v1.01 (versionCode 110)
 
 ### v1.00
 *2026-07-08*

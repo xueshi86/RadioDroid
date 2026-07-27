@@ -359,41 +359,26 @@ public class Utils {
         if (prefs.getBoolean("play_external", false)) {
             showMpdServersDialog(radioDroidApp, fragmentManager, station);
         } else {
-            playAndWarnIfMetered(radioDroidApp, station, PlayerType.RADIODROID, () -> play(radioDroidApp, station));
+            play(radioDroidApp, station);
         }
-    }
-
-    public static void playAndWarnIfMetered(RadioDroidApp radioDroidApp, DataRadioStation station, PlayerType playerType, Runnable playFunc) {
-        playAndWarnIfMetered(radioDroidApp, station, playerType, playFunc,
-                (station1, playerType1) -> {
-                    // Making sure that resuming from notification or some external event will actually resume
-                    // and not issue warning a second time.
-                    PlayerServiceUtil.setStation(station1);
-                    PlayerServiceUtil.warnAboutMeteredConnection(playerType1);
-                });
     }
 
     public static boolean urlIndicatesHlsStream(String streamUrl) {
-        final Pattern p = Pattern.compile(".*\\.m3u8([#?\\s].*)?$");
-        return p.matcher(streamUrl).matches();
-    }
-
-    public interface MeteredWarningCallback {
-        void warn(DataRadioStation station, PlayerType playerType);
-    }
-
-    // TODO: Sort out the indirection when PlayerService won't need aidl and we won't need to have
-    //  PlayerServiceUtil as a proxy between common code and the service.
-    public static void playAndWarnIfMetered(RadioDroidApp radioDroidApp, DataRadioStation station, PlayerType playerType,
-                                            Runnable playFunc, MeteredWarningCallback warningCallback) {
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(radioDroidApp);
-        final boolean warnOnMetered = sharedPref.getBoolean("warn_no_wifi", false);
-
-        if (warnOnMetered && ConnectivityChecker.getCurrentConnectionType(radioDroidApp) == ConnectivityChecker.ConnectionType.METERED) {
-            warningCallback.warn(station, playerType);
-        } else {
-            playFunc.run();
+        if (streamUrl == null || streamUrl.isEmpty()) {
+            return false;
         }
+        // Match .m3u8 at the end of path (before query/fragment)
+        final Pattern m3u8Pattern = Pattern.compile(".*\\.m3u8([#?\\s].*)?$", Pattern.CASE_INSENSITIVE);
+        if (m3u8Pattern.matcher(streamUrl).matches()) {
+            return true;
+        }
+        // Match /hls/ in the URL path
+        if (streamUrl.toLowerCase().contains("/hls/")) {
+            return true;
+        }
+        // Match .hls extension at the end of path
+        final Pattern hlsExtPattern = Pattern.compile(".*\\.hls([#?\\s].*)?$", Pattern.CASE_INSENSITIVE);
+        return hlsExtPattern.matcher(streamUrl).matches();
     }
 
     public static void play(final RadioDroidApp radioDroidApp, final DataRadioStation station) {

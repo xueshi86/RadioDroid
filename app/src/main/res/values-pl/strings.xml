@@ -115,8 +115,8 @@
     <string name="settings_alarm_external_desc_on">Otwórz alarm z domyślną aplikacją zewnętrzną</string>
     <string name="settings_alarm_external_desc_off">Otwórz alarm z RadioDroid</string> 
     <string name="settings_alarm_audio_player">Odtwarzacz muzyki</string>
-    <string name="settings_alarm_sleep_timer">Wyłącznik czasowy</string>
-    <string name="settings_alarm_sleep_timer_desc">Przestań odtwarzać po %1$s minutach</string>
+    <string name="settings_sleep_timer">Wyłącznik czasowy</string>
+    <string name="settings_sleep_timer_desc">Przestań odtwarzać po %1$s minutach</string>
     <string name="settings_play">Odtwarzacz</string>
     <string name="settings_auto_play_on_startup">Autoodtwarzanie</string>
     <string name="settings_auto_play_on_startup_on">Odtwórz ostatnią stację podczas uruchamiania</string>

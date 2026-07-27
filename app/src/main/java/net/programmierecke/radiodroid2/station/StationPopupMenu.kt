@@ -9,10 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import net.programmierecke.radiodroid2.R
-import net.programmierecke.radiodroid2.RadioDroidApp
-import net.programmierecke.radiodroid2.Utils
 import net.programmierecke.radiodroid2.players.PlayStationTask
-import net.programmierecke.radiodroid2.players.selector.PlayerType
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil
 
 object StationPopupMenu {
@@ -37,11 +34,8 @@ object StationPopupMenu {
                     true
                 }
                 R.id.menu_play_in_external_player -> {
-                    Utils.playAndWarnIfMetered(context.applicationContext as RadioDroidApp, station,
-                            PlayerType.EXTERNAL) { 
-                        CoroutineScope(Dispatchers.IO).launch {
-                            PlayStationTask.playExternal(station, context).execute()
-                        }
+                    CoroutineScope(Dispatchers.IO).launch {
+                        PlayStationTask.playExternal(station, context).execute()
                     }
                     true
                 }

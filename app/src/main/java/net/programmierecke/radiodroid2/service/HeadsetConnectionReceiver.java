@@ -160,7 +160,7 @@ public class HeadsetConnectionReceiver extends BroadcastReceiver {
 
         if (lastStation != null) {
             if (!radioDroidApp.getMpdClient().isMpdEnabled()) {
-                Utils.playAndWarnIfMetered(radioDroidApp, lastStation, PlayerType.RADIODROID, () -> Utils.play(radioDroidApp, lastStation));
+                Utils.play(radioDroidApp, lastStation);
             }
         }
     }

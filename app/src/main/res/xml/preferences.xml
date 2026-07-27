@@ -227,6 +227,13 @@
             android:summaryOn="@string/settings_warn_no_wifi_on"
             android:title="@string/settings_warn_no_wifi" />
 
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="pause_on_speaker_zero_volume"
+            android:title="@string/settings_pause_on_speaker_zero_volume"
+            android:summaryOn="@string/settings_pause_on_speaker_zero_volume_summary_on"
+            android:summaryOff="@string/settings_pause_on_speaker_zero_volume_summary_off" />
+
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="pause_when_noisy"
@@ -299,6 +306,12 @@
             android:key="equalizer"
             android:title="@string/settings_equalizer"
             android:summary="@string/equalizer_use_builtin" />
+
+        <Preference
+            android:key="sleep_timer"
+            android:summary="@string/settings_sleep_timer_desc"
+            search:summary=""
+            android:title="@string/settings_sleep_timer" />
     </PreferenceScreen>
 
     <PreferenceScreen android:title="@string/settings_alarm"
@@ -315,13 +328,6 @@
         <Preference
             android:key="shareapp_package"
             android:title="@string/settings_alarm_audio_player" />
-
-        <Preference
-            android:dependency="alarm_external"
-            android:key="alarm_timeout"
-            android:summary="@string/settings_alarm_sleep_timer_desc"
-            search:summary=""
-            android:title="@string/settings_alarm_sleep_timer" />
 
     </PreferenceScreen>
 

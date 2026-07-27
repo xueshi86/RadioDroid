@@ -114,6 +114,9 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
     public static final String METERED_CONNECTION_WARNING_KEY = "warn_no_wifi";
 
+    public static final String PLAYER_SERVICE_CONNECTION_TYPE_CHANGED = "net.programmierecke.radiodroid2.connection_type_changed";
+    public static final String PLAYER_SERVICE_CONNECTION_TYPE_EXTRA = "connection_type";
+
     public static final String PLAYER_SERVICE_NO_NOTIFICATION_EXTRA = "no_notification";
 
     public static final String PLAYER_SERVICE_TIMER_UPDATE = "net.programmierecke.radiodroid2.timerupdate";
@@ -122,9 +125,6 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
     public static final String PLAYER_SERVICE_STATE_CHANGE = "net.programmierecke.radiodroid2.statechange";
     public static final String PLAYER_SERVICE_STATE_EXTRA_KEY = "state";
-
-    public static final String PLAYER_SERVICE_METERED_CONNECTION = "net.programmierecke.radiodroid2.metered_connection";
-    public static final String PLAYER_SERVICE_METERED_CONNECTION_PLAYER_TYPE = "PLAYER_TYPE";
 
     public static final String PLAYER_SERVICE_BOUND = "net.programmierecke.radiodroid2.playerservicebound";
 
@@ -145,10 +145,6 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     // 高系统音量（65%-100%）→ maxGain = 1.0 ~ 2.0（提升 1 倍）
     private BroadcastReceiver volumeChangeReceiver;
 
-    private static final int METERED_CONNECTION_WARNING_COOLDOWN = 20 * 1000; // 20 seconds
-
-    private static final int AUDIO_WARNING_DURATION = 2000;
-
     private SharedPreferences sharedPref;
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceChangeListener;
 
@@ -158,6 +154,25 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     private Handler handler;
 
     private DataRadioStation currentStation;
+
+    // 闹钟播放时的音量渐增参数（直接控制系统音量）
+    private boolean currentIsAlarm = false;
+    private boolean alarmFadeApplied = false;
+    private int alarmStartVolume = 0;
+    private int alarmTargetVolume = 50;
+    private int alarmFadeDurationMs = 30000;
+
+    // 闹钟播放时保存/恢复系统音量
+    private int savedSystemVolume = -1;
+    private boolean alarmVolumeOverride = false;
+    /**
+     * 闹钟音量会话代次。每次 start/stop 递增。
+     * 渐增 Runnable 捕获创建时的 session，执行时若 session 已过期则丢弃，
+     * 避免 binder 线程 stop 与主线程 fade 竞态导致音量被再次抬高。
+     */
+    private volatile int alarmVolumeSession = 0;
+    // 系统音量渐增用的定时任务
+    private final List<Runnable> alarmFadeTasks = new java.util.ArrayList<>();
 
     private BitmapDrawable radioIcon;
 
@@ -201,8 +216,6 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
     private int lastErrorFromPlayer = -1;
 
-    private long lastMeteredConnectionWarningTime;
-
     private ToneGenerator toneGenerator;
     private Runnable toneGeneratorStopRunnable;
 
@@ -234,6 +247,10 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         // and then use it in playerFragment when MPD player is working.
         public void SetStation(DataRadioStation station) {
             PlayerService.this.setStation(station);
+        }
+
+        public void SetAlarmFade(int startVolume, int targetVolume, int durationMs) throws RemoteException {
+            PlayerService.this.setAlarmFade(startVolume, targetVolume, durationMs);
         }
 
         public void SkipToNext() throws RemoteException {
@@ -399,11 +416,6 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         }
 
         @Override
-        public void warnAboutMeteredConnection(PlayerType playerType) throws RemoteException {
-            PlayerService.this.warnAboutMeteredConnection(playerType);
-        }
-
-        @Override
         public boolean isNotificationActive() throws RemoteException {
             return PlayerService.this.notificationIsActive;
         }
@@ -432,9 +444,35 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
             new AudioManager.OnAudioFocusChangeListener() {
                 public void onAudioFocusChange(int focusChange) {
                     // #region debug-point B:focus-change
-                    dbg("B", "PlayerService:416", "onAudioFocusChange", java.util.Map.of("focusChange", focusChange, "isLocal", radioPlayer != null && radioPlayer.isLocal()));
+                    dbg("B", "PlayerService:416", "onAudioFocusChange", java.util.Map.of("focusChange", focusChange, "isLocal", radioPlayer != null && radioPlayer.isLocal(), "isAlarm", currentIsAlarm, "alarmVolumeOverride", alarmVolumeOverride));
                     // #endregion
-                    if (!radioPlayer.isLocal()) {
+                    if (radioPlayer == null || !radioPlayer.isLocal()) {
+                        return;
+                    }
+
+                    // 闹钟播放期间：保持满增益，不 duck、不因短暂失焦而静音。
+                    // 系统媒体音量由 startSystemVolumeFade 线性控制，应用层音量必须始终为 FULL。
+                    if (currentIsAlarm || alarmVolumeOverride) {
+                        switch (focusChange) {
+                            case AudioManager.AUDIOFOCUS_GAIN:
+                                if (pauseReason == PauseReason.FOCUS_LOSS_TRANSIENT) {
+                                    enableMediaSession();
+                                    resume();
+                                }
+                                radioPlayer.setVolume(FULL_VOLUME);
+                                break;
+                            case AudioManager.AUDIOFOCUS_LOSS:
+                                // 永久失焦仍暂停（例如用户切到其他强占媒体的应用）
+                                if (radioPlayer.isPlaying()) {
+                                    pause(PauseReason.FOCUS_LOSS);
+                                }
+                                break;
+                            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                                // 闹钟不 duck、不暂停短暂失焦，避免“无声播放”
+                                radioPlayer.setVolume(FULL_VOLUME);
+                                break;
+                        }
                         return;
                     }
 
@@ -476,9 +514,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     private ConnectivityChecker.ConnectivityCallback connectivityCallback = new ConnectivityChecker.ConnectivityCallback() {
         @Override
         public void onConnectivityChanged(boolean connected, ConnectivityChecker.ConnectionType connectionType) {
-            if (connectionType == ConnectivityChecker.ConnectionType.METERED && sharedPref.getBoolean(METERED_CONNECTION_WARNING_KEY, false)) {
-                warnAboutMeteredConnection(PlayerType.RADIODROID);
-            }
+            sendConnectionTypeChangedBroadcast(connectionType);
         }
     };
 
@@ -600,7 +636,20 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     }
 
     @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        // 用户划掉最近任务时，确保闹钟系统音量恢复（onDestroy 可能不被调用）
+        currentIsAlarm = false;
+        alarmFadeApplied = false;
+        stopAlarmVolumeOverride();
+        super.onTaskRemoved(rootIntent);
+    }
+
+    @Override
     public void onDestroy() {
+        // 服务销毁时务必先恢复系统音量，避免闹钟渐增后的 100% 残留
+        currentIsAlarm = false;
+        alarmFadeApplied = false;
+        stopAlarmVolumeOverride();
 
         stop();
 
@@ -621,7 +670,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
         releaseServiceEqualizer();
 
-        // Clean up handler to prevent memory leaks
+        // Clean up handler to prevent memory leaks（须在音量恢复之后）
         if (handler != null) {
             handler.removeCallbacksAndMessages(null);
         }
@@ -724,24 +773,23 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         playCurrentStation(false);
     }
 
-    private void playAndWarnIfMetered(DataRadioStation station) {
-        RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
-        Utils.playAndWarnIfMetered(radioDroidApp, station, PlayerType.RADIODROID,
-                () -> playWithoutWarnings(station),
-                (station1, playerType) -> {
-                    setStation(station1);
-                    warnAboutMeteredConnection(playerType);
-                });
-    }
-
     public void setStation(DataRadioStation station) {
         this.currentStation = station;
+    }
+
+    private void setAlarmFade(int startVolume, int targetVolume, int durationMs) {
+        this.alarmStartVolume = Math.max(0, Math.min(100, startVolume));
+        this.alarmTargetVolume = Math.max(0, Math.min(100, targetVolume));
+        this.alarmFadeDurationMs = Math.max(0, durationMs);
     }
 
     public void playCurrentStation(final boolean isAlarm) {
         if (currentStation == null) {
             return;
         }
+
+        currentIsAlarm = isAlarm;
+        alarmFadeApplied = false;
 
         if (Utils.shouldLoadIcons(itsContext))
             downloadRadioIcon();
@@ -776,18 +824,20 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
         this.pauseReason = pauseReason;
 
-        forceStopAudioWarning();
-
-        if (pauseReason == PauseReason.METERED_CONNECTION) {
-            lastMeteredConnectionWarningTime = System.currentTimeMillis();
-        }
-
         releaseWakeLockAndWifiLock();
 
         // Pausing due to focus loss means that we can gain it again
         // so we should keep the focus and the wait for callback.
         if (pauseReason != PauseReason.FOCUS_LOSS_TRANSIENT) {
             releaseAudioFocus();
+        }
+
+        // 用户手动暂停/永久暂停闹钟时：立即恢复闹钟响铃前的系统媒体音量
+        // 短暂失焦（FOCUS_LOSS_TRANSIENT）保留渐增状态，以便焦点回来后继续
+        if (pauseReason != PauseReason.FOCUS_LOSS_TRANSIENT) {
+            currentIsAlarm = false;
+            alarmFadeApplied = false;
+            stopAlarmVolumeOverride();
         }
 
         radioPlayer.pause();
@@ -802,13 +852,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         DataRadioStation station = currentStation.queue.getNextById(currentStation.StationUuid);
 
         if (station != null) {
-            if (radioPlayer.isPlaying()) {
-                // Since we are using data at the moment user doesn't need any notifications about
-                // metered connection because he already received them if there were any.
-                playWithoutWarnings(station);
-            } else {
-                playAndWarnIfMetered(station);
-            }
+            playWithoutWarnings(station);
         }
     }
 
@@ -819,29 +863,13 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
         DataRadioStation station = currentStation.queue.getPreviousById(currentStation.StationUuid);
         if (station != null) {
-            if (radioPlayer.isPlaying()) {
-                playWithoutWarnings(station);
-            } else {
-                playAndWarnIfMetered(station);
-            }
+            playWithoutWarnings(station);
         }
     }
 
     public void resume() {
 
-        forceStopAudioWarning();
-
-        boolean bypassMeteredConnectionWarning = false;
-
-        if (pauseReason == PauseReason.METERED_CONNECTION) {
-            long now = System.currentTimeMillis();
-            long delta = now - lastMeteredConnectionWarningTime;
-
-            bypassMeteredConnectionWarning = delta < METERED_CONNECTION_WARNING_COOLDOWN && delta > 0;
-        }
-
         this.pauseReason = PauseReason.NONE;
-        this.lastMeteredConnectionWarningTime = 0;
 
         if (!radioPlayer.isPlaying()) {
             RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
@@ -853,15 +881,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
             }
 
             if (station != null) {
-                if (bypassMeteredConnectionWarning) {
-                    startMeteredConnectionListener();
-                    acquireAudioFocus();
-
-                    playWithoutWarnings(station);
-                } else {
-                    playAndWarnIfMetered(station);
-                }
-
+                playWithoutWarnings(station);
             }
         }
     }
@@ -869,13 +889,15 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     public void stop() {
 
         this.pauseReason = PauseReason.NONE;
-        this.lastMeteredConnectionWarningTime = 0;
         this.notificationIsActive = false;
 
         liveInfo = new StreamLiveInfo(null);
         streamInfo = null;
 
-        forceStopAudioWarning();
+        // 先恢复系统音量，再停播放器，避免停止过程中仍有渐增任务把音量改回目标值
+        currentIsAlarm = false;
+        alarmFadeApplied = false;
+        stopAlarmVolumeOverride();
 
         releaseAudioFocus();
         disableMediaSession();
@@ -887,7 +909,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
         stopForeground(true);
 
-        stopMeteredConnectionListener();
+        stopConnectionTypeListener();
 
         //sendBroadCast(PLAYER_SERVICE_STATE_CHANGE);
     }
@@ -942,16 +964,10 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         if (state == PlaybackStateCompat.STATE_ERROR) {
             String error = "";
 
-            PlayState currentPlayerState = radioPlayer.getPlayState();
-            if ((currentPlayerState == PlayState.Paused || currentPlayerState == PlayState.Idle)
-                    && pauseReason == PauseReason.METERED_CONNECTION) {
-                error = itsContext.getResources().getString(R.string.notify_metered_connection);
-            } else {
-                try {
-                    error = itsContext.getResources().getString(lastErrorFromPlayer);
-                } catch (Resources.NotFoundException ex) {
-                    Log.e(TAG, String.format("Unknown play error: %d", lastErrorFromPlayer), ex);
-                }
+            try {
+                error = itsContext.getResources().getString(lastErrorFromPlayer);
+            } catch (Resources.NotFoundException ex) {
+                Log.e(TAG, String.format("Unknown play error: %d", lastErrorFromPlayer), ex);
             }
 
             playbackStateBuilder.setErrorMessage(PlaybackStateCompat.ERROR_CODE_ACTION_ABORTED, error);
@@ -987,17 +1003,24 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     private int acquireAudioFocus() {
         int result;
         // #region debug-point B:audio-focus-request
-        dbg("B", "PlayerService:905", "requestAudioFocus called", null);
+        dbg("B", "PlayerService:905", "requestAudioFocus called", java.util.Map.of("isAlarm", currentIsAlarm));
         // #endregion
+        // 闹钟与普通播放统一使用 USAGE_MEDIA + STREAM_MUSIC，
+        // 使系统路由到扬声器/有线/蓝牙时都走媒体音量（与闹钟音量渐增一致）。
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             AudioAttributes audioAttributes = new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build();
-            audioFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+            AudioFocusRequest.Builder builder = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                     .setAudioAttributes(audioAttributes)
                     .setOnAudioFocusChangeListener(afChangeListener)
-                    .build();
+                    .setAcceptsDelayedFocusGain(false);
+            // 闹钟不因 duck 而暂停，音量由系统媒体音量线性控制
+            if (currentIsAlarm) {
+                builder.setWillPauseWhenDucked(false);
+            }
+            audioFocusRequest = builder.build();
             result = audioManager.requestAudioFocus(audioFocusRequest);
         } else {
             result = audioManager.requestAudioFocus(afChangeListener,
@@ -1005,7 +1028,13 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                     AudioManager.AUDIOFOCUS_GAIN);
         }
         if (result != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            Log.e(TAG, "acquiring audio focus failed!");
+            Log.e(TAG, "acquiring audio focus failed! result=" + result + " isAlarm=" + currentIsAlarm);
+            // 闹钟场景：即便焦点未授予也继续播放，避免“完全无声”
+            // （部分 ROM 在锁屏/勿扰下可能拒绝 AUDIOFOCUS_GAIN）
+            if (currentIsAlarm) {
+                Log.w(TAG, "Alarm playback continues without exclusive audio focus");
+                return AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
+            }
             toastOnUi(R.string.error_grant_audiofocus);
         }
 
@@ -1094,10 +1123,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
         PlayState currentPlayerState = radioPlayer.getPlayState();
 
-        if ((currentPlayerState == PlayState.Paused || currentPlayerState == PlayState.Idle)
-                && pauseReason == PauseReason.METERED_CONNECTION) {
-            theMessage = itsContext.getResources().getString(R.string.notify_metered_connection);
-        } else if (lastErrorFromPlayer != -1) {
+        if (lastErrorFromPlayer != -1) {
             try {
                 theMessage = itsContext.getResources().getString(lastErrorFromPlayer);
             } catch (Resources.NotFoundException ex) {
@@ -1163,26 +1189,228 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     }
 
     /**
-     * 应用均衡器设置并渐入音量。
+     * 闹钟开始时：保存系统媒体音量，设为起始音量，直接控制 STREAM_MUSIC 线性渐增。
+     * startVolume/targetVolume 是系统媒体音量的百分比（0-100）。
+     * 统一使用 STREAM_MUSIC，覆盖扬声器 / 有线耳机 / 蓝牙 A2DP 的媒体音量路由。
      */
-    private void applyEqualizerAndFadeIn(int audioSessionId) {
+    private void startAlarmVolumeOverride() {
+        if (alarmVolumeOverride) return;
+        if (audioManager == null) return;
+
+        // 仅在首次进入闹钟音量覆盖时保存响铃前系统音量；中途重入不得覆盖
+        if (savedSystemVolume < 0) {
+            savedSystemVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        }
+        alarmVolumeOverride = true;
+        final int session = ++alarmVolumeSession;
+
+        // 禁用指数音量映射，使用线性映射，使系统音量百分比 = 实际输出百分比
+        if (radioPlayer != null) {
+            radioPlayer.setVolumeMappingEnabled(false);
+            radioPlayer.setMaxGain(1.0f);
+            // 应用层固定满增益，实际响度完全由系统媒体音量控制
+            radioPlayer.setVolume(FULL_VOLUME);
+        }
+
+        int maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        if (maxVol <= 0) {
+            Log.e(TAG, "startAlarmVolumeOverride: stream max volume is 0");
+            return;
+        }
+
+        // 设系统媒体音量为起始音量（0% 对应 0，100% 对应 maxVol）
+        int startVol = Math.round(alarmStartVolume / 100f * maxVol);
+        startVol = Math.max(0, Math.min(maxVol, startVol));
+        try {
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, startVol, 0);
+        } catch (SecurityException e) {
+            Log.e(TAG, "Failed to set system media volume for alarm start", e);
+        }
+
+        Log.i(TAG, "Alarm volume override start: start%=" + alarmStartVolume
+                + " target%=" + alarmTargetVolume
+                + " fadeMs=" + alarmFadeDurationMs
+                + " startVol=" + startVol + "/" + maxVol
+                + " savedVol=" + savedSystemVolume
+                + " session=" + session);
+
+        // 如果有渐增时长且目标 > 起始，启动系统媒体音量线性渐增
+        if (alarmFadeDurationMs > 0 && alarmTargetVolume > alarmStartVolume) {
+            int targetVol = Math.round(alarmTargetVolume / 100f * maxVol);
+            targetVol = Math.max(0, Math.min(maxVol, targetVol));
+            startSystemVolumeFade(startVol, targetVol, alarmFadeDurationMs, session);
+        } else {
+            // 无渐增：直接跳到目标系统音量
+            int targetVol = Math.round(alarmTargetVolume / 100f * maxVol);
+            targetVol = Math.max(0, Math.min(maxVol, targetVol));
+            try {
+                if (alarmVolumeSession == session && alarmVolumeOverride) {
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVol, 0);
+                }
+            } catch (SecurityException e) {
+                Log.e(TAG, "Failed to set system media volume for alarm target", e);
+            }
+        }
+    }
+
+    /**
+     * 通过定时器逐步增加系统媒体音量（STREAM_MUSIC），实现闹钟音量线性渐增。
+     * 该流同时作用于内置扬声器、有线耳机与蓝牙媒体（A2DP）输出。
+     *
+     * @param session 创建本轮渐增时的 alarmVolumeSession；停止后 session 失效，残留任务自动作废
+     */
+    private void startSystemVolumeFade(int fromVol, int toVol, int durationMs, final int session) {
+        cancelAlarmFade();
+        if (audioManager == null) return;
+        if (toVol <= fromVol || durationMs <= 0) {
+            try {
+                if (alarmVolumeSession == session && alarmVolumeOverride) {
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,
+                            Math.max(0, Math.min(audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), toVol)), 0);
+                }
+            } catch (SecurityException e) {
+                Log.e(TAG, "Failed to set alarm target volume", e);
+            }
+            return;
+        }
+
+        final int maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        // 步数与系统可分辨档位对齐，最多 60 步，保证线性且不过密
+        final int steps = Math.max(1, Math.min(toVol - fromVol, 60));
+        final long stepInterval = Math.max(1L, durationMs / steps);
+        final float volumeStep = (float) (toVol - fromVol) / steps;
+
+        for (int i = 1; i <= steps; i++) {
+            final float vol = fromVol + volumeStep * i;
+            final int stepIndex = i;
+            Runnable step = () -> {
+                // session 过期或已停止：丢弃，绝不可再改系统音量
+                if (!alarmVolumeOverride || alarmVolumeSession != session || audioManager == null) return;
+                int sysVol = Math.round(vol);
+                sysVol = Math.max(0, Math.min(maxVol, sysVol));
+                try {
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, sysVol, 0);
+                } catch (SecurityException e) {
+                    Log.e(TAG, "Failed to set alarm fade volume step=" + stepIndex, e);
+                }
+                // 每一步都确保播放器增益仍为满，防止焦点/重缓冲把应用音量压低
+                if (radioPlayer != null && alarmVolumeOverride && alarmVolumeSession == session) {
+                    radioPlayer.setVolumeMappingEnabled(false);
+                    radioPlayer.setMaxGain(1.0f);
+                    radioPlayer.setVolume(FULL_VOLUME);
+                }
+            };
+            alarmFadeTasks.add(step);
+            handler.postDelayed(step, stepInterval * i);
+        }
+    }
+
+    /**
+     * 取消系统音量渐增定时器。
+     */
+    private void cancelAlarmFade() {
+        if (handler != null) {
+            for (Runnable task : alarmFadeTasks) {
+                handler.removeCallbacks(task);
+            }
+        }
+        alarmFadeTasks.clear();
+    }
+
+    /**
+     * 闹钟结束/用户手动停止时：
+     * 1) 取消所有系统音量渐增任务
+     * 2) 把 STREAM_MUSIC 恢复到闹钟响铃前保存的档位（不能停留在目标 100%）
+     * 3) 恢复普通播放的音量映射
+     *
+     * 幂等：可重复调用；即使 alarmVolumeOverride 标志异常，只要 savedSystemVolume 有效也会恢复。
+     * 注意：必须同步执行（不可 post 到 handler），否则 onDestroy 的
+     * handler.removeCallbacksAndMessages(null) 可能把恢复任务清掉，导致音量卡在 100%。
+     */
+    private void stopAlarmVolumeOverride() {
+        final boolean wasOverride = alarmVolumeOverride;
+        final int volumeToRestore = savedSystemVolume;
+
+        // 递增 session：所有在途渐增 Runnable 立即失效，即使已通过 alarmVolumeOverride 检查也不会写音量
+        alarmVolumeSession++;
+        alarmVolumeOverride = false;
+        currentIsAlarm = false;
+        alarmFadeApplied = false;
+        cancelAlarmFade();
+
+        // 恢复音量映射开关
+        boolean mappingEnabled = sharedPref != null && sharedPref.getBoolean("enable_volume_mapping", true);
+        if (radioPlayer != null) {
+            radioPlayer.setVolumeMappingEnabled(mappingEnabled);
+        }
+
+        // 恢复闹钟响铃前的系统媒体音量（0 也是合法档位，必须用 >= 0 判断）
+        // 场景：起始 0% → 目标 100%，用户停止后绝不能保持 100%，必须回到响铃前档位
+        if (volumeToRestore >= 0 && audioManager != null) {
+            try {
+                int maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                int restoreVol = Math.max(0, Math.min(maxVol, volumeToRestore));
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, restoreVol, 0);
+                Log.i(TAG, "Alarm stopped: restored system media volume to " + restoreVol
+                        + "/" + maxVol + " (saved=" + volumeToRestore
+                        + ", wasOverride=" + wasOverride
+                        + ", session=" + alarmVolumeSession + ")");
+            } catch (SecurityException e) {
+                Log.e(TAG, "Failed to restore system media volume after alarm", e);
+            }
+            savedSystemVolume = -1;
+        } else if (wasOverride) {
+            Log.w(TAG, "Alarm stopped but no saved system volume to restore");
+        }
+
+        // 重新计算 maxGain（恢复正常的音量映射补偿）
+        updateVolumeGain();
+        if (radioPlayer != null) {
+            radioPlayer.refreshVolume();
+        }
+    }
+
+    /**
+     * 应用均衡器设置并渐入音量。
+     *
+     * @param useAlarmFade 是否使用闹钟专属音量渐增参数
+     */
+    private void applyEqualizerAndFadeIn(int audioSessionId, boolean useAlarmFade) {
         // #region debug-point B:apply-equalizer
         int streamMaxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         int streamCurVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-        dbg("B", "PlayerService:1083", "applyEqualizerAndFadeIn called", java.util.Map.of("audioSessionId", audioSessionId, "maxGain", radioPlayer != null ? radioPlayer.getMaxGain() : -1, "streamCurVol", streamCurVol, "streamMaxVol", streamMaxVol));
+        dbg("B", "PlayerService:1083", "applyEqualizerAndFadeIn called", java.util.Map.of("audioSessionId", audioSessionId, "maxGain", radioPlayer != null ? radioPlayer.getMaxGain() : -1, "streamCurVol", streamCurVol, "streamMaxVol", streamMaxVol, "useAlarmFade", useAlarmFade, "alarmFadeApplied", alarmFadeApplied));
         // #endregion
-        if (radioPlayer != null) {
-            radioPlayer.setVolume(0f);
-        }
 
         applyEqualizerSettings(audioSessionId);
+
+        // 闹钟渐增已启动后，后续 Buffering→Playing 只重新确保应用层满增益，
+        // 不重启系统音量渐增（避免音量被重置回起点）。
+        if (useAlarmFade && alarmFadeApplied) {
+            if (radioPlayer != null) {
+                radioPlayer.setVolumeMappingEnabled(false);
+                radioPlayer.setMaxGain(1.0f);
+                radioPlayer.setVolume(FULL_VOLUME);
+            }
+            return;
+        }
 
         cancelPendingFadeIn();
         final RadioPlayer player = radioPlayer;
         if (player != null) {
-            Runnable fadeInTask = () -> fadeInVolume(player, 0f, FULL_VOLUME, 300);
-            pendingFadeInTasks.add(fadeInTask);
-            handler.postDelayed(fadeInTask, 50);
+            if (useAlarmFade) {
+                alarmFadeApplied = true;
+                // 闹钟播放：系统媒体音量线性渐增 + 应用层固定满增益
+                startAlarmVolumeOverride();
+                player.setVolumeMappingEnabled(false);
+                player.setMaxGain(1.0f);
+                player.setVolume(FULL_VOLUME);
+            } else {
+                player.setVolume(0f);
+                Runnable fadeInTask = () -> fadeInVolume(player, 0f, FULL_VOLUME, 300);
+                pendingFadeInTasks.add(fadeInTask);
+                handler.postDelayed(fadeInTask, 50);
+            }
         }
     }
 
@@ -1536,67 +1764,19 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         }
     }
 
-    private void warnAboutMeteredConnection(PlayerType playerType) {
-        // The idea is to play a warning and give user some time frame to press the play media button
-        // again to resume the playback. However media buttons may not work as expected and think
-        // that current state is "playing" and send us "pause" regardless of our attempt to set state
-        // to "paused".
-        // FIXME: Make media buttons send correct events considering the above.
-
-        stopMeteredConnectionListener();
-
-        pause(PauseReason.METERED_CONNECTION);
-
-        handler.post(() -> {
-            setMediaPlaybackState(PlaybackStateCompat.STATE_PLAYING);
-
-            toneGenerator = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
-            toneGenerator.startTone(ToneGenerator.TONE_SUP_RADIO_NOTAVAIL, AUDIO_WARNING_DURATION);
-        });
-
-        toneGeneratorStopRunnable = () -> {
-            if (toneGenerator != null) {
-                toneGenerator.stopTone();
-                toneGenerator.release();
-                toneGenerator = null;
-            }
-            toneGeneratorStopRunnable = null;
-
-            setMediaPlaybackState(PlaybackStateCompat.STATE_ERROR);
-        };
-
-        handler.postDelayed(toneGeneratorStopRunnable, AUDIO_WARNING_DURATION);
-
+    private void sendConnectionTypeChangedBroadcast(ConnectivityChecker.ConnectionType connectionType) {
         Intent broadcast = new Intent();
-        broadcast.setAction(PLAYER_SERVICE_METERED_CONNECTION);
-        broadcast.putExtra(PLAYER_SERVICE_METERED_CONNECTION_PLAYER_TYPE, (Parcelable) playerType);
+        broadcast.setAction(PLAYER_SERVICE_CONNECTION_TYPE_CHANGED);
+        broadcast.putExtra(PLAYER_SERVICE_CONNECTION_TYPE_EXTRA, connectionType.name());
         LocalBroadcastManager.getInstance(itsContext).sendBroadcast(broadcast);
-
-        updateNotification(PlayState.Paused);
     }
 
-    private void forceStopAudioWarning() {
-        if (toneGenerator != null) {
-            handler.removeCallbacks(toneGeneratorStopRunnable);
-            toneGeneratorStopRunnable = null;
-
-            handler.post(() -> {
-                if (toneGenerator != null) {
-                    toneGenerator.stopTone();
-                    toneGenerator.release();
-                    toneGenerator = null;
-                }
-            });
-        }
+    private void startConnectionTypeListener() {
+        connectivityChecker.startListening(PlayerService.this, connectivityCallback);
+        sendConnectionTypeChangedBroadcast(ConnectivityChecker.getCurrentConnectionType(PlayerService.this));
     }
 
-    private void startMeteredConnectionListener() {
-        if (sharedPref.getBoolean(METERED_CONNECTION_WARNING_KEY, false)) {
-            connectivityChecker.startListening(PlayerService.this, connectivityCallback);
-        }
-    }
-
-    private void stopMeteredConnectionListener() {
+    private void stopConnectionTypeListener() {
         connectivityChecker.stopListening(PlayerService.this);
     }
 
@@ -1616,7 +1796,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                         if (playStateIsPlaying) {
                             currentPlayingSessionStart = System.currentTimeMillis();
                             lastPlayStartTime = currentPlayingSessionStart;
-                            applyEqualizerAndFadeIn(audioSessionId);
+                            applyEqualizerAndFadeIn(audioSessionId, currentIsAlarm);
                             break;
                         }
 
@@ -1632,7 +1812,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                         i.putExtra(AudioEffect.EXTRA_PACKAGE_NAME, getPackageName());
                         itsContext.sendBroadcast(i);
 
-                        applyEqualizerAndFadeIn(audioSessionId);
+                        applyEqualizerAndFadeIn(audioSessionId, currentIsAlarm);
                         break;
                     }
                     default: {
@@ -1668,10 +1848,10 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                     playStateIsPlaying = false;
                 }
 
-                if (state != PlayState.Paused && state != PlayState.Idle) {
-                    startMeteredConnectionListener();
+                if (state == PlayState.Playing) {
+                    startConnectionTypeListener();
                 } else {
-                    stopMeteredConnectionListener();
+                    stopConnectionTypeListener();
                 }
 
                 updateNotification(state);
@@ -1779,6 +1959,14 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
      * - 系统音量 100%：maxGain=2.0（提升 1 倍）
      */
     private void updateVolumeGain() {
+        // 闹钟播放期间使用固定的 maxGain=1.0，音量由系统音量控制
+        if (alarmVolumeOverride) {
+            if (radioPlayer != null) {
+                radioPlayer.setMaxGain(1.0f);
+            }
+            return;
+        }
+
         int maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         int curVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         if (maxVol <= 0) return;
@@ -1823,9 +2011,13 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     }
 
     /**
-     * 当系统音量调至 0 且对应耳机连接时，根据设置自动暂停播放。
+     * 当系统音量调至 0 且对应音频设备连接时，根据设置自动暂停播放。
+     * 优先级：有线耳机 > 蓝牙耳机 > 内置扬声器（无耳机连接时）
      */
     private void checkHeadsetZeroVolumePause() {
+        // 闹钟音量渐增期间可能临时将系统音量设为 0，不应触发自动暂停
+        if (alarmVolumeOverride) return;
+
         if (audioManager == null) return;
 
         int curVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
@@ -1835,8 +2027,9 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
         boolean pauseOnWiredZero = sharedPref != null && sharedPref.getBoolean("pause_on_wired_headset_zero_volume", false);
         boolean pauseOnBluetoothZero = sharedPref != null && sharedPref.getBoolean("pause_on_bluetooth_headset_zero_volume", false);
+        boolean pauseOnSpeakerZero = sharedPref != null && sharedPref.getBoolean("pause_on_speaker_zero_volume", false);
 
-        if (!pauseOnWiredZero && !pauseOnBluetoothZero) return;
+        if (!pauseOnWiredZero && !pauseOnBluetoothZero && !pauseOnSpeakerZero) return;
 
         if (pauseOnWiredZero && audioDeviceMonitor != null && audioDeviceMonitor.isWiredHeadsetConnected()) {
             Log.d(TAG, "Wired headset volume reached 0, pausing playback");
@@ -1846,6 +2039,15 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
         if (pauseOnBluetoothZero && audioDeviceMonitor != null && audioDeviceMonitor.isBluetoothAudioConnected()) {
             Log.d(TAG, "Bluetooth headset volume reached 0, pausing playback");
+            PlayerServiceUtil.pause(PauseReason.USER);
+            return;
+        }
+
+        // 内置扬声器：仅在没有耳机连接时生效
+        if (pauseOnSpeakerZero && audioDeviceMonitor != null
+                && !audioDeviceMonitor.isWiredHeadsetConnected()
+                && !audioDeviceMonitor.isBluetoothAudioConnected()) {
+            Log.d(TAG, "Speaker volume reached 0 (no headset connected), pausing playback");
             PlayerServiceUtil.pause(PauseReason.USER);
         }
     }

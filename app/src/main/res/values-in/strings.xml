@@ -138,8 +138,8 @@
     <string name="settings_alarm_external_desc_on">Buka alarm dengan aplikasi eksternal bawaan</string>
     <string name="settings_alarm_external_desc_off">Buka alarm dengan RadioDroid</string>
     <string name="settings_alarm_audio_player">Pemutar audio</string>
-    <string name="settings_alarm_sleep_timer">Waktu tidur</string>
-    <string name="settings_alarm_sleep_timer_desc">Setop pemutaran setelah %1$s menit</string>
+    <string name="settings_sleep_timer">Waktu tidur</string>
+    <string name="settings_sleep_timer_desc">Setop pemutaran setelah %1$s menit</string>
     <string name="settings_play">Pemutar</string>
     <string name="settings_auto_play_on_startup">Putar otomatis</string>
     <string name="settings_auto_play_on_startup_on">Putar stasiun terakhir saat memulai</string>
@@ -191,7 +191,6 @@
     <string name="notify_pre_play">Menyambung</string>
     <string name="notify_play">Memutar</string>
     <string name="notify_paused">Dijeda</string>
-    <string name="notify_metered_connection">Koneksi terbatas</string>
 
     <string name="notify_starred">Stasiun telah ditambahkan ke favorit</string>
     <string name="notify_autostarred">Stasiun telah ditambahkan secara otomatis ke favorit</string>

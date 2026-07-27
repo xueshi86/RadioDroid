@@ -56,12 +56,12 @@
 
             <TextView
                 android:id="@+id/textViewGeneralInfo"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_marginLeft="8dp"
-                android:layout_marginEnd="8dp"
-                android:layout_marginRight="8dp"
+                android:layout_marginEnd="4dp"
+                android:layout_marginRight="4dp"
                 android:gravity="center_horizontal"
                 android:maxHeight="72sp"
                 android:minHeight="36sp"
@@ -69,10 +69,23 @@
                 android:autoSizeMaxTextSize="30sp"
                 android:autoSizeMinTextSize="14sp"
                 android:autoSizeTextType="uniform"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/imageViewConnectionTypeFull"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:text="Info" />
+
+            <ImageView
+                android:id="@+id/imageViewConnectionTypeFull"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginRight="8dp"
+                android:contentDescription="@string/content_desc_connection_type"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="@id/textViewGeneralInfo"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/textViewGeneralInfo"
+                tools:src="@drawable/ic_network_wifi" />
 
             <androidx.viewpager.widget.ViewPager
                 android:id="@+id/pagerArtAndInfo"

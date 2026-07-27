@@ -115,8 +115,8 @@
     <string name="settings_alarm_external_desc_on">Obriu l\'alarma amb una aplicació externa predeterminada</string>
     <string name="settings_alarm_external_desc_off">Obriu l\'alarma amb RadioDroid</string>
     <string name="settings_alarm_audio_player">Reproductor d\'àudio</string>
-    <string name="settings_alarm_sleep_timer">Temporitzador</string>
-    <string name="settings_alarm_sleep_timer_desc">Deixa de reproduir després de %1$s minuts</string>
+    <string name="settings_sleep_timer">Temporitzador</string>
+    <string name="settings_sleep_timer_desc">Deixa de reproduir després de %1$s minuts</string>
     <string name="settings_play">Reproducció</string>
     <string name="settings_auto_play_on_startup">Reproducció automàtica</string>
     <string name="settings_auto_play_on_startup_on">Reproduir la darrera emissora a l\'inici</string>

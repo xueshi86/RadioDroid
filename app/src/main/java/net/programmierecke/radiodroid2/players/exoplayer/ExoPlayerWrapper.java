@@ -98,6 +98,8 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
 
     private boolean isHls;
     private boolean isPlayingFlag;
+    /** 是否已把音量控制权交给上层；此后禁止再强制 setVolume(0)，避免覆盖闹钟满音量 */
+    private boolean volumeHandedOff;
     private String streamContentType;
 
     private Handler playerThreadHandler;
@@ -143,6 +145,7 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
 
         this.context = context;
         this.streamUrl = streamUrl;
+        this.volumeHandedOff = false;
 
         cancelStopTask();
         cancelPlaybackDelay();
@@ -199,9 +202,14 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         // #region debug-point A:player-create
         dbg("A", "ExoPlayerWrapper:183", "ExoPlayer created, setting volume to 0", java.util.Collections.singletonMap("volume", 0f));
         // #endregion
+        // 启动阶段静音，避免 AudioTrack 初始化爆音；真正音量由 PlayerService 在 Playing 后设置
         player.setVolume(0f);
-        player.setAudioAttributes(new AudioAttributes.Builder().setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
-                .setUsage(C.USAGE_MEDIA).build(), false);
+        // 闹钟与普通播放统一走 USAGE_MEDIA → STREAM_MUSIC，保证扬声器/有线/蓝牙都受系统媒体音量控制
+        // handleAudioFocus=false：焦点由 PlayerService 统一申请，避免与闹钟逻辑冲突
+        player.setAudioAttributes(new AudioAttributes.Builder()
+                .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                .setUsage(C.USAGE_MEDIA)
+                .build(), false);
 
         player.addListener(this);
         player.addAnalyticsListener(new AnalyticEventListener(sessionId));
@@ -254,7 +262,10 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                 // #region debug-point A:play-when-ready
                 dbg("A", "ExoPlayerWrapper:240", "BEFORE setPlayWhenReady(true)", java.util.Collections.singletonMap("currentVolume", player.getVolume()));
                 // #endregion
-                player.setVolume(0f);
+                // 仅在尚未交给上层前保持静音；若 PlayerService 已设闹钟满音量则绝不可再置 0
+                if (!volumeHandedOff) {
+                    player.setVolume(0f);
+                }
                 player.setPlayWhenReady(true);
                 // #region debug-point A:play-when-ready-after
                 dbg("A", "ExoPlayerWrapper:240b", "AFTER setPlayWhenReady(true), delaying 100ms for AudioTrack stabilization", java.util.Collections.singletonMap("currentVolume", player.getVolume()));
@@ -262,7 +273,9 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                 pendingPlaybackInnerCallback = () -> {
                     if (playSessionId != sessionId) return;
                     if (player != null) {
-                        player.setVolume(0f);
+                        // 关键修复：此处绝不能再 setVolume(0)。
+                        // 旧逻辑会在 PlayerService 已 setVolume(FULL) 且 alarmFadeApplied=true 之后
+                        // 再次静音，导致闹钟“有进度无声音”。
                         if (stateListener != null) {
                             stateListener.onStateChanged(PlayState.Playing);
                         }
@@ -354,6 +367,10 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         // #region debug-point A:set-volume
         dbg("A", "ExoPlayerWrapper:324", "setVolume called", java.util.Collections.singletonMap("volume", newVolume));
         // #endregion
+        // 上层（PlayerService）一旦设置非零音量，即视为音量控制权已交接
+        if (newVolume > 0f) {
+            volumeHandedOff = true;
+        }
         if (player != null) {
             player.setVolume(newVolume);
         }
@@ -631,7 +648,10 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                     dbg("A", "ExoPlayerWrapper:585", "STATE_READY, notifying Playing", java.util.Map.of("volume", player != null ? player.getVolume() : -1, "playWhenReady", player != null && player.getPlayWhenReady()));
                     // #endregion
                     cancelStopTask();
-                    stateListener.onStateChanged(PlayState.Playing);
+                    // 仅在真正开始出声（playWhenReady）时通知 Playing，避免过早触发闹钟音量交接后被后续逻辑覆盖
+                    if (playWhenReady && stateListener != null) {
+                        stateListener.onStateChanged(PlayState.Playing);
+                    }
                     break;
                 case Player.STATE_BUFFERING:
                     // #region debug-point A:state-buffering

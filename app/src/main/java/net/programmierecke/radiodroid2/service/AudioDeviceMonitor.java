@@ -398,7 +398,7 @@ public class AudioDeviceMonitor {
         if (lastStation != null) {
             Log.d(TAG, "  resuming station: " + lastStation.Name);
             if (!radioDroidApp.getMpdClient().isMpdEnabled()) {
-                Utils.playAndWarnIfMetered(radioDroidApp, lastStation, PlayerType.RADIODROID, () -> Utils.play(radioDroidApp, lastStation));
+                Utils.play(radioDroidApp, lastStation);
             }
         } else {
             Log.w(TAG, "  no last station found in history, cannot resume");

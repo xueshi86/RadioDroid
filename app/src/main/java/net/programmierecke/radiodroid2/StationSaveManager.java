@@ -105,12 +105,14 @@ public class StationSaveManager extends Observable {
     }
 
     public void addMultiple(List<DataRadioStation> stations) {
-        // 清空现有列表
+        // 清空现有列表，实现覆盖式导入
         listStations.clear();
-        
-        // 添加新导入的电台
+
+        // 添加新导入的电台，同时按 UUID 去重，避免 M3U 内部重复导致列表重复
         for (DataRadioStation station_new: stations){
-            listStations.add(station_new);
+            if (!has(station_new.StationUuid)) {
+                listStations.add(station_new);
+            }
         }
         Save();
 

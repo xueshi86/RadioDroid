@@ -11,6 +11,7 @@ import android.support.v4.media.session.MediaSessionCompat;
 interface IPlayerService
 {
 void SetStation(in DataRadioStation station);
+void SetAlarmFade(int startVolume, int targetVolume, int durationMs);
 void Play(boolean isAlarm);
 void Pause(in PauseReason pauseReason);
 void Resume();
@@ -42,6 +43,4 @@ int getAudioSessionId();
 
 void enableMPD(String hostname, int port);
 void disableMPD();
-
-void warnAboutMeteredConnection(in PlayerType playerType);
 }

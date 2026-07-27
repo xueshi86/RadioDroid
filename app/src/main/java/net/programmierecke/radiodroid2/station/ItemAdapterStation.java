@@ -225,7 +225,7 @@ public class ItemAdapterStation
             supportsStationRemoval = true;
             this.snackbarRecyclerView = recyclerView;
 
-            RecyclerItemMoveAndSwipeHelper<StationViewHolder> swipeAndMoveHelper = new RecyclerItemMoveAndSwipeHelper<>(getContext(), ItemTouchHelper.UP | ItemTouchHelper.DOWN, ItemTouchHelper.LEFT + ItemTouchHelper.RIGHT, this);
+            RecyclerItemMoveAndSwipeHelper<StationViewHolder> swipeAndMoveHelper = new RecyclerItemMoveAndSwipeHelper<>(getContext(), ItemTouchHelper.UP | ItemTouchHelper.DOWN, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT, this);
             new ItemTouchHelper(swipeAndMoveHelper).attachToRecyclerView(recyclerView);
         }
     }
@@ -513,8 +513,7 @@ public class ItemAdapterStation
                 Context context = getContext();
                 holder.buttonPlayInternalOrExternal.setContentDescription(getContext().getString(R.string.detail_play_in_external_player));
                 holder.buttonPlayInternalOrExternal.setImageDrawable(new IconicsDrawable(getContext(), CommunityMaterial.Icon2.cmd_play_box_outline).size(IconicsSize.dp(24)));
-                holder.buttonPlayInternalOrExternal.setOnClickListener(v -> Utils.playAndWarnIfMetered((RadioDroidApp) context.getApplicationContext(), station,
-                        PlayerType.EXTERNAL, () -> PlayStationTask.playExternal(station, context).execute()));
+                holder.buttonPlayInternalOrExternal.setOnClickListener(v -> PlayStationTask.playExternal(station, context).execute());
             }
 
             holder.buttonRefreshIcon.setOnClickListener(v -> {

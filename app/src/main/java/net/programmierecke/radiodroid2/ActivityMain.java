@@ -1,6 +1,7 @@
 package net.programmierecke.radiodroid2;
 
 
+import android.Manifest;
 import android.app.TimePickerDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -14,6 +15,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.text.TextUtils;
 import android.util.Log;
@@ -163,8 +165,6 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
     private boolean instanceStateWasSaved;
 
     private Date lastExitTry;
-
-    private AlertDialog meteredConnectionAlertDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -492,17 +492,17 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         switch (requestCode) {
             case PERM_REQ_STORAGE_FAV_LOAD: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    LoadFavourites();
+                    showOpenFileDialog();
                 } else {
-                    LoadFavourites();
+                    Toast.makeText(this, R.string.error_permission_denied, Toast.LENGTH_LONG).show();
                 }
                 return;
             }
             case PERM_REQ_STORAGE_FAV_SAVE: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    SaveFavourites();
+                    showSaveFileDialog();
                 } else {
-                    SaveFavourites();
+                    Toast.makeText(this, R.string.error_permission_denied, Toast.LENGTH_LONG).show();
                 }
                 return;
             }
@@ -959,22 +959,56 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
         String timestamp = sdf.format(new Date());
         String defaultFileName = "RadioDroid_Favorites_" + timestamp + "_" + favouriteCount + "stations.m3u";
-        
-        // 使用系统文件选择器
-        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("audio/x-mpegurl");
-        intent.putExtra(Intent.EXTRA_TITLE, defaultFileName);
-        startActivityForResult(intent, ACTION_SAVE_FILE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            // API 19+ 使用系统 SAF 文件选择器
+            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("audio/x-mpegurl");
+            intent.putExtra(Intent.EXTRA_TITLE, defaultFileName);
+            startActivityForResult(intent, ACTION_SAVE_FILE);
+        } else {
+            // API 16-18 使用自定义文件对话框，需先申请存储权限
+            if (Utils.verifyStoragePermissions(this, PERM_REQ_STORAGE_FAV_SAVE)) {
+                showSaveFileDialog();
+            }
+        }
     }
 
     void LoadFavourites() {
-        // 使用系统文件选择器
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("audio/x-mpegurl");
-        intent.putExtra(Intent.EXTRA_TITLE, "playlist.m3u");
-        startActivityForResult(intent, ACTION_LOAD_FILE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            // API 19+ 使用系统 SAF 文件选择器
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("audio/x-mpegurl");
+            intent.putExtra(Intent.EXTRA_TITLE, "playlist.m3u");
+            startActivityForResult(intent, ACTION_LOAD_FILE);
+        } else {
+            // API 16-18 使用自定义文件对话框，需先申请存储权限
+            if (Utils.verifyStoragePermissions(this, PERM_REQ_STORAGE_FAV_LOAD)) {
+                showOpenFileDialog();
+            }
+        }
+    }
+
+    private void showSaveFileDialog() {
+        SaveFileDialog dialog = new SaveFileDialog();
+        Bundle args = new Bundle();
+        args.putString(FileDialog.EXTENSION, "m3u");
+        args.putSerializable(FileDialog.START_DIRECTORY, Environment.getExternalStorageDirectory());
+        dialog.setArguments(args);
+        dialog.setStyle(DialogFragment.STYLE_NO_TITLE, Utils.getAlertDialogThemeResId(this));
+        dialog.show(getSupportFragmentManager(), SaveFileDialog.class.getName());
+    }
+
+    private void showOpenFileDialog() {
+        OpenFileDialog dialog = new OpenFileDialog();
+        Bundle args = new Bundle();
+        args.putString(FileDialog.EXTENSION, "m3u");
+        args.putSerializable(FileDialog.START_DIRECTORY, Environment.getExternalStorageDirectory());
+        dialog.setArguments(args);
+        dialog.setStyle(DialogFragment.STYLE_NO_TITLE, Utils.getAlertDialogThemeResId(this));
+        dialog.show(getSupportFragmentManager(), OpenFileDialog.class.getName());
     }
 
     @Override
@@ -1328,21 +1362,6 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
 
 
 
-    private void showMeteredConnectionDialog(@NonNull Runnable playFunc) {
-        Resources res = this.getResources();
-        String title = res.getString(R.string.alert_metered_connection_title);
-        String text = res.getString(R.string.alert_metered_connection_message);
-        meteredConnectionAlertDialog = new AlertDialog.Builder(this, Utils.getAlertDialogThemeResId(this))
-                .setTitle(title)
-                .setMessage(text)
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(android.R.string.ok, (dialog, which) -> playFunc.run())
-                .setOnDismissListener(dialog -> meteredConnectionAlertDialog = null)
-                .create();
-
-        meteredConnectionAlertDialog.show();
-    }
-
     private void setupBroadcastReceiver() {
         if (broadcastReceiver != null) {
             try {
@@ -1356,7 +1375,6 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         filter.addAction(ACTION_HIDE_LOADING);
         filter.addAction(ACTION_SHOW_LOADING);
         filter.addAction(PlayerService.PLAYER_SERVICE_STATE_CHANGE);
-        filter.addAction(PlayerService.PLAYER_SERVICE_METERED_CONNECTION);
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -1364,34 +1382,6 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
                     hideLoadingIcon();
                 } else if (intent.getAction().equals(ACTION_SHOW_LOADING)) {
                     showLoadingIcon();
-                } else if (intent.getAction().equals(PlayerService.PLAYER_SERVICE_METERED_CONNECTION)) {
-                    if (meteredConnectionAlertDialog != null) {
-                        meteredConnectionAlertDialog.cancel();
-                        meteredConnectionAlertDialog = null;
-                    }
-
-                    PlayerType playerType = intent.getParcelableExtra(PlayerService.PLAYER_SERVICE_METERED_CONNECTION_PLAYER_TYPE);
-
-                    switch (playerType) {
-                        case RADIODROID:
-                            showMeteredConnectionDialog(() -> Utils.play((RadioDroidApp) getApplication(), PlayerServiceUtil.getCurrentStation()));
-                            break;
-                        case EXTERNAL:
-                            DataRadioStation currentStation = PlayerServiceUtil.getCurrentStation();
-                            if (currentStation != null) {
-                                showMeteredConnectionDialog(() -> PlayStationTask.playExternal(currentStation, ActivityMain.this).execute());
-                            }
-                            break;
-                        default:
-                            Log.e(TAG, String.format("broadcastReceiver unexpected PlayerType '%s'", playerType.toString()));
-                    }
-                } else if (intent.getAction().equals(PlayerService.PLAYER_SERVICE_STATE_CHANGE)) {
-                    if (PlayerServiceUtil.isPlaying()) {
-                        if (meteredConnectionAlertDialog != null) {
-                            meteredConnectionAlertDialog.cancel();
-                            meteredConnectionAlertDialog = null;
-                        }
-                    }
                 }
             }
         };

@@ -138,8 +138,8 @@
     <string name="settings_alarm_external_desc_on">Apri la sveglia con l\'applicazione esterna predefinita</string>
     <string name="settings_alarm_external_desc_off">Apri la sveglia con RadioDroid</string>
     <string name="settings_alarm_audio_player">Riproduttore di audio</string>
-    <string name="settings_alarm_sleep_timer">Tempo di sonno</string>
-    <string name="settings_alarm_sleep_timer_desc">Smetti di riprodurre dopo %1$s minuti</string>
+    <string name="settings_sleep_timer">Tempo di sonno</string>
+    <string name="settings_sleep_timer_desc">Smetti di riprodurre dopo %1$s minuti</string>
     <string name="settings_play">Riproduttore</string>
     <string name="settings_auto_play_on_startup">Auto-riproduzione</string>
     <string name="settings_auto_play_on_startup_on">Riproduci l\'ultima stazione all\'avvio</string>
@@ -191,7 +191,6 @@
     <string name="notify_pre_play">Connettendo</string>
     <string name="notify_play">Riproducendo</string>
     <string name="notify_paused">In pausa</string>
-    <string name="notify_metered_connection">Connessione misurata</string>
 
     <string name="notify_starred">La stazione è stata marcata come preferita</string>
     <string name="notify_autostarred">La stazione è stata marcata automaticamente come preferita</string>

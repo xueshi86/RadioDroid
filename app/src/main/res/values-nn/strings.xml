@@ -81,8 +81,8 @@
   <string name="settings_alarm">Varsling</string>
   <string name="settings_alarm_external">Opna i ekstern app</string>
   <string name="settings_alarm_audio_player">Musikkspelar</string>
-  <string name="settings_alarm_sleep_timer">Nedteljing til avspelingsstopp</string>
-  <string name="settings_alarm_sleep_timer_desc">Stopp avspeling etter %1$s minutt</string>
+  <string name="settings_sleep_timer">Nedteljing til avspelingsstopp</string>
+  <string name="settings_sleep_timer_desc">Stopp avspeling etter %1$s minutt</string>
   <string name="settings_play">Avspeling</string>
   <string name="settings_play_external">Opna i ekstern app</string>
   <string name="settings_equalizer">Lydbalanse</string>

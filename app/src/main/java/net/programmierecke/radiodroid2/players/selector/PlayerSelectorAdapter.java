@@ -29,7 +29,6 @@ import net.programmierecke.radiodroid2.players.mpd.tasks.MPDPauseTask;
 import net.programmierecke.radiodroid2.players.mpd.tasks.MPDResumeTask;
 import net.programmierecke.radiodroid2.players.mpd.tasks.MPDStopTask;
 import net.programmierecke.radiodroid2.service.PauseReason;
-import net.programmierecke.radiodroid2.service.PlayerService;
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
 
@@ -90,7 +89,6 @@ public class PlayerSelectorAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private final Context context;
 
     private final boolean showPlayInExternal;
-    private final boolean warnOnMeteredConnection;
 
     private int fixedViewsCount;
 
@@ -116,7 +114,6 @@ public class PlayerSelectorAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         showPlayInExternal = sharedPref.getBoolean("play_external", false) && stationToPlay != null;
-        warnOnMeteredConnection = sharedPref.getBoolean(PlayerService.METERED_CONNECTION_WARNING_KEY, false);
 
         fixedViewsCount = 0;
         if (stationToPlay != null) {
@@ -189,15 +186,13 @@ public class PlayerSelectorAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
                     PlayerServiceUtil.pause(PauseReason.USER);
                 } else {
-                    Utils.playAndWarnIfMetered((RadioDroidApp) context.getApplicationContext(), stationToPlay, PlayerType.RADIODROID,
-                            () -> Utils.play((RadioDroidApp) context.getApplicationContext(), stationToPlay));
+                    Utils.play((RadioDroidApp) context.getApplicationContext(), stationToPlay);
                 }
             });
         } else if (holder.getItemViewType() == PlayerType.EXTERNAL.getValue()) {
             holder.textViewDescription.setText(R.string.action_play_in_external);
 
-            holder.btnPlay.setOnClickListener(v -> Utils.playAndWarnIfMetered((RadioDroidApp) context.getApplicationContext(), stationToPlay,
-                    PlayerType.EXTERNAL, () -> PlayStationTask.playExternal(stationToPlay, context).execute()));
+            holder.btnPlay.setOnClickListener(v -> PlayStationTask.playExternal(stationToPlay, context).execute());
 
         } else if (holder.getItemViewType() == PlayerType.CAST.getValue()) {
             holder.textViewDescription.setText(R.string.media_route_menu_title);

@@ -138,8 +138,8 @@
     <string name="settings_alarm_external_desc_on">Abra o alarme com o aplicativo externo padrão</string>
     <string name="settings_alarm_external_desc_off">Abra o alarme com RadioDroid</string>
     <string name="settings_alarm_audio_player">Reprodutor de áudio</string>
-    <string name="settings_alarm_sleep_timer">Despertador do sono</string>
-    <string name="settings_alarm_sleep_timer_desc">Parar de reproduzir após %1$s minutos</string>
+    <string name="settings_sleep_timer">Despertador do sono</string>
+    <string name="settings_sleep_timer_desc">Parar de reproduzir após %1$s minutos</string>
     <string name="settings_play">Reprodutor</string>
     <string name="settings_auto_play_on_startup">Auto-reproduzir</string>
     <string name="settings_auto_play_on_startup_on">Reproduzir último rádio ao abrir</string>
@@ -191,7 +191,6 @@
     <string name="notify_pre_play">Conectando</string>
     <string name="notify_play">Reproduzindo</string>
     <string name="notify_paused">Pausado</string>
-    <string name="notify_metered_connection">Conexão medida</string>
 
     <string name="notify_starred">O rádio foi adicionado aos favoritos</string>
     <string name="notify_autostarred">O rádio foi automaticamente adicionado aos favoritos</string>

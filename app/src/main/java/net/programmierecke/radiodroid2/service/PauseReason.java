@@ -9,7 +9,6 @@ public enum PauseReason implements Parcelable {
     BECAME_NOISY,
     FOCUS_LOSS,
     FOCUS_LOSS_TRANSIENT,
-    METERED_CONNECTION,
     USER;
 
     @Override
@@ -25,7 +24,12 @@ public enum PauseReason implements Parcelable {
     public static final Parcelable.Creator<PauseReason> CREATOR = new Parcelable.Creator<PauseReason>() {
         @Override
         public PauseReason createFromParcel(Parcel in) {
-            return PauseReason.values()[in.readInt()];
+            int ordinal = in.readInt();
+            PauseReason[] values = PauseReason.values();
+            if (ordinal < 0 || ordinal >= values.length) {
+                return NONE;
+            }
+            return values[ordinal];
         }
 
         @Override

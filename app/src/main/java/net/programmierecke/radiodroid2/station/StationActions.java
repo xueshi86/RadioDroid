@@ -154,6 +154,12 @@ public class StationActions {
         if (effectiveSnackbarView != null) {
             Snackbar snackbar = Snackbar
                     .make(effectiveSnackbarView, R.string.notify_station_removed_from_list, 6000);
+            // Anchor above the bottom player sheet so the Snackbar (and undo button)
+            // is not hidden behind it
+            View bottomSheet = effectiveSnackbarView.getRootView().findViewById(R.id.bottom_sheet);
+            if (bottomSheet != null && bottomSheet.getVisibility() == View.VISIBLE) {
+                snackbar.setAnchorView(bottomSheet);
+            }
             snackbar.setAction(R.string.action_station_removed_from_list_undo, view1 -> {
                 favouriteManager.restore(station, removedIdx);
                 // 撤销删除时，将图标移回永久缓存
@@ -217,8 +223,7 @@ public class StationActions {
     public static void playInRadioDroid(final @NonNull Context context, final @NonNull DataRadioStation station) {
         RadioDroidApp radioDroidApp = (RadioDroidApp) context.getApplicationContext();
 
-        Utils.playAndWarnIfMetered(radioDroidApp, station,
-                PlayerType.RADIODROID, () -> Utils.play(radioDroidApp, station));
+        Utils.play(radioDroidApp, station);
     }
 
 }

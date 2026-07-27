@@ -65,6 +65,9 @@ public class RadioAlarmManager {
         alarm.minute = minute;
         alarm.weekDays = new ArrayList<>();
         alarm.id = getFreeId();
+        alarm.startVolume = 0;
+        alarm.targetVolume = 50;
+        alarm.fadeDurationSeconds = 30;
         list.add(alarm);
 
         save();
@@ -111,6 +114,9 @@ public class RadioAlarmManager {
             Gson gson = new Gson();
             String weekdaysString = gson.toJson(alarm.weekDays);
             editor.putString("alarm."+alarm.id+".weekDays",weekdaysString);
+            editor.putInt("alarm."+alarm.id+".startVolume",alarm.startVolume);
+            editor.putInt("alarm."+alarm.id+".targetVolume",alarm.targetVolume);
+            editor.putInt("alarm."+alarm.id+".fadeDurationSeconds",alarm.fadeDurationSeconds);
 
             if (items.equals("")) {
                 items = "" + alarm.id;
@@ -145,6 +151,9 @@ public class RadioAlarmManager {
                 alarm.minute = sharedPref.getInt("alarm." + id + ".timeMinutes", 0);
                 alarm.enabled = sharedPref.getBoolean("alarm." + id + ".enabled", false);
                 alarm.repeating  = sharedPref.getBoolean("alarm." + id + ".repeating", false);
+                alarm.startVolume = sharedPref.getInt("alarm." + id + ".startVolume", 0);
+                alarm.targetVolume = sharedPref.getInt("alarm." + id + ".targetVolume", 50);
+                alarm.fadeDurationSeconds = sharedPref.getInt("alarm." + id + ".fadeDurationSeconds", 30);
 
                 try {
                     alarm.id = Integer.parseInt(id);
@@ -261,6 +270,16 @@ public class RadioAlarmManager {
                 stop(alarmId);
                 start(alarmId);
             }
+        }
+    }
+
+    public void setAlarmFade(int alarmId, int startVolume, int targetVolume, int fadeDurationSeconds) {
+        DataRadioStationAlarm alarm = getById(alarmId);
+        if (alarm != null) {
+            alarm.startVolume = Math.max(0, Math.min(100, startVolume));
+            alarm.targetVolume = Math.max(0, Math.min(100, targetVolume));
+            alarm.fadeDurationSeconds = Math.max(0, fadeDurationSeconds);
+            save();
         }
     }
 

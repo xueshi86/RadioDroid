@@ -94,7 +94,9 @@ public class MediaPlayerWrapper implements PlayerWrapper, StreamProxyListener {
         mediaPlayer.reset();
 
         try {
-            mediaPlayer.setAudioStreamType(isAlarm ? AudioManager.STREAM_ALARM : AudioManager.STREAM_MUSIC);
+            // 闹钟与普通播放统一走 STREAM_MUSIC，保证扬声器/有线/蓝牙都受系统媒体音量控制
+            // （STREAM_ALARM 走独立闹钟音量，与 PlayerService 的 STREAM_MUSIC 渐增不一致）
+            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mediaPlayer.setDataSource(proxyUrl);
             mediaPlayer.prepareAsync();
 

@@ -26,7 +26,6 @@ import androidx.preference.PreferenceManager;
 
 import net.programmierecke.radiodroid2.BuildConfig;
 import net.programmierecke.radiodroid2.IPlayerService;
-import net.programmierecke.radiodroid2.service.ConnectivityChecker;
 import net.programmierecke.radiodroid2.service.PlayerService;
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
 import net.programmierecke.radiodroid2.R;
@@ -48,6 +47,7 @@ public class AlarmReceiver extends BroadcastReceiver {
     private final String TAG = "RECV";
     static int BACKUP_NOTIFICATION_ID = 2;
     static String BACKUP_NOTIFICATION_NAME = "backup-alarm";
+    private DataRadioStationAlarm currentAlarm;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -64,8 +64,8 @@ public class AlarmReceiver extends BroadcastReceiver {
         RadioAlarmManager ram = radioDroidApp.getAlarmManager();
         station = ram.getStation(alarmId);
 
-        DataRadioStationAlarm alarm = ram.getById(alarmId);
-        if (alarm != null && !alarm.repeating) {
+        currentAlarm = ram.getById(alarmId);
+        if (currentAlarm != null && !currentAlarm.repeating) {
             ram.setEnabled(alarmId, false);
         }
 
@@ -79,13 +79,7 @@ public class AlarmReceiver extends BroadcastReceiver {
             if (wasPlayingBeforeAlarm) {
                 stopPlayback(context);
             } else {
-                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(radioDroidApp);
-                final boolean warnOnMetered = sharedPref.getBoolean("warn_no_wifi", false);
-                if (warnOnMetered && ConnectivityChecker.getCurrentConnectionType(radioDroidApp) == ConnectivityChecker.ConnectionType.METERED) {
-                    PlaySystemAlarm(context);
-                } else {
-                    Play(context, station.StationUuid);
-                }
+                Play(context, station.StationUuid);
             }
         }else{
             toast = Toast.makeText(context, context.getResources().getText(R.string.alert_alarm_not_working), Toast.LENGTH_SHORT);
@@ -144,8 +138,10 @@ public class AlarmReceiver extends BroadcastReceiver {
                 } else {
                     station.playableUrl = url;
                     itsPlayerService.SetStation(station);
+                    if (currentAlarm != null) {
+                        itsPlayerService.SetAlarmFade(currentAlarm.startVolume, currentAlarm.targetVolume, currentAlarm.fadeDurationSeconds * 1000);
+                    }
                     itsPlayerService.Play(true);
-                    itsPlayerService.addTimer(timeout*60);
                 }
             } catch (RemoteException e) {
                 Log.e(TAG,"play error:"+e);
@@ -159,8 +155,6 @@ public class AlarmReceiver extends BroadcastReceiver {
             itsPlayerService = null;
         }
     };
-
-    int timeout = 10;
 
     private void stopPlayback(final Context context) {
         Intent anIntent = new Intent(context, PlayerService.class);
@@ -220,11 +214,6 @@ public class AlarmReceiver extends BroadcastReceiver {
                     boolean play_external = sharedPref.getBoolean("alarm_external", false);
                     String packageName = sharedPref.getString("shareapp_package",null);
                     String activityName = sharedPref.getString("shareapp_activity",null);
-                    try {
-                        timeout = Integer.parseInt(sharedPref.getString("alarm_timeout", "10"));
-                    }catch(Exception e){
-                        timeout = 10;
-                    }
                     try {
                         if (play_external && packageName != null && activityName != null){
                             Intent share = new Intent(Intent.ACTION_VIEW);

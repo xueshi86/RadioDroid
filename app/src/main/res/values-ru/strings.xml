@@ -272,9 +272,20 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="settings_alarm_external_desc_on">Открыть будильник с помощью внешнего приложения по умолчанию</string>
     <string name="settings_alarm_external_desc_off">Открыть будильник с помощью RadioDroid</string>
     <string name="settings_alarm_audio_player">Аудиоплеер</string>
-    <string name="settings_alarm_sleep_timer">Таймер сна</string>
-    <string name="settings_alarm_sleep_timer_desc">Остановить воспроизведение через %1$s минут</string>
-    <string name="settings_alarm_sleep_timer_desc_not_set">Нажмите, чтобы установить таймер сна</string>
+    <string name="settings_sleep_timer">Таймер сна</string>
+    <string name="settings_sleep_timer_desc">Остановить текущее воспроизведение через %1$s минут</string>
+    <string name="settings_sleep_timer_desc_not_set">Нажмите, чтобы установить таймер сна</string>
+    <string name="alarm_edit_title">Изменить будильник</string>
+    <string name="alarm_fade_in">Плавное увеличение громкости</string>
+    <string name="alarm_start_volume">Начальная громкость</string>
+    <string name="alarm_target_volume">Конечная громкость</string>
+    <string name="alarm_fade_duration">Длительность нарастания</string>
+    <string name="alarm_volume_percent">%1$d%%</string>
+    <string name="alarm_fade_seconds">%1$d с</string>
+    <string name="alarm_fade_info">%1$d%% → %2$d%% / %3$d с</string>
+    <string name="alarm_fade_off">выкл.</string>
+    <string name="alarm_save">Сохранить</string>
+    <string name="alarm_cancel">Отмена</string>
     <string name="settings_play">Плеер</string>
     <string name="settings_auto_play_on_startup">Автовоспроизведение</string>
     <string name="settings_auto_play_on_startup_on">Воспроизводить последнюю станцию при запуске</string>
@@ -325,6 +336,9 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="settings_pause_on_bluetooth_headset_zero_volume">Пауза при нулевой громкости Bluetooth-гарнитуры</string>
     <string name="settings_pause_on_bluetooth_headset_zero_volume_summary_on">Вкл.: автоматическая пауза при нулевой громкости Bluetooth-гарнитуры</string>
     <string name="settings_pause_on_bluetooth_headset_zero_volume_summary_off">Выкл.: не ставить на паузу при нулевой громкости</string>
+    <string name="settings_pause_on_speaker_zero_volume">Пауза при нулевой громкости динамика</string>
+    <string name="settings_pause_on_speaker_zero_volume_summary_on">Вкл.: автоматическая пауза при нулевой громкости динамика (без гарнитуры)</string>
+    <string name="settings_pause_on_speaker_zero_volume_summary_off">Выкл.: не ставить на паузу при нулевой громкости</string>
 
     <string name="settings_warn_no_wifi">Предупреждение при отсутствии Wi-Fi</string>
     <string name="settings_warn_no_wifi_on">Предупреждать при воспроизведении без подключения Wi-Fi</string>
@@ -346,7 +360,6 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="notify_pre_play">Подключение</string>
     <string name="notify_play">Воспроизведение</string>
     <string name="notify_paused">Приостановлено</string>
-    <string name="notify_metered_connection">Измерительное соединение</string>
 
     <string name="notify_starred">Станция добавлена в избранное</string>
     <string name="notify_autostarred">Станция автоматически добавлена в избранное</string>

@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.os.Build;
 
@@ -16,7 +17,8 @@ public class ConnectivityChecker {
 
     public enum ConnectionType {
         NOT_METERED,
-        METERED
+        METERED,
+        NONE
     }
 
     public interface ConnectivityCallback {
@@ -34,6 +36,13 @@ public class ConnectivityChecker {
 
     public static ConnectionType getCurrentConnectionType(Context context) {
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager == null) {
+            return ConnectionType.NONE;
+        }
+        android.net.NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+        if (activeNetwork == null || !activeNetwork.isConnected()) {
+            return ConnectionType.NONE;
+        }
         return ConnectivityManagerCompat.isActiveNetworkMetered(connectivityManager) ? ConnectionType.METERED : ConnectionType.NOT_METERED;
     }
 
@@ -52,8 +61,12 @@ public class ConnectivityChecker {
                 @Override
                 public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
                     boolean connected = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+                    if (!connected) {
+                        onConnectivityChanged(false, ConnectionType.NONE);
+                        return;
+                    }
                     boolean metered = !networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED);
-                    onConnectivityChanged(connected, metered ? ConnectionType.METERED : ConnectionType.NOT_METERED);
+                    onConnectivityChanged(true, metered ? ConnectionType.METERED : ConnectionType.NOT_METERED);
                 }
                 // -Snip-
             };
@@ -62,8 +75,15 @@ public class ConnectivityChecker {
             networkBroadcastReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
-                    boolean connected = !intent.hasExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY);
-                    onConnectivityChanged(connected, ConnectivityManagerCompat.isActiveNetworkMetered(connectivityManager) ? ConnectionType.METERED : ConnectionType.NOT_METERED);
+                    NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+                    boolean connected = activeNetwork != null && activeNetwork.isConnected();
+                    ConnectionType type;
+                    if (!connected) {
+                        type = ConnectionType.NONE;
+                    } else {
+                        type = ConnectivityManagerCompat.isActiveNetworkMetered(connectivityManager) ? ConnectionType.METERED : ConnectionType.NOT_METERED;
+                    }
+                    onConnectivityChanged(connected, type);
                 }
             };
             context.registerReceiver(networkBroadcastReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));

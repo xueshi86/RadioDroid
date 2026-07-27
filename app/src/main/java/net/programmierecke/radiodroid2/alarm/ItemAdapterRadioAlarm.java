@@ -43,6 +43,7 @@ public class ItemAdapterRadioAlarm extends ArrayAdapter<DataRadioStationAlarm> {
 		}
 
 		TextView tvStation = (TextView) v.findViewById(R.id.textViewStation);
+		TextView tvFadeInfo = (TextView) v.findViewById(R.id.textViewFadeInfo);
 		TextView tvTime = (TextView) v.findViewById(R.id.textViewTime);
 		SwitchCompat s = (SwitchCompat)v.findViewById(R.id.switch1);
 		ImageButton b = (ImageButton) v.findViewById(R.id.buttonDeleteAlarm);
@@ -72,6 +73,18 @@ public class ItemAdapterRadioAlarm extends ArrayAdapter<DataRadioStationAlarm> {
 		}
 		if (tvStation != null) {
 			tvStation.setText(aData.station.Name);
+		}
+		if (tvFadeInfo != null) {
+			if (aData.fadeDurationSeconds > 0) {
+				tvFadeInfo.setText(String.format(Locale.getDefault(), "%s: %s",
+						context.getString(R.string.alarm_fade_in),
+						String.format(Locale.getDefault(), context.getString(R.string.alarm_fade_info),
+								aData.startVolume, aData.targetVolume, aData.fadeDurationSeconds)));
+			} else {
+				tvFadeInfo.setText(String.format(Locale.getDefault(), "%s: %s",
+						context.getString(R.string.alarm_fade_in),
+						context.getString(R.string.alarm_fade_off)));
+			}
 		}
 		if (tvTime != null) {
 			tvTime.setText(String.format(Locale.getDefault(),"%02d:%02d",aData.hour,aData.minute));

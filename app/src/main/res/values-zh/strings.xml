@@ -167,6 +167,10 @@
     <string name="settings_auto_favorite_on">播放时自动将电台添加到收藏</string>
     <string name="settings_auto_favorite_off">播放时不自动将电台添加到收藏</string>
 
+    <string name="settings_clear_icon_cache">清除图标缓存</string>
+    <string name="settings_clear_icon_cache_summary">删除所有已缓存的电台图标，图标将在需要时重新下载</string>
+    <string name="icon_cache_cleared">图标缓存已清除</string>
+
     <string name="settings_icon_click_toggles_favorite">点击收藏</string>
     <string name="settings_icon_click_toggles_favorite_on">点击电台图标以添加或删除收藏电台</string>
     <string name="settings_icon_click_toggles_favorite_off">点击电台图标以开始播放</string>
@@ -180,9 +184,20 @@
     <string name="settings_alarm_external_desc_on">使用默认外部应用打开闹钟</string>
     <string name="settings_alarm_external_desc_off">使用RadioDroid打开闹钟</string>
     <string name="settings_alarm_audio_player">音频播放器</string>
-    <string name="settings_alarm_sleep_timer">睡眠定时器</string>
-    <string name="settings_alarm_sleep_timer_desc">%1$s分钟后停止播放</string>
-    <string name="settings_alarm_sleep_timer_desc_not_set">点击设置睡眠定时器</string>
+    <string name="settings_sleep_timer">睡眠定时器</string>
+    <string name="settings_sleep_timer_desc">%1$s分钟后停止当前播放</string>
+    <string name="settings_sleep_timer_desc_not_set">点击设置睡眠定时器</string>
+    <string name="alarm_edit_title">编辑闹钟</string>
+    <string name="alarm_fade_in">音量渐增</string>
+    <string name="alarm_start_volume">起始音量</string>
+    <string name="alarm_target_volume">目标音量</string>
+    <string name="alarm_fade_duration">渐增时长</string>
+    <string name="alarm_volume_percent">%1$d%%</string>
+    <string name="alarm_fade_seconds">%1$d 秒</string>
+    <string name="alarm_fade_info">%1$d%% → %2$d%% / %3$d 秒</string>
+    <string name="alarm_fade_off">关闭</string>
+    <string name="alarm_save">保存</string>
+    <string name="alarm_cancel">取消</string>
     <string name="settings_play">播放器</string>
     <string name="settings_auto_play_on_startup">自动播放</string>
     <string name="settings_auto_play_on_startup_on">启动时播放上一个电台</string>
@@ -238,10 +253,17 @@
     <string name="settings_pause_on_bluetooth_headset_zero_volume">蓝牙耳机零音量暂停</string>
     <string name="settings_pause_on_bluetooth_headset_zero_volume_summary_on">开启：蓝牙耳机音量调至 0 时自动暂停播放</string>
     <string name="settings_pause_on_bluetooth_headset_zero_volume_summary_off">关闭：音量调至 0 时不自动暂停</string>
+    <string name="settings_pause_on_speaker_zero_volume">扬声器零音量暂停</string>
+    <string name="settings_pause_on_speaker_zero_volume_summary_on">开启：未连接耳机时，扬声器音量调至 0 自动暂停播放</string>
+    <string name="settings_pause_on_speaker_zero_volume_summary_off">关闭：音量调至 0 时不自动暂停</string>
 
-    <string name="settings_warn_no_wifi">非Wi-Fi警告</string>
-    <string name="settings_warn_no_wifi_on">在没有Wi-Fi连接时播放时警告</string>
-    <string name="settings_warn_no_wifi_off">在没有Wi-Fi连接时不警告</string>
+    <string name="settings_warn_no_wifi">顯示網路類型指示器</string>
+    <string name="settings_warn_no_wifi_on">播放時顯示 Wi-Fi 或行動數據圖示</string>
+    <string name="settings_warn_no_wifi_off">隱藏網路類型指示器</string>
+
+    <string name="content_desc_connection_type">網路類型</string>
+    <string name="content_desc_connection_type_wifi">透過 Wi-Fi 連線</string>
+    <string name="content_desc_connection_type_mobile">透過行動數據連線</string>
 
     <string name="settings_recordings">录音</string>
     <string name="settings_record_name_formatting">名称格式</string>
@@ -259,7 +281,6 @@
     <string name="notify_pre_play">正在连接</string>
     <string name="notify_play">正在播放</string>
     <string name="notify_paused">已暂停</string>
-    <string name="notify_metered_connection">计费连接</string>
 
     <string name="notify_starred">电台已添加到收藏</string>
     <string name="notify_autostarred">电台已自动添加到收藏</string>
@@ -305,6 +326,7 @@
     <string name="giving_up_resume">放弃尝试恢复播放</string>
 
     <string name="error_record_needs_write">录音需要写入权限</string>
+    <string name="error_permission_denied">权限被拒绝</string>
     <string name="error_grant_audiofocus">系统未授予音频焦点请求</string>
 
     <string name="error_no_equalizer_found">未找到均衡器应用</string>

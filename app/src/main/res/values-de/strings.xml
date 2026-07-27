@@ -87,6 +87,10 @@
     <string name="settings_auto_favorite_on">Stationen werden beim Abspielen automatisch als Favoriten gesetzt.</string>
     <string name="settings_auto_favorite_off">Stationen werden beim Abspielen nicht automatisch als Favoriten gesetzt.</string>
 
+    <string name="settings_clear_icon_cache">Icon-Cache leeren</string>
+    <string name="settings_clear_icon_cache_summary">Alle zwischengespeicherten Stationslogos löschen. Logos werden bei Bedarf neu heruntergeladen.</string>
+    <string name="icon_cache_cleared">Icon-Cache geleert</string>
+
     <string name="settings_icon_click_toggles_favorite">Klickverhalten</string>
     <string name="settings_icon_click_toggles_favorite_on">Ein Klick auf das Stationslogo setzt oder löscht die Station als Favorit.</string>
     <string name="settings_icon_click_toggles_favorite_off">Ein Klick auf das Stationslogo startet das Abspielen.</string>
@@ -94,8 +98,8 @@
     <string name="settings_alarm">Wecker</string>
     <string name="settings_alarm_external">Interner/externer Alarmspieler</string>
     <string name="settings_alarm_audio_player">Audio-Abspieler</string>
-    <string name="settings_alarm_sleep_timer">Alarmdauer</string>
-    <string name="settings_alarm_sleep_timer_desc">Nach %1$s Minuten stoppen</string>
+    <string name="settings_sleep_timer">Alarmdauer</string>
+    <string name="settings_sleep_timer_desc">Nach %1$s Minuten stoppen</string>
     <string name="settings_play">Abspieler</string>
     <string name="settings_play_external">Interner/externer Abspieler</string>
 
@@ -105,9 +109,13 @@
     <string name="settings_about">Über RadioDroid</string>
 
     <string name="settings_connectivity">Konnektivität</string>
-    <string name="settings_warn_no_wifi">WLAN-Verbindung</string>
-    <string name="settings_warn_no_wifi_on">Es wird eine Warnung angezeigt, wenn keine WLAN-Verbindung verfügbar ist.</string>
-    <string name="settings_warn_no_wifi_off">Es wird keine Warnung angezeigt, wenn keine WLAN-Verbindung verfügbar ist.</string>
+    <string name="settings_warn_no_wifi">Netzwerktyp-Anzeige</string>
+    <string name="settings_warn_no_wifi_on">WLAN- oder Mobilfunk-Symbol während der Wiedergabe anzeigen</string>
+    <string name="settings_warn_no_wifi_off">Netzwerktyp-Anzeige ausblenden</string>
+
+    <string name="content_desc_connection_type">Netzwerktyp</string>
+    <string name="content_desc_connection_type_wifi">Über WLAN verbunden</string>
+    <string name="content_desc_connection_type_mobile">Über Mobilfunk verbunden</string>
 
     <string name="settings_recordings">Aufnahmen</string>
     <string name="notify_play">Wiedergabe</string>
@@ -140,6 +148,7 @@
     <string name="error_play_stream">Stream-Wiedergabe schlug fehl.</string>
 
     <string name="error_record_needs_write">Die Aufnahmefunktion benötigt Schreibberechtigung!</string>
+    <string name="error_permission_denied">Berechtigung verweigert</string>
     <string name="error_grant_audiofocus">Das System gab den Audiokanal nicht frei.</string>
 
     <string name="error_no_equalizer_found">Keine Equalizer-App gefunden!</string>

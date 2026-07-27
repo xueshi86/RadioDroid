@@ -141,7 +141,10 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
 
         // TODO: Should we not pass http client if currentPlayer is external?
 
-        final OkHttpClient customizedHttpClient = radioDroidApp.newHttpClient()
+        // Use getHttpClient().newBuilder() to preserve UserAgentInterceptor and other
+        // interceptors from the main client. Using newHttpClient() creates a fresh builder
+        // without interceptors, causing many stream servers to reject requests (no User-Agent).
+        final OkHttpClient customizedHttpClient = radioDroidApp.getHttpClient().newBuilder()
                 .connectTimeout(connectTimeout, TimeUnit.SECONDS)
                 .readTimeout(readTimeout, TimeUnit.SECONDS)
                 .build();

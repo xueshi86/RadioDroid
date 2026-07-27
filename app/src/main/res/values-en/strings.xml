@@ -150,9 +150,9 @@
     <string name="settings_alarm_external_desc_on">Open the alarm with default external app</string>
     <string name="settings_alarm_external_desc_off">Open the alarm with RadioDroid</string>
     <string name="settings_alarm_audio_player">Audio player</string>
-    <string name="settings_alarm_sleep_timer">Sleep timer</string>
-    <string name="settings_alarm_sleep_timer_desc">Stop playing after %1$s minutes</string>
-    <string name="settings_alarm_sleep_timer_desc_not_set">Tap to set sleep timer</string>
+    <string name="settings_sleep_timer">Sleep timer</string>
+    <string name="settings_sleep_timer_desc">Stop playing after %1$s minutes</string>
+    <string name="settings_sleep_timer_desc_not_set">Tap to set sleep timer</string>
     <string name="settings_play">Player</string>
     <string name="settings_auto_play_on_startup">Auto-play</string>
     <string name="settings_auto_play_on_startup_on">Play last station on startup</string>
@@ -202,10 +202,17 @@
     <string name="settings_pause_on_bluetooth_headset_zero_volume">Pause on Bluetooth headset zero volume</string>
     <string name="settings_pause_on_bluetooth_headset_zero_volume_summary_on">On: automatically pause when Bluetooth headset volume reaches 0</string>
     <string name="settings_pause_on_bluetooth_headset_zero_volume_summary_off">Off: do not auto-pause when volume reaches 0</string>
+    <string name="settings_pause_on_speaker_zero_volume">Pause on speaker zero volume</string>
+    <string name="settings_pause_on_speaker_zero_volume_summary_on">On: automatically pause when speaker volume reaches 0 (no headset connected)</string>
+    <string name="settings_pause_on_speaker_zero_volume_summary_off">Off: do not auto-pause when volume reaches 0</string>
 
-    <string name="settings_warn_no_wifi">Off-Wi-Fi warning</string>
-    <string name="settings_warn_no_wifi_on">Warn when playing without Wi-Fi connection</string>
-    <string name="settings_warn_no_wifi_off">No warning when not on Wi-Fi connection</string>
+    <string name="settings_warn_no_wifi">Show network type indicator</string>
+    <string name="settings_warn_no_wifi_on">Show Wi-Fi or mobile data icon while playing</string>
+    <string name="settings_warn_no_wifi_off">Hide network type indicator</string>
+
+    <string name="content_desc_connection_type">Network type</string>
+    <string name="content_desc_connection_type_wifi">Connected via Wi-Fi</string>
+    <string name="content_desc_connection_type_mobile">Connected via mobile data</string>
 
     <string name="settings_recordings">Recordings</string>
     <string name="settings_record_name_formatting">Name format</string>
@@ -223,7 +230,6 @@
     <string name="notify_pre_play">Connecting</string>
     <string name="notify_play">Playing</string>
     <string name="notify_paused">Paused</string>
-    <string name="notify_metered_connection">Metered connection</string>
 
     <string name="notify_starred">Station has been added to favorites</string>
     <string name="notify_autostarred">Station has been automatically added to favorites</string>
@@ -267,6 +273,7 @@
     <string name="giving_up_resume">Giving up attempt to resume playback</string>
 
     <string name="error_record_needs_write">Need write permission for recording</string>
+    <string name="error_permission_denied">Permission denied</string>
     <string name="error_grant_audiofocus">Request for audio focus was not granted by the system</string>
 
     <string name="error_no_equalizer_found">No equalizer app found</string>
@@ -470,4 +477,7 @@
     <string name="db_status_never_updated">Database not yet updated</string>
     <string name="db_status_error">Failed to get status: %1$s</string>
     <string name="export_type_file">File</string>
+    <string name="settings_clear_icon_cache">Clear icon cache</string>
+    <string name="settings_clear_icon_cache_summary">Delete all cached station icons. Icons will be re-downloaded when needed.</string>
+    <string name="icon_cache_cleared">Icon cache cleared</string>
 </resources>

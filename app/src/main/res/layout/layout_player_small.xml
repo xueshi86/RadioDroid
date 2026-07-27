@@ -96,8 +96,22 @@
         android:id="@+id/barrierEndButtons"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        app:barrierAllowsGoneWidgets="false"
         app:barrierDirection="start"
-        app:constraint_referenced_ids="buttonPlay,buttonMore" />
+        app:constraint_referenced_ids="buttonPlay,buttonMore,imageViewConnectionType" />
+
+    <ImageView
+        android:id="@+id/imageViewConnectionType"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginRight="4dp"
+        android:contentDescription="@string/content_desc_connection_type"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/buttonPlay"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:src="@drawable/ic_network_wifi" />
 
     <ImageButton
         android:id="@+id/buttonPlay"

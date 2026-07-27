@@ -17,6 +17,7 @@ import androidx.preference.PreferenceManager;
 
 import net.programmierecke.radiodroid2.history.TrackHistoryRepository;
 import net.programmierecke.radiodroid2.players.mpd.MPDClient;
+import net.programmierecke.radiodroid2.service.ConnectivityChecker;
 import net.programmierecke.radiodroid2.service.PauseReason;
 import net.programmierecke.radiodroid2.service.PlayerService;
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
@@ -53,6 +54,7 @@ public class FragmentPlayerSmall extends Fragment {
 
     private ImageButton buttonPlay;
     private ImageButton buttonMore;
+    private ImageView imageViewConnectionType;
 
     private boolean firstPlayAttempted = false;
 
@@ -84,6 +86,14 @@ public class FragmentPlayerSmall extends Fragment {
                     }
                     case PlayerService.PLAYER_SERVICE_BOUND: {
                         tryPlayAtStart();
+                        break;
+                    }
+                    case PlayerService.PLAYER_SERVICE_CONNECTION_TYPE_CHANGED: {
+                        String connectionTypeName = intent.getStringExtra(PlayerService.PLAYER_SERVICE_CONNECTION_TYPE_EXTRA);
+                        if (connectionTypeName != null) {
+                            updateConnectionTypeIcon(ConnectivityChecker.ConnectionType.valueOf(connectionTypeName));
+                        }
+                        break;
                     }
                 }
             }
@@ -96,6 +106,7 @@ public class FragmentPlayerSmall extends Fragment {
 
         buttonPlay = view.findViewById(R.id.buttonPlay);
         buttonMore = view.findViewById(R.id.buttonMore);
+        imageViewConnectionType = view.findViewById(R.id.imageViewConnectionType);
 
         return view;
     }
@@ -151,6 +162,7 @@ public class FragmentPlayerSmall extends Fragment {
         filter.addAction(PlayerService.PLAYER_SERVICE_STATE_CHANGE);
         filter.addAction(PlayerService.PLAYER_SERVICE_META_UPDATE);
         filter.addAction(PlayerService.PLAYER_SERVICE_BOUND);
+        filter.addAction(PlayerService.PLAYER_SERVICE_CONNECTION_TYPE_CHANGED);
 
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(updateUIReceiver, filter);
 
@@ -353,6 +365,8 @@ public class FragmentPlayerSmall extends Fragment {
 
             textViewStationName.setVisibility(View.VISIBLE);
             textViewLiveInfoBig.setVisibility(View.GONE);
+
+            updateConnectionTypeIcon();
         } else if (role == Role.HEADER) {
             buttonPlay.setVisibility(View.GONE);
             buttonMore.setVisibility(View.VISIBLE);
@@ -360,7 +374,42 @@ public class FragmentPlayerSmall extends Fragment {
             textViewLiveInfo.setVisibility(View.GONE);
             textViewStationName.setVisibility(View.GONE);
             textViewLiveInfoBig.setVisibility(View.VISIBLE);
+
+            if (imageViewConnectionType != null) {
+                imageViewConnectionType.setVisibility(View.GONE);
+            }
         }
+    }
+
+    private void updateConnectionTypeIcon() {
+        updateConnectionTypeIcon(ConnectivityChecker.getCurrentConnectionType(requireContext()));
+    }
+
+    private void updateConnectionTypeIcon(ConnectivityChecker.ConnectionType connectionType) {
+        if (imageViewConnectionType == null || role != Role.PLAYER) {
+            return;
+        }
+
+        boolean showIndicator = PreferenceManager.getDefaultSharedPreferences(requireContext().getApplicationContext())
+                .getBoolean(PlayerService.METERED_CONNECTION_WARNING_KEY, false);
+
+        if (!showIndicator || connectionType == null || connectionType == ConnectivityChecker.ConnectionType.NONE || !PlayerServiceUtil.isPlaying()) {
+            imageViewConnectionType.setVisibility(View.GONE);
+            return;
+        }
+
+        switch (connectionType) {
+            case NOT_METERED:
+                imageViewConnectionType.setImageResource(R.drawable.ic_network_wifi);
+                imageViewConnectionType.setContentDescription(getString(R.string.content_desc_connection_type_wifi));
+                break;
+            case METERED:
+                imageViewConnectionType.setImageResource(R.drawable.ic_network_mobile);
+                imageViewConnectionType.setContentDescription(getString(R.string.content_desc_connection_type_mobile));
+                break;
+        }
+
+        imageViewConnectionType.setVisibility(View.VISIBLE);
     }
 
     private void showPlayerMenu(@NonNull final DataRadioStation currentStation, final boolean stationIsInFavourites) {

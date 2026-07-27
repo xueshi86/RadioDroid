@@ -28,7 +28,9 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.fragment.app.DialogFragment;
 import androidx.appcompat.widget.Toolbar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentTransaction;
@@ -43,6 +45,9 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import com.mikepenz.iconics.typeface.library.googlematerial.GoogleMaterial;
 import com.bytehamster.lib.preferencesearch.SearchConfiguration;
 import com.bytehamster.lib.preferencesearch.SearchPreference;
+import com.rustamg.filedialogs.FileDialog;
+import com.rustamg.filedialogs.OpenFileDialog;
+import com.rustamg.filedialogs.SaveFileDialog;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -69,9 +74,12 @@ import static net.programmierecke.radiodroid2.service.PlayerService.PLAYER_SERVI
 
 import android.os.PowerManager;
 
-public class FragmentSettings extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener, IApplicationSelected, PreferenceFragmentCompat.OnPreferenceStartScreenCallback  {
+public class FragmentSettings extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener, IApplicationSelected, PreferenceFragmentCompat.OnPreferenceStartScreenCallback, FileDialog.OnFileSelectedListener {
     private static final String TAG = "FragmentSettings";
-    
+
+    private static final int PERM_REQ_STORAGE_DB_IMPORT = 3;
+    private static final int PERM_REQ_STORAGE_DB_EXPORT = 4;
+
     private DatabaseUpdateProgressDialog updateDialog;
     private ActivityResultLauncher<String[]> filePickerLauncher;
     private ActivityResultLauncher<Intent> exportFileLauncher;
@@ -270,6 +278,26 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 }
             });
             setupBluetoothPermissionPreference();
+
+            // 初始化睡眠定时器摘要文本
+            Preference sleepTimerPref = findPreference("sleep_timer");
+            if (sleepTimerPref != null) {
+                long currenTimerSeconds = PlayerServiceUtil.getTimerSeconds();
+                if (currenTimerSeconds > 0) {
+                    int minutes = (int) (currenTimerSeconds < 60 ? 1 : currenTimerSeconds / 60);
+                    sleepTimerPref.setSummary(getString(R.string.settings_sleep_timer_desc).replace("%1$s", String.valueOf(minutes)));
+                } else {
+                    sleepTimerPref.setSummary(getString(R.string.settings_sleep_timer_desc_not_set));
+                }
+            }
+
+            findPreference("sleep_timer").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    showSleepTimerDialog();
+                    return true;
+                }
+            });
         } else if (s.equals("pref_category_interaction")) {
             Preference clearIconCachePref = findPreference("clear_icon_cache");
             if (clearIconCachePref != null) {
@@ -391,8 +419,15 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     confirmBuilder.setMessage(getString(R.string.import_database_message));
                     
                     confirmBuilder.setPositiveButton(getString(R.string.import_database_button), (dialog, which) -> {
-                        // 使用OpenDocument打开文件选择器，兼容Android 13+
-                        filePickerLauncher.launch(new String[]{"*/*"});
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                            // API 19+ 使用系统 SAF 文件选择器，兼容Android 13+
+                            filePickerLauncher.launch(new String[]{"*/*"});
+                        } else {
+                            // API 16-18 使用自定义文件对话框，需先申请存储权限
+                            if (Utils.verifyStoragePermissions(FragmentSettings.this, PERM_REQ_STORAGE_DB_IMPORT)) {
+                                showDatabaseOpenFileDialog();
+                            }
+                        }
                     });
                     
                     confirmBuilder.setNegativeButton(getString(android.R.string.cancel), null);
@@ -414,27 +449,6 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     }
                 });
             }
-
-            // 初始化睡眠定时器摘要文本
-            Preference alarmTimeoutPref = findPreference("alarm_timeout");
-            if (alarmTimeoutPref != null) {
-                long currenTimerSeconds = PlayerServiceUtil.getTimerSeconds();
-                if (currenTimerSeconds > 0) {
-                    int minutes = (int) (currenTimerSeconds < 60 ? 1 : currenTimerSeconds / 60);
-                    alarmTimeoutPref.setSummary(getString(R.string.settings_alarm_sleep_timer_desc).replace("%1$s", String.valueOf(minutes)));
-                } else {
-                    alarmTimeoutPref.setSummary(getString(R.string.settings_alarm_sleep_timer_desc_not_set));
-                }
-            }
-            
-            findPreference("alarm_timeout").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                @Override
-                public boolean onPreferenceClick(Preference preference) {
-                    // 使用与工具栏睡眠定时器相同的对话框
-                    showSleepTimerDialog();
-                    return true;
-                }
-            });
         } else if (s.equals("pref_category_other")) {
             findPreference("show_statistics").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
@@ -775,9 +789,9 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             public void onReceive(Context context, Intent intent) {
                 if (PLAYER_SERVICE_TIMER_FINISHED.equals(intent.getAction())) {
                     // 更新睡眠定时器摘要文本
-                    Preference alarmTimeoutPref = findPreference("alarm_timeout");
-                    if (alarmTimeoutPref != null) {
-                        alarmTimeoutPref.setSummary(getString(R.string.settings_alarm_sleep_timer_desc_not_set));
+                    Preference sleepTimerPref = findPreference("sleep_timer");
+                    if (sleepTimerPref != null) {
+                        sleepTimerPref.setSummary(getString(R.string.settings_sleep_timer_desc_not_set));
                     }
                 }
             }
@@ -1240,11 +1254,19 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 
                 requireActivity().runOnUiThread(() -> {
                     try {
-                        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-                        intent.addCategory(Intent.CATEGORY_OPENABLE);
-                        intent.setType("application/octet-stream");
-                        intent.putExtra(Intent.EXTRA_TITLE, defaultFileName);
-                        exportFileLauncher.launch(intent);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                            // API 19+ 使用系统 SAF 文件选择器
+                            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                            intent.addCategory(Intent.CATEGORY_OPENABLE);
+                            intent.setType("application/octet-stream");
+                            intent.putExtra(Intent.EXTRA_TITLE, defaultFileName);
+                            exportFileLauncher.launch(intent);
+                        } else {
+                            // API 16-18 使用自定义文件对话框，需先申请存储权限
+                            if (Utils.verifyStoragePermissions(FragmentSettings.this, PERM_REQ_STORAGE_DB_EXPORT)) {
+                                showDatabaseSaveFileDialog();
+                            }
+                        }
                     } catch (Exception e) {
                         Log.e("FragmentSettings", "Error launching export dialog", e);
                         Toast.makeText(requireContext(), getString(R.string.export_failed_message, e.getMessage()), Toast.LENGTH_LONG).show();
@@ -1307,6 +1329,57 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 });
             }
         }).start();
+    }
+
+    private void showDatabaseOpenFileDialog() {
+        OpenFileDialog dialog = new OpenFileDialog();
+        Bundle args = new Bundle();
+        args.putString(FileDialog.EXTENSION, "db");
+        args.putSerializable(FileDialog.START_DIRECTORY, Environment.getExternalStorageDirectory());
+        dialog.setArguments(args);
+        dialog.setStyle(DialogFragment.STYLE_NO_TITLE, Utils.getAlertDialogThemeResId(requireContext()));
+        dialog.show(getChildFragmentManager(), OpenFileDialog.class.getName());
+    }
+
+    private void showDatabaseSaveFileDialog() {
+        SaveFileDialog dialog = new SaveFileDialog();
+        Bundle args = new Bundle();
+        args.putString(FileDialog.EXTENSION, "db");
+        args.putSerializable(FileDialog.START_DIRECTORY, Environment.getExternalStorageDirectory());
+        dialog.setArguments(args);
+        dialog.setStyle(DialogFragment.STYLE_NO_TITLE, Utils.getAlertDialogThemeResId(requireContext()));
+        dialog.show(getChildFragmentManager(), SaveFileDialog.class.getName());
+    }
+
+    @Override
+    public void onFileSelected(FileDialog dialog, File file) {
+        if (!isAdded() || getContext() == null) {
+            return;
+        }
+        if (dialog instanceof OpenFileDialog) {
+            importDatabase(Uri.fromFile(file));
+        } else if (dialog instanceof SaveFileDialog) {
+            exportDatabaseToUri(Uri.fromFile(file));
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (!isAdded() || getContext() == null) {
+            return;
+        }
+        if (requestCode == PERM_REQ_STORAGE_DB_IMPORT || requestCode == PERM_REQ_STORAGE_DB_EXPORT) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (requestCode == PERM_REQ_STORAGE_DB_IMPORT) {
+                    showDatabaseOpenFileDialog();
+                } else {
+                    showDatabaseSaveFileDialog();
+                }
+            } else {
+                Toast.makeText(requireContext(), R.string.error_permission_denied, Toast.LENGTH_LONG).show();
+            }
+        }
     }
     
     // 将URI转换为友好的文件路径显示
@@ -1615,13 +1688,13 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         seekBar.setProgress((int) currentTimer);
         
         // 根据当前定时器状态更新摘要文本
-        Preference alarmTimeoutPref = findPreference("alarm_timeout");
-        if (alarmTimeoutPref != null) {
+        Preference sleepTimerPref = findPreference("sleep_timer");
+        if (sleepTimerPref != null) {
             if (currenTimerSeconds > 0) {
                 int minutes = (int) (currenTimerSeconds < 60 ? 1 : currenTimerSeconds / 60);
-                alarmTimeoutPref.setSummary(getString(R.string.settings_alarm_sleep_timer_desc).replace("%1$s", String.valueOf(minutes)));
+                sleepTimerPref.setSummary(getString(R.string.settings_sleep_timer_desc).replace("%1$s", String.valueOf(minutes)));
             } else {
-                alarmTimeoutPref.setSummary(getString(R.string.settings_alarm_sleep_timer_desc_not_set));
+                sleepTimerPref.setSummary(getString(R.string.settings_sleep_timer_desc_not_set));
             }
         }
         
@@ -1633,9 +1706,9 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 sharedPref.edit().putInt("sleep_timer_default_minutes", seekBar.getProgress()).apply();
                 
                 // 更新摘要文本
-                Preference alarmTimeoutPref = findPreference("alarm_timeout");
-                if (alarmTimeoutPref != null) {
-                    alarmTimeoutPref.setSummary(getString(R.string.settings_alarm_sleep_timer_desc).replace("%1$s", String.valueOf(seekBar.getProgress())));
+                Preference sleepTimerPref = findPreference("sleep_timer");
+                if (sleepTimerPref != null) {
+                    sleepTimerPref.setSummary(getString(R.string.settings_sleep_timer_desc).replace("%1$s", String.valueOf(seekBar.getProgress())));
                 }
             }
         });
@@ -1646,9 +1719,9 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 PlayerServiceUtil.clearTimer();
                 
                 // 重置摘要文本
-                Preference alarmTimeoutPref = findPreference("alarm_timeout");
-                if (alarmTimeoutPref != null) {
-                    alarmTimeoutPref.setSummary(getString(R.string.settings_alarm_sleep_timer_desc_not_set));
+                Preference sleepTimerPref = findPreference("sleep_timer");
+                if (sleepTimerPref != null) {
+                    sleepTimerPref.setSummary(getString(R.string.settings_sleep_timer_desc_not_set));
                 }
             }
         });

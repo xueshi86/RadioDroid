@@ -139,8 +139,8 @@
     <string name="settings_alarm_external_desc_on">Åbne alarm med standard eksternt program</string>
     <string name="settings_alarm_external_desc_off">Åbne alarm med RadioDroid</string>
     <string name="settings_alarm_audio_player">Lyd afspiller</string>
-    <string name="settings_alarm_sleep_timer">Sove tidsforsinkelse</string>
-    <string name="settings_alarm_sleep_timer_desc">Stop afspilning efter %1$s minutter</string>
+    <string name="settings_sleep_timer">Sove tidsforsinkelse</string>
+    <string name="settings_sleep_timer_desc">Stop afspilning efter %1$s minutter</string>
     <string name="settings_play">Afspiller</string>
     <string name="settings_auto_play_on_startup">Automatisk afspilning</string>
     <string name="settings_auto_play_on_startup_on">Afspil seneste station ved opstart</string>
@@ -192,7 +192,6 @@
     <string name="notify_pre_play">Forbinder</string>
     <string name="notify_play">Afspiller</string>
     <string name="notify_paused">Pauset</string>
-    <string name="notify_metered_connection">Afmålt forbindelse</string>
 
     <string name="notify_starred">Station tilføjet til favoritter</string>
     <string name="notify_autostarred">Station tilføjet automatisk til favoritter</string>

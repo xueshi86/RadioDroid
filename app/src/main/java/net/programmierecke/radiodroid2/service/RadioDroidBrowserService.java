@@ -93,6 +93,7 @@ public class RadioDroidBrowserService extends MediaBrowserServiceCompat {
     public void onDestroy() {
         super.onDestroy();
 
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(playStationFromIdReceiver);
         unbindService(playerServiceConnection);
     }
 

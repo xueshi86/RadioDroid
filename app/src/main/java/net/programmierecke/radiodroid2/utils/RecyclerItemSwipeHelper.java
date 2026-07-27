@@ -92,8 +92,8 @@ public class RecyclerItemSwipeHelper<ViewHolderType extends SwipeableViewHolder>
             iconRight += magicConstraint;
             icon.setBounds(iconLeft, iconTop, iconRight, iconBottom);
 
-            background.setBounds(itemView.getRight(), itemView.getTop(),
-                    itemView.getRight() + ((int) dX),
+            background.setBounds(itemView.getRight() + ((int) dX), itemView.getTop(),
+                    itemView.getRight(),
                     itemView.getBottom());
         } else { // view is unSwiped
             icon.setBounds(0, 0, 0, 0);

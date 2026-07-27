@@ -1302,16 +1302,6 @@ public class PlayerServiceUtil {
         }
     }
 
-    public static void warnAboutMeteredConnection(PlayerType playerType) {
-        if (itsPlayerService != null) {
-            try {
-                itsPlayerService.warnAboutMeteredConnection(playerType);
-            } catch (RemoteException e) {
-                Log.e("", "" + e);
-            }
-        }
-    }
-
     public static boolean isNotificationActive() {
         if (itsPlayerService != null) {
             try {

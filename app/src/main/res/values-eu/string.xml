@@ -138,8 +138,8 @@
     <string name="settings_alarm_external_desc_on">Ireki alarma lehenetsitako aplikazioarekin</string>
     <string name="settings_alarm_external_desc_off">Ireki alarma RadioDroidekin</string>
     <string name="settings_alarm_audio_player">Erreproduzitu audioa</string>
-    <string name="settings_alarm_sleep_timer">Lotarako tenporizadorea</string>
-    <string name="settings_alarm_sleep_timer_desc">Gelditu erreprodukzioa %1$s minutu eta gero</string>
+    <string name="settings_sleep_timer">Lotarako tenporizadorea</string>
+    <string name="settings_sleep_timer_desc">Gelditu erreprodukzioa %1$s minutu eta gero</string>
     <string name="settings_play">Erreproduzitzailea</string>
     <string name="settings_auto_play_on_startup">Erreprodukzio automatikoa</string>
     <string name="settings_auto_play_on_startup_on">Erreproduzitu azken irrati-etxea abioan</string>
@@ -191,7 +191,6 @@
     <string name="notify_pre_play">Konektatzen</string>
     <string name="notify_play">Erreproduzitzen</string>
     <string name="notify_paused">Pausatua</string>
-    <string name="notify_metered_connection">Erabilpen neurtuko konexioa</string>
 
     <string name="notify_starred">Irrati-etxea gogokoetara gehitu da</string>
     <string name="notify_autostarred">Irrati-etxea gogokoetara gehitu da automatikoki</string>

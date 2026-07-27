@@ -49,6 +49,7 @@ import net.programmierecke.radiodroid2.recording.Recordable;
 import net.programmierecke.radiodroid2.recording.RecordingsAdapter;
 import net.programmierecke.radiodroid2.recording.RecordingsManager;
 import net.programmierecke.radiodroid2.recording.RunningRecordingInfo;
+import net.programmierecke.radiodroid2.service.ConnectivityChecker;
 import net.programmierecke.radiodroid2.service.PauseReason;
 import net.programmierecke.radiodroid2.service.PlayerService;
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
@@ -122,6 +123,8 @@ public class FragmentPlayerFull extends Fragment {
     private TextView textViewNetworkUsageInfo;
     private TextView textViewTimeCached;
 
+    private ImageView imageViewConnectionTypeFull;
+
     private Group groupRecordings;
     private ImageView imgRecordingIcon;
     private TextView textViewRecordingSize;
@@ -176,6 +179,13 @@ public class FragmentPlayerFull extends Fragment {
                     }
                     case PlayerService.PLAYER_SERVICE_META_UPDATE: {
                         fullUpdate();
+                        break;
+                    }
+                    case PlayerService.PLAYER_SERVICE_CONNECTION_TYPE_CHANGED: {
+                        String connectionTypeName = intent.getStringExtra(PlayerService.PLAYER_SERVICE_CONNECTION_TYPE_EXTRA);
+                        if (connectionTypeName != null) {
+                            updateConnectionTypeIcon(ConnectivityChecker.ConnectionType.valueOf(connectionTypeName));
+                        }
                         break;
                     }
                 }
@@ -234,6 +244,8 @@ public class FragmentPlayerFull extends Fragment {
         textViewCurrentPlayTime = view.findViewById(R.id.textViewCurrentPlayTime);
         textViewNetworkUsageInfo = view.findViewById(R.id.textViewNetworkUsageInfo);
         textViewTimeCached = view.findViewById(R.id.textViewTimeCached);
+
+        imageViewConnectionTypeFull = view.findViewById(R.id.imageViewConnectionTypeFull);
 
         groupRecordings = view.findViewById(R.id.group_recording_info);
         imgRecordingIcon = view.findViewById(R.id.imgRecordingIcon);
@@ -368,7 +380,7 @@ public class FragmentPlayerFull extends Fragment {
             }
 
             if (favouriteManager.has(station.StationUuid)) {
-                StationActions.removeFromFavourites(requireContext(), null, null, station);
+                StationActions.removeFromFavourites(requireContext(), v, v, station);
             } else {
                 StationActions.markAsFavourite(requireContext(), station);
             }
@@ -424,6 +436,7 @@ public class FragmentPlayerFull extends Fragment {
         filter.addAction(PlayerService.PLAYER_SERVICE_TIMER_UPDATE);
         filter.addAction(PlayerService.PLAYER_SERVICE_STATE_CHANGE);
         filter.addAction(PlayerService.PLAYER_SERVICE_META_UPDATE);
+        filter.addAction(PlayerService.PLAYER_SERVICE_CONNECTION_TYPE_CHANGED);
 
         
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(updateUIReceiver, filter);
@@ -573,9 +586,42 @@ public class FragmentPlayerFull extends Fragment {
         updateRecordButton(PlayerServiceUtil.isPlaying(), PlayerServiceUtil.isRecording());
         updateFavouriteButton();
 
+        updateConnectionTypeIcon();
+
         timedUpdateTask.run();
 
         initialized = true;
+    }
+
+    private void updateConnectionTypeIcon() {
+        updateConnectionTypeIcon(ConnectivityChecker.getCurrentConnectionType(requireContext()));
+    }
+
+    private void updateConnectionTypeIcon(ConnectivityChecker.ConnectionType connectionType) {
+        if (imageViewConnectionTypeFull == null) {
+            return;
+        }
+
+        boolean showIndicator = PreferenceManager.getDefaultSharedPreferences(requireContext().getApplicationContext())
+                .getBoolean(PlayerService.METERED_CONNECTION_WARNING_KEY, false);
+
+        if (!showIndicator || connectionType == null || connectionType == ConnectivityChecker.ConnectionType.NONE || !PlayerServiceUtil.isPlaying()) {
+            imageViewConnectionTypeFull.setVisibility(View.GONE);
+            return;
+        }
+
+        switch (connectionType) {
+            case NOT_METERED:
+                imageViewConnectionTypeFull.setImageResource(R.drawable.ic_network_wifi);
+                imageViewConnectionTypeFull.setContentDescription(getString(R.string.content_desc_connection_type_wifi));
+                break;
+            case METERED:
+                imageViewConnectionTypeFull.setImageResource(R.drawable.ic_network_mobile);
+                imageViewConnectionTypeFull.setContentDescription(getString(R.string.content_desc_connection_type_mobile));
+                break;
+        }
+
+        imageViewConnectionTypeFull.setVisibility(View.VISIBLE);
     }
 
     private void updatePlaybackButtons(boolean playing, boolean recording) {
