@@ -22,7 +22,13 @@ public enum PlayState implements Parcelable {
     public static final Creator<PlayState> CREATOR = new Creator<PlayState>() {
         @Override
         public PlayState createFromParcel(Parcel in) {
-            return PlayState.values()[in.readInt()];
+            int ordinal = in.readInt();
+            PlayState[] values = PlayState.values();
+            // 越界保护：跨进程脏数据或版本升级后枚举顺序变化时回退到 Idle，避免崩溃
+            if (ordinal < 0 || ordinal >= values.length) {
+                return Idle;
+            }
+            return values[ordinal];
         }
 
         @Override

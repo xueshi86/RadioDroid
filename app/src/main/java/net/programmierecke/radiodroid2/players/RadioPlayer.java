@@ -84,7 +84,9 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
     private Handler playerThreadHandler;
 
     private PlayerListener playerListener;
-    private PlayState playState = PlayState.Idle;
+    // volatile：playState 在主线程与 ExoPlayer 回调线程之间共享，需保证可见性，
+    // 否则 stop() 可能读到过期值导致 ExoPlayer 不释放
+    private volatile PlayState playState = PlayState.Idle;
 
     private StreamLiveInfo lastLiveInfo;
 
@@ -153,6 +155,9 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
     }
 
     public final void play(final DataRadioStation station, final boolean isAlarm) {
+        // 取消旧的链接解析任务：避免旧任务回调污染新播放状态（清空新任务引用、对新电台报错暂停）
+        cancelStationLinkRetrieval();
+
         setState(PlayState.PrePlaying, -1);
 
         playStationTask = new PlayStationTask(station, mainContext,

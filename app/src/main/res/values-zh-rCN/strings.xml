@@ -470,7 +470,7 @@
     <string name="progress_writing_main_db">正在写入主数据库...</string>
     <string name="progress_switching_db">正在切换到新数据库...</string>
     <string name="update_completed">更新完成，共同步 %d 个电台，已切换到新数据</string>
-    <string name="update_confirm_replace_message">新数据(%d个)比现有数据(%d个)少，是否替换？</string>
+    <string name="update_confirm_replace_message">新数据(%1$d个)比现有数据(%2$d个)少，是否替换？</string>
     <string name="update_completed_keep_existing">更新完成，但用户选择继续使用现有数据</string>
     <string name="settings_language">界面语言</string>
     <string name="settings_language_desc">选择应用界面的语言</string>

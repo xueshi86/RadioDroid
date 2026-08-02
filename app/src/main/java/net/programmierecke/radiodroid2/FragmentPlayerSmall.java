@@ -58,6 +58,10 @@ public class FragmentPlayerSmall extends Fragment {
 
     private boolean firstPlayAttempted = false;
 
+    // 持有 LifecycleCallbacks 引用，便于在 Fragment 销毁时反注册，
+    // 避免 Application 永久持有 Fragment 实例导致内存泄漏
+    private LifecycleCallbacks lifecycleCallbacks;
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -91,7 +95,14 @@ public class FragmentPlayerSmall extends Fragment {
                     case PlayerService.PLAYER_SERVICE_CONNECTION_TYPE_CHANGED: {
                         String connectionTypeName = intent.getStringExtra(PlayerService.PLAYER_SERVICE_CONNECTION_TYPE_EXTRA);
                         if (connectionTypeName != null) {
-                            updateConnectionTypeIcon(ConnectivityChecker.ConnectionType.valueOf(connectionTypeName));
+                            // 防御非法 enum 名：valueOf 遇到未知字符串会抛 IllegalArgumentException 导致主线程崩溃
+                            ConnectivityChecker.ConnectionType type;
+                            try {
+                                type = ConnectivityChecker.ConnectionType.valueOf(connectionTypeName);
+                            } catch (IllegalArgumentException e) {
+                                type = ConnectivityChecker.ConnectionType.NONE;
+                            }
+                            updateConnectionTypeIcon(type);
                         }
                         break;
                     }
@@ -115,7 +126,8 @@ public class FragmentPlayerSmall extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        requireActivity().getApplication().registerActivityLifecycleCallbacks(new LifecycleCallbacks());
+        lifecycleCallbacks = new LifecycleCallbacks();
+        requireActivity().getApplication().registerActivityLifecycleCallbacks(lifecycleCallbacks);
 
         buttonPlay.setOnClickListener(v -> {
             if (PlayerServiceUtil.isPlaying()) {
@@ -179,6 +191,20 @@ public class FragmentPlayerSmall extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        // 反注册 LifecycleCallbacks：否则 Application 永久持有 Fragment 实例，
+        // 每次旋转/重建都会新增一个回调，导致内存泄漏与重复触发 tryPlayAtStart
+        if (lifecycleCallbacks != null) {
+            // 使用 getActivity() 而非 requireActivity()：onDestroy 时 Fragment 可能已 detach，
+            // requireActivity() 会抛 IllegalStateException；此时通过 Application 引用反注册
+            Activity host = getActivity();
+            if (host != null) {
+                try {
+                    host.getApplication().unregisterActivityLifecycleCallbacks(lifecycleCallbacks);
+                } catch (Exception ignored) {
+                }
+            }
+            lifecycleCallbacks = null;
+        }
     }
 
     public void setCallback(Callback callback) {

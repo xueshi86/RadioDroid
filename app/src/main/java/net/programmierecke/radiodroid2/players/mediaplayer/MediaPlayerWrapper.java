@@ -228,7 +228,11 @@ public class MediaPlayerWrapper implements PlayerWrapper, StreamProxyListener {
 
     @Override
     public void stopRecording() {
-        proxy.stopRecording();
+        // HLS 场景下 playRemote 会调用 stopProxy() 将 proxy 置 null，
+        // 此时调用 stopRecording() 会 NPE，需防御
+        if (proxy != null) {
+            proxy.stopRecording();
+        }
     }
 
     @Override
@@ -243,7 +247,8 @@ public class MediaPlayerWrapper implements PlayerWrapper, StreamProxyListener {
 
     @Override
     public String getExtension() {
-        return proxy.getExtension();
+        // proxy 为 null 时返回默认扩展名，避免 NPE
+        return proxy != null ? proxy.getExtension() : "mp3";
     }
 
     @Override

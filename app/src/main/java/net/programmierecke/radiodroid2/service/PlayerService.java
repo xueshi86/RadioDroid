@@ -985,7 +985,6 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
             mediaSession.setActive(true);
 
-        setMediaPlaybackState(PlaybackStateCompat.STATE_NONE);
             setMediaPlaybackState(PlaybackStateCompat.STATE_NONE);
         }
     }
@@ -996,7 +995,13 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
             mediaSession.setActive(false);
 
-            unregisterReceiver(becomingNoisyReceiver);
+            // try-catch 保护：若 registerReceiver 抛异常（如 SecurityException），
+            // mediaSession 已激活但 receiver 未注册，此处反注册会抛 IllegalArgumentException
+            try {
+                unregisterReceiver(becomingNoisyReceiver);
+            } catch (IllegalArgumentException e) {
+                Log.w(TAG, "becomingNoisyReceiver not registered");
+            }
         }
     }
 
@@ -1372,6 +1377,9 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
     /**
      * 应用均衡器设置并渐入音量。
+     * <p>
+     * 注意：必须先静音再应用均衡器，避免在 Android 5.1 等低版本上
+     * Equalizer 效果附着到音频会话时产生爆音（音频 DSP 管线重配置瞬间的瞬态噪声）。
      *
      * @param useAlarmFade 是否使用闹钟专属音量渐增参数
      */
@@ -1381,6 +1389,11 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         int streamCurVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         dbg("B", "PlayerService:1083", "applyEqualizerAndFadeIn called", java.util.Map.of("audioSessionId", audioSessionId, "maxGain", radioPlayer != null ? radioPlayer.getMaxGain() : -1, "streamCurVol", streamCurVol, "streamMaxVol", streamMaxVol, "useAlarmFade", useAlarmFade, "alarmFadeApplied", alarmFadeApplied));
         // #endregion
+
+        // 先静音，避免后续均衡器附着时产生爆音
+        if (radioPlayer != null) {
+            radioPlayer.setVolume(0f);
+        }
 
         applyEqualizerSettings(audioSessionId);
 
@@ -1406,7 +1419,6 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                 player.setMaxGain(1.0f);
                 player.setVolume(FULL_VOLUME);
             } else {
-                player.setVolume(0f);
                 Runnable fadeInTask = () -> fadeInVolume(player, 0f, FULL_VOLUME, 300);
                 pendingFadeInTasks.add(fadeInTask);
                 handler.postDelayed(fadeInTask, 50);
@@ -1903,37 +1915,56 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
     @Override
     public void foundLiveStreamInfo(final StreamLiveInfo liveInfo) {
-        StreamLiveInfo oldLiveInfo = this.liveInfo;
-        this.liveInfo = liveInfo;
+        // 此回调由 ExoPlayer/IcyDataSource 在子线程触发，而 currentStation、liveInfo、
+        // radioPlayer.getPlayState() 等字段均在主线程修改。直接在子线程访问会引发：
+        // 1) oldLiveInfo.getTitle().equals(...) 在 getTitle() 返回 null 时 NPE；
+        // 2) updateNotification() 读取 currentStation.StationUuid 时 currentStation 已被切到新电台或为 null；
+        // 3) 通知显示错误电台、轨道历史写入错误 stationUuid。
+        // 因此将整个方法体 post 到主 handler 串行化执行
+        handler.post(() -> {
+            StreamLiveInfo oldLiveInfo = this.liveInfo;
+            this.liveInfo = liveInfo;
 
-        if (oldLiveInfo == null || !oldLiveInfo.getTitle().equals(liveInfo.getTitle())) {
-            sendBroadCast(PLAYER_SERVICE_META_UPDATE);
-            updateNotification();
+            // null 安全的 title 比较：oldLiveInfo 或其 title 为 null 时视为变化
+            String oldTitle = oldLiveInfo == null ? null : oldLiveInfo.getTitle();
+            String newTitle = liveInfo.getTitle();
+            boolean titleChanged = oldTitle == null ? newTitle != null : !oldTitle.equals(newTitle);
 
-            Calendar calendar = Calendar.getInstance();
-            Date currentTime = calendar.getTime();
+            if (titleChanged) {
+                sendBroadCast(PLAYER_SERVICE_META_UPDATE);
+                updateNotification();
 
-            trackHistoryRepository.getLastInsertedHistoryItem((trackHistoryEntry, dao) -> {
-                if (trackHistoryEntry != null && trackHistoryEntry.title.equals(liveInfo.getTitle())) {
-                    // Prevent from generating several same entries when rapidly doing pause and resume.
-                    trackHistoryEntry.endTime = new Date(0);
-                    dao.update(trackHistoryEntry);
-                } else {
-                    dao.setCurrentPlayingTrackEndTime(currentTime);
-
-                    TrackHistoryEntry newTrackHistoryEntry = new TrackHistoryEntry();
-                    newTrackHistoryEntry.stationUuid = currentStation.StationUuid;
-                    newTrackHistoryEntry.artist = liveInfo.getArtist();
-                    newTrackHistoryEntry.title = liveInfo.getTitle();
-                    newTrackHistoryEntry.track = liveInfo.getTrack();
-                    newTrackHistoryEntry.stationIconUrl = currentStation.IconUrl;
-                    newTrackHistoryEntry.startTime = currentTime;
-                    newTrackHistoryEntry.endTime = new Date(0);
-
-                    trackHistoryRepository.insert(newTrackHistoryEntry);
+                // currentStation 可能在切台过程中被置 null，必须防御
+                if (currentStation == null) {
+                    return;
                 }
-            });
-        }
+
+                Calendar calendar = Calendar.getInstance();
+                Date currentTime = calendar.getTime();
+
+                trackHistoryRepository.getLastInsertedHistoryItem((trackHistoryEntry, dao) -> {
+                    if (trackHistoryEntry != null && liveInfo.getTitle() != null
+                            && liveInfo.getTitle().equals(trackHistoryEntry.title)) {
+                        // Prevent from generating several same entries when rapidly doing pause and resume.
+                        trackHistoryEntry.endTime = new Date(0);
+                        dao.update(trackHistoryEntry);
+                    } else {
+                        dao.setCurrentPlayingTrackEndTime(currentTime);
+
+                        TrackHistoryEntry newTrackHistoryEntry = new TrackHistoryEntry();
+                        newTrackHistoryEntry.stationUuid = currentStation.StationUuid;
+                        newTrackHistoryEntry.artist = liveInfo.getArtist();
+                        newTrackHistoryEntry.title = liveInfo.getTitle();
+                        newTrackHistoryEntry.track = liveInfo.getTrack();
+                        newTrackHistoryEntry.stationIconUrl = currentStation.IconUrl;
+                        newTrackHistoryEntry.startTime = currentTime;
+                        newTrackHistoryEntry.endTime = new Date(0);
+
+                        trackHistoryRepository.insert(newTrackHistoryEntry);
+                    }
+                });
+            }
+        });
     }
 
     @Override

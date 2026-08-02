@@ -49,6 +49,7 @@ import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
 
 import net.programmierecke.radiodroid2.proxy.ProxySettings;
+import net.programmierecke.radiodroid2.utils.CompositeX509TrustManager;
 import net.programmierecke.radiodroid2.utils.Tls12SocketFactory;
 
 import org.json.JSONObject;
@@ -62,6 +63,10 @@ import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.security.KeyStore;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -687,6 +692,80 @@ public class Utils {
             }
         }
 
+        return client;
+    }
+
+    /**
+     * 为 OkHttpClient 添加 ISRG Root X1 (Let's Encrypt 根证书) 到信任链。
+     * <p>
+     * Android 5.1 及更早版本的系统 TrustStore 不包含 ISRG Root X1（2015年6月发布），
+     * 导致使用 Let's Encrypt 证书的服务器 SSL 握手失败。
+     * 此方法创建一个组合式 TrustManager，系统 CA 优先验证，失败后尝试 ISRG Root X1。
+     * 在所有 Android 版本上安全使用：有 ISRG Root X1 的设备由系统直接验证通过，
+     * 没有的设备由额外的 TrustManager 兜底。
+     *
+     * @param client  OkHttpClient.Builder
+     * @param context 用于加载 res/raw/isrg_root_x1.pem
+     * @return 传入的 builder（链式调用）
+     */
+    public static OkHttpClient.Builder addIsrgRootX1(OkHttpClient.Builder client, Context context) {
+        try {
+            // 加载 ISRG Root X1 证书
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            Certificate isrgCert;
+            try (java.io.InputStream is = context.getResources().openRawResource(
+                    context.getResources().getIdentifier("isrg_root_x1", "raw", context.getPackageName()))) {
+                isrgCert = cf.generateCertificate(is);
+            }
+
+            // 创建只包含 ISRG Root X1 的 KeyStore
+            KeyStore isrgKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            isrgKeyStore.load(null, null);
+            isrgKeyStore.setCertificateEntry("isrg-root-x1", isrgCert);
+
+            // 创建 ISRG TrustManager
+            TrustManagerFactory isrgTmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            isrgTmf.init(isrgKeyStore);
+            X509TrustManager isrgTm = null;
+            for (TrustManager tm : isrgTmf.getTrustManagers()) {
+                if (tm instanceof X509TrustManager) {
+                    isrgTm = (X509TrustManager) tm;
+                    break;
+                }
+            }
+            if (isrgTm == null) {
+                Log.e("IsrgRootX1", "Failed to find X509TrustManager for ISRG Root X1");
+                return client;
+            }
+
+            // 获取系统 TrustManager
+            TrustManagerFactory systemTmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            systemTmf.init((KeyStore) null);
+            X509TrustManager systemTm = null;
+            for (TrustManager tm : systemTmf.getTrustManagers()) {
+                if (tm instanceof X509TrustManager) {
+                    systemTm = (X509TrustManager) tm;
+                    break;
+                }
+            }
+            if (systemTm == null) {
+                Log.e("IsrgRootX1", "Failed to find system X509TrustManager");
+                return client;
+            }
+
+            // 创建组合式 TrustManager
+            CompositeX509TrustManager compositeTm = new CompositeX509TrustManager(systemTm, isrgTm);
+
+            // 设置 SSLContext
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, new TrustManager[]{compositeTm}, null);
+
+            client.sslSocketFactory(sslContext.getSocketFactory(), compositeTm);
+
+            Log.i("IsrgRootX1", "Successfully added ISRG Root X1 to trust store");
+        } catch (Exception e) {
+            Log.e("IsrgRootX1", "Failed to add ISRG Root X1", e);
+        }
         return client;
     }
 

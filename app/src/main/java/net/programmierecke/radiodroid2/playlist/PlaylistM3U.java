@@ -33,6 +33,9 @@ public class PlaylistM3U {
             try {
                 decodeLine(line);
             } catch (MalformedURLException e) {
+                // 单行解析失败不应中断整个播放列表解析
+            } catch (RuntimeException e) {
+                // 防御 getBasePath 等处的边界异常，避免单行错误导致整列表解析失败
             }
         }
     }
@@ -64,6 +67,10 @@ public class PlaylistM3U {
     String getBasePath(String fullPath) {
         final char pathSeparator = '/';
         int sep = fullPath.lastIndexOf(pathSeparator);
+        // 路径不含分隔符时返回空串，避免 substring(0, -1) 抛 StringIndexOutOfBoundsException
+        if (sep < 0) {
+            return "";
+        }
         return fullPath.substring(0, sep);
     }
 
@@ -77,7 +84,7 @@ public class PlaylistM3U {
                 list.add(line);
             }
         } catch (IOException e) {
-
+            // 静默失败：StringReader 不会抛出真实的 IOException
         }
         return list.toArray(new String[0]);
     }

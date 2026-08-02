@@ -94,7 +94,9 @@ public class AlarmReceiver extends BroadcastReceiver {
         }
         if (!wakeLock.isHeld()) {
             if(BuildConfig.DEBUG) { Log.d(TAG,"acquire wakelock"); }
-            wakeLock.acquire();
+            // 设置 60 秒超时兜底：若 onServiceConnected 未被回调（bindService 失败或服务崩溃），
+            // wakelock 不会永久持有导致电量耗尽
+            wakeLock.acquire(60_000);
         }
         WifiManager wm = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         if (wm != null) {
@@ -107,6 +109,8 @@ public class AlarmReceiver extends BroadcastReceiver {
             }
             if (!wifiLock.isHeld()) {
                 if(BuildConfig.DEBUG) { Log.d(TAG,"acquire wifilock"); }
+                // WifiLock.acquire() 无超时重载，依赖 releaseLocks() 在服务连接/断开时释放；
+                // wakeLock 已有 60 秒超时兜底，可防止 onServiceConnected 未回调时的永久持有
                 wifiLock.acquire();
             }
         }else{

@@ -94,11 +94,13 @@ public class RadioBrowserServerManager {
 
     /**
      * Construct full url from server and path
+     * 默认使用 HTTPS：radio-browser API 调用必须加密传输，
+     * 否则中间人可篡改返回的流地址、搜索结果，窃听用户搜索内容
      */
     public static String constructEndpoint(String server, String path){
-        return "http://" + server + "/" + path;
+        return "https://" + server + "/" + path;
     }
-    
+
     /**
      * Construct full url from server and path with protocol
      */

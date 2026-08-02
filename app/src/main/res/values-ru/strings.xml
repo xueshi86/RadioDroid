@@ -267,6 +267,10 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="settings_click_trend_icon_visible_on">Иконка будет видна</string>
     <string name="settings_click_trend_icon_visible_off">Иконка будет скрыта</string>
 
+    <string name="settings_clear_icon_cache">Очистить кэш иконок</string>
+    <string name="settings_clear_icon_cache_summary">Удалить все кэшированные иконки станций. Иконки будут загружены повторно при необходимости.</string>
+    <string name="icon_cache_cleared">Кэш иконок очищен</string>
+
     <string name="settings_alarm">Будильник</string>
     <string name="settings_alarm_external">Включить внешнее приложение</string>
     <string name="settings_alarm_external_desc_on">Открыть будильник с помощью внешнего приложения по умолчанию</string>

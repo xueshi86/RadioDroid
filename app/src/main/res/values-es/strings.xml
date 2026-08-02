@@ -142,6 +142,10 @@
     <string name="settings_click_trend_icon_visible_on">El icono será visible</string>
     <string name="settings_click_trend_icon_visible_off">El icono se ocultará</string>
 
+    <string name="settings_clear_icon_cache">Limpiar caché de iconos</string>
+    <string name="settings_clear_icon_cache_summary">Eliminar todos los iconos de estaciones en caché. Los iconos se volverán a descargar cuando sea necesario.</string>
+    <string name="icon_cache_cleared">Caché de iconos limpiada</string>
+
     <string name="settings_alarm">Alarma</string>
     <string name="settings_alarm_external">Abrir aplicación externa</string>
     <string name="settings_alarm_external_desc_on">Abrir la alarma con la aplicación externa predeterminada</string>

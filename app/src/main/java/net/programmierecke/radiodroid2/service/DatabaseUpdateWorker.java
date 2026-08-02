@@ -543,8 +543,11 @@ public class DatabaseUpdateWorker extends Worker implements RadioStationReposito
      * 取消更新
      */
     public static void cancelUpdate(Context context) {
-        // 使用同步块确保与doWork和isUpdating方法保持一致性
-        synchronized (sLock) {
+        // 使用与 doWork() 相同的 ReentrantLock（sLock.lock()），
+        // synchronized(sLock) 用的是对象内置 monitor，与 ReentrantLock 互不阻塞，
+        // 会导致 cancelUpdate 与 doWork 并发修改 SharedPreferences，取消失效
+        sLock.lock();
+        try {
             Log.d(TAG, "Starting cancelUpdate process");
             
             // 清除更新状态，包括所有相关字段，确保下次启动新更新而不是恢复
@@ -620,7 +623,9 @@ public class DatabaseUpdateWorker extends Worker implements RadioStationReposito
             }
             
             Log.d(TAG, "CancelUpdate process completed");
-        } // 结束synchronized块
+        } finally {
+            sLock.unlock();
+        }
     }
     
     /**

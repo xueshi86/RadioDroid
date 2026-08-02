@@ -68,7 +68,17 @@ public class ConnectivityChecker {
                     boolean metered = !networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED);
                     onConnectivityChanged(true, metered ? ConnectionType.METERED : ConnectionType.NOT_METERED);
                 }
-                // -Snip-
+
+                @Override
+                public void onLost(Network network) {
+                    // 网络完全丢失时必须通知 NONE，否则 UI 网络类型图标会停留在上一次状态
+                    onConnectivityChanged(false, ConnectionType.NONE);
+                }
+
+                @Override
+                public void onUnavailable() {
+                    onConnectivityChanged(false, ConnectionType.NONE);
+                }
             };
             connectivityManager.registerNetworkCallback(new NetworkRequest.Builder().build(), networkCallback);
         } else {

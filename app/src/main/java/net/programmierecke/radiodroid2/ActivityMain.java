@@ -190,23 +190,11 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
 
         Log.d(TAG, "FilesDir: "+getFilesDir().getAbsolutePath());
         Log.d(TAG, "CacheDir: "+getCacheDir().getAbsolutePath());
-        try {
-            File dir = new File(getFilesDir().getAbsolutePath());
-            if (dir.isDirectory()) {
-
-                String[] children = dir.list();
-                for (String aChildren : children) {
-                    if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "delete file:" + aChildren);
-                    }
-                    try {
-                        new File(dir, aChildren).delete();
-                    } catch (Exception e) {
-                    }
-                }
-            }
-        } catch (Exception e) {
-        }
+        // 此前这里会遍历 filesDir 并删除所有顶层文件，但：
+        // 1) 该操作在每次 onCreate（包括旋转重建）都执行；
+        // 2) filesDir 实际存放了 StationIconCache 的永久/半永久图标目录等应用数据；
+        // 3) File.delete() 虽不会递归删除子目录，但任何写入 filesDir 顶层的未来文件都会被静默清空。
+        // 如需清理缓存应使用 getCacheDir()，目前没有此需求，故移除该循环。
 
         final Toolbar myToolbar = findViewById(R.id.my_awesome_toolbar);
         setSupportActionBar(myToolbar);

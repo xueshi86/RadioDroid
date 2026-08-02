@@ -40,7 +40,10 @@ public class StreamProxy implements Recordable {
     private String uri;
     private byte readBuffer[] = new byte[256 * 16];
     private volatile String localAddress = null;
-    private boolean isStopped = false;
+    // volatile：isStopped 由调用线程（主线程或 player 线程）在 stop() 中写为 true，
+    // 由 StreamProxy 内部线程在 while(!isStopped) 循环中读取。无 volatile 时 JIT 可能
+    // 将读取优化为寄存器缓存，导致 stop() 后代理线程长时间不退出，持续占用 socket 和带宽
+    private volatile boolean isStopped = false;
     private volatile String streamContentType = null;
 
     public StreamProxy(OkHttpClient httpClient, String uri, StreamProxyListener callback) {

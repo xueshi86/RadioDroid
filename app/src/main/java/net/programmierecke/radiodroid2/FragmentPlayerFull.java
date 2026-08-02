@@ -184,7 +184,14 @@ public class FragmentPlayerFull extends Fragment {
                     case PlayerService.PLAYER_SERVICE_CONNECTION_TYPE_CHANGED: {
                         String connectionTypeName = intent.getStringExtra(PlayerService.PLAYER_SERVICE_CONNECTION_TYPE_EXTRA);
                         if (connectionTypeName != null) {
-                            updateConnectionTypeIcon(ConnectivityChecker.ConnectionType.valueOf(connectionTypeName));
+                            // 防御非法 enum 名：valueOf 遇到未知字符串会抛 IllegalArgumentException 导致主线程崩溃
+                            ConnectivityChecker.ConnectionType type;
+                            try {
+                                type = ConnectivityChecker.ConnectionType.valueOf(connectionTypeName);
+                            } catch (IllegalArgumentException e) {
+                                type = ConnectivityChecker.ConnectionType.NONE;
+                            }
+                            updateConnectionTypeIcon(type);
                         }
                         break;
                     }

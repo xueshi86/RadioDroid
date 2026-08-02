@@ -186,7 +186,11 @@ public class RadioDroidApp extends MultiDexApplication {
             Toast toast = Toast.makeText(this, getResources().getString(R.string.ignore_proxy_settings_invalid), Toast.LENGTH_SHORT);
             toast.show();
         }
-        return Utils.enableTls12OnPreLollipop(builder);
+        builder = Utils.enableTls12OnPreLollipop(builder);
+        // 添加 ISRG Root X1 (Let's Encrypt 根证书)，解决 Android 5.1 等旧版本
+        // 系统 TrustStore 不包含该证书导致 SSL 握手失败的问题
+        builder = Utils.addIsrgRootX1(builder, this);
+        return builder;
     }
 
     public OkHttpClient.Builder newHttpClientWithoutProxy() {
@@ -196,7 +200,9 @@ public class RadioDroidApp extends MultiDexApplication {
             builder.addInterceptor(testsInterceptor);
         }
 
-        return Utils.enableTls12OnPreLollipop(builder);
+        builder = Utils.enableTls12OnPreLollipop(builder);
+        builder = Utils.addIsrgRootX1(builder, this);
+        return builder;
     }
 
     public boolean setCurrentOkHttpProxy(@NonNull OkHttpClient.Builder builder) {

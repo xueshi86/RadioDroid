@@ -613,6 +613,61 @@ Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elemen
 
 > Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+### v1.02
+*2026-07-31*
+
+**首次安装默认设置调整**
+- **优化**：外观 → 主题默认选项为「自动」，新安装用户首次启动即适配系统主题
+- **优化**：启动行为 → 启动时默认「显示所有电台」
+- **优化**：互动页「点击收藏」「自动收藏」「无效电台」「热度图标」默认不选中
+- **优化**：播放器页「显示网络类型指示器」「扬声器零音量暂停」「手机耳机断开暂停」「音量映射增强」默认选中
+- **说明**：以上均为首次安装时的默认值；用户若已修改设置，覆盖/升级安装不会覆盖用户设置
+
+**Android 5.1 播放兼容性修复（Let's Encrypt 证书）**
+- **新增**：`CompositeX509TrustManager` 组合式信任管理器 — 系统 CA 优先验证，失败后回退到内置的 ISRG Root X1
+- **新增**：打包 ISRG Root X1（Let's Encrypt 根证书）到 `res/raw`，解决 Android 5.1 手机系统 TrustStore 不含该证书导致使用 Let's Encrypt 证书的电台（如 rautemusik、radiohost、zeno.fm 等）SSL 握手失败、静音无声音的问题
+- **优化**：`RadioDroidApp.newHttpClient()` / `newHttpClientWithoutProxy()` 统一注入 ISRG Root X1；在有该证书的设备（Android 6+）上由系统直接验证，不影响原有行为
+
+**播放器与均衡器爆音修复**
+- **修复**：应用均衡器附着到音频会话前先静音应用层音量，消除 Android 5.1 等低版本上 DSP 管线重配置瞬间的爆音
+
+**播放错误提示**
+- **修复**：`ExoPlayerWrapper.onPlayerErrorChanged` 无条件停止并报告错误，不再因服务器返回错误码或 TLS 握手失败而静默停留在错误状态、无提示无声音
+
+**语言资源补全**
+- **新增**：清除图标缓存设置项的西班牙语、俄语翻译（此前显示英文）
+
+**代码审查 — Critical（崩溃/数据丢失）**
+- **修复**：`StationSaveManager.addMultiple` 空/Null 列表前置防御 — 误导入空 M3U 不再清空已有数据
+- **修复**：`StationSaveManager.addMultiple` 导入电台未设置 `queue` 字段，播放切换时补 `station_new.queue`，避免 NPE
+- **修复**：`PlayState` Parcelable 反序列化序号越界 — `ordinal < 0` 或越界时返回 `Idle`，避免损坏 Parcel 崩溃
+- **修复**：`MediaPlayerWrapper` proxy 为 null 时 NPE — 增加 `proxy != null` 防御，`getExtension()` 返回 `"mp3"` 默认值
+- **修复**：`PlaylistM3U.getBasePath` 无分隔符路径 `substring(0, -1)` 抛 `StringIndexOutOfBoundsException` — 分隔符为 -1 时返回空串
+
+**Major（功能异常）**
+- **修复**：`PlayerService.foundLiveStreamInfo` 子线程竞态 — 回调统一 `handler.post()` 主线程串行化，null 安全比较标题变化
+- **修复**：`RadioPlayer.playState` 无 `volatile` 可见性 + `play()` 旧链接解析任务污染 — 加 `volatile` 并在 `play()` 开头 `cancelStationLinkRetrieval()`
+- **修复**：`StreamProxy.isStopped` 无 `volatile` ，JIT 缓存导致代理线程退出延迟 — 改 `volatile`，`stop()` 后及时释放 socket 与带宽
+- **修复**：`DatabaseUpdateWorker.cancelUpdate` 锁机制错误 — 改 `sLock.lock()` + try/finally unlock，取消失效问题
+- **修复**：`RadioBrowserServerManager.constructEndpoint` HTTP 明文传输 — 改为 `https://` 强制加密
+- **修复**：`PlayerService` 重复调用 `setMediaPlaybackState()` 及 `unregisterReceiver` 未注册抛异常 — 删除重复行、加 try-catch 保护
+- **修复**：`ConnectivityChecker` 未实现 `onLost()/onUnavailable()` — 网络断开后 UI 网络类型图标卡旧状态
+- **修复**：`NetworkCallback` 网络丢失未通知 UI
+
+**Minor（健壮性/体验）**
+- **修复**：`FragmentPlayerSmall.onDestroy` 用 `requireActivity()` — 改为 `getActivity()` + null 检查，避免 detach 后崩溃
+- **修复**：`AlarmReceiver` `WifiLock.acquire()` 带超时参数编译错误 — 去除超时重载
+- **修复**：values-zh-rCN `update_confirm_replace_message` 多占位符非位置格式 — 改为 `%1$d/%2$d`
+- **修复**：`PlaylistM3U` 单行解析失败中断整个列表 — 增加 `catch (RuntimeException)` 跳过异常行
+- **修复**：`ActivityMain` 广播接收器注册/反注册配对，避免泄漏
+- **新增**：`FragmentSettings` 图标缓存清除功能及 es/ru/zh 翻译
+- **修复**：`RadioDroidApp` 初始化异常保护与日志记录
+- **修复**：`BootReceiver` 主线程耗时处理 — 改异步线程避免 ANR
+- **修复**：`Utils` 缓存文件处理增强 — try-with-resources 与详细错误日志
+
+**版本更新**
+- 版本号升级至 v1.02 (versionCode 111)
+
 ### v1.01
 *2026-07-27*
 

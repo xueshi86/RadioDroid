@@ -24,18 +24,24 @@ import org.json.JSONArray;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Observable;
 import java.util.Vector;
 
@@ -105,12 +111,24 @@ public class StationSaveManager extends Observable {
     }
 
     public void addMultiple(List<DataRadioStation> stations) {
+        // 防御空列表：避免误导入空 M3U 时静默清空已有数据
+        if (stations == null || stations.isEmpty()) {
+            Log.w("SAVE", "addMultiple called with empty list, ignoring to protect existing data");
+            notifyAllListeners();
+            return;
+        }
+
         // 清空现有列表，实现覆盖式导入
         listStations.clear();
 
         // 添加新导入的电台，同时按 UUID 去重，避免 M3U 内部重复导致列表重复
         for (DataRadioStation station_new: stations){
             if (!has(station_new.StationUuid)) {
+                // 与 add()/addFront()/addAll() 保持一致：设置 queue 字段，
+                // 否则 PlayerService 调用 getNextById/getPreviousById 时会 NPE
+                if (station_new.queue == null) {
+                    station_new.queue = this;
+                }
                 listStations.add(station_new);
             }
         }
@@ -121,6 +139,10 @@ public class StationSaveManager extends Observable {
 
     public void replaceList(List<DataRadioStation> stations_new) {
         for (DataRadioStation station_new: stations_new) {
+            // 设置 queue 字段，避免 PlayerService 调用 getNextById/getPreviousById 时 NPE
+            if (station_new.queue == null) {
+                station_new.queue = this;
+            }
             for (int i = 0; i < listStations.size(); i++) {
                 if (listStations.get(i).StationUuid.equals(station_new.StationUuid)){
                     listStations.set(i, station_new);
@@ -562,7 +584,9 @@ public class StationSaveManager extends Observable {
         final OkHttpClient httpClient = radioDroidApp.getHttpClient();
 
         File f = new File(filePath, fileName);
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(f, false))) {
+        // 显式指定 UTF-8 字符集，与 SaveM3UToStream 保持一致，避免默认字符集导致乱码
+        try (BufferedWriter bw = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(f), StandardCharsets.UTF_8))) {
             SaveM3UWriter(bw);
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
                 context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC))));
@@ -579,11 +603,19 @@ public class StationSaveManager extends Observable {
 
     public boolean SaveM3UWriter(Writer bw) {
         try {
+            // 对 listStations 做快照，避免导出过程中主线程修改列表触发 ConcurrentModificationException
+            List<DataRadioStation> snapshot;
+            synchronized (this) {
+                snapshot = new ArrayList<>(listStations);
+            }
             bw.write("#EXTM3U\n");
-            for (DataRadioStation station : listStations) {
+            for (DataRadioStation station : snapshot) {
+                // 转义 Name/StreamUrl 中的换行符，避免破坏 M3U 格式
+                String safeName = station.Name == null ? "" : station.Name.replaceAll("[\\r\\n]", " ");
+                String safeUrl = station.StreamUrl == null ? "" : station.StreamUrl.replaceAll("[\\r\\n]", "");
                 bw.write(M3U_PREFIX + station.StationUuid + "\n");
-                bw.write("#EXTINF:-1," + station.Name + "\n");
-                bw.write(station.StreamUrl + "\n\n");
+                bw.write("#EXTINF:-1," + safeName + "\n");
+                bw.write(safeUrl + "\n\n");
             }
             bw.flush();
 
@@ -595,21 +627,28 @@ public class StationSaveManager extends Observable {
     }
 
     public boolean SaveM3UToStream(OutputStream outputStream) {
+        // 注意：不关闭底层 outputStream（调用方负责），仅确保 BufferedWriter 的缓冲被刷新
+        BufferedWriter bw = null;
         try {
-            OutputStreamWriter osw = new OutputStreamWriter(outputStream, "UTF-8");
-            BufferedWriter bw = new BufferedWriter(osw);
+            bw = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
             return SaveM3UWriter(bw);
         } catch (Exception e) {
             Log.e("Exception", "Stream write failed: " + e.toString());
             return false;
+        } finally {
+            if (bw != null) {
+                try {
+                    bw.flush();
+                } catch (IOException ignored) {
+                }
+            }
         }
     }
 
     List<DataRadioStation> LoadM3UInternal(String filePath, String fileName) {
-        try {
-            File f = new File(filePath, fileName);
-            FileReader fr = new FileReader(f);
-            return LoadM3UReader(fr);
+        // 显式指定 UTF-8 字符集，与 SaveM3U 保持一致
+        try (InputStream is = new FileInputStream(new File(filePath, fileName))) {
+            return LoadM3UReader(new InputStreamReader(is, StandardCharsets.UTF_8));
         } catch (Exception e) {
             Log.e("LOAD", "File read failed: " + e.toString());
             return null;
@@ -617,46 +656,56 @@ public class StationSaveManager extends Observable {
     }
 
     protected List<DataRadioStation> LoadM3UReader(Reader reader) {
-        try {
+        final RadioDroidApp radioDroidApp = (RadioDroidApp) context.getApplicationContext();
+        final OkHttpClient httpClient = radioDroidApp.getHttpClient();
+        ArrayList<String> listUuids = new ArrayList<String>();
+
+        // 用 try-with-resources 关闭 BufferedReader，避免异常路径下文件句柄泄漏
+        try (BufferedReader br = new BufferedReader(reader)) {
             String line;
-
-            final RadioDroidApp radioDroidApp = (RadioDroidApp) context.getApplicationContext();
-            final OkHttpClient httpClient = radioDroidApp.getHttpClient();
-            ArrayList<String> listUuids = new ArrayList<String>();
-
-            BufferedReader br = new BufferedReader(reader);
+            boolean firstLine = true;
             while ((line = br.readLine()) != null) {
-                Log.v("LOAD", "line: "+line);
-                if (line.startsWith(M3U_PREFIX)) {
-                    try {
-                        if (line.length() > M3U_PREFIX.length()) {
-                            String uuid = line.substring(M3U_PREFIX.length()).trim();
-                            listUuids.add(uuid);
-                        }
-                    } catch (Exception e) {
-                        Log.e("LOAD", e.toString());
+                // 跳过 UTF-8 BOM（如有），避免首行 #EXTM3U 或 #RADIOBROWSERUUID 解析失败
+                if (firstLine) {
+                    if (line.startsWith("\uFEFF")) {
+                        line = line.substring(1);
                     }
+                    firstLine = false;
+                }
+                if (line.startsWith(M3U_PREFIX) && line.length() > M3U_PREFIX.length()) {
+                    String uuid = line.substring(M3U_PREFIX.length()).trim();
+                    listUuids.add(uuid);
                 }
             }
-            br.close();
-
-            List<DataRadioStation> listStationsNew = Utils.getStationsByUuid(httpClient, context, listUuids);
-
-            // sort list to have the same order as the initial save file
-            List<DataRadioStation> listStationsSorted = new ArrayList<DataRadioStation>();
-            for (String uuid: listUuids)
-            {
-                for (DataRadioStation s: listStationsNew){
-                    if (uuid.equals(s.StationUuid)){
-                        listStationsSorted.add(s);
-                        break;
-                    }
-                }
-            }
-            return listStationsSorted;
         } catch (Exception e) {
             Log.e("LOAD", "File read failed: " + e.toString());
             return null;
         }
+
+        // M3U 中无 UUID 时直接返回空列表，避免发起空 uuids 的网络请求
+        if (listUuids.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<DataRadioStation> listStationsNew = Utils.getStationsByUuid(httpClient, context, listUuids);
+        // 网络失败时 getStationsByUuid 返回 null，避免后续 for-each 解引用 null 抛 NPE
+        if (listStationsNew == null) {
+            Log.e("LOAD", "getStationsByUuid returned null (network failure?)");
+            return null;
+        }
+
+        // 用 Map 替代 O(n*m) 嵌套循环，按 M3U 文件中的顺序排序
+        Map<String, DataRadioStation> byUuid = new HashMap<>();
+        for (DataRadioStation s : listStationsNew) {
+            byUuid.put(s.StationUuid, s);
+        }
+        List<DataRadioStation> listStationsSorted = new ArrayList<>();
+        for (String uuid : listUuids) {
+            DataRadioStation s = byUuid.get(uuid);
+            if (s != null) {
+                listStationsSorted.add(s);
+            }
+        }
+        return listStationsSorted;
     }
 }

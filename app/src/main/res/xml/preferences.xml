@@ -221,14 +221,14 @@
             android:title="@string/settings_play_external" />
 
         <CheckBoxPreference
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:key="warn_no_wifi"
             android:summaryOff="@string/settings_warn_no_wifi_off"
             android:summaryOn="@string/settings_warn_no_wifi_on"
             android:title="@string/settings_warn_no_wifi" />
 
         <SwitchPreferenceCompat
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:key="pause_on_speaker_zero_volume"
             android:title="@string/settings_pause_on_speaker_zero_volume"
             android:summaryOn="@string/settings_pause_on_speaker_zero_volume_summary_on"

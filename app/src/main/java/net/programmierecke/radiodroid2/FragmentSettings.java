@@ -797,7 +797,10 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             }
         };
         IntentFilter filter = new IntentFilter(PLAYER_SERVICE_TIMER_FINISHED);
-        requireContext().registerReceiver(timerFinishedReceiver, filter);
+        // 使用 LocalBroadcastManager 注册：PlayerService.sendBroadCast() 通过 LocalBroadcastManager 发送，
+        // 必须用 LocalBroadcastManager.registerReceiver 才能收到；同时避免 Android 14+ 上
+        // Context.registerReceiver(receiver, filter) 二参重载抛 SecurityException
+        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(timerFinishedReceiver, filter);
         
         // 初始化并注册数据库更新广播接收器
         databaseUpdatedReceiver = new BroadcastReceiver() {
@@ -846,11 +849,18 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         
         // 注销广播接收器
         if (timerFinishedReceiver != null) {
-            requireContext().unregisterReceiver(timerFinishedReceiver);
+            // 与注册对应，使用 LocalBroadcastManager 注销；try-catch 防御未注册情况
+            try {
+                LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(timerFinishedReceiver);
+            } catch (IllegalArgumentException ignored) {
+            }
         }
-        
+
         if (databaseUpdatedReceiver != null) {
-            LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(databaseUpdatedReceiver);
+            try {
+                LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(databaseUpdatedReceiver);
+            } catch (IllegalArgumentException ignored) {
+            }
         }
         
         // 隐藏进度对话框但不取消更新
