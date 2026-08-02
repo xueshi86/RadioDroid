@@ -968,7 +968,11 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             // API 19+ 使用系统 SAF 文件选择器
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
-            intent.setType("audio/x-mpegurl");
+            // 不限制 MIME 类型：Android 各版本/各厂商文件管理器对 .m3u 的 MIME 映射不统一
+            // （audio/x-mpegurl / application/octet-stream / application/vnd.apple.mpegurl 等），
+            // 任何 MIME 过滤都可能把 .m3u 文件置灰不可选。用 "*/*" 确保所有文件都可选，
+            // 文件有效性在 LoadM3U 解析阶段保证（无效行自动跳过）。
+            intent.setType("*/*");
             intent.putExtra(Intent.EXTRA_TITLE, "playlist.m3u");
             startActivityForResult(intent, ACTION_LOAD_FILE);
         } else {

@@ -637,6 +637,10 @@ Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elemen
 **语言资源补全**
 - **新增**：清除图标缓存设置项的西班牙语、俄语翻译（此前显示英文）
 
+**收藏导入 M3U 文件选择修复**
+- **修复**：从播放列表导入收藏时，文件管理器中 `.m3u` 播放列表文件变灰不可选 — 原 `intent.setType("audio/x-mpegurl")` 按单一 MIME 过滤过窄，Android 各版本/各厂商文件管理器对 `.m3u` 的 MIME 映射不统一（`audio/x-mpegurl` / `application/octet-stream` / `application/vnd.apple.mpegurl` 等），导致文件被置灰无法选择
+- **修复方案**：改为 `intent.setType("*/*")` 且不设置 `EXTRA_MIME_TYPES`，确保所有文件可选；文件有效性由 `LoadM3U` 解析阶段保证（无效行自动跳过）
+
 **代码审查 — Critical（崩溃/数据丢失）**
 - **修复**：`StationSaveManager.addMultiple` 空/Null 列表前置防御 — 误导入空 M3U 不再清空已有数据
 - **修复**：`StationSaveManager.addMultiple` 导入电台未设置 `queue` 字段，播放切换时补 `station_new.queue`，避免 NPE
