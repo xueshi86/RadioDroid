@@ -148,6 +148,7 @@
     <string name="error_play_stream">Stream-Wiedergabe schlug fehl.</string>
 
     <string name="error_record_needs_write">Die Aufnahmefunktion benötigt Schreibberechtigung!</string>
+    <string name="error_record_not_playing">Starte zuerst die Wiedergabe, bevor du aufnimmst</string>
     <string name="error_permission_denied">Berechtigung verweigert</string>
     <string name="error_grant_audiofocus">Das System gab den Audiokanal nicht frei.</string>
 
@@ -303,4 +304,9 @@
     <string name="recording_detail_size">Dateigröße:</string>
     <string name="recording_detail_duration">Dauer (geschätzt):</string>
     <string name="recording_detail_modified">Geändert:</string>
+    <string name="recording_player_title">Aufnahme abspielen</string>
+    <string name="recording_play">Abspielen</string>
+    <string name="recording_pause">Pause</string>
+    <string name="recording_play_external">Mit externem Player abspielen</string>
+    <string name="recording_empty_file">Die Aufnahmedatei ist leer</string>
 </resources>

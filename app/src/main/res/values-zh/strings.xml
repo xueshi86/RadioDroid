@@ -695,6 +695,29 @@
     <string name="player_total_play_time">总时长: %1$s</string>
     <string name="player_current_play_time">当前时长: %1$s</string>
     <string name="player_network_usage">流量: %1$s</string>
-    <string name="player_buffer_time">缓冲时长: %1$s</string>
+    <string name="player_buffer_time">緩衝時長: %1$s</string>
+
+    <string name="settings_bluetooth_connect_permission">鄰近裝置權限</string>
+    <string name="settings_bluetooth_connect_permission_summary">Android 12 及以上版本需要此權限來偵測藍牙音訊裝置的連線。此權限屬於「鄰近裝置」類別。若沒有此權限，藍牙斷線／連線功能將無法使用。</string>
+    <string name="settings_bluetooth_connect_permission_not_needed">此 Android 版本不需要</string>
+    <string name="settings_bluetooth_connect_permission_denied">權限遭到拒絕。藍牙斷線／連線功能無法使用。</string>
+    <string name="error_record_not_playing">請先開始播放再錄音</string>
+    <string name="alarm_repeat">重複</string>
+    <string name="context_menu_refresh_icon">重新整理圖示</string>
+    <string name="recording_player_title">播放錄音</string>
+    <string name="recording_play">播放</string>
+    <string name="recording_pause">暫停</string>
+    <string name="recording_play_external">使用外部播放器播放</string>
+    <string name="recording_empty_file">錄音檔案為空</string>
+    <string name="detail_equalizer_settings">等化器設定</string>
+    <string name="buffer_settings_title">播放緩衝</string>
+    <string name="buffer_settings_min">0.5秒</string>
+    <string name="buffer_settings_max">30秒</string>
+    <string name="buffer_settings_default">預設</string>
+    <string name="buffer_settings_reset">重置</string>
+    <string name="buffer_settings_apply">套用</string>
+    <string name="buffer_settings_seconds">%1$.1f 秒</string>
+    <string name="buffer_settings_default_desc">預設 (2.5秒)</string>
+    <string name="buffer_settings_custom_desc">自訂 (%1$.1f秒)</string>
 
 </resources>

@@ -231,6 +231,13 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     private long totalPlayTimeAccumulatedMillis = 0;
     private long currentPlayingSessionStart = 0;
     private boolean playStateIsPlaying = false;
+    /**
+     * 本次播放会话是否已完成“静音→均衡器附着→音量渐入”初始化。
+     * ExoPlayer 对同一会话可能连续通知多次 Playing（STATE_READY 回调与
+     * setPlayWhenReady 后的手动回调共两条路径）。用它避免重复初始化导致在
+     * 播放过程中释放+重建 AudioEffect，触发 DSP 效果链重配置而产生爆音。
+     */
+    private boolean eqAndFadeInitialized = false;
 
     private boolean notificationIsActive = false;
 
@@ -484,8 +491,14 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                                 resume();
                             }
 
-                            // 渐变恢复到满音量，避免瞬间音量突增
-                            fadeInVolume(radioPlayer, DUCK_VOLUME, FULL_VOLUME, 200);
+                            // 仅在播放已真正开始时做 DUCK→FULL 恢复渐入。
+                            // 播放刚启动时（还在缓冲/初始化）请求焦点获得的 GAIN 回调
+                            // 若立即把音量拉到 DUCK_VOLUME，会与 applyEqualizerAndFadeIn
+                            // 的“静音→渐入”竞争，造成起始瞬间音量突增。
+                            if (playStateIsPlaying) {
+                                // 渐变恢复到满音量，避免瞬间音量突增
+                                fadeInVolume(radioPlayer, DUCK_VOLUME, FULL_VOLUME, 200);
+                            }
                             break;
                         case AudioManager.AUDIOFOCUS_LOSS:
 
@@ -1384,6 +1397,21 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
      * @param useAlarmFade 是否使用闹钟专属音量渐增参数
      */
     private void applyEqualizerAndFadeIn(int audioSessionId, boolean useAlarmFade) {
+        // 幂等保护：ExoPlayer 对同一播放会话可能发出多次 Playing 通知
+        // （STATE_READY 在 buffering→ready 切换、seek 等场景下可能重复触发）。
+        // 若每次都重新执行"静音→释放/重建均衡器→渐入"，会在播放过程中反复
+        // 触发 AudioFlinger 效果链重配置，低版本 Android 上会产生爆音，
+        // 且音量会从渐入中途被重置回 0，表现为"开始播放不到一秒突然很大声"。
+        // 对闹钟模式同样生效：第一次已完成 startAlarmVolumeOverride + 满音量设置，
+        // 重复执行只会释放并重建均衡器产生爆音。
+        if (eqAndFadeInitialized) {
+            // #region debug-point B:apply-equalizer
+            dbg("B", "PlayerService:applyEqualizerAndFadeIn", "skip duplicate Playing notification", java.util.Map.of("audioSessionId", audioSessionId, "useAlarmFade", useAlarmFade));
+            // #endregion
+            return;
+        }
+        eqAndFadeInitialized = true;
+
         // #region debug-point B:apply-equalizer
         int streamMaxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         int streamCurVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
@@ -1829,6 +1857,8 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                     }
                     default: {
                         releaseServiceEqualizer();
+                        // 离开 Playing 状态（缓冲/停止/出错）后，下次 Playing 需重新初始化音量与均衡器
+                        eqAndFadeInitialized = false;
 
                         if (state != PlayState.PrePlaying) {
                             disableMediaSession();

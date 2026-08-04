@@ -63,3 +63,20 @@ Thumbs.db
 build_debug.log
 # Logcat output
 logcat*.txt
+
+# Trae IDE
+.trae/
+
+# Local analysis / temp artifacts
+analyze.py
+_extract_missing.py
+_extract_missing2.py
+_missing_keys.txt
+_missing_keys2.txt
+missing_keys.txt
+de_missing_computed.txt
+de_missing_values.tsv
+
+# Exported data
+RadioDroid_Favorites_*.m3u
+radio_droid_database_*.db

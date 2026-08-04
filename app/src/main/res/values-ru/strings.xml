@@ -707,4 +707,43 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="player_network_usage">Трафик: %1$s</string>
     <string name="player_buffer_time">Буфер: %1$s</string>
 
+    <string name="detail_shortcut_requested">Запрос на добавление ярлыка на главный экран</string>
+    <string name="settings_bluetooth_connect_permission">Разрешение на доступ к nearby devices</string>
+    <string name="settings_bluetooth_connect_permission_summary">Требуется в Android 12 и новее для обнаружения подключения Bluetooth-аудиоустройств. Это разрешение относится к категории «Соседние устройства». Без него функции подключения/отключения Bluetooth не будут работать.</string>
+    <string name="settings_bluetooth_connect_permission_not_needed">Не требуется для этой версии Android</string>
+    <string name="settings_bluetooth_connect_permission_denied">Разрешение отклонено. Функции подключения/отключения Bluetooth недоступны.</string>
+    <string name="content_desc_connection_type">Тип сети</string>
+    <string name="content_desc_connection_type_wifi">Подключено через Wi-Fi</string>
+    <string name="content_desc_connection_type_mobile">Подключено через мобильную сеть</string>
+    <string name="no_audio_apps_found">На этом устройстве не найдено аудиоплееров</string>
+    <string name="settings_alarm_audio_player_not_selected">Не выбрано</string>
+    <string name="error_record_not_playing">Начните воспроизведение перед записью</string>
+    <string name="error_permission_denied">Разрешение отклонено</string>
+    <string name="alarm_repeat">Повторять</string>
+    <string name="context_menu_refresh_icon">Обновить значок</string>
+    <string name="update_failed_db_migration">Обновление не удалось: несовместимая версия базы данных. Локальная база данных будет пересоздана при следующем обновлении.</string>
+    <string name="update_failed_network">Обновление не удалось: ошибка сетевого подключения. Проверьте подключение и попробуйте снова.</string>
+    <string name="update_failed_storage">Обновление не удалось: недостаточно места. Освободите место и попробуйте снова.</string>
+    <string name="update_network_unavailable_warning">Не удаётся подключиться к серверу Radio Browser. Проверьте подключение к сети и повторите попытку позже.</string>
+    <string name="update_network_unstable_title">Нестабильная сеть</string>
+    <string name="update_network_unstable_warning">Соединение медленное (быстрейший ответ: %1$d мс). Обновление может неоднократно завершаться с ошибкой. Рекомендуется переключиться на более стабильную сеть или повторить позже.</string>
+    <string name="update_network_continue_anyway">Продолжить в любом случае</string>
+    <string name="update_network_cancel">Отмена</string>
+    <string name="update_network_error_warning">Проверка сети не удалась: %1$s\n\nОбновление может завершиться с ошибкой. Продолжить?</string>
+    <string name="recording_player_title">Воспроизвести запись</string>
+    <string name="recording_play">Воспроизвести</string>
+    <string name="recording_pause">Пауза</string>
+    <string name="recording_play_external">Воспроизвести во внешнем плеере</string>
+    <string name="recording_empty_file">Файл записи пуст</string>
+    <string name="detail_equalizer_settings">Настройки эквалайзера</string>
+    <string name="buffer_settings_title">Буфер воспроизведения</string>
+    <string name="buffer_settings_min">0,5 с</string>
+    <string name="buffer_settings_max">30 с</string>
+    <string name="buffer_settings_default">По умолчанию</string>
+    <string name="buffer_settings_reset">Сбросить</string>
+    <string name="buffer_settings_apply">Применить</string>
+    <string name="buffer_settings_seconds">%1$.1f секунд</string>
+    <string name="buffer_settings_default_desc">По умолчанию (2,5 с)</string>
+    <string name="buffer_settings_custom_desc">Свой (%1$.1f с)</string>
+
 </resources>

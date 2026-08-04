@@ -726,4 +726,15 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="player_network_usage">Datos: %1$s</string>
     <string name="player_buffer_time">En búfer: %1$s</string>
 
+    <string name="content_desc_connection_type">Tipo de red</string>
+    <string name="content_desc_connection_type_wifi">Conectado mediante Wi-Fi</string>
+    <string name="content_desc_connection_type_mobile">Conectado mediante datos móviles</string>
+    <string name="settings_record_name_formatting_default" translatable="false">${station}_${artist}_${track}_${date}_${time}</string>
+    <string name="settings_record_name_formatting_1" translatable="false">${station}_${artist}_${track}</string>
+    <string name="settings_record_name_formatting_2" translatable="false">${station}_${date}_${time}</string>
+    <string name="settings_record_name_formatting_3" translatable="false">${index}_${station}_${date}</string>
+    <string name="error_record_not_playing">Inicie la reproducción antes de grabar</string>
+    <string name="error_permission_denied">Permiso denegado</string>
+    <string name="context_menu_refresh_icon">Actualizar icono</string>
+
 </resources>

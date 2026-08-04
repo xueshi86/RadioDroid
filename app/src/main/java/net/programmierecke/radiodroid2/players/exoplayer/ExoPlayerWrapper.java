@@ -85,7 +85,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
     private PlayListener stateListener;
 
     private int playSessionId;
-    private Runnable pendingPlaybackInnerCallback;
 
     private String streamUrl;
 
@@ -268,21 +267,10 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                 }
                 player.setPlayWhenReady(true);
                 // #region debug-point A:play-when-ready-after
-                dbg("A", "ExoPlayerWrapper:240b", "AFTER setPlayWhenReady(true), delaying 100ms for AudioTrack stabilization", java.util.Collections.singletonMap("currentVolume", player.getVolume()));
+                dbg("A", "ExoPlayerWrapper:240b", "AFTER setPlayWhenReady(true)", java.util.Collections.singletonMap("currentVolume", player.getVolume()));
                 // #endregion
-                pendingPlaybackInnerCallback = () -> {
-                    if (playSessionId != sessionId) return;
-                    if (player != null) {
-                        // 关键修复：此处绝不能再 setVolume(0)。
-                        // 旧逻辑会在 PlayerService 已 setVolume(FULL) 且 alarmFadeApplied=true 之后
-                        // 再次静音，导致闹钟“有进度无声音”。
-                        if (stateListener != null) {
-                            stateListener.onStateChanged(PlayState.Playing);
-                        }
-                    }
-                    pendingPlaybackInnerCallback = null;
-                };
-                playerThreadHandler.postDelayed(pendingPlaybackInnerCallback, 100);
+                // 不再在此处手动通知 Playing。Playing 统一由 STATE_READY 回调
+                // （AudioTrack 真正启动）触发，避免提前渐入音量导致启动爆音被放大。
             }
             playbackDelayRunnable = null;
         };
@@ -564,10 +552,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         if (playbackDelayRunnable != null) {
             playerThreadHandler.removeCallbacks(playbackDelayRunnable);
             playbackDelayRunnable = null;
-        }
-        if (pendingPlaybackInnerCallback != null) {
-            playerThreadHandler.removeCallbacks(pendingPlaybackInnerCallback);
-            pendingPlaybackInnerCallback = null;
         }
     }
 

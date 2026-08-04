@@ -376,6 +376,8 @@ public class FragmentPlayerFull extends Fragment {
                 updateRunningRecording();
 
                 pagerHistoryAndRecordings.setCurrentItem(1, true);
+            } else {
+                Toast.makeText(getActivity(), getResources().getString(R.string.error_record_not_playing), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -652,17 +654,23 @@ public class FragmentPlayerFull extends Fragment {
     }
 
     private void updateRecordButton(boolean playing, boolean recording) {
-        btnRecord.setEnabled(playing);
+        btnRecord.setEnabled(true);
 
         if (recording) {
             btnRecord.setImageResource(R.drawable.ic_stop_recording);
             btnRecord.setContentDescription(getResources().getString(R.string.detail_stop));
+            btnRecord.setAlpha(1.0f);
         } else {
             btnRecord.setImageResource(R.drawable.ic_start_recording);
 
-            if (!storagePermissionsDenied) {
+            if (!playing) {
+                btnRecord.setAlpha(0.5f);
+                btnRecord.setContentDescription(getResources().getString(R.string.error_record_not_playing));
+            } else if (!storagePermissionsDenied) {
+                btnRecord.setAlpha(1.0f);
                 btnRecord.setContentDescription(getResources().getString(R.string.image_button_record));
             } else {
+                btnRecord.setAlpha(1.0f);
                 btnRecord.setContentDescription(getResources().getString(R.string.image_button_record_request_permission));
             }
         }

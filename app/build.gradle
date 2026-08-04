@@ -127,7 +127,8 @@ android {
 
     testOptions {
         unitTests.all {
-            useJUnit()
+            // 启用 JUnit Platform：Jupiter(JUnit5) 测试与经 vintage engine 的 JUnit4 测试都能运行
+            useJUnitPlatform()
         }
         animationsDisabled = true
         unitTests.returnDefaultValues = true

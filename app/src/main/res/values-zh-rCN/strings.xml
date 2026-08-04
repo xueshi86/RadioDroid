@@ -307,6 +307,7 @@
     <string name="giving_up_resume">已忽略尝试恢复播放</string>
 
     <string name="error_record_needs_write">需要写入权限才能录音</string>
+    <string name="error_record_not_playing">请先点击播放再开始录音</string>
     <string name="error_permission_denied">权限被拒绝</string>
     <string name="error_grant_audiofocus">系统未授予音频焦点请求</string>
 
