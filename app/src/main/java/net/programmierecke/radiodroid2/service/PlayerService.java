@@ -1236,9 +1236,11 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
             return;
         }
 
-        // 设系统媒体音量为起始音量（0% 对应 0，100% 对应 maxVol）
+        // 设系统媒体音量为起始音量（0% 对应 1，100% 对应 maxVol）
+        // 起始音量强制 ≥ 1：app 永远不将系统音量设为 0，这样 checkHeadsetZeroVolumePause
+        // 中任何 volume=0 必定是用户手动操作，可安全触发暂停（无需 alarmVolumeOverride 早返回）
         int startVol = Math.round(alarmStartVolume / 100f * maxVol);
-        startVol = Math.max(0, Math.min(maxVol, startVol));
+        startVol = Math.max(1, Math.min(maxVol, startVol));
         try {
             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, startVol, 0);
         } catch (SecurityException e) {
@@ -1255,12 +1257,12 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         // 如果有渐增时长且目标 > 起始，启动系统媒体音量线性渐增
         if (alarmFadeDurationMs > 0 && alarmTargetVolume > alarmStartVolume) {
             int targetVol = Math.round(alarmTargetVolume / 100f * maxVol);
-            targetVol = Math.max(0, Math.min(maxVol, targetVol));
+            targetVol = Math.max(1, Math.min(maxVol, targetVol));
             startSystemVolumeFade(startVol, targetVol, alarmFadeDurationMs, session);
         } else {
-            // 无渐增：直接跳到目标系统音量
+            // 无渐增：直接跳到目标系统音量（≥ 1，确保 app 不设 0）
             int targetVol = Math.round(alarmTargetVolume / 100f * maxVol);
-            targetVol = Math.max(0, Math.min(maxVol, targetVol));
+            targetVol = Math.max(1, Math.min(maxVol, targetVol));
             try {
                 if (alarmVolumeSession == session && alarmVolumeOverride) {
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVol, 0);
@@ -1284,7 +1286,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
             try {
                 if (alarmVolumeSession == session && alarmVolumeOverride) {
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,
-                            Math.max(0, Math.min(audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), toVol)), 0);
+                            Math.max(1, Math.min(audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), toVol)), 0);
                 }
             } catch (SecurityException e) {
                 Log.e(TAG, "Failed to set alarm target volume", e);
@@ -1293,9 +1295,13 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         }
 
         final int maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        // 步数与系统可分辨档位对齐，最多 60 步，保证线性且不过密
-        final int steps = Math.max(1, Math.min(toVol - fromVol, 60));
-        final long stepInterval = Math.max(1L, durationMs / steps);
+        // 步数计算：保证每步音量变化不超过 1 个系统档位，同时限制最大步数避免过密。
+        // 步数越多，渐增越平滑（修复用户反馈的"10步跳变"问题）。
+        // 最小步数 = toVol - fromVol（每步 1 档），最大 200 步。
+        final int steps = Math.max(1, Math.min(toVol - fromVol, 200));
+        // 步进间隔：确保不超过 200ms，否则用户会感知到跳变。
+        // 若 durationMs / steps > 200ms，则缩短间隔使渐增更平滑（总时长可能略短）。
+        final long stepInterval = Math.max(1L, Math.min(durationMs / steps, 200L));
         final float volumeStep = (float) (toVol - fromVol) / steps;
 
         for (int i = 1; i <= steps; i++) {
@@ -1305,7 +1311,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                 // session 过期或已停止：丢弃，绝不可再改系统音量
                 if (!alarmVolumeOverride || alarmVolumeSession != session || audioManager == null) return;
                 int sysVol = Math.round(vol);
-                sysVol = Math.max(0, Math.min(maxVol, sysVol));
+                sysVol = Math.max(1, Math.min(maxVol, sysVol));
                 try {
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, sysVol, 0);
                 } catch (SecurityException e) {
@@ -2086,9 +2092,8 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
      * 优先级：有线耳机 > 蓝牙耳机 > 内置扬声器（无耳机连接时）
      */
     private void checkHeadsetZeroVolumePause() {
-        // 闹钟音量渐增期间可能临时将系统音量设为 0，不应触发自动暂停
-        if (alarmVolumeOverride) return;
-
+        // 闹钟期间不再跳过零音量暂停检查：startAlarmVolumeOverride 已确保起始音量 ≥ 1，
+        // app 永远不会自己将系统音量设为 0，因此任何 volume=0 必定是用户手动操作。
         if (audioManager == null) return;
 
         int curVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
