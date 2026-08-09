@@ -271,7 +271,7 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 
 ####  ️ 多语言界面
 
-设置中提供界面语言选择，支持：跟随系统、中文、英文、西班牙语、俄语。通过 `initAppLanguage()` 在 `ActivityMain.onCreate()` 中动态加载生效。针对所有新增和修改过的代码界面进行了多语言的全面适配，消除了原版代码中中英文混杂显示的问题。
+设置中提供界面语言选择，支持：跟随系统、中文、英文、俄语、西班牙语、德语、法语、意大利语、希腊语（共 8 种语言）。通过 `initAppLanguage()` 在 `ActivityMain.onCreate()` 中动态加载生效。针对所有新增和修改过的代码界面进行了多语言的全面适配，消除了原版代码中中英文混杂显示的问题。
 
 ####   暗色主题
 
@@ -588,7 +588,7 @@ The station details page provides a **Buffer Strategy** configuration button, al
 
 ####  ️ Multi-Language UI
 
-Language selector in settings: System, Chinese, English, Spanish, Russian. Loaded dynamically in `ActivityMain.onCreate()` via `initAppLanguage()`. All new and modified UI code has full multi-language support.
+Language selector in settings: System, Chinese, English, Russian, Spanish, German, French, Italian, Greek (8 languages in total). Loaded dynamically in `ActivityMain.onCreate()` via `initAppLanguage()`. All new and modified UI code has full multi-language support.
 
 ####   Dark Theme
 
