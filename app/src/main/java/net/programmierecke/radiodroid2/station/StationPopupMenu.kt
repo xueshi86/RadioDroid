@@ -5,9 +5,6 @@ import android.view.View
 import android.widget.PopupMenu
 import androidx.fragment.app.FragmentActivity
 import androidx.preference.PreferenceManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import net.programmierecke.radiodroid2.R
 import net.programmierecke.radiodroid2.players.PlayStationTask
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil
@@ -34,9 +31,8 @@ object StationPopupMenu {
                     true
                 }
                 R.id.menu_play_in_external_player -> {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        PlayStationTask.playExternal(station, context).execute()
-                    }
+                    // execute() 自身会在后台执行并在主线程回调，无需额外包裹协程
+                    PlayStationTask.playExternal(station, context).execute()
                     true
                 }
                 R.id.menu_visit_homepage -> {

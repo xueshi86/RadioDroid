@@ -613,6 +613,13 @@ Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elemen
 
 > Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+### v1.03
+*2026-08-09*
+
+- **新增**：录音按钮提示，帮助用户识别录音操作
+- **修复**：低版本 Android 播放时的爆音问题
+- **新增**：德语、法语、意大利语、希腊语界面语言支持
+
 ### v1.02
 *2026-07-31*
 

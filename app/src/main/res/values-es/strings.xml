@@ -737,4 +737,6 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="error_permission_denied">Permiso denegado</string>
     <string name="context_menu_refresh_icon">Actualizar icono</string>
 
+    <string name="language_german">Alemán</string>
+    <string name="language_greek">Griego</string>
 </resources>

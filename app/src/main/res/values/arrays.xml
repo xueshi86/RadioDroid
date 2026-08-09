@@ -71,6 +71,10 @@
         <item>@string/language_english</item>
         <item>@string/language_russian</item>
         <item>@string/language_spanish</item>
+        <item>@string/language_german</item>
+        <item>@string/language_french</item>
+        <item>@string/language_italian</item>
+        <item>@string/language_greek</item>
     </string-array>
     <string-array name="language_values">
         <item>system</item>
@@ -78,6 +82,10 @@
         <item>en</item>
         <item>ru</item>
         <item>es</item>
+        <item>de</item>
+        <item>fr</item>
+        <item>it</item>
+        <item>el</item>
     </string-array>
 
 </resources>

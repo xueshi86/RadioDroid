@@ -393,4 +393,6 @@
     <string name="recording_detail_size">Tamanho do arquivo:</string>
     <string name="recording_detail_duration">Duração (est.):</string>
     <string name="recording_detail_modified">Modificado:</string>
+    <string name="language_german">Alemão</string>
+    <string name="language_greek">Grego</string>
 </resources>

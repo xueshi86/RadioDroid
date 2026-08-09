@@ -97,8 +97,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
 
     private boolean isHls;
     private boolean isPlayingFlag;
-    /** 是否已把音量控制权交给上层；此后禁止再强制 setVolume(0)，避免覆盖闹钟满音量 */
-    private boolean volumeHandedOff;
     private String streamContentType;
 
     private Handler playerThreadHandler;
@@ -144,7 +142,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
 
         this.context = context;
         this.streamUrl = streamUrl;
-        this.volumeHandedOff = false;
 
         cancelStopTask();
         cancelPlaybackDelay();
@@ -261,10 +258,10 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                 // #region debug-point A:play-when-ready
                 dbg("A", "ExoPlayerWrapper:240", "BEFORE setPlayWhenReady(true)", java.util.Collections.singletonMap("currentVolume", player.getVolume()));
                 // #endregion
-                // 仅在尚未交给上层前保持静音；若 PlayerService 已设闹钟满音量则绝不可再置 0
-                if (!volumeHandedOff) {
-                    player.setVolume(0f);
-                }
+                // 启动前始终强制静音：音量统一由 PlayerService 在 STATE_READY → Playing
+                // 回调后通过 fadeInVolume 控制。若此处不静音，切换电台时旧 fade-in 任务
+                // 命中新播放器后，新 ExoPlayer 会以非零音量启动一帧（残留爆音）。
+                player.setVolume(0f);
                 player.setPlayWhenReady(true);
                 // #region debug-point A:play-when-ready-after
                 dbg("A", "ExoPlayerWrapper:240b", "AFTER setPlayWhenReady(true)", java.util.Collections.singletonMap("currentVolume", player.getVolume()));
@@ -355,10 +352,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         // #region debug-point A:set-volume
         dbg("A", "ExoPlayerWrapper:324", "setVolume called", java.util.Collections.singletonMap("volume", newVolume));
         // #endregion
-        // 上层（PlayerService）一旦设置非零音量，即视为音量控制权已交接
-        if (newVolume > 0f) {
-            volumeHandedOff = true;
-        }
         if (player != null) {
             player.setVolume(newVolume);
         }

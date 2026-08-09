@@ -431,6 +431,8 @@
     <string name="language_french">French</string>
     <string name="language_italian">Italian</string>
     <string name="language_brazilian_portuguese">Português (Brasil)</string>
+    <string name="language_german">German</string>
+    <string name="language_greek">Greek</string>
     
     <string name="multi_search_title">Multi Criteria Search</string>
     <string name="multi_search_country">Country</string>

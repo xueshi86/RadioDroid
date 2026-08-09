@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="language_german">Deutsch</string>
+    <string name="language_french">Französisch</string>
+    <string name="language_italian">Italienisch</string>
+    <string name="language_greek">Griechisch</string>
     <string name="detail_name">Name</string>
     <string name="detail_tags">Tags</string>
     <string name="detail_country">Land</string>

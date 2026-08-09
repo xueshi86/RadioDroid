@@ -746,4 +746,6 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="buffer_settings_default_desc">По умолчанию (2,5 с)</string>
     <string name="buffer_settings_custom_desc">Свой (%1$.1f с)</string>
 
+    <string name="language_german">Немецкий</string>
+    <string name="language_greek">Греческий</string>
 </resources>

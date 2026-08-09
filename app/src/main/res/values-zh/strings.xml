@@ -569,8 +569,8 @@
     <string name="update_failed_network">更新失败：网络连接错误，请检查网络后重试。</string>
     <string name="update_failed_storage">更新失败：存储空间不足，请释放空间后重试。</string>
     <string name="language_russian">Русский</string>
-    <string name="language_french">Français</string>
-    <string name="language_italian">Italiano</string>
+    <string name="language_french">法语</string>
+    <string name="language_italian">意大利语</string>
     <string name="language_brazilian_portuguese">Português (Brasil)</string>
     
     <!-- Database update progress dialog -->

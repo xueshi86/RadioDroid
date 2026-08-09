@@ -133,6 +133,11 @@
     <string name="language_english">English</string>
     <string name="language_chinese">Chinese</string>
     <string name="language_spanish">Spanish</string>
+    <string name="language_russian">Russian</string>
+    <string name="language_german">German</string>
+    <string name="language_french">French</string>
+    <string name="language_italian">Italian</string>
+    <string name="language_greek">Greek</string>
     
     <string name="multi_search_title">Multi Criteria Search</string>
     <string name="multi_search_country">Country</string>
@@ -641,9 +646,6 @@ The app will automatically restart to load the new database.</string>
     <string name="update_completed">Update completed, synchronized %d stations, switched to new data</string>
     <string name="update_confirm_replace_message">New data (%1$d stations) has fewer stations than existing data (%2$d stations), do you want to replace?</string>
     <string name="update_completed_keep_existing">Update completed, but user chose to keep existing data</string>
-    <string name="language_russian">Russian</string>
-    <string name="language_french">French</string>
-    <string name="language_italian">Italian</string>
     <string name="language_brazilian_portuguese">Português (Brasil)</string>
     <string name="progress_system_paused_suffix"> (may be paused by system)</string>
     

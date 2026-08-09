@@ -1856,6 +1856,16 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                         break;
                     }
                     default: {
+                        // 离开 Playing 状态（缓冲/停止/出错/切换电台）后：
+                        // 1) 先取消所有待执行的渐入任务，避免旧 fade-in 回调在缓冲期间继续上调音量
+                        //    （Android 5.x 残留爆音根因：BUFFERING/切换电台抖动时，旧任务仍被 postDelayed
+                        //    执行，用户会听到"少量初始声音"，READY 恢复时又被 setVolume(0) 截断）
+                        // 2) 立即静音，确保缓冲期间不输出声音
+                        cancelPendingFadeIn();
+                        if (radioPlayer != null) {
+                            radioPlayer.setVolume(0f);
+                        }
+
                         releaseServiceEqualizer();
                         // 离开 Playing 状态（缓冲/停止/出错）后，下次 Playing 需重新初始化音量与均衡器
                         eqAndFadeInitialized = false;

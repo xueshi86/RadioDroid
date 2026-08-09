@@ -1642,6 +1642,14 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             locale = new Locale("es");
         } else if (language.equals("ru")) {
             locale = new Locale("ru");
+        } else if (language.equals("de")) {
+            locale = new Locale("de");
+        } else if (language.equals("fr")) {
+            locale = new Locale("fr");
+        } else if (language.equals("it")) {
+            locale = new Locale("it");
+        } else if (language.equals("el")) {
+            locale = new Locale("el");
         } else {
             locale = Locale.getDefault();
         }

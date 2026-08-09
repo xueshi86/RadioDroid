@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <resources>
+    <string name="language_german">Tedesco</string>
+    <string name="language_greek">Greco</string>
     <string name="detail_name">Nome</string>
     <string name="detail_tags">Etichette</string>
     <string name="detail_country">Nazione</string>

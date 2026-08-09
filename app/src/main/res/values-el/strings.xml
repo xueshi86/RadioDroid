@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <resources>
+    <string name="language_german">Γερμανικά</string>
+    <string name="language_french">Γαλλικά</string>
+    <string name="language_italian">Ιταλικά</string>
+    <string name="language_greek">Ελληνικά</string>
     <string name="detail_name">Όνομα</string>
     <string name="detail_tags">Καρτέλες</string>
     <string name="detail_country">Χώρα</string>
