@@ -49,7 +49,7 @@ public class StationActions {
             Log.i(TAG, String.format("Alarm time picked %d:%d", hourOfDay, minute));
             radioDroidApp.getAlarmManager().add(station, hourOfDay, minute);
         });
-        newFragment.show(activity.getSupportFragmentManager(), "timePicker");
+        newFragment.show(activity, activity.getSupportFragmentManager(), "timePicker");
     }
 
     public static void showWebLinks(final @NonNull FragmentActivity activity, final @NonNull DataRadioStation station) {

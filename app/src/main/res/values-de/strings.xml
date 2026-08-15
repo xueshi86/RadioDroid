@@ -313,4 +313,5 @@
     <string name="recording_pause">Pause</string>
     <string name="recording_play_external">Mit externem Player abspielen</string>
     <string name="recording_empty_file">Die Aufnahmedatei ist leer</string>
+    <string name="alarm_fade_invalid_range">Die Startlautstärke muss niedriger sein als die Ziellautstärke</string>
 </resources>

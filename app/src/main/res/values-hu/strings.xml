@@ -221,4 +221,5 @@
     <string name="nav_item_about">Névjegy</string>
     <string name="settings_mpd_port">MPD port</string>
     <string name="refresh">Frissítés</string>
+    <string name="alarm_fade_invalid_range">A kezdő hangerőnek alacsonyabbnak kell lennie a célnál</string>
 </resources>

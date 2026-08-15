@@ -16,6 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.collection.ArraySet;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import net.programmierecke.radiodroid2.database.RadioStation;
 import net.programmierecke.radiodroid2.database.RadioStationRepository;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
 
@@ -656,14 +657,18 @@ public class StationSaveManager extends Observable {
     }
 
     protected List<DataRadioStation> LoadM3UReader(Reader reader) {
-        final RadioDroidApp radioDroidApp = (RadioDroidApp) context.getApplicationContext();
-        final OkHttpClient httpClient = radioDroidApp.getHttpClient();
-        ArrayList<String> listUuids = new ArrayList<String>();
+        List<String> listUuids = new ArrayList<>();
+        // UUID → (名称, URL) 映射：用于 API 查询失败时的离线 fallback
+        // （电台下线/UUID 变更/断网时仍可基于 M3U 中的 URL 导入）
+        Map<String, String> uuidToName = new HashMap<>();
+        Map<String, String> uuidToUrl = new HashMap<>();
 
         // 用 try-with-resources 关闭 BufferedReader，避免异常路径下文件句柄泄漏
         try (BufferedReader br = new BufferedReader(reader)) {
             String line;
             boolean firstLine = true;
+            String pendingUuid = null;
+            boolean pendingUrlSeen = false;
             while ((line = br.readLine()) != null) {
                 // 跳过 UTF-8 BOM（如有），避免首行 #EXTM3U 或 #RADIOBROWSERUUID 解析失败
                 if (firstLine) {
@@ -675,6 +680,21 @@ public class StationSaveManager extends Observable {
                 if (line.startsWith(M3U_PREFIX) && line.length() > M3U_PREFIX.length()) {
                     String uuid = line.substring(M3U_PREFIX.length()).trim();
                     listUuids.add(uuid);
+                    pendingUuid = uuid;
+                    pendingUrlSeen = false;
+                } else if (pendingUuid != null && line.startsWith("#EXTINF:")) {
+                    int commaIdx = line.indexOf(',');
+                    if (commaIdx >= 0) {
+                        String name = line.substring(commaIdx + 1).trim();
+                        if (!name.isEmpty()) {
+                            uuidToName.put(pendingUuid, name);
+                        }
+                    }
+                } else if (pendingUuid != null && !pendingUrlSeen
+                        && !line.startsWith("#") && !line.trim().isEmpty()) {
+                    String url = line.trim();
+                    uuidToUrl.put(pendingUuid, url);
+                    pendingUrlSeen = true;
                 }
             }
         } catch (Exception e) {
@@ -687,23 +707,38 @@ public class StationSaveManager extends Observable {
             return new ArrayList<>();
         }
 
-        List<DataRadioStation> listStationsNew = Utils.getStationsByUuid(httpClient, context, listUuids);
-        // 网络失败时 getStationsByUuid 返回 null，避免后续 for-each 解引用 null 抛 NPE
-        if (listStationsNew == null) {
-            Log.e("LOAD", "getStationsByUuid returned null (network failure?)");
-            return null;
+        // 纯本地导入：本地数据库 → M3U 内 URL，完全不需要网络。
+        // 本地数据库是 radio-browser 全量镜像，M3U 文件自带 URL + 名称，
+        // 两者足以完成导入（与 ActivityMain 通过 UUID 播放电台的"本地优先"策略一致）。
+        RadioStationRepository repository = RadioStationRepository.getInstance(context);
+        Map<String, DataRadioStation> localByUuid = new HashMap<>();
+        for (String uuid : listUuids) {
+            RadioStation localStation = repository.getStationByUuid(uuid);
+            if (localStation != null) {
+                localByUuid.put(uuid, localStation.toDataRadioStation());
+            }
         }
 
-        // 用 Map 替代 O(n*m) 嵌套循环，按 M3U 文件中的顺序排序
-        Map<String, DataRadioStation> byUuid = new HashMap<>();
-        for (DataRadioStation s : listStationsNew) {
-            byUuid.put(s.StationUuid, s);
-        }
+        // 按 M3U 文件中的顺序组装：本地数据库 → M3U 内 URL fallback（纯离线）
         List<DataRadioStation> listStationsSorted = new ArrayList<>();
         for (String uuid : listUuids) {
-            DataRadioStation s = byUuid.get(uuid);
+            DataRadioStation s = localByUuid.get(uuid);
             if (s != null) {
                 listStationsSorted.add(s);
+            } else {
+                // 本地数据库查不到（电台未同步/手动添加/已下线）时，用 M3U
+                // 中的 URL + 名称创建电台，保证文件可离线导入
+                String url = uuidToUrl.get(uuid);
+                if (url != null && !url.isEmpty()) {
+                    DataRadioStation fallback = new DataRadioStation();
+                    fallback.StationUuid = uuid;
+                    fallback.Name = uuidToName.get(uuid);
+                    if (fallback.Name == null || fallback.Name.isEmpty()) {
+                        fallback.Name = url;
+                    }
+                    fallback.StreamUrl = url;
+                    listStationsSorted.add(fallback);
+                }
             }
         }
         return listStationsSorted;

@@ -395,4 +395,5 @@
     <string name="recording_detail_modified">Modificado:</string>
     <string name="language_german">Alemão</string>
     <string name="language_greek">Grego</string>
+    <string name="alarm_fade_invalid_range">O volume inicial deve ser menor que o volume alvo</string>
 </resources>

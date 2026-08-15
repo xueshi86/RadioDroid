@@ -191,6 +191,13 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
                     btnPlayPause.setText(R.string.recording_play);
                     stopSeekUpdate();
                 } else {
+                    // 播放完毕后 ExoPlayer 停留在 STATE_ENDED，直接 play() 不会重启，
+                    // 需先 seek 回开头再播放
+                    if (activePlayer.getPlaybackState() == Player.STATE_ENDED) {
+                        activePlayer.seekTo(0);
+                        seekBar.setProgress(0);
+                        tvCurrent.setText(formatDuration(0));
+                    }
                     activePlayer.play();
                     btnPlayPause.setText(R.string.recording_pause);
                     startSeekUpdate(seekBar, tvCurrent);

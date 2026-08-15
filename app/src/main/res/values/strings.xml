@@ -291,7 +291,7 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="settings_sleep_timer_desc">Stop current playback after %1$s minutes</string>
     <string name="settings_sleep_timer_desc_not_set">Tap to set sleep timer</string>
     <string name="alarm_edit_title">Edit alarm</string>
-    <string name="alarm_fade_in">Fade-in volume</string>
+    <string name="alarm_fade_in">Fade-in volume (min 1%)</string>
     <string name="alarm_start_volume">Start volume</string>
     <string name="alarm_target_volume">Target volume</string>
     <string name="alarm_fade_duration">Fade-in duration</string>
@@ -299,8 +299,11 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="alarm_fade_seconds">%1$d s</string>
     <string name="alarm_fade_info">%1$d%% → %2$d%% / %3$d s</string>
     <string name="alarm_fade_off">off</string>
+    <string name="alarm_volume_zero_warning">Current media volume is 0. The alarm may be inaudible. Increase volume now?</string>
+    <string name="alarm_fade_invalid_range">Start volume must be below target volume</string>
     <string name="alarm_save">Save</string>
     <string name="alarm_cancel">Cancel</string>
+    <string name="alarm_set_time">Set Time</string>
     <string name="settings_play">Player</string>
     <string name="settings_auto_play_on_startup">Auto-play</string>
     <string name="settings_auto_play_on_startup_on">Play last station on startup</string>

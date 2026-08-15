@@ -65,7 +65,7 @@ public class RadioAlarmManager {
         alarm.minute = minute;
         alarm.weekDays = new ArrayList<>();
         alarm.id = getFreeId();
-        alarm.startVolume = 0;
+        alarm.startVolume = 1;
         alarm.targetVolume = 50;
         alarm.fadeDurationSeconds = 30;
         list.add(alarm);
@@ -117,6 +117,7 @@ public class RadioAlarmManager {
             editor.putInt("alarm."+alarm.id+".startVolume",alarm.startVolume);
             editor.putInt("alarm."+alarm.id+".targetVolume",alarm.targetVolume);
             editor.putInt("alarm."+alarm.id+".fadeDurationSeconds",alarm.fadeDurationSeconds);
+            editor.putLong("alarm."+alarm.id+".nextTriggerTime",alarm.nextTriggerTime);
 
             if (items.equals("")) {
                 items = "" + alarm.id;
@@ -151,9 +152,12 @@ public class RadioAlarmManager {
                 alarm.minute = sharedPref.getInt("alarm." + id + ".timeMinutes", 0);
                 alarm.enabled = sharedPref.getBoolean("alarm." + id + ".enabled", false);
                 alarm.repeating  = sharedPref.getBoolean("alarm." + id + ".repeating", false);
-                alarm.startVolume = sharedPref.getInt("alarm." + id + ".startVolume", 0);
-                alarm.targetVolume = sharedPref.getInt("alarm." + id + ".targetVolume", 50);
+                // 旧版本可能保存了 0%，统一归一化到 [1,100]（app 永不将系统音量设为 0）
+                alarm.startVolume = Math.max(1, Math.min(100, sharedPref.getInt("alarm." + id + ".startVolume", 1)));
+                alarm.targetVolume = Math.max(1, Math.min(100, sharedPref.getInt("alarm." + id + ".targetVolume", 50)));
                 alarm.fadeDurationSeconds = sharedPref.getInt("alarm." + id + ".fadeDurationSeconds", 30);
+                // 旧版本数据没有该字段时默认 -1（不误判为错过）
+                alarm.nextTriggerTime = sharedPref.getLong("alarm." + id + ".nextTriggerTime", -1);
 
                 try {
                     alarm.id = Integer.parseInt(id);
@@ -166,6 +170,23 @@ public class RadioAlarmManager {
             }
         }else{
             Log.w("ALARM","empty load() string");
+        }
+
+        // 打开应用时：已错过的单次闹钟直接作废（enabled=false），
+        // 避免界面显示"仍开启"，也防止后续 resetAllAlarms() 将其重新激活补响。
+        // 重复闹钟或旧数据（nextTriggerTime=-1）不受影响。
+        boolean disabledMissed = false;
+        long now = System.currentTimeMillis();
+        for (DataRadioStationAlarm alarm : list) {
+            if (alarm.enabled && !alarm.repeating
+                    && alarm.nextTriggerTime >= 0 && alarm.nextTriggerTime < now) {
+                alarm.enabled = false;
+                disabledMissed = true;
+                if(BuildConfig.DEBUG) { Log.d("ALARM","missed one-shot alarm disabled on load:"+alarm.id); }
+            }
+        }
+        if (disabledMissed) {
+            save();
         }
     }
 
@@ -245,6 +266,12 @@ public class RadioAlarmManager {
                 if(BuildConfig.DEBUG) { Log.d("ALARM","START set"); }
                 alarmMgr.set(AlarmManager.RTC_WAKEUP,calendar.getTimeInMillis(),alarmIntent);
             }
+
+            // 记录实际注册的触发时间，供 resetAllAlarms() 判断单次闹钟是否已错过
+            if (alarm.nextTriggerTime != calendar.getTimeInMillis()) {
+                alarm.nextTriggerTime = calendar.getTimeInMillis();
+                save();
+            }
         }
     }
 
@@ -276,8 +303,8 @@ public class RadioAlarmManager {
     public void setAlarmFade(int alarmId, int startVolume, int targetVolume, int fadeDurationSeconds) {
         DataRadioStationAlarm alarm = getById(alarmId);
         if (alarm != null) {
-            alarm.startVolume = Math.max(0, Math.min(100, startVolume));
-            alarm.targetVolume = Math.max(0, Math.min(100, targetVolume));
+            alarm.startVolume = Math.max(1, Math.min(100, startVolume));
+            alarm.targetVolume = Math.max(1, Math.min(100, targetVolume));
             alarm.fadeDurationSeconds = Math.max(0, fadeDurationSeconds);
             save();
         }
@@ -317,12 +344,33 @@ public class RadioAlarmManager {
         return null;
     }
 
+    /**
+     * 重新注册所有启用的闹钟（设备重启、或某个闹钟响后调用）。
+     * 单次闹钟：若原定触发时间已过（例如被强行停止/冻结而错过，或设备长时间关机后开机），
+     * 视为作废并自动禁用，不再跨天补响。重复闹钟不受影响，start() 内部会顺延到下一个匹配日。
+     */
     public void resetAllAlarms() {
+        boolean disabledMissed = false;
         for(DataRadioStationAlarm alarm: list){
             if (alarm.enabled){
-                if(BuildConfig.DEBUG) { Log.d("ALARM","started alarm with id:"+alarm.id); }
-                start(alarm.id);
+                if (alarm.repeating) {
+                    start(alarm.id);
+                } else {
+                    // -1 表示旧版本数据未记录触发时间，保持原行为（重新注册）
+                    long now = System.currentTimeMillis();
+                    if (alarm.nextTriggerTime >= 0 && alarm.nextTriggerTime < now) {
+                        if(BuildConfig.DEBUG) { Log.d("ALARM","missed one-shot alarm disabled:"+alarm.id); }
+                        alarm.enabled = false;
+                        disabledMissed = true;
+                    } else {
+                        if(BuildConfig.DEBUG) { Log.d("ALARM","started alarm with id:"+alarm.id); }
+                        start(alarm.id);
+                    }
+                }
             }
+        }
+        if (disabledMissed) {
+            save();
         }
     }
 

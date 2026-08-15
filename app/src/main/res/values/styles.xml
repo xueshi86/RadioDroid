@@ -37,11 +37,24 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <!-- 时间选择器滚轮文字/分割线/按钮（浅色主题） -->
+        <item name="timePickerValueColor">#212121</item>
+        <item name="timePickerDividerColor">#555555</item>
+        <item name="timePickerButtonColor">#212121</item>
+        <item name="timePickerCardBackground">#F0F0F0</item>
+        <!-- 闹钟编辑页控件（浅色主题保持原蓝色样式） -->
+        <item name="alarmTimeButtonColor">?attr/colorPrimary</item>
+        <item name="sliderThumbColor">?attr/colorPrimary</item>
+        <item name="sliderHaloColor">?attr/colorPrimary</item>
+        <item name="sliderTrackActiveColor">?attr/colorPrimary</item>
+        <item name="sliderTrackInactiveColor">#3D125688</item>
+        <item name="sliderTickColor">?attr/colorPrimary</item>
+        <item name="sliderTickInactiveColor">#3D125688</item>
     </style>
 
     
     <style name="DialogTheme.Dark" parent="Theme.MaterialComponents.Dialog">
-        <item name="colorPrimary">@color/colorPrimaryDark</item>
+        <item name="colorPrimary">@color/colorAccentDark</item>
         <item name="colorPrimaryDark">@color/colorPrimary</item>
         <item name="colorAccent">@color/colorAccentDark</item>
         <item name="android:textColor">@android:color/white</item>
@@ -50,6 +63,19 @@
         <item name="android:windowBackground">@color/windowBackgroundDark</item>
         <item name="android:colorBackground">@color/windowBackgroundDark</item>
         <item name="android:background">@color/windowBackgroundDark</item>
+        <!-- 时间选择器滚轮文字/分割线/按钮（暗色主题统一白色） -->
+        <item name="timePickerValueColor">@android:color/white</item>
+        <item name="timePickerDividerColor">#99FFFFFF</item>
+        <item name="timePickerButtonColor">@android:color/white</item>
+        <item name="timePickerCardBackground">#3A3A3C</item>
+        <!-- 闹钟编辑页控件（暗色主题统一白色） -->
+        <item name="alarmTimeButtonColor">@android:color/white</item>
+        <item name="sliderThumbColor">@android:color/white</item>
+        <item name="sliderHaloColor">#33FFFFFF</item>
+        <item name="sliderTrackActiveColor">@android:color/white</item>
+        <item name="sliderTrackInactiveColor">#66FFFFFF</item>
+        <item name="sliderTickColor">@android:color/white</item>
+        <item name="sliderTickInactiveColor">#66FFFFFF</item>
     </style>
     
     <!-- Alert themes -->
@@ -57,13 +83,21 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <!-- 闹钟编辑页控件（浅色主题保持原蓝色样式） -->
+        <item name="alarmTimeButtonColor">?attr/colorPrimary</item>
+        <item name="sliderThumbColor">?attr/colorPrimary</item>
+        <item name="sliderHaloColor">?attr/colorPrimary</item>
+        <item name="sliderTrackActiveColor">?attr/colorPrimary</item>
+        <item name="sliderTrackInactiveColor">#3D125688</item>
+        <item name="sliderTickColor">?attr/colorPrimary</item>
+        <item name="sliderTickInactiveColor">#3D125688</item>
     </style>
 
     
     <style name="AlertTheme.Dark" parent="Theme.MaterialComponents.Dialog.Alert">
-        <item name="colorPrimary">@color/colorPrimaryDark</item>
+        <item name="colorPrimary">@color/colorAlertPrimaryDark</item>
         <item name="colorPrimaryDark">@color/colorPrimary</item>
-        <item name="colorAccent">@color/colorAccentDark</item>
+        <item name="colorAccent">@color/colorAlertPrimaryDark</item>
         <item name="android:textColor">@android:color/white</item>
         <item name="android:textColorPrimary">@android:color/white</item>
         <item name="android:textColorSecondary">@android:color/white</item>
@@ -72,6 +106,14 @@
         <item name="android:windowBackground">@color/windowBackgroundDark</item>
         <item name="android:colorBackground">@color/windowBackgroundDark</item>
         <item name="android:background">@color/windowBackgroundDark</item>
+        <!-- 闹钟编辑页控件颜色（暗色主题统一白色） -->
+        <item name="alarmTimeButtonColor">@android:color/white</item>
+        <item name="sliderThumbColor">@android:color/white</item>
+        <item name="sliderHaloColor">#33FFFFFF</item>
+        <item name="sliderTrackActiveColor">@android:color/white</item>
+        <item name="sliderTrackInactiveColor">#66FFFFFF</item>
+        <item name="sliderTickColor">@android:color/white</item>
+        <item name="sliderTickInactiveColor">#66FFFFFF</item>
     </style>
 
     

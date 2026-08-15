@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.media.audiofx.BassBoost;
 import android.media.audiofx.Equalizer;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -177,7 +178,12 @@ public class EqualizerActivity extends AppCompatActivity {
 
         audioSessionId = PlayerServiceUtil.getAudioSessionId();
 
-        if (audioSessionId != 0) {
+        // 低版本 Android（API < 23，含 5.x）上，在正在播放的 audio session 上
+        // new Equalizer + BassBoost 会触发 AudioFlinger 效果链重配置，产生 DSP 层面
+        // 的瞬态爆音（setVolume(0) 也无法消除）。因此低版本一律用临时 session 探测
+        // 能力（不影响播放），界面调整仅保存到 prefs，下次播放会话生效。
+        // Android 6.0+ 的 AudioFlinger 对效果链变更有平滑处理，保持实时 attach。
+        if (audioSessionId != 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             try {
                 equalizer = new Equalizer(0, audioSessionId);
                 queryCapabilities(equalizer);

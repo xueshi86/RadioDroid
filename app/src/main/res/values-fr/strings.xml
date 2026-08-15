@@ -399,4 +399,5 @@
     <string name="recording_detail_size">Taille du fichier :</string>
     <string name="recording_detail_duration">Durée (est.) :</string>
     <string name="recording_detail_modified">Modifié :</string>
+    <string name="alarm_fade_invalid_range">Le volume de départ doit être inférieur au volume cible</string>
 </resources>

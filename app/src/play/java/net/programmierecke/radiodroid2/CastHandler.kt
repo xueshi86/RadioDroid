@@ -5,6 +5,9 @@ import android.net.Uri
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import androidx.core.view.MenuItemCompat
+import androidx.mediarouter.app.MediaRouteActionProvider
+import androidx.preference.PreferenceManager
 import com.google.android.gms.cast.MediaInfo
 import com.google.android.gms.cast.MediaLoadRequestData
 import com.google.android.gms.cast.MediaMetadata
@@ -200,9 +203,22 @@ public class CastHandler {
     }
 
     fun getRouteItem(context: Context, menu: Menu): MenuItem {
-        return CastButtonFactory.setUpMediaRouteButton(context,
+        val menuItem = CastButtonFactory.setUpMediaRouteButton(context,
                 menu,
                 R.id.media_route_menu_item)
+
+        // 让投屏按钮始终显示在工具栏：即使当前网络没有投屏设备也显示（置灰），
+        // 避免按钮"消失"让用户误以为功能未启用，与主流播放器体验一致。
+        // CastButtonFactory.setUpMediaRouteButton 内部仅在特定条件下才自动
+        // setAlwaysVisible(true)，这里显式保证按钮始终可见。
+        val showCast = PreferenceManager.getDefaultSharedPreferences(context)
+                .getBoolean("toolbar_show_cast", true)
+        if (showCast) {
+            val provider = MenuItemCompat.getActionProvider(menuItem) as? MediaRouteActionProvider
+            provider?.setAlwaysVisible(true)
+        }
+
+        return menuItem
     }
 
     fun playRemote(title: String, url: String, iconurl: String?) {

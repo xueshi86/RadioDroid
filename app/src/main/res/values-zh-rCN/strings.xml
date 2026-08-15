@@ -170,7 +170,7 @@
     <string name="settings_sleep_timer_desc">%1$s 分钟后停止当前播放</string>
     <string name="settings_sleep_timer_desc_not_set">点击设置睡眠定时器</string>
     <string name="alarm_edit_title">编辑闹钟</string>
-    <string name="alarm_fade_in">音量渐增</string>
+    <string name="alarm_fade_in">音量渐增（最低 1%）</string>
     <string name="alarm_start_volume">起始音量</string>
     <string name="alarm_target_volume">目标音量</string>
     <string name="alarm_fade_duration">渐增时长</string>
@@ -178,6 +178,8 @@
     <string name="alarm_fade_seconds">%1$d 秒</string>
     <string name="alarm_fade_info">%1$d%% → %2$d%% / %3$d 秒</string>
     <string name="alarm_fade_off">关闭</string>
+    <string name="alarm_volume_zero_warning">当前媒体音量为 0，闹钟可能无声。是否现在调高音量？</string>
+    <string name="alarm_fade_invalid_range">起始音量需低于目标音量</string>
     <string name="alarm_save">保存</string>
     <string name="alarm_cancel">取消</string>
     <string name="settings_play">播放器</string>
@@ -554,4 +556,10 @@
     <string name="buffer_settings_seconds">%1$.1f 秒</string>
     <string name="buffer_settings_default_desc">默认 (2.5秒)</string>
     <string name="buffer_settings_custom_desc">自定义 (%1$.1f秒)</string>
+
+    <!-- Player full screen labels -->
+    <string name="player_total_play_time">总时长: %1$s</string>
+    <string name="player_current_play_time">当前时长: %1$s</string>
+    <string name="player_network_usage">流量: %1$s</string>
+    <string name="player_buffer_time">缓冲时长: %1$s</string>
 </resources>

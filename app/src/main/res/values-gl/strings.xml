@@ -340,4 +340,5 @@
     <string name="context_menu_add_alarm">@string/action_alarm</string>
     <string name="context_menu_create_shortcut">@string/detail_create_shortcut</string>
     <string name="context_menu_delete">@string/action_delete</string>
+    <string name="alarm_fade_invalid_range">O volume inicial debe ser inferior ao volume obxectivo</string>
 </resources>

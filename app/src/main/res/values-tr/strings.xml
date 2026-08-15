@@ -216,4 +216,5 @@
     <string name="nav_item_about">Hakkında</string>
     <string name="settings_mpd_port">MPD portu</string>
     <string name="refresh">Yenile</string>
+    <string name="alarm_fade_invalid_range">Başlangıç ses düzeyi hedef ses düzeyinden düşük olmalı</string>
 </resources>

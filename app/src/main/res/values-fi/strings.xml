@@ -89,4 +89,5 @@
         <item>L</item>
     </string-array>
     
+    <string name="alarm_fade_invalid_range">Aloitusäänenvoimakkuuden on oltava pienempi kuin tavoiteäänenvoimakkuus</string>
 </resources>

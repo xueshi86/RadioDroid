@@ -158,13 +158,16 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     // 闹钟播放时的音量渐增参数（直接控制系统音量）
     private boolean currentIsAlarm = false;
     private boolean alarmFadeApplied = false;
-    private int alarmStartVolume = 0;
+    private int alarmStartVolume = 1;
     private int alarmTargetVolume = 50;
     private int alarmFadeDurationMs = 30000;
 
     // 闹钟播放时保存/恢复系统音量
     private int savedSystemVolume = -1;
     private boolean alarmVolumeOverride = false;
+    // 闹钟期间应用层（播放器）增益 0~1。渐增在此层完成：浮点精度不受系统粗档位限制，
+    // 即使手机只有 13~15 档，也能平滑渐变且 24% 与 29% 听感不同。
+    private float alarmAppGain = 1.0f;
     /**
      * 闹钟音量会话代次。每次 start/stop 递增。
      * 渐增 Runnable 捕获创建时的 session，执行时若 session 已过期则丢弃，
@@ -191,6 +194,9 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
     private android.media.audiofx.Equalizer serviceEqualizer;
     private android.media.audiofx.BassBoost serviceBassBoost;
+    // 均衡器 attach 的 audio session id，用于复用判断（同一 session 不重建，
+    // 避免 Android 5.x 上反复 attach/detach AudioEffect 触发 DSP 效果链瞬态爆音）
+    private int serviceEqualizerSessionId = -1;
     private boolean eqActivityOpen = false;
 
     private final BroadcastReceiver eqActivityReceiver = new BroadcastReceiver() {
@@ -457,8 +463,9 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                         return;
                     }
 
-                    // 闹钟播放期间：保持满增益，不 duck、不因短暂失焦而静音。
-                    // 系统媒体音量由 startSystemVolumeFade 线性控制，应用层音量必须始终为 FULL。
+                    // 闹钟播放期间：不 duck、不因短暂失焦而静音。
+                    // 音量由应用层浮点增益 alarmAppGain 平滑渐增（系统音量一次性设为目标档位），
+                    // 因此这里始终恢复"当前渐增增益"，避免把渐增中途的增益强行拉回 100%。
                     if (currentIsAlarm || alarmVolumeOverride) {
                         switch (focusChange) {
                             case AudioManager.AUDIOFOCUS_GAIN:
@@ -466,7 +473,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                                     enableMediaSession();
                                     resume();
                                 }
-                                radioPlayer.setVolume(FULL_VOLUME);
+                                radioPlayer.setVolume(alarmAppGain * 100f);
                                 break;
                             case AudioManager.AUDIOFOCUS_LOSS:
                                 // 永久失焦仍暂停（例如用户切到其他强占媒体的应用）
@@ -477,7 +484,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
                             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
                                 // 闹钟不 duck、不暂停短暂失焦，避免“无声播放”
-                                radioPlayer.setVolume(FULL_VOLUME);
+                                radioPlayer.setVolume(alarmAppGain * 100f);
                                 break;
                         }
                         return;
@@ -791,8 +798,8 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     }
 
     private void setAlarmFade(int startVolume, int targetVolume, int durationMs) {
-        this.alarmStartVolume = Math.max(0, Math.min(100, startVolume));
-        this.alarmTargetVolume = Math.max(0, Math.min(100, targetVolume));
+        this.alarmStartVolume = Math.max(1, Math.min(100, startVolume));
+        this.alarmTargetVolume = Math.max(1, Math.min(100, targetVolume));
         this.alarmFadeDurationMs = Math.max(0, durationMs);
     }
 
@@ -1207,9 +1214,18 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     }
 
     /**
-     * 闹钟开始时：保存系统媒体音量，设为起始音量，直接控制 STREAM_MUSIC 线性渐增。
-     * startVolume/targetVolume 是系统媒体音量的百分比（0-100）。
-     * 统一使用 STREAM_MUSIC，覆盖扬声器 / 有线耳机 / 蓝牙 A2DP 的媒体音量路由。
+     * 闹钟开始时：保存系统媒体音量，把系统音量设为起始档位（向上取整），
+     * 然后"系统音量逐档爬升 + 应用层浮点增益补平"双重渐增到目标%。
+     * <p>
+     * 为什么双轨：
+     * 1) 只靠系统音量（旧方案）：档位太少（通常 13~15 档），24% 与 29% 四舍五入到
+     *    同一档，听感相同；且每档一跳，不平滑。
+     * 2) 只靠应用层增益（上一版）：部分机型对播放器增益不生效，导致系统音量
+     *    一开始就被设为目标档位，音量"一步到位、毫无过渡"（用户实测回归）。
+     * <p>
+     * 双轨：系统音量始终从起始档逐档爬升（任何机型都有过渡），应用层浮点增益
+     * 在档位之间把响度精确补到目标百分比（支持增益的机型上丝滑且 24%/29% 可区分）。
+     * startVolume/targetVolume 是百分比（0-100）。统一使用 STREAM_MUSIC。
      */
     private void startAlarmVolumeOverride() {
         if (alarmVolumeOverride) return;
@@ -1222,12 +1238,10 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         alarmVolumeOverride = true;
         final int session = ++alarmVolumeSession;
 
-        // 禁用指数音量映射，使用线性映射，使系统音量百分比 = 实际输出百分比
+        // 禁用指数音量映射，使用线性映射（gain = volume/100），便于精确控制
         if (radioPlayer != null) {
             radioPlayer.setVolumeMappingEnabled(false);
             radioPlayer.setMaxGain(1.0f);
-            // 应用层固定满增益，实际响度完全由系统媒体音量控制
-            radioPlayer.setVolume(FULL_VOLUME);
         }
 
         int maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
@@ -1236,97 +1250,127 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
             return;
         }
 
-        // 设系统媒体音量为起始音量（0% 对应 1，100% 对应 maxVol）
-        // 起始音量强制 ≥ 1：app 永远不将系统音量设为 0，这样 checkHeadsetZeroVolumePause
-        // 中任何 volume=0 必定是用户手动操作，可安全触发暂停（无需 alarmVolumeOverride 早返回）
-        int startVol = Math.round(alarmStartVolume / 100f * maxVol);
-        startVol = Math.max(1, Math.min(maxVol, startVol));
+        // 系统音量先设到起始档位（向上取整）。起始音量强制 ≥ 1：app 永远不将系统音量
+        // 设为 0，这样 checkHeadsetZeroVolumePause 中任何 volume=0 必定是用户手动操作。
+        int startSysVol = targetSystemVolume(alarmStartVolume, maxVol);
         try {
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, startVol, 0);
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, startSysVol, 0);
         } catch (SecurityException e) {
             Log.e(TAG, "Failed to set system media volume for alarm start", e);
+        }
+
+        // 起始应用层增益 = 起始% / 起始档位比例（≤1），保证起始响度恰好 = 起始%
+        float startRatio = startSysVol / (float) maxVol;
+        float startGain = alarmGainForVolume(alarmStartVolume, startRatio);
+
+        alarmAppGain = startGain;
+        if (radioPlayer != null) {
+            radioPlayer.setVolume(alarmAppGain * 100f);
         }
 
         Log.i(TAG, "Alarm volume override start: start%=" + alarmStartVolume
                 + " target%=" + alarmTargetVolume
                 + " fadeMs=" + alarmFadeDurationMs
-                + " startVol=" + startVol + "/" + maxVol
+                + " startSysVol=" + startSysVol + "/" + maxVol
+                + " startGain=" + startGain
                 + " savedVol=" + savedSystemVolume
                 + " session=" + session);
 
-        // 如果有渐增时长且目标 > 起始，启动系统媒体音量线性渐增
+        // 有渐增时长且目标 > 起始：启动"系统音量逐档 + 应用层增益补平"双重渐增
         if (alarmFadeDurationMs > 0 && alarmTargetVolume > alarmStartVolume) {
-            int targetVol = Math.round(alarmTargetVolume / 100f * maxVol);
-            targetVol = Math.max(1, Math.min(maxVol, targetVol));
-            startSystemVolumeFade(startVol, targetVol, alarmFadeDurationMs, session);
+            startAlarmFade(alarmStartVolume, alarmTargetVolume, alarmFadeDurationMs, session);
         } else {
-            // 无渐增：直接跳到目标系统音量（≥ 1，确保 app 不设 0）
-            int targetVol = Math.round(alarmTargetVolume / 100f * maxVol);
-            targetVol = Math.max(1, Math.min(maxVol, targetVol));
+            // 无渐增：系统音量直接设为目标档位，应用层增益精确到目标%
+            int targetSysVol = targetSystemVolume(alarmTargetVolume, maxVol);
             try {
                 if (alarmVolumeSession == session && alarmVolumeOverride) {
-                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVol, 0);
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetSysVol, 0);
                 }
             } catch (SecurityException e) {
                 Log.e(TAG, "Failed to set system media volume for alarm target", e);
+            }
+            float targetGain = alarmGainForVolume(alarmTargetVolume, targetSysVol / (float) maxVol);
+            alarmAppGain = targetGain;
+            if (radioPlayer != null) {
+                radioPlayer.setVolume(alarmAppGain * 100f);
             }
         }
     }
 
     /**
-     * 通过定时器逐步增加系统媒体音量（STREAM_MUSIC），实现闹钟音量线性渐增。
-     * 该流同时作用于内置扬声器、有线耳机与蓝牙媒体（A2DP）输出。
+     * 闹钟音量渐增（双轨）：
+     * 1) 系统音量：按当前渐增进度向上取整逐档爬升——任何机型都有"逐渐变大"的过渡，
+     *    不会出现"一步跳到目标"；
+     * 2) 应用层增益：在档位之间把响度精确补到当前进度百分比——支持播放器增益的机型上
+     *    完全平滑，且最终响度恰好等于目标%（24% 与 29% 可区分）。
      *
      * @param session 创建本轮渐增时的 alarmVolumeSession；停止后 session 失效，残留任务自动作废
      */
-    private void startSystemVolumeFade(int fromVol, int toVol, int durationMs, final int session) {
+    private void startAlarmFade(int fromPercent, int toPercent, int durationMs, final int session) {
         cancelAlarmFade();
-        if (audioManager == null) return;
-        if (toVol <= fromVol || durationMs <= 0) {
-            try {
-                if (alarmVolumeSession == session && alarmVolumeOverride) {
-                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,
-                            Math.max(1, Math.min(audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), toVol)), 0);
-                }
-            } catch (SecurityException e) {
-                Log.e(TAG, "Failed to set alarm target volume", e);
-            }
-            return;
-        }
+        if (radioPlayer == null || audioManager == null) return;
+        if (toPercent <= fromPercent || durationMs <= 0) return;
 
-        final int maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        // 步数计算：保证每步音量变化不超过 1 个系统档位，同时限制最大步数避免过密。
-        // 步数越多，渐增越平滑（修复用户反馈的"10步跳变"问题）。
-        // 最小步数 = toVol - fromVol（每步 1 档），最大 200 步。
-        final int steps = Math.max(1, Math.min(toVol - fromVol, 200));
-        // 步进间隔：确保不超过 200ms，否则用户会感知到跳变。
-        // 若 durationMs / steps > 200ms，则缩短间隔使渐增更平滑（总时长可能略短）。
-        final long stepInterval = Math.max(1L, Math.min(durationMs / steps, 200L));
-        final float volumeStep = (float) (toVol - fromVol) / steps;
+        // 每约 100ms 一步；超过 60 秒的渐增放宽到 200ms，避免任务过多。
+        final int steps = Math.max(10, Math.min((int) (durationMs / 100L), 600));
+        final long stepInterval = Math.max(1L, durationMs / steps);
 
         for (int i = 1; i <= steps; i++) {
-            final float vol = fromVol + volumeStep * i;
-            final int stepIndex = i;
+            final float percent = fromPercent + (toPercent - fromPercent) * i / (float) steps;
             Runnable step = () -> {
-                // session 过期或已停止：丢弃，绝不可再改系统音量
-                if (!alarmVolumeOverride || alarmVolumeSession != session || audioManager == null) return;
-                int sysVol = Math.round(vol);
-                sysVol = Math.max(1, Math.min(maxVol, sysVol));
-                try {
-                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, sysVol, 0);
-                } catch (SecurityException e) {
-                    Log.e(TAG, "Failed to set alarm fade volume step=" + stepIndex, e);
+                // session 过期或已停止：丢弃，绝不可再改音量
+                if (!alarmVolumeOverride || alarmVolumeSession != session
+                        || radioPlayer == null || audioManager == null) return;
+                // 用户手动把系统音量调至 0：跳过本步，不覆盖，让零音量暂停逻辑生效
+                int curSys = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+                if (curSys == 0) return;
+                // 系统音量：当前进度对应的档位（向上取整），仅在档位变化时才写入
+                int maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                int sysVol = targetSystemVolume(percent, maxVol);
+                if (curSys != sysVol) {
+                    try {
+                        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, sysVol, 0);
+                    } catch (SecurityException e) {
+                        Log.e(TAG, "Failed to set alarm fade system volume step", e);
+                    }
                 }
-                // 每一步都确保播放器增益仍为满，防止焦点/重缓冲把应用音量压低
-                if (radioPlayer != null && alarmVolumeOverride && alarmVolumeSession == session) {
-                    radioPlayer.setVolumeMappingEnabled(false);
-                    radioPlayer.setMaxGain(1.0f);
-                    radioPlayer.setVolume(FULL_VOLUME);
-                }
+                // 应用层增益：精确补平到当前进度百分比
+                float sysRatio = sysVol / (float) Math.max(1, maxVol);
+                alarmAppGain = alarmGainForVolume(percent, sysRatio);
+                radioPlayer.setVolumeMappingEnabled(false);
+                radioPlayer.setMaxGain(1.0f);
+                radioPlayer.setVolume(alarmAppGain * 100f);
             };
             alarmFadeTasks.add(step);
             handler.postDelayed(step, stepInterval * i);
         }
+    }
+
+    /**
+     * 百分比 → 系统音量档位（纯函数，便于单元测试）。
+     * 向上取整：保证目标档位比例 ≥ 目标百分比，从而应用层增益 ≤ 1（只需衰减、不需放大）。
+     *
+     * @param percent 音量百分比（0-100，可为小数）
+     * @param maxVol  系统媒体音量最大档位
+     * @return 1..maxVol 的档位
+     */
+    static int targetSystemVolume(float percent, int maxVol) {
+        int sysVol = (int) Math.ceil(percent / 100f * maxVol);
+        return Math.max(1, Math.min(maxVol, sysVol));
+    }
+
+    /**
+     * 百分比 → 应用层增益（纯函数，便于单元测试）。
+     * 增益 = 百分比 / 系统档位比例，并限制在 [0.01, 1]，
+     * 保证最终响度恰好等于目标百分比，且不同百分比（如 24% 与 29%）听感不同。
+     *
+     * @param percent  音量百分比（0-100，可为小数）
+     * @param sysRatio 系统音量档位比例（0~1，如 4/15）
+     */
+    static float alarmGainForVolume(float percent, float sysRatio) {
+        if (sysRatio <= 0f) return 1f;
+        float gain = (percent / 100f) / sysRatio;
+        return Math.max(0.01f, Math.min(1f, gain));
     }
 
     /**
@@ -1387,10 +1431,12 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
             Log.w(TAG, "Alarm stopped but no saved system volume to restore");
         }
 
-        // 重新计算 maxGain（恢复正常的音量映射补偿）
+        // 重新计算 maxGain（恢复正常的音量映射补偿），并把应用层音量复位为满音量：
+        // 渐增期间 lastVolume 是渐增增益（如 94），若不复位，闹钟结束后普通播放会一直偏小。
+        alarmAppGain = 1.0f;
         updateVolumeGain();
         if (radioPlayer != null) {
-            radioPlayer.refreshVolume();
+            radioPlayer.setVolume(FULL_VOLUME);
         }
     }
 
@@ -1408,7 +1454,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         // 若每次都重新执行"静音→释放/重建均衡器→渐入"，会在播放过程中反复
         // 触发 AudioFlinger 效果链重配置，低版本 Android 上会产生爆音，
         // 且音量会从渐入中途被重置回 0，表现为"开始播放不到一秒突然很大声"。
-        // 对闹钟模式同样生效：第一次已完成 startAlarmVolumeOverride + 满音量设置，
+        // 对闹钟模式同样生效：第一次已完成 startAlarmVolumeOverride（设系统音量 + 启动增益渐增），
         // 重复执行只会释放并重建均衡器产生爆音。
         if (eqAndFadeInitialized) {
             // #region debug-point B:apply-equalizer
@@ -1431,13 +1477,13 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
         applyEqualizerSettings(audioSessionId);
 
-        // 闹钟渐增已启动后，后续 Buffering→Playing 只重新确保应用层满增益，
-        // 不重启系统音量渐增（避免音量被重置回起点）。
+        // 闹钟渐增已启动后，后续 Buffering→Playing 只重新确保应用层增益为当前渐增值，
+        // 不重启渐增（避免音量被重置回起点）。
         if (useAlarmFade && alarmFadeApplied) {
             if (radioPlayer != null) {
                 radioPlayer.setVolumeMappingEnabled(false);
                 radioPlayer.setMaxGain(1.0f);
-                radioPlayer.setVolume(FULL_VOLUME);
+                radioPlayer.setVolume(alarmAppGain * 100f);
             }
             return;
         }
@@ -1447,11 +1493,9 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         if (player != null) {
             if (useAlarmFade) {
                 alarmFadeApplied = true;
-                // 闹钟播放：系统媒体音量线性渐增 + 应用层固定满增益
+                // 闹钟播放：系统音量一次性设为目标档位，应用层浮点增益从起始%平滑渐增
+                //（起始增益由 startAlarmVolumeOverride 内部立即设置，无需在此置满）
                 startAlarmVolumeOverride();
-                player.setVolumeMappingEnabled(false);
-                player.setMaxGain(1.0f);
-                player.setVolume(FULL_VOLUME);
             } else {
                 Runnable fadeInTask = () -> fadeInVolume(player, 0f, FULL_VOLUME, 300);
                 pendingFadeInTasks.add(fadeInTask);
@@ -1461,9 +1505,16 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     }
 
     private void applyEqualizerSettings(int audioSessionId) {
-        releaseServiceEqualizer();
-
         if (eqActivityOpen) return;
+
+        // 均衡器已 attach 到同一 audio session 时直接复用，避免反复
+        // new Equalizer + setEnabled(true) 触发 Android 5.x 效果链瞬态爆音
+        // （缓冲恢复、重复 Playing 通知等场景下尤其重要）
+        if (serviceEqualizer != null && serviceEqualizerSessionId == audioSessionId) {
+            return;
+        }
+
+        releaseServiceEqualizer();
 
         SharedPreferences eqPrefs = PreferenceManager.getDefaultSharedPreferences(itsContext);
 
@@ -1561,6 +1612,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
             }
 
             serviceEqualizer.setEnabled(true);
+            serviceEqualizerSessionId = audioSessionId;
 
             boolean bassBoostEnabled = eqPrefs.getBoolean(prefBassBoostEnabled, false);
             if (bassBoostEnabled) {
@@ -1633,6 +1685,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
             }
             serviceBassBoost = null;
         }
+        serviceEqualizerSessionId = -1;
     }
 
     private void updateNotification() {
@@ -1872,7 +1925,13 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                             radioPlayer.setVolume(0f);
                         }
 
-                        releaseServiceEqualizer();
+                        // 缓冲（PrePlaying）时保留均衡器实例：即使不重建，反复
+                        // release + attach 也会触发 Android 5.x 的 AudioFlinger
+                        // 效果链瞬态爆音。仅停止（Idle）时释放，由下次 applyEqualizerSettings
+                        // 在 session 变化时重建（session 复用逻辑保证同 session 不重建）。
+                        if (state == PlayState.Idle) {
+                            releaseServiceEqualizer();
+                        }
                         // 离开 Playing 状态（缓冲/停止/出错）后，下次 Playing 需重新初始化音量与均衡器
                         eqAndFadeInitialized = false;
 
@@ -2092,8 +2151,8 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
      * 优先级：有线耳机 > 蓝牙耳机 > 内置扬声器（无耳机连接时）
      */
     private void checkHeadsetZeroVolumePause() {
-        // 闹钟期间不再跳过零音量暂停检查：startAlarmVolumeOverride 已确保起始音量 ≥ 1，
-        // app 永远不会自己将系统音量设为 0，因此任何 volume=0 必定是用户手动操作。
+        // 闹钟期间不再跳过零音量暂停检查：startAlarmVolumeOverride 已确保系统音量 ≥ 1，
+        // 且渐增只在应用层做、绝不写系统音量，因此任何 volume=0 必定是用户手动操作。
         if (audioManager == null) return;
 
         int curVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
