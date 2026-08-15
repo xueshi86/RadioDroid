@@ -1180,6 +1180,12 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             updateAppLanguage(language);
             getActivity().recreate();
         }
+        if (key != null && key.startsWith("toolbar_show_")) {
+            androidx.fragment.app.FragmentActivity activity = getActivity();
+            if (activity != null) {
+                activity.invalidateOptionsMenu();
+            }
+        }
     }
     
     private void updateAppLanguage(String language) {

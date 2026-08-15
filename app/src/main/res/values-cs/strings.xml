@@ -77,4 +77,5 @@
     <string name="image_button_record">Nahrát</string>
     <string name="image_button_delete">Smazat</string>
     <string name="image_button_more">Více</string>
+    <string name="alarm_fade_invalid_range">Počáteční hlasitost musí být nižší než cílová</string>
 </resources>

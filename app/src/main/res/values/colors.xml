@@ -8,6 +8,8 @@
     <color name="navigationBarColor">#000000</color>
     <color name="colorAccent">#1d6293</color>
     <color name="colorAccentDark">#1d6293</color>
+    <!-- 暗色主题对话框主色：比 colorAccentDark 更亮，保证暗色背景上文字/滑块清晰可见 -->
+    <color name="colorAlertPrimaryDark">#64B5F6</color>
     <color name="colorTabUnderline">#e0347f</color>
     <color name="colorTabUnderlineDark">@color/colorAccentDark</color>
     <color name="colorStationSwipeBackground">#ff4081</color>

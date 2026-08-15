@@ -557,6 +557,7 @@ Esto sobrescribirá la base de datos principal actual, asegúrese de haber reali
     <string name="alarm_fade_seconds">%1$d s</string>
     <string name="alarm_fade_info">%1$d%% → %2$d%% / %3$d s</string>
     <string name="alarm_fade_off">desactivado</string>
+    <string name="alarm_fade_invalid_range">El volumen inicial debe ser menor que el objetivo</string>
     <string name="alarm_save">Guardar</string>
     <string name="alarm_cancel">Cancelar</string>
 

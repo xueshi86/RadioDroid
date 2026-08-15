@@ -33,7 +33,15 @@ local.properties
 
 # Gradle generated files
 .gradle/
+.gradle-home/
+.gradle-home2/
 gradle/
+
+# Local tool data
+.workbuddy/
+
+# Temp UI mockup
+time_picker_mockup.html
 
 # Signing files
 .signing/

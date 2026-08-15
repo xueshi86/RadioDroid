@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -109,6 +110,10 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
 
     private Runnable fullStopTask;
     private Runnable playbackDelayRunnable;
+    // 兜底轮询：STATE_READY 回调可能延迟/丢失（旧 Android 或特殊流），
+    // 轮询检查播放器实际状态，READY 时补发 Playing 通知，避免"缓冲完成却一直静音"
+    private Runnable readyPollRunnable;
+    private int readyPollTries;
 
     // 音量渐入由 PlayerService 统一控制，ExoPlayerWrapper 只负责静音启动
 
@@ -123,6 +128,9 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                 player.setMediaSource(audioSource);
                 player.prepare();
                 player.setPlayWhenReady(true);
+                // 与 playRemote 的兜底逻辑保持一致：网络恢复恢复播放后也启动轮询，
+                // 避免 STATE_READY 回调延迟/丢失时长时间静音无 Playing 通知
+                startReadyPolling(playSessionId);
             }
         }
     };
@@ -248,6 +256,11 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         // is only ~40KB and can be downloaded in under 1 second. So we add a real-time
         // delay to ensure the player buffers for the intended duration before playing.
         int playbackDelayMs = bufferForPlaybackMs;
+        // 低版本 Android（5.x）设备网络栈/CPU 弱，缩短启动缓冲延迟，更快进入播放流程，
+        // 减少"点播后长时间静音"的等待。ExoPlayer 仍会在缓冲足够后才真正 READY 出声。
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            playbackDelayMs = Math.min(playbackDelayMs, 1000);
+        }
         cancelPlaybackDelay();
 
         player.setPlayWhenReady(false); // Don't play yet, just buffer
@@ -266,8 +279,13 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                 // #region debug-point A:play-when-ready-after
                 dbg("A", "ExoPlayerWrapper:240b", "AFTER setPlayWhenReady(true)", java.util.Collections.singletonMap("currentVolume", player.getVolume()));
                 // #endregion
-                // 不再在此处手动通知 Playing。Playing 统一由 STATE_READY 回调
-                // （AudioTrack 真正启动）触发，避免提前渐入音量导致启动爆音被放大。
+                // 正常路径：Playing 由 STATE_READY 回调（AudioTrack 真正启动）触发，
+                // 避免提前渐入音量导致启动爆音被放大。
+                // 兜底：部分旧 Android（如 5.x）或特殊流上 STATE_READY 回调可能延迟/丢失，
+                // 若长期无 Playing 通知则轮询检查播放器实际状态，READY 时补发 Playing，
+                // 避免"缓冲完成却一直静音"。轮询同样只在 READY 后通知，不会提前渐入，
+                // 不会重新引入爆音（PlayerService 幂等守卫自动去重）。
+                startReadyPolling(sessionId);
             }
             playbackDelayRunnable = null;
         };
@@ -542,10 +560,52 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
     }
 
     private void cancelPlaybackDelay() {
+        cancelReadyPolling();
         if (playbackDelayRunnable != null) {
             playerThreadHandler.removeCallbacks(playbackDelayRunnable);
             playbackDelayRunnable = null;
         }
+    }
+
+    /**
+     * 兜底轮询：STATE_READY 回调可能延迟/丢失（旧 Android 或特殊流），
+     * 轮询检查播放器实际状态，READY 且 playWhenReady 时补发 Playing 通知。
+     * 只在真正 READY 后通知，不会提前渐入，不引入爆音；
+     * PlayerService 的幂等守卫（eqAndFadeInitialized）保证与 STATE_READY 通知去重。
+     */
+    private void startReadyPolling(final int sessionId) {
+        cancelReadyPolling();
+        readyPollTries = 0;
+        readyPollRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (playSessionId != sessionId || player == null) {
+                    readyPollRunnable = null;
+                    return;
+                }
+                if (player.getPlaybackState() == Player.STATE_READY && player.getPlayWhenReady()) {
+                    if (stateListener != null) {
+                        stateListener.onStateChanged(PlayState.Playing);
+                    }
+                    readyPollRunnable = null;
+                } else if (++readyPollTries > 60) {
+                    // 约 15 秒仍未 READY（慢缓冲/流异常）：停止轮询，
+                    // 之后由 STATE_READY 回调或错误处理（onPlayerErrorChanged）接管
+                    readyPollRunnable = null;
+                } else {
+                    playerThreadHandler.postDelayed(this, 250);
+                }
+            }
+        };
+        playerThreadHandler.postDelayed(readyPollRunnable, 500);
+    }
+
+    private void cancelReadyPolling() {
+        if (readyPollRunnable != null) {
+            playerThreadHandler.removeCallbacks(readyPollRunnable);
+            readyPollRunnable = null;
+        }
+        readyPollTries = 0;
     }
 
     @Override

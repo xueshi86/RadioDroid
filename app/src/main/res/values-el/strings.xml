@@ -226,4 +226,5 @@
     <string name="nav_item_about">Σχετικά με...</string>
     <string name="settings_mpd_port">Θύρα MPD</string>
     <string name="refresh">Ανανέωση</string>
+    <string name="alarm_fade_invalid_range">Η αρχική ένταση πρέπει να είναι χαμηλότερη από την τελική</string>
 </resources>

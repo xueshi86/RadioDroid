@@ -188,7 +188,7 @@
     <string name="settings_sleep_timer_desc">%1$s分钟后停止当前播放</string>
     <string name="settings_sleep_timer_desc_not_set">点击设置睡眠定时器</string>
     <string name="alarm_edit_title">编辑闹钟</string>
-    <string name="alarm_fade_in">音量渐增</string>
+    <string name="alarm_fade_in">音量渐增（最低 1%）</string>
     <string name="alarm_start_volume">起始音量</string>
     <string name="alarm_target_volume">目标音量</string>
     <string name="alarm_fade_duration">渐增时长</string>
@@ -196,6 +196,8 @@
     <string name="alarm_fade_seconds">%1$d 秒</string>
     <string name="alarm_fade_info">%1$d%% → %2$d%% / %3$d 秒</string>
     <string name="alarm_fade_off">关闭</string>
+    <string name="alarm_volume_zero_warning">当前媒体音量为 0，闹钟可能无声。是否现在调高音量？</string>
+    <string name="alarm_fade_invalid_range">起始音量需低于目标音量</string>
     <string name="alarm_save">保存</string>
     <string name="alarm_cancel">取消</string>
     <string name="settings_play">播放器</string>
@@ -257,13 +259,13 @@
     <string name="settings_pause_on_speaker_zero_volume_summary_on">开启：未连接耳机时，扬声器音量调至 0 自动暂停播放</string>
     <string name="settings_pause_on_speaker_zero_volume_summary_off">关闭：音量调至 0 时不自动暂停</string>
 
-    <string name="settings_warn_no_wifi">顯示網路類型指示器</string>
-    <string name="settings_warn_no_wifi_on">播放時顯示 Wi-Fi 或行動數據圖示</string>
-    <string name="settings_warn_no_wifi_off">隱藏網路類型指示器</string>
+    <string name="settings_warn_no_wifi">显示网络类型指示器</string>
+    <string name="settings_warn_no_wifi_on">播放时显示 Wi-Fi 或移动数据图标</string>
+    <string name="settings_warn_no_wifi_off">隐藏网络类型指示器</string>
 
-    <string name="content_desc_connection_type">網路類型</string>
-    <string name="content_desc_connection_type_wifi">透過 Wi-Fi 連線</string>
-    <string name="content_desc_connection_type_mobile">透過行動數據連線</string>
+    <string name="content_desc_connection_type">网络类型</string>
+    <string name="content_desc_connection_type_wifi">通过 Wi-Fi 连接</string>
+    <string name="content_desc_connection_type_mobile">通过移动数据连接</string>
 
     <string name="settings_recordings">录音</string>
     <string name="settings_record_name_formatting">名称格式</string>
@@ -667,18 +669,18 @@
     <string name="db_status_never_updated">数据库尚未更新</string>
     <string name="db_status_error">获取状态失败：%1$s</string>
     <string name="export_type_file">文件</string>
-    <string name="recording_delete_title">刪除錄音</string>
-    <string name="recording_delete_confirm">確定要刪除\"%s\"嗎？</string>
-    <string name="recording_deleted">錄音已刪除</string>
-    <string name="recording_delete_failed">刪除錄音失敗</string>
-    <string name="recording_file_not_found">錄音檔案未找到</string>
-    <string name="recording_play_error">無法播放錄音</string>
-    <string name="recording_details">詳情</string>
-    <string name="recording_detail_name">檔案名稱：</string>
-    <string name="recording_detail_path">儲存路徑：</string>
-    <string name="recording_detail_size">檔案大小：</string>
-    <string name="recording_detail_duration">時長（估算）：</string>
-    <string name="recording_detail_modified">修改時間：</string>
+    <string name="recording_delete_title">删除录音</string>
+    <string name="recording_delete_confirm">确定要删除\"%s\"吗？</string>
+    <string name="recording_deleted">录音已删除</string>
+    <string name="recording_delete_failed">删除录音失败</string>
+    <string name="recording_file_not_found">录音文件未找到</string>
+    <string name="recording_play_error">无法播放录音</string>
+    <string name="recording_details">详情</string>
+    <string name="recording_detail_name">文件名：</string>
+    <string name="recording_detail_path">保存路径：</string>
+    <string name="recording_detail_size">文件大小：</string>
+    <string name="recording_detail_duration">时长（估算）：</string>
+    <string name="recording_detail_modified">修改时间：</string>
 
     <!-- Buffer strategy -->
     <string name="detail_buffer_settings">缓存策略</string>
@@ -695,29 +697,29 @@
     <string name="player_total_play_time">总时长: %1$s</string>
     <string name="player_current_play_time">当前时长: %1$s</string>
     <string name="player_network_usage">流量: %1$s</string>
-    <string name="player_buffer_time">緩衝時長: %1$s</string>
+    <string name="player_buffer_time">缓冲时长: %1$s</string>
 
-    <string name="settings_bluetooth_connect_permission">鄰近裝置權限</string>
-    <string name="settings_bluetooth_connect_permission_summary">Android 12 及以上版本需要此權限來偵測藍牙音訊裝置的連線。此權限屬於「鄰近裝置」類別。若沒有此權限，藍牙斷線／連線功能將無法使用。</string>
-    <string name="settings_bluetooth_connect_permission_not_needed">此 Android 版本不需要</string>
-    <string name="settings_bluetooth_connect_permission_denied">權限遭到拒絕。藍牙斷線／連線功能無法使用。</string>
-    <string name="error_record_not_playing">請先開始播放再錄音</string>
-    <string name="alarm_repeat">重複</string>
-    <string name="context_menu_refresh_icon">重新整理圖示</string>
-    <string name="recording_player_title">播放錄音</string>
+    <string name="settings_bluetooth_connect_permission">附近设备权限</string>
+    <string name="settings_bluetooth_connect_permission_summary">Android 12 及以上版本需要此权限来检测蓝牙音频设备的连接和断开。此权限属于"附近设备"权限类别。未授权时，蓝牙断开/连接相关功能将无法使用。</string>
+    <string name="settings_bluetooth_connect_permission_not_needed">当前安卓版本无需此权限</string>
+    <string name="settings_bluetooth_connect_permission_denied">权限被拒绝，蓝牙断开/连接功能不可用</string>
+    <string name="error_record_not_playing">请先点击播放再开始录音</string>
+    <string name="alarm_repeat">重复</string>
+    <string name="context_menu_refresh_icon">刷新图标</string>
+    <string name="recording_player_title">播放录音</string>
     <string name="recording_play">播放</string>
-    <string name="recording_pause">暫停</string>
+    <string name="recording_pause">暂停</string>
     <string name="recording_play_external">使用外部播放器播放</string>
-    <string name="recording_empty_file">錄音檔案為空</string>
-    <string name="detail_equalizer_settings">等化器設定</string>
-    <string name="buffer_settings_title">播放緩衝</string>
+    <string name="recording_empty_file">录音文件为空</string>
+    <string name="detail_equalizer_settings">均衡器设置</string>
+    <string name="buffer_settings_title">播放缓冲</string>
     <string name="buffer_settings_min">0.5秒</string>
     <string name="buffer_settings_max">30秒</string>
-    <string name="buffer_settings_default">預設</string>
+    <string name="buffer_settings_default">默认</string>
     <string name="buffer_settings_reset">重置</string>
-    <string name="buffer_settings_apply">套用</string>
+    <string name="buffer_settings_apply">应用</string>
     <string name="buffer_settings_seconds">%1$.1f 秒</string>
-    <string name="buffer_settings_default_desc">預設 (2.5秒)</string>
-    <string name="buffer_settings_custom_desc">自訂 (%1$.1f秒)</string>
+    <string name="buffer_settings_default_desc">默认 (2.5秒)</string>
+    <string name="buffer_settings_custom_desc">自定义 (%1$.1f秒)</string>
 
 </resources>

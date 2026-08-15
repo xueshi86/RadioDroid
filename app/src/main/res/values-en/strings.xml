@@ -483,4 +483,5 @@
     <string name="settings_clear_icon_cache">Clear icon cache</string>
     <string name="settings_clear_icon_cache_summary">Delete all cached station icons. Icons will be re-downloaded when needed.</string>
     <string name="icon_cache_cleared">Icon cache cleared</string>
+    <string name="alarm_fade_invalid_range">Start volume must be below target volume</string>
 </resources>

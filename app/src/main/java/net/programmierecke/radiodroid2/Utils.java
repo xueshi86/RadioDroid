@@ -435,15 +435,6 @@ public class Utils {
         return getThemeResId(context) == R.style.MyMaterialTheme_Dark;
     }
 
-    public static int getTimePickerThemeResId(final Context context) {
-        int theme;
-        if (getThemeResId(context) == R.style.MyMaterialTheme_Dark)
-            theme = R.style.DialogTheme_Dark;
-        else
-            theme = R.style.DialogTheme;
-        return theme;
-    }
-    
     public static int getAlertDialogThemeResId(final Context context) {
         int theme;
         if (getThemeResId(context) == R.style.MyMaterialTheme_Dark)

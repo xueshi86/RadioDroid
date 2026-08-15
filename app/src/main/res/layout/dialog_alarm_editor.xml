@@ -8,8 +8,10 @@
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        app:cardBackgroundColor="?android:attr/colorBackground"
         app:cardCornerRadius="16dp"
-        app:cardElevation="4dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp"
         app:contentPadding="20dp">
 
         <LinearLayout
@@ -37,6 +39,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="32sp"
+                android:textColor="?attr/alarmTimeButtonColor"
+                android:backgroundTint="@android:color/transparent"
                 android:paddingTop="12dp"
                 android:paddingBottom="12dp"
                 android:layout_marginBottom="16dp" />
@@ -65,9 +69,15 @@
                 android:id="@+id/sliderStartVolume"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:valueFrom="0"
+                android:valueFrom="1"
                 android:valueTo="100"
                 android:stepSize="1"
+                app:thumbColor="?attr/sliderThumbColor"
+                app:haloColor="?attr/sliderHaloColor"
+                app:trackColorActive="?attr/sliderTrackActiveColor"
+                app:trackColorInactive="?attr/sliderTrackInactiveColor"
+                app:tickColorActive="?attr/sliderTickColor"
+                app:tickColorInactive="?attr/sliderTickInactiveColor"
                 android:layout_marginBottom="8dp" />
 
             <TextView
@@ -81,9 +91,15 @@
                 android:id="@+id/sliderTargetVolume"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:valueFrom="0"
+                android:valueFrom="1"
                 android:valueTo="100"
                 android:stepSize="1"
+                app:thumbColor="?attr/sliderThumbColor"
+                app:haloColor="?attr/sliderHaloColor"
+                app:trackColorActive="?attr/sliderTrackActiveColor"
+                app:trackColorInactive="?attr/sliderTrackInactiveColor"
+                app:tickColorActive="?attr/sliderTickColor"
+                app:tickColorInactive="?attr/sliderTickInactiveColor"
                 android:layout_marginBottom="8dp" />
 
             <TextView
@@ -100,6 +116,24 @@
                 android:valueFrom="0"
                 android:valueTo="120"
                 android:stepSize="5"
+                app:thumbColor="?attr/sliderThumbColor"
+                app:haloColor="?attr/sliderHaloColor"
+                app:trackColorActive="?attr/sliderTrackActiveColor"
+                app:trackColorInactive="?attr/sliderTrackInactiveColor"
+                app:tickColorActive="?attr/sliderTickColor"
+                app:tickColorInactive="?attr/sliderTickInactiveColor"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/textViewFadeWarning"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textAlignment="center"
+                android:text="@string/alarm_fade_invalid_range"
+                android:textColor="?attr/colorError"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:visibility="gone"
                 android:layout_marginBottom="8dp" />
 
         </LinearLayout>

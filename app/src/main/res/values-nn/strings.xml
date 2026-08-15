@@ -178,4 +178,5 @@
   <string name="nav_item_about">Om</string>
   <string name="settings_mpd_port">MPD-port</string>
   <string name="refresh">Oppdater</string>
+  <string name="alarm_fade_invalid_range">Startvolumet må vere lågare enn målvolumet</string>
 </resources>

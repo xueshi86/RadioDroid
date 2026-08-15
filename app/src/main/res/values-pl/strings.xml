@@ -256,4 +256,5 @@
     <string name="nav_item_statistics">Statystyki</string>
     <string name="nav_item_about">O</string>
     <string name="refresh">Odśwież</string>
+    <string name="alarm_fade_invalid_range">Głośność początkowa musi być niższa niż docelowa</string>
 </resources>

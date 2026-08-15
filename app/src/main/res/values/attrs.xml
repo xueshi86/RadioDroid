@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 时间选择器：滚轮数字、分割线、按钮文字颜色（按浅/暗主题区分） -->
+    <attr name="timePickerValueColor" format="color"/>
+    <attr name="timePickerDividerColor" format="color"/>
+    <attr name="timePickerButtonColor" format="color"/>
+    <attr name="timePickerCardBackground" format="color"/>
+    <!-- 闹钟编辑页：时间按钮文字色 -->
+    <attr name="alarmTimeButtonColor" format="color"/>
+    <!-- 闹钟编辑页：音量/时长滑块颜色 -->
+    <attr name="sliderThumbColor" format="color"/>
+    <attr name="sliderHaloColor" format="color"/>
+    <attr name="sliderTrackActiveColor" format="color"/>
+    <attr name="sliderTrackInactiveColor" format="color"/>
+    <attr name="sliderTickColor" format="color"/>
+    <attr name="sliderTickInactiveColor" format="color"/>
+</resources>

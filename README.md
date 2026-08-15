@@ -36,6 +36,8 @@
 
 两个版本的核心功能（收音机播放、离线数据库、搜索等）完全一致，区别仅在于是否包含 Google 专有服务。
 
+> **系统版本支持说明**：本应用优先支持 **Android 9.0+**（API 28+），在该版本区间获得最佳体验。Android 5.x~8.x 等低版本设备已做兼容适配，但部分特性（如均衡器实时调节、缓冲表现）可能存在小幅瑕疵，属预期行为。
+
 ### 与官方原版的主要区别
 
 ####  核心架构变更：离线数据库模式
@@ -331,6 +333,8 @@ This project is a heavily customized fork of [segler-alex/RadioDroid](https://gi
 
 Core functionality is identical across both variants. The difference is the availability of Google proprietary services.
 
+> **System Version Note**: This app is optimized for **Android 9.0+** (API 28+), where it delivers the best experience. Older versions (Android 5.x-8.x) are supported with compatibility adaptations, but some features (e.g., real-time equalizer adjustments, buffering behavior) may have minor quirks, which is expected.
+
 ### Key Differences from Official RadioDroid
 
 ####   Core Architecture: Offline Database Mode
@@ -612,6 +616,42 @@ Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elemen
 ## Changelog
 
 > Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+
+### v1.04
+*2026-08-15*
+
+**低版本 Android（5.x）播放兼容性修复**
+- **修复**：多个电台"无法播放"（缓冲完成却静音不发声）— ExoPlayer 的 STATE_READY 回调在旧设备上可能延迟/丢失，新增轮询兜底在真正 READY 后补发 Playing 通知（不会提前渐入、不引入爆音）
+- **优化**：低版本启动缓冲延迟缩短（2500ms → 1000ms），点击播放后更快出声
+
+**低版本爆音修复（均衡器场景）**
+- **修复**：Android 5.x 打开均衡器或播放瞬间爆音 — 低版本（API < 23）不再在正在播放的 audio session 上 attach Equalizer/BassBoost（改用临时 session 探测能力），消除 AudioFlinger 效果链瞬态爆音；设置保存后下次播放生效
+- **修复**：BUFFERING 抖动时均衡器反复 attach/detach 引发的爆音 — 均衡器按 session 复用，仅停止（Idle）时释放
+
+**收藏夹导入修复**
+- **修复**：收藏夹跨版本导入失败 — M3U 导入改为纯本地流程（本地数据库查询 → M3U 内 URL 兜底），不再依赖联网查询 UUID，断网也能导入
+- **修复**：M3U 导入显式指定 UTF-8 编码，兼容 Android 5.1.1 等旧设备导出的文件
+
+**时间选择器界面重做**
+- **重做**：时间选择器由系统 TimePickerDialog 改为自定义双滚轮对话框 — 小时/分钟两个可循环滚轮（00-23 / 00-59、两位补零、禁止键盘输入、长按连续滚动）
+- **新增**：`CompactNumberPicker` 完全自绘滚轮 — 选中行放大加粗（44sp）、相邻行缩小半透明（26sp），突出当前选中值；支持拖动跟手、松手惯性吸附
+- **美化**：对话框新增标题、圆角卡片容器、居中按钮区，布局与闹钟编辑页风格统一
+- **适配**：滚轮数字、分割线、卡片背景、按钮文字颜色全部由主题属性控制，亮色/暗色主题下均显示正常
+
+**闹钟功能增强**
+- **修复**：闹钟起始音量允许 0% 导致渐增无效 — 起始音量下限改为 1%（应用永不将系统音量设为 0），旧数据加载时自动归一化到 [1,100]
+- **修复**：一次性（非重复）闹钟错过触发后仍显示"已开启" — 记录实际触发时间，应用启动/重注册时检测到已错过则自动禁用，避免跨天补响
+- **新增**：渐增参数实时校验 — 渐增开启时起始音量必须低于目标音量，否则禁用保存按钮并显示提示
+- **新增**：系统媒体音量为 0 时保存闹钟弹窗警告（闹钟可能无声）
+- **适配**：闹钟编辑对话框暗色主题下滑块、时间按钮颜色统一为白色，不再与深色背景混为一体
+
+**其他修复**
+- **修复**：录音播放完毕后再次点击播放无响应 — STATE_ENDED 状态下先 seek 回开头再播放
+- **优化**：Chromecast 投屏按钮始终显示在工具栏（无投屏设备时置灰），受"显示投屏按钮"设置控制，避免按钮消失误导用户
+- **优化**：电台列表 图标/列表 切换按钮改为"有空间才显示"，避免窄屏工具栏溢出
+
+**版本更新**
+- 版本号升级至 v1.04 (versionCode 113)
 
 ### v1.03
 *2026-08-09*

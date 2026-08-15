@@ -89,6 +89,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -157,6 +158,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
     MenuItem menuItemMpd;
     MenuItem menuItemRandomPlay;
     MenuItem menuItemSort;
+    MenuItem menuItemCast;
 
     private SharedPreferences sharedPref;
 
@@ -679,6 +681,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         menuItemMpd = menu.findItem(R.id.action_mpd);
         menuItemRandomPlay = menu.findItem(R.id.action_random_play);
         menuItemSort = menu.findItem(R.id.action_sort);
+        menuItemCast = menu.findItem(R.id.media_route_menu_item);
         // 移除SearchView，直接使用onOptionsItemSelected处理点击事件跳转到多条件搜索界面
         MenuItemCompat.setActionView(menuItemSearch, null);
 
@@ -763,11 +766,8 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
 
         ((RadioDroidApp) getApplication()).getCastHandler().getRouteItem(getApplicationContext(), menu);
 
-        if (!sharedPref.getBoolean("toolbar_show_cast", true)) {
-            MenuItem castItem = menu.findItem(R.id.media_route_menu_item);
-            if (castItem != null) {
-                castItem.setVisible(false);
-            }
+        if (menuItemCast != null) {
+            menuItemCast.setVisible(sharedPref.getBoolean("toolbar_show_cast", true));
         }
 
         return true;
@@ -778,8 +778,14 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         if (menuItemRandomPlay == null) {
             menuItemRandomPlay = menu.findItem(R.id.action_random_play);
         }
+        if (menuItemCast == null) {
+            menuItemCast = menu.findItem(R.id.media_route_menu_item);
+        }
 
         menuItemRandomPlay.setVisible(selectedMenuItem == R.id.nav_item_stations && sharedPref.getBoolean("toolbar_show_random_play", true));
+        if (menuItemCast != null) {
+            menuItemCast.setVisible(sharedPref.getBoolean("toolbar_show_cast", true));
+        }
 
         return super.onPrepareOptionsMenu(menu);
     }
@@ -877,7 +883,9 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
                             FavouriteManager favouriteManager = radioDroidApp.getFavouriteManager();
                             
                             InputStream is = getContentResolver().openInputStream(finalUri);
-                            InputStreamReader reader = new InputStreamReader(is);
+                            // 显式指定 UTF-8，与 SaveM3U/LoadM3UInternal 保持一致，避免
+                            // 平台默认编码差异导致 5.1.1 等旧设备导出的文件解析乱码
+                            InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
                             
                             // 直接调用LoadM3UReader获取结果
                             importedStations = favouriteManager.LoadM3UReader(reader);
@@ -1091,7 +1099,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         } else if (itemId == R.id.action_add_alarm) {
             TimePickerFragment newFragment = new TimePickerFragment();
             newFragment.setCallback(this);
-            newFragment.show(getSupportFragmentManager(), "timePicker");
+            newFragment.show(this, getSupportFragmentManager(), "timePicker");
             return true;
         } else {
             return super.onOptionsItemSelected(menuItem);
