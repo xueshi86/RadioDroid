@@ -209,7 +209,7 @@
     <string name="notify_station_removed_from_list">1 Eliminada</string>
     <string name="action_station_removed_from_list_undo">DESFACER</string>
 
-    <string name="alert_install_lyrics_app">QuickLyric non está instalada no sistema. Queres instalala desde Google Play Store?</string>
+    <string name="alert_install_lyrics_app">QuickLyric non está instalada no sistema. Queres abrir a súa páxina de descarga?</string>
 
     <string name="alert_delete_history">Tes a certeza de querer eliminar o historial?</string>
     <string name="alert_delete_favorites">Tes a certeza de querer eliminar tódalas favoritas?</string>

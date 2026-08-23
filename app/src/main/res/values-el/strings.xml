@@ -178,6 +178,7 @@
     <string name="error_grant_audiofocus">Το αίτημα εστίασης στον ήχο δεν παραχωρήθηκε από το σύστημα.</string>
 
     <string name="error_no_equalizer_found">Δεν βρέθηκε εφαρμογή ισοστάθμισης.</string>
+    <string name="equalizer_unsupported_android5">Ο ενσωματωμένος ισοσταθμιστής δεν υποστηρίζεται σε Android 5.x. Χρησιμοποιήστε τον ισοσταθμιστή συστήματος.</string>
 
     <string name="player_info_status">Κατάσταση: </string>
     <string name="player_info_status_stopped">σταματημένο</string>

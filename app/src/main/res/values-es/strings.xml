@@ -238,7 +238,7 @@
     <string name="notify_station_removed_from_list">1 borrada</string>
     <string name="action_station_removed_from_list_undo">DESHACER</string>
 
-    <string name="alert_install_lyrics_app">QuickLyric no está instalada en el dispositivo. ¿Te gustaría conseguirla desde Google Play Store?</string>
+    <string name="alert_install_lyrics_app">QuickLyric no está instalada en el dispositivo. ¿Te gustaría abrir su página de descarga?</string>
 
     <string name="alert_delete_history">¿Realmente quieres borrar el historial?</string>
     <string name="alert_delete_favorites">¿Realmente quieres eliminar todos los favoritos?</string>
@@ -299,6 +299,7 @@
     <string name="equalizer_bands">Bandas de frecuencia</string>
     <string name="equalizer_not_playing">Primero inicie la reproducción de una estación para usar el ecualizador</string>
     <string name="equalizer_settings_saved_hint">La configuración surtirá efecto al iniciar la reproducción</string>
+    <string name="equalizer_unsupported_android5">El ecualizador integrado no es compatible con Android 5.x. Utilice el ecualizador del sistema.</string>
     <string name="equalizer_init_failed">Error al inicializar el ecualizador. Su dispositivo puede no ser compatible con esta función.</string>
     <string name="equalizer_open_external">Abrir ecualizador del sistema</string>
     <string name="equalizer_open_external_summary">Abrir el panel de efectos de audio del dispositivo (si está disponible)</string>

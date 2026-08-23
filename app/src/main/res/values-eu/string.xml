@@ -203,7 +203,7 @@
     <string name="notify_station_removed_from_list">1 ezabatu da</string>
     <string name="action_station_removed_from_list_undo">DESEGIN</string>
 
-    <string name="alert_install_lyrics_app">QuickLyric ez dago gailu honetan instalatuta. Nahi al duzu Google Play Store-tik eskuratzea?</string>
+    <string name="alert_install_lyrics_app">QuickLyric ez dago gailu honetan instalatuta. Deskargatzeko orria irekitzea nahi duzu?</string>
 
     <string name="alert_delete_history">Ziur zaude historiala ezabatu nahi duzula?</string>
     <string name="alert_delete_favorites">Ziur zaude gogokoak ezabatu nahi dituzula?</string>

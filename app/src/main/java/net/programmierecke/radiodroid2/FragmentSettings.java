@@ -269,14 +269,24 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             config.setActivity((AppCompatActivity) getActivity());
             config.index(R.xml.preferences);
         } else if (s.equals("pref_category_player")) {
-            findPreference("equalizer").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                @Override
-                public boolean onPreferenceClick(Preference preference) {
-                    Intent intent = new Intent(getContext(), net.programmierecke.radiodroid2.ui.EqualizerActivity.class);
-                    startActivity(intent);
-                    return true;
-                }
-            });
+            Preference equalizerPref = findPreference("equalizer");
+            if (equalizerPref == null) return;
+
+            // Android 5.x（API < 23）：AudioFlinger 效果链 attach/detach 会产生爆音，
+            // 应用内均衡器在 5.x 上禁用，入口置灰并显示说明，引导用户使用系统均衡器。
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                equalizerPref.setEnabled(false);
+                equalizerPref.setSummary(R.string.equalizer_unsupported_android5);
+            } else {
+                equalizerPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                    @Override
+                    public boolean onPreferenceClick(Preference preference) {
+                        Intent intent = new Intent(getContext(), net.programmierecke.radiodroid2.ui.EqualizerActivity.class);
+                        startActivity(intent);
+                        return true;
+                    }
+                });
+            }
             setupBluetoothPermissionPreference();
 
             // 初始化睡眠定时器摘要文本

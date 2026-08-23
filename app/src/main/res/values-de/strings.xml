@@ -157,6 +157,7 @@
     <string name="error_grant_audiofocus">Das System gab den Audiokanal nicht frei.</string>
 
     <string name="error_no_equalizer_found">Keine Equalizer-App gefunden!</string>
+    <string name="equalizer_unsupported_android5">Der integrierte Equalizer wird auf Android 5.x nicht unterstützt. Verwenden Sie den System-Equalizer.</string>
 
     <string name="player_info_status">Status:&#160;</string>
     <string name="player_info_status_stopped">gestoppt</string>

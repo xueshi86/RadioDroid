@@ -49,8 +49,6 @@ import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.widget.Toast;
 
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -88,26 +86,6 @@ import net.programmierecke.radiodroid2.ui.EqualizerActivity;
 import static android.content.Intent.ACTION_MEDIA_BUTTON;
 
 public class PlayerService extends JobIntentService implements RadioPlayer.PlayerListener {
-
-    // #region debug-point B:debug-logger
-    private static void dbg(String hypothesisId, String location, String msg, java.util.Map<String, Object> data) {
-        new Thread(() -> {
-            try {
-                URL url = new URL("http://127.0.0.1:7777/event");
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setDoOutput(true);
-                conn.setRequestProperty("Content-Type", "application/json");
-                conn.setConnectTimeout(500);
-                conn.setReadTimeout(500);
-                String json = "{\"sessionId\":\"volume-pop\",\"runId\":\"pre\",\"hypothesisId\":\"" + hypothesisId + "\",\"location\":\"" + location + "\",\"msg\":\"[DEBUG] " + msg.replace("\"", "'") + "\",\"data\":" + (data != null ? new org.json.JSONObject(data).toString() : "{}") + ",\"ts\":" + System.currentTimeMillis() + "}";
-                conn.getOutputStream().write(json.getBytes("UTF-8"));
-                conn.getResponseCode();
-                conn.disconnect();
-            } catch (Exception ignored) {}
-        }).start();
-    }
-    // #endregion
 
     protected static final int NOTIFY_ID = 1;
     private static final String NOTIFICATION_CHANNEL_ID = "default";
@@ -244,6 +222,22 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
      * 播放过程中释放+重建 AudioEffect，触发 DSP 效果链重配置而产生爆音。
      */
     private boolean eqAndFadeInitialized = false;
+
+    /**
+     * 最近一次发出 OPEN_AUDIO_EFFECT_CONTROL_SESSION 的 audioSessionId（0=无）。
+     * 用于效果会话广播去抖：同一 session 的缓冲抖动/暂停恢复不重复发 OPEN/CLOSE，
+     * 避免三星 SoundAlive 等系统效果链反复 attach/detach 在 Android 5.x 上
+     * 触发 AudioFlinger 效果链重配置产生全幅 DSP 瞬态爆音（应用层静音无法阻挡）。
+     */
+    private int lastEffectSessionId = 0;
+
+    // ---- 增益线性渐入的临时状态（fadeInSavedMaxGain <= 0 表示无进行中的线性渐入） ----
+    /** 线性渐入开始前的真实 maxGain */
+    private float fadeInSavedMaxGain = -1f;
+    /** 线性渐入开始前的音量映射开关 */
+    private boolean fadeInSavedMappingEnabled = true;
+    /** 线性渐入的目标稳态增益：volume=100 经指数映射并限幅后的值 */
+    private float fadeInSteadyGain = 1f;
 
     private boolean notificationIsActive = false;
 
@@ -456,9 +450,6 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     private AudioManager.OnAudioFocusChangeListener afChangeListener =
             new AudioManager.OnAudioFocusChangeListener() {
                 public void onAudioFocusChange(int focusChange) {
-                    // #region debug-point B:focus-change
-                    dbg("B", "PlayerService:416", "onAudioFocusChange", java.util.Map.of("focusChange", focusChange, "isLocal", radioPlayer != null && radioPlayer.isLocal(), "isAlarm", currentIsAlarm, "alarmVolumeOverride", alarmVolumeOverride));
-                    // #endregion
                     if (radioPlayer == null || !radioPlayer.isLocal()) {
                         return;
                     }
@@ -677,6 +668,19 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
         radioPlayer.destroy();
 
+        // 兜底补发效果会话 CLOSE：stop()→Idle 通知经 handler 排队，会被下方
+        // handler.removeCallbacksAndMessages 清掉而永远发不出
+        if (lastEffectSessionId > 0) {
+            try {
+                Intent i = new Intent(AudioEffect.ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION);
+                i.putExtra(AudioEffect.EXTRA_AUDIO_SESSION, lastEffectSessionId);
+                i.putExtra(AudioEffect.EXTRA_PACKAGE_NAME, getPackageName());
+                itsContext.sendBroadcast(i);
+            } catch (Exception ignored) {
+            }
+            lastEffectSessionId = 0;
+        }
+
         unregisterReceiver(eqActivityReceiver);
         unregisterVolumeChangeReceiver();
         if (audioDeviceMonitor != null) {
@@ -815,11 +819,6 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
             downloadRadioIcon();
 
         int result = acquireAudioFocus();
-        // #region debug-point B:audio-focus-result
-        int streamMaxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        int streamCurVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-        dbg("B", "PlayerService:705", "acquireAudioFocus result", java.util.Map.of("result", result, "granted", result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED, "streamMaxVol", streamMaxVol, "streamCurVol", streamCurVol, "streamRatio", (float)streamCurVol / streamMaxVol));
-        // #endregion
         if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
             // Start playback.
             enableMediaSession();
@@ -1027,9 +1026,6 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
     private int acquireAudioFocus() {
         int result;
-        // #region debug-point B:audio-focus-request
-        dbg("B", "PlayerService:905", "requestAudioFocus called", java.util.Map.of("isAlarm", currentIsAlarm));
-        // #endregion
         // 闹钟与普通播放统一使用 USAGE_MEDIA + STREAM_MUSIC，
         // 使系统路由到扬声器/有线/蓝牙时都走媒体音量（与闹钟音量渐增一致）。
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -1457,18 +1453,9 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         // 对闹钟模式同样生效：第一次已完成 startAlarmVolumeOverride（设系统音量 + 启动增益渐增），
         // 重复执行只会释放并重建均衡器产生爆音。
         if (eqAndFadeInitialized) {
-            // #region debug-point B:apply-equalizer
-            dbg("B", "PlayerService:applyEqualizerAndFadeIn", "skip duplicate Playing notification", java.util.Map.of("audioSessionId", audioSessionId, "useAlarmFade", useAlarmFade));
-            // #endregion
             return;
         }
         eqAndFadeInitialized = true;
-
-        // #region debug-point B:apply-equalizer
-        int streamMaxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        int streamCurVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-        dbg("B", "PlayerService:1083", "applyEqualizerAndFadeIn called", java.util.Map.of("audioSessionId", audioSessionId, "maxGain", radioPlayer != null ? radioPlayer.getMaxGain() : -1, "streamCurVol", streamCurVol, "streamMaxVol", streamMaxVol, "useAlarmFade", useAlarmFade, "alarmFadeApplied", alarmFadeApplied));
-        // #endregion
 
         // 先静音，避免后续均衡器附着时产生爆音
         if (radioPlayer != null) {
@@ -1497,7 +1484,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                 //（起始增益由 startAlarmVolumeOverride 内部立即设置，无需在此置满）
                 startAlarmVolumeOverride();
             } else {
-                Runnable fadeInTask = () -> fadeInVolume(player, 0f, FULL_VOLUME, 300);
+                Runnable fadeInTask = () -> fadeInVolumeLinearGain(player, 300);
                 pendingFadeInTasks.add(fadeInTask);
                 handler.postDelayed(fadeInTask, 50);
             }
@@ -1506,6 +1493,22 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
     private void applyEqualizerSettings(int audioSessionId) {
         if (eqActivityOpen) return;
+
+        // Android 5.x（API < 23）的 AudioFlinger 在向正在播放的 audio session
+        // attach / detach AudioEffect（Equalizer / BassBoost）时会产生 DSP 层面的
+        // 瞬态爆音（pop/click），即使先 setVolume(0) 也无法消除——效果链重配置
+        // 发生在 AudioTrack 之外的 DSP 节点，会引入直流偏移瞬态。
+        // Android 6.0+ 的 AudioFlinger 对效果链变更有平滑处理，可安全实时 attach。
+        //
+        // 5.x 上不在实时播放会话 attach 均衡器，设置仅保存到 prefs；
+        // 这同时消除了三个爆音场景：
+        //   1) 切换电台时新 audioSessionId 触发 release 旧 EQ + attach 新 EQ
+        //   2) 打开 EqualizerActivity → ACTION_EQ_ACTIVITY_OPENED → releaseServiceEqualizer()
+        //   3) 关闭 EqualizerActivity → ACTION_EQ_ACTIVITY_CLOSED → 重新 attach
+        // 与 EqualizerActivity 自身的 5.x 行为一致（它也仅在 M+ 实时 attach）。
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return;
+        }
 
         // 均衡器已 attach 到同一 audio session 时直接复用，避免反复
         // new Equalizer + setEnabled(true) 触发 Android 5.x 效果链瞬态爆音
@@ -1644,18 +1647,11 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         final long stepInterval = durationMs / steps;
         final float volumeStep = (toVolume - fromVolume) / steps;
 
-        // #region debug-point B:fadein-start
-        dbg("B", "PlayerService:1220", "fadeInVolume START", java.util.Map.of("from", fromVolume, "to", toVolume, "stepInterval", stepInterval));
-        // #endregion
         player.setVolume(fromVolume);
 
         for (int i = 1; i <= steps; i++) {
             final float volume = fromVolume + volumeStep * i;
-            final int stepIndex = i;
             Runnable task = () -> {
-                // #region debug-point B:fadein-step
-                dbg("B", "PlayerService:1228", "fadeInVolume step", java.util.Map.of("step", stepIndex, "volume", volume, "totalSteps", steps));
-                // #endregion
                 player.setVolume(volume);
             };
             pendingFadeInTasks.add(task);
@@ -1668,6 +1664,115 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
             handler.removeCallbacks(task);
         }
         pendingFadeInTasks.clear();
+        restoreLinearFadeInState();
+    }
+
+    /**
+     * 增益线性渐入（从 0 到稳态增益）。
+     * <p>
+     * 普通 fadeInVolume 在 volume 域线性步进，经指数映射 gain = maxGain×2^(2r-1) 后
+     * 低音量段斜率极陡：前两步（40ms）增益即从 0 跳到 27%→60%，叠加 Android 音频栈
+     * 对音量变化的瞬时应用（无 ramp），形成启动瞬间的爆音。
+     * <p>
+     * 此方法在渐入期间临时关闭音量映射并把 maxGain 固定为"volume=100 的稳态增益"
+     * （再经 ExoPlayer constrainValue(0,1) 限幅），使 volume 0→100 的线性步进等价于
+     * 增益 0→稳态 的线性步进（首步 ≈6.7%）；末步恢复真实 maxGain 与映射开关后
+     * volume=100 的增益与稳态完全一致，首尾均无跳变。
+     * 稳态增益按映射开关分支计算：
+     * - 映射开启（指数域）：gain = maxGain×2^(2×1-1) = 2×maxGain
+     * - 映射关闭（线性域）：gain = maxGain×1 = maxGain
+     * （当前 updateVolumeGain 在映射关闭时恒设 maxGain=1.0，两分支结果相同，
+     * 但显式分支可避免依赖该隐式耦合）
+     * <p>
+     * 被中断时由 {@link #restoreLinearFadeInState()} 按“当前增益不变”反解等效
+     * volume 切回正常映射域。
+     */
+    private void fadeInVolumeLinearGain(final RadioPlayer player, final int durationMs) {
+        // 先取消上一次渐入（含线性渐入临时状态的对齐恢复）。
+        // 注意必须先于 setVolume(0f) 执行：restore 依赖 lastVolume 反解，置零会污染反解输入。
+        cancelPendingFadeIn();
+
+        final int steps = 15;
+        final long stepInterval = Math.max(1, durationMs / steps);
+
+        final float realMaxGain = player.getMaxGain();
+        final boolean mappingEnabled = sharedPref != null && sharedPref.getBoolean("enable_volume_mapping", true);
+        // 稳态增益：volume=100 在各自映射域下的增益，再经 ExoPlayer constrainValue(0,1) 限幅
+        final float steadyGain = mappingEnabled
+                ? Math.min(2f * realMaxGain, 1f)
+                : Math.min(realMaxGain, 1f);
+
+        fadeInSavedMaxGain = realMaxGain;
+        fadeInSavedMappingEnabled = mappingEnabled;
+        fadeInSteadyGain = steadyGain;
+
+        player.setVolumeMappingEnabled(false);
+        player.setMaxGain(steadyGain);
+        player.setVolume(0f);
+
+        for (int i = 1; i <= steps; i++) {
+            final float volume = 100f * i / steps;
+            final int stepIndex = i;
+            Runnable task = () -> {
+                player.setVolume(volume);
+                if (stepIndex == steps) {
+                    // 末步：恢复真实 maxGain 与映射开关。恢复后 volume=100 的稳态增益
+                    // 与末步线性增益一致，无跳变。随后 updateVolumeGain() 按当前系统
+                    // 音量重算 maxGain，对齐渐入期间用户按音量键造成的变更；若重算
+                    // 改变了 maxGain，需再设一次 FULL_VOLUME 使实际输出增益跟随
+                    // （updateVolumeGain 只写 maxGain 字段，不触发 setVolume）。
+                    player.setMaxGain(fadeInSavedMaxGain);
+                    player.setVolumeMappingEnabled(fadeInSavedMappingEnabled);
+                    player.setVolume(FULL_VOLUME);
+                    updateVolumeGain();
+                    player.setVolume(FULL_VOLUME);
+                    fadeInSavedMaxGain = -1f;
+                }
+            };
+            pendingFadeInTasks.add(task);
+            handler.postDelayed(task, stepInterval * i);
+        }
+    }
+
+    /**
+     * 线性渐入被中断（缓冲抖动/换台/暂停/焦点变化）时，以当前实际增益无缝切回
+     * 正常映射域。直接恢复 maxGain/映射开关而不重设 volume 会造成增益跳变
+     * （同一 volume 值在两个域中的增益含义不同），这里按“增益不变”反解等效 volume。
+     */
+    private void restoreLinearFadeInState() {
+        if (fadeInSavedMaxGain <= 0f || radioPlayer == null) {
+            fadeInSavedMaxGain = -1f;
+            return;
+        }
+
+        // 线性域当前增益：volume/100 × steadyGain
+        float curGain = radioPlayer.getLastVolume() / 100f * fadeInSteadyGain;
+
+        // 先按当前系统音量重算真实 maxGain——渐入期间用户可能按了音量键，
+        // 开始时的快照（fadeInSavedMaxGain）已过时；再基于重算值反解等效
+        // volume，保证反解结果与恢复后的增益域一致、无跳变。
+        // （闹钟渐增期间不走线性渐入，此处 alarmVolumeOverride 必为 false，
+        // updateVolumeGain 的闹钟分支不会干扰）
+        updateVolumeGain();
+        float realMaxGain = radioPlayer.getMaxGain();
+        boolean mappingEnabled = fadeInSavedMappingEnabled;
+
+        radioPlayer.setMaxGain(realMaxGain);
+        radioPlayer.setVolumeMappingEnabled(mappingEnabled);
+
+        if (mappingEnabled && realMaxGain > 0f && curGain > 0f) {
+            // 指数映射：gain = maxGain×2^(2v-1) → v = (log2(gain/maxGain)+1)/2
+            // 低于曲线下限 0.5×maxGain 的增益无法表达，钳到 0（向下小跳变，多发生在
+            // 即将静音的场景，随后通常紧跟显式 setVolume(0)）
+            float v = 50f * (float) (Math.log(curGain / realMaxGain) / Math.log(2) + 1f);
+            radioPlayer.setVolume(Math.max(0f, Math.min(100f, v)));
+        } else {
+            // 线性映射：gain = maxGain×ratio → ratio = gain/maxGain
+            radioPlayer.setVolume(realMaxGain > 0f
+                    ? Math.max(0f, Math.min(100f, curGain / realMaxGain * 100f)) : 0f);
+        }
+
+        fadeInSavedMaxGain = -1f;
     }
 
     private void releaseServiceEqualizer() {
@@ -1906,23 +2011,49 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
                         playStateIsPlaying = true;
 
-                        Intent i = new Intent(AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION);
-                        i.putExtra(AudioEffect.EXTRA_AUDIO_SESSION, audioSessionId);
-                        i.putExtra(AudioEffect.EXTRA_PACKAGE_NAME, getPackageName());
-                        itsContext.sendBroadcast(i);
+                        // 效果会话广播去抖：仅当 sessionId 变化（首次播放或换台）才发 OPEN；
+                        // 同一 session 的缓冲抖动、暂停恢复不再重复发送。
+                        // 旧逻辑每次 BUFFERING→READY 抖动都发一对 CLOSE/OPEN，三星 SoundAlive
+                        // 等系统效果链监听这对广播反复 attach/detach，在 Android 5.x 上每次
+                        // 重配置都产生全幅 DSP 瞬态爆音（应用层 setVolume(0) 无法阻挡）。
+                        // audioSessionId<=0 时无有效会话，跳过广播避免发出 EXTRA_AUDIO_SESSION=0
+                        if (audioSessionId > 0 && audioSessionId != lastEffectSessionId) {
+                            if (lastEffectSessionId > 0) {
+                                // 换台：旧 session 的效果会话补发 CLOSE
+                                Intent close = new Intent(AudioEffect.ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION);
+                                close.putExtra(AudioEffect.EXTRA_AUDIO_SESSION, lastEffectSessionId);
+                                close.putExtra(AudioEffect.EXTRA_PACKAGE_NAME, getPackageName());
+                                itsContext.sendBroadcast(close);
+                            }
+
+                            Intent i = new Intent(AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION);
+                            i.putExtra(AudioEffect.EXTRA_AUDIO_SESSION, audioSessionId);
+                            i.putExtra(AudioEffect.EXTRA_PACKAGE_NAME, getPackageName());
+                            itsContext.sendBroadcast(i);
+                            lastEffectSessionId = audioSessionId;
+                        }
 
                         applyEqualizerAndFadeIn(audioSessionId, currentIsAlarm);
                         break;
                     }
                     default: {
                         // 离开 Playing 状态（缓冲/停止/出错/切换电台）后：
-                        // 1) 先取消所有待执行的渐入任务，避免旧 fade-in 回调在缓冲期间继续上调音量
-                        //    （Android 5.x 残留爆音根因：BUFFERING/切换电台抖动时，旧任务仍被 postDelayed
-                        //    执行，用户会听到"少量初始声音"，READY 恢复时又被 setVolume(0) 截断）
-                        // 2) 立即静音，确保缓冲期间不输出声音
+                        // 先取消所有待执行的渐入任务，避免旧 fade-in 回调在缓冲期间继续上调音量
+                        // （Android 5.x 残留爆音根因：BUFFERING/切换电台抖动时，旧任务仍被 postDelayed
+                        // 执行，用户会听到"少量初始声音"，READY 恢复时又被截断）
                         cancelPendingFadeIn();
-                        if (radioPlayer != null) {
-                            radioPlayer.setVolume(0f);
+
+                        if (state == PlayState.PrePlaying) {
+                            // 中途缓冲抖动：不做硬静音截断。
+                            // 旧逻辑 setVolume(0) 会把正在播出的波形瞬间砍到零，
+                            // Android 音频栈对音量变化瞬时应用（无 ramp），满幅→0 的
+                            // 数字阶跃本身就是响亮的 click。让 sink 中已缓冲的数据以
+                            // 当前增益自然播完并 underrun 静音，衔接更平滑。
+                        } else {
+                            // 暂停/停止/出错：立即静音（无输出或即将销毁，截断无听感代价）
+                            if (radioPlayer != null) {
+                                radioPlayer.setVolume(0f);
+                            }
                         }
 
                         // 缓冲（PrePlaying）时保留均衡器实例：即使不重建，反复
@@ -1939,14 +2070,16 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                             disableMediaSession();
                         }
 
-                        if (audioSessionId > 0) {
-                            if (BuildConfig.DEBUG) {
-                            }
-
+                        // 效果会话广播去抖：仅在会话真正终结（Idle）时发 CLOSE。
+                        // 缓冲抖动/暂停不发——效果链保持附着，恢复播放时也不再重发 OPEN，
+                        // 避免 5.x 上系统效果链（三星 SoundAlive 等）反复重配置产生爆音。
+                        // 换台时旧 session 的 CLOSE 由 Playing 分支按 sessionId 变化补发。
+                        if (state == PlayState.Idle && lastEffectSessionId > 0) {
                             Intent i = new Intent(AudioEffect.ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION);
-                            i.putExtra(AudioEffect.EXTRA_AUDIO_SESSION, audioSessionId);
+                            i.putExtra(AudioEffect.EXTRA_AUDIO_SESSION, lastEffectSessionId);
                             i.putExtra(AudioEffect.EXTRA_PACKAGE_NAME, getPackageName());
                             itsContext.sendBroadcast(i);
+                            lastEffectSessionId = 0;
                         }
 
                         if (state == PlayState.Idle) {

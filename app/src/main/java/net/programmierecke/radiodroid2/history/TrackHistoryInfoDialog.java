@@ -37,6 +37,11 @@ public class TrackHistoryInfoDialog extends BottomSheetDialogFragment {
 
     public static final String FRAGMENT_TAG = "tracks_history_info_dialog_fragment";
 
+    // QuickLyric 及其兼容分支在 Manifest 中注册的歌词查询协议
+    private static final String ACTION_GET_LYRICS = "com.geecko.QuickLyric.getLyrics";
+    // 原版已从 Google Play 下架，官方仍在维护的分发渠道是 F-Droid 页面
+    private static final String QUICKLYRIC_DOWNLOAD_URL = "https://f-droid.org/packages/com.geecko.QuickLyric/";
+
     private final TrackHistoryEntry historyEntry;
 
     public TrackHistoryInfoDialog(TrackHistoryEntry historyEntry) {
@@ -96,26 +101,24 @@ public class TrackHistoryInfoDialog extends BottomSheetDialogFragment {
         }
 
         btnLyrics.setOnClickListener(v -> {
-            if (isQuickLyricInstalled()) {
-                // 传递原始数据给QuickLyric
-                getContext().startActivity(new Intent("com.geecko.QuickLyric.getLyrics")
-                        .putExtra("TAGS", new String[]{historyEntry.artist, historyEntry.track}));
+            if (hasLyricsAppHandler()) {
+                // 传递原始数据给歌词应用
+                try {
+                    getContext().startActivity(new Intent(ACTION_GET_LYRICS)
+                            .putExtra("TAGS", new String[]{historyEntry.artist, historyEntry.track}));
+                } catch (ActivityNotFoundException ignored) {
+                }
             } else {
                 new AlertDialog.Builder(getContext())
                         .setMessage(this.getString(R.string.alert_install_lyrics_app))
                         .setCancelable(true)
                         .setPositiveButton(this.getString(R.string.yes), (dialog, id) -> {
                             try {
-                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.geecko.QuickLyric"));
+                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(QUICKLYRIC_DOWNLOAD_URL));
                                 getContext().startActivity(browserIntent);
                             } catch (ActivityNotFoundException ex) {
-                                try {
-                                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.geecko.QuickLyric"));
-                                    getContext().startActivity(browserIntent);
-                                } catch (ActivityNotFoundException ex2) {
-                                    Toast toast = Toast.makeText(getContext(), R.string.notify_open_link_failure, Toast.LENGTH_LONG);
-                                    toast.show();
-                                }
+                                Toast toast = Toast.makeText(getContext(), R.string.notify_open_link_failure, Toast.LENGTH_LONG);
+                                toast.show();
                             }
                         })
                         .setNegativeButton(this.getString(R.string.no), null)
@@ -140,12 +143,8 @@ public class TrackHistoryInfoDialog extends BottomSheetDialogFragment {
         return view;
     }
 
-    private boolean isQuickLyricInstalled() {
+    private boolean hasLyricsAppHandler() {
         PackageManager pm = requireContext().getPackageManager();
-        try {
-            return pm.getApplicationInfo("com.geecko.QuickLyric", 0).enabled;
-        } catch (PackageManager.NameNotFoundException ignored) {
-            return false;
-        }
+        return !pm.queryIntentActivities(new Intent(ACTION_GET_LYRICS), PackageManager.MATCH_DEFAULT_ONLY).isEmpty();
     }
 }

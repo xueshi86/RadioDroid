@@ -239,6 +239,7 @@
     <string name="error_grant_audiofocus">La richiesta dell\'audio non è stata accettata dal sistema</string>
 
     <string name="error_no_equalizer_found">Nessuna applicazione di equalizzazione</string>
+    <string name="equalizer_unsupported_android5">L\'equalizzatore integrato non è supportato su Android 5.x. Utilizza l\'equalizzatore di sistema.</string>
 
     <string name="player_info_status">Stato:&#160;</string>
     <string name="player_info_status_stopped">interrotto</string>

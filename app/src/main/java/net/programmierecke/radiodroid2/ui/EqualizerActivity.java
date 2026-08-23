@@ -206,7 +206,12 @@ public class EqualizerActivity extends AppCompatActivity {
                 loadCachedCapabilities();
             }
             textNotPlaying.setVisibility(View.VISIBLE);
-            textNotPlaying.setText(R.string.equalizer_settings_saved_hint);
+            // Android 5.x：应用内均衡器不可用，显示禁用说明；其他情况（未播放）提示保存后生效
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                textNotPlaying.setText(R.string.equalizer_unsupported_android5);
+            } else {
+                textNotPlaying.setText(R.string.equalizer_settings_saved_hint);
+            }
         }
 
         setupUI();
@@ -380,6 +385,15 @@ public class EqualizerActivity extends AppCompatActivity {
     private void setupUI() {
         boolean wasEnabled = prefs.getBoolean(key(PREF_EQ_ENABLED), false);
         switchEnabled.setChecked(wasEnabled);
+
+        // Android 5.x：应用内均衡器不可用（AudioFlinger 效果链 attach/detach 会产生爆音），
+        // 禁用全部控件，避免用户误以为可以开启；说明见 textNotPlaying。
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            switchEnabled.setEnabled(false);
+            switchBassBoost.setEnabled(false);
+            updateControlsState(false);
+            return;
+        }
 
         if (hasLiveEqualizer) {
             equalizer.setEnabled(wasEnabled);
