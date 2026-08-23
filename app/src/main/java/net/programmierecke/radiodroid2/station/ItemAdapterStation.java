@@ -495,6 +495,10 @@ public class ItemAdapterStation
                     }
                 }
             });
+            // Android 5.x：应用内均衡器不可用（AudioFlinger 效果链重配置会爆音），隐藏入口
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                holder.buttonEqualizerSettings.setVisibility(View.GONE);
+            }
 
             holder.buttonAddAlarm.setOnClickListener(new View.OnClickListener() {
                 @Override

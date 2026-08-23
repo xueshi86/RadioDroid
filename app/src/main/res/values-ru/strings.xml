@@ -437,6 +437,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="equalizer_bands">Частотные полосы</string>
     <string name="equalizer_not_playing">Сначала начните воспроизведение станции для использования эквалайзера</string>
     <string name="equalizer_settings_saved_hint">Настройки вступят в силу при начале воспроизведения</string>
+    <string name="equalizer_unsupported_android5">Встроенный эквалайзер не поддерживается на Android 5.x. Используйте системный эквалайзер.</string>
     <string name="equalizer_init_failed">Не удалось инициализировать эквалайзер. Ваше устройство может не поддерживать эту функцию.</string>
     <string name="equalizer_open_external">Открыть системный эквалайзер</string>
     <string name="equalizer_open_external_summary">Открыть встроенную панель аудиоэффектов устройства (если доступна)</string>

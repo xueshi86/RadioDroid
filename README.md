@@ -617,6 +617,21 @@ Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elemen
 
 > Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+### v1.05
+*2026-08-23*
+
+**继续修复安卓 5.x 播放爆音问题**
+- **修复**：Android 5.x 设备彻底禁用均衡器效果 — Equalizer/BassBoost 不再附着到播放会话，从根源消除效果链挂载/卸载引发的瞬间爆音
+- **修复**：缓冲抖动期间不再反复收发音频效果会话广播 — 避免部分机型（如三星 SoundAlive）的系统音效随广播反复挂载/卸载产生全幅瞬态噪声；换台时正确补发旧会话的关闭广播
+- **修复**：播放中缓冲抖动不再将音量硬性截断为 0 — 消除数字音频阶跃产生的"咔哒"声，仅在真正停止播放时静音
+- **优化**：启动音量渐入由指数曲线改为线性增益渐入 — 消除起始瞬间的增益跳变，出声更平滑自然
+
+**QuickLyric not found error 修复**
+- **修复**：点击"查看歌词"时若未安装 QuickLyric（或其兼容应用）不再报错 — 改为弹窗询问，可选择前往 F-Droid 下载页安装
+
+**版本更新**
+- 版本号升级至 v1.05 (versionCode 114)
+
 ### v1.04
 *2026-08-15*
 

@@ -209,7 +209,7 @@
   <string name="notify_station_removed_from_list">1 fjernet</string>
   <string name="action_station_removed_from_list_undo">ANGRE</string>
   
-  <string name="alert_install_lyrics_app">QuickLyric er ikke installert på enheten. Laste ned fra Google Play Store?</string>
+  <string name="alert_install_lyrics_app">QuickLyric er ikke installert på enheten. Vil du åpne nedlastingssiden?</string>
   
   <string name="alert_delete_history">Tømme historikken?</string>
   <string name="alert_delete_favorites">Slette favorittene?</string>

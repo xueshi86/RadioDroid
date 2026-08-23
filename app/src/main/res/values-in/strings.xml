@@ -203,7 +203,7 @@
     <string name="notify_station_removed_from_list">1 Dibuang</string>
     <string name="action_station_removed_from_list_undo">URUNG</string>
 
-    <string name="alert_install_lyrics_app">QuickLyric tidak dipasang pada perangkat anda. Apakah anda ingin mengunduhnya dari Toko Google Play?</string>
+    <string name="alert_install_lyrics_app">QuickLyric tidak dipasang pada perangkat anda. Apakah anda ingin membuka halaman unduhannya?</string>
 
     <string name="alert_delete_history">Apakah anda yakin ingin menghapus riwayat?</string>
     <string name="alert_delete_favorites">Apakah anda yakin ingin menghapus semua favorit?</string>

@@ -31,8 +31,6 @@ import com.google.android.exoplayer2.metadata.icy.IcyInfo;
 import com.google.android.exoplayer2.metadata.id3.Id3Frame;
 
 import java.io.ByteArrayOutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
@@ -59,26 +57,6 @@ import java.util.Map;
 import okhttp3.OkHttpClient;
 
 public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSourceListener, Player.Listener {
-
-    // #region debug-point A:debug-logger
-    private static void dbg(String hypothesisId, String location, String msg, java.util.Map<String, Object> data) {
-        new Thread(() -> {
-            try {
-                URL url = new URL("http://127.0.0.1:7777/event");
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setDoOutput(true);
-                conn.setRequestProperty("Content-Type", "application/json");
-                conn.setConnectTimeout(500);
-                conn.setReadTimeout(500);
-                String json = "{\"sessionId\":\"volume-pop\",\"runId\":\"pre\",\"hypothesisId\":\"" + hypothesisId + "\",\"location\":\"" + location + "\",\"msg\":\"[DEBUG] " + msg.replace("\"", "'") + "\",\"data\":" + (data != null ? new org.json.JSONObject(data).toString() : "{}") + ",\"ts\":" + System.currentTimeMillis() + "}";
-                conn.getOutputStream().write(json.getBytes("UTF-8"));
-                conn.getResponseCode();
-                conn.disconnect();
-            } catch (Exception ignored) {}
-        }).start();
-    }
-    // #endregion
 
     final private String TAG = "ExoPlayerWrapper";
 
@@ -203,9 +181,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         player = new ExoPlayer.Builder(context)
                 .setLoadControl(loadControl)
                 .build();
-        // #region debug-point A:player-create
-        dbg("A", "ExoPlayerWrapper:183", "ExoPlayer created, setting volume to 0", java.util.Collections.singletonMap("volume", 0f));
-        // #endregion
         // 启动阶段静音，避免 AudioTrack 初始化爆音；真正音量由 PlayerService 在 Playing 后设置
         player.setVolume(0f);
         // 闹钟与普通播放统一走 USAGE_MEDIA → STREAM_MUSIC，保证扬声器/有线/蓝牙都受系统媒体音量控制
@@ -245,9 +220,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         }
 
         // 静音启动，渐入由 PlayerService 统一控制
-        // #region debug-point A:set-volume-zero
-        dbg("A", "ExoPlayerWrapper:223", "setVolume(0f) before play", java.util.Collections.singletonMap("currentVolume", player.getVolume()));
-        // #endregion
         player.setVolume(0f);
 
         // Real-time delay before playback starts.
@@ -268,17 +240,11 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         playbackDelayRunnable = () -> {
             if (playSessionId != sessionId) return;
             if (player != null) {
-                // #region debug-point A:play-when-ready
-                dbg("A", "ExoPlayerWrapper:240", "BEFORE setPlayWhenReady(true)", java.util.Collections.singletonMap("currentVolume", player.getVolume()));
-                // #endregion
                 // 启动前始终强制静音：音量统一由 PlayerService 在 STATE_READY → Playing
                 // 回调后通过 fadeInVolume 控制。若此处不静音，切换电台时旧 fade-in 任务
                 // 命中新播放器后，新 ExoPlayer 会以非零音量启动一帧（残留爆音）。
                 player.setVolume(0f);
                 player.setPlayWhenReady(true);
-                // #region debug-point A:play-when-ready-after
-                dbg("A", "ExoPlayerWrapper:240b", "AFTER setPlayWhenReady(true)", java.util.Collections.singletonMap("currentVolume", player.getVolume()));
-                // #endregion
                 // 正常路径：Playing 由 STATE_READY 回调（AudioTrack 真正启动）触发，
                 // 避免提前渐入音量导致启动爆音被放大。
                 // 兜底：部分旧 Android（如 5.x）或特殊流上 STATE_READY 回调可能延迟/丢失，
@@ -367,9 +333,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
 
     @Override
     public void setVolume(float newVolume) {
-        // #region debug-point A:set-volume
-        dbg("A", "ExoPlayerWrapper:324", "setVolume called", java.util.Collections.singletonMap("volume", newVolume));
-        // #endregion
         if (player != null) {
             player.setVolume(newVolume);
         }
@@ -686,9 +649,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
 
             switch (playbackState) {
                 case Player.STATE_READY:
-                    // #region debug-point A:state-ready
-                    dbg("A", "ExoPlayerWrapper:585", "STATE_READY, notifying Playing", java.util.Map.of("volume", player != null ? player.getVolume() : -1, "playWhenReady", player != null && player.getPlayWhenReady()));
-                    // #endregion
                     cancelStopTask();
                     // 仅在真正开始出声（playWhenReady）时通知 Playing，避免过早触发闹钟音量交接后被后续逻辑覆盖
                     if (playWhenReady && stateListener != null) {
@@ -696,9 +656,6 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                     }
                     break;
                 case Player.STATE_BUFFERING:
-                    // #region debug-point A:state-buffering
-                    dbg("A", "ExoPlayerWrapper:590", "STATE_BUFFERING", java.util.Map.of("volume", player != null ? player.getVolume() : -1, "playWhenReady", player != null && player.getPlayWhenReady()));
-                    // #endregion
                     stateListener.onStateChanged(PlayState.PrePlaying);
                     break;
             }

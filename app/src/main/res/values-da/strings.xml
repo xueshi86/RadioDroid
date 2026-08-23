@@ -204,7 +204,7 @@
     <string name="notify_station_removed_from_list">1 fjernet</string>
     <string name="action_station_removed_from_list_undo">Genskab</string>
 
-    <string name="alert_install_lyrics_app">QuickLyric er ikke installeret på enhed. Hente den fra Google Play Store?</string>
+    <string name="alert_install_lyrics_app">QuickLyric er ikke installeret på enhed. Vil du åbne dens downloadside?</string>
 
     <string name="alert_delete_history">Slet historik?</string>
     <string name="alert_delete_favorites">Slet alle favoritter?</string>

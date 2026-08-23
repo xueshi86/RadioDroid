@@ -206,7 +206,7 @@
     <string name="notify_station_removed_from_list">1 Supprimée</string>
     <string name="action_station_removed_from_list_undo">ANNULER</string>
 
-    <string name="alert_install_lyrics_app">QuickLyric n’est pas installé sur votre appareil. Voulez-vous l\'obtenir sur le Google Play Store ?</string>
+    <string name="alert_install_lyrics_app">QuickLyric n\'est pas installé sur votre appareil. Voulez-vous ouvrir sa page de téléchargement ?</string>
 
     <string name="alert_delete_history">Voulez-vous vraiment supprimer votre historique ?</string>
     <string name="alert_delete_favorites">Voulez-vous vraiment supprimer tous vos favoris ?</string>
@@ -240,6 +240,7 @@
     <string name="error_grant_audiofocus">La demande de focus audio n\'a pas été accordée par le système.</string>
 
     <string name="error_no_equalizer_found">Aucun égaliseur trouvé !</string>
+    <string name="equalizer_unsupported_android5">L\'égaliseur intégré n\'est pas pris en charge sur Android 5.x. Utilisez l\'égaliseur système.</string>
 
     <string name="player_info_status">Status :</string>
     <string name="player_info_status_stopped">Arrêté</string>

@@ -203,7 +203,7 @@
     <string name="notify_station_removed_from_list">1 Excluído</string>
     <string name="action_station_removed_from_list_undo">DESFAZER</string>
 
-    <string name="alert_install_lyrics_app">QuickLyric não está instalado no seu dispositivo. Gostaria de baixar-lo da loja do Google Play?</string>
+    <string name="alert_install_lyrics_app">QuickLyric não está instalado no seu dispositivo. Gostaria de abrir a página de download?</string>
 
     <string name="alert_delete_history">Deseja excluir o histórico?</string>
     <string name="alert_delete_favorites">Deseja excluir todos os favoritos?</string>

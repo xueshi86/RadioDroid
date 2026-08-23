@@ -403,7 +403,7 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="notify_station_removed_from_list">1 Removed</string>
     <string name="action_station_removed_from_list_undo">UNDO</string>
 
-    <string name="alert_install_lyrics_app">QuickLyric is not installed on your device. Would you like to get it from Google Play Store?</string>
+    <string name="alert_install_lyrics_app">QuickLyric is not installed on your device. Would you like to open its download page?</string>
 
     <string name="alert_delete_history">Do you really want to delete the history?</string>
     <string name="alert_delete_favorites">Do you really want to delete all favorites?</string>
@@ -467,6 +467,7 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="equalizer_bands">Frequency Bands</string>
     <string name="equalizer_not_playing">Start playing a station first to use the equalizer</string>
     <string name="equalizer_settings_saved_hint">Settings will take effect when playback starts</string>
+    <string name="equalizer_unsupported_android5">In-app equalizer is not supported on Android 5.x. Use the system equalizer instead.</string>
     <string name="equalizer_init_failed">Failed to initialize equalizer. Your device may not support this feature.</string>
     <string name="equalizer_open_external">Open System Equalizer</string>
     <string name="equalizer_open_external_summary">Open your device\'s built-in audio effect panel (if available)</string>
