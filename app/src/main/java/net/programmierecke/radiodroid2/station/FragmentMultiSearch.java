@@ -6,22 +6,13 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.ScrollView;
-import android.widget.Spinner;
-import java.lang.reflect.Field;
-import android.content.Context;
-import android.widget.ListPopupWindow;
-import net.programmierecke.radiodroid2.views.CustomSpinner;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -39,6 +30,7 @@ import net.programmierecke.radiodroid2.RadioDroidApp;
 import net.programmierecke.radiodroid2.Utils;
 import net.programmierecke.radiodroid2.database.RadioStation;
 import net.programmierecke.radiodroid2.database.RadioStationRepository;
+import net.programmierecke.radiodroid2.ui.SearchableListDialogFragment;
 import net.programmierecke.radiodroid2.utils.DatabaseEmptyHelper;
 
 import java.util.ArrayList;
@@ -47,40 +39,43 @@ import java.util.List;
 public class FragmentMultiSearch extends FragmentBase {
     private static final String TAG = "FragmentMultiSearch";
 
+    private static final int FILTER_TYPE_COUNTRY = 0;
+    private static final int FILTER_TYPE_LANGUAGE = 1;
+    private static final int FILTER_TYPE_TAG = 2;
+
     private RecyclerView recyclerViewStations;
     private EditText etSearchQuery;
-    private CustomSpinner spinnerCountry;
-    private CustomSpinner spinnerLanguage;
-    private CustomSpinner spinnerTag;
+    private MaterialButton spinnerCountry;
+    private MaterialButton spinnerLanguage;
+    private MaterialButton spinnerTag;
     private MaterialButton btnResetFilters;
     private MaterialButton btnToggleFilters;
     private MaterialButton btnExpandFilters;
     private ScrollView scrollViewFilters;
     private androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipeRefreshLayout;
     private FloatingActionButton fabScrollToTop;
-    
+
     private ItemAdapterStation stationListAdapter;
     private RadioStationRepository repository;
-    
+
     // 筛选条件
     private String selectedCountry = "";
     private String selectedLanguage = "";
     private String selectedTag = "";
     private String searchQuery = "";
-    
-    // 选项列表
-    private List<String> countriesList = new ArrayList<>();
-    private List<String> languagesList = new ArrayList<>();
-    private List<String> tagsList = new ArrayList<>();
-    
+
+    // 选项列表（首项为"全部"）
+    private List<SearchableListDialogFragment.FilterOption> countriesList = new ArrayList<>();
+    private List<SearchableListDialogFragment.FilterOption> languagesList = new ArrayList<>();
+    private List<SearchableListDialogFragment.FilterOption> tagsList = new ArrayList<>();
+    private boolean tagsLoaded = false;
+
     // 防抖处理
     private Handler searchHandler = new Handler();
     private static final long DEBOUNCE_DELAY = 500; // 500ms
     private Runnable searchRunnable;
-    
-    private ArrayAdapter<String> countryAdapter;
-    private ArrayAdapter<String> languageAdapter;
-    private ArrayAdapter<String> tagAdapter;
+
+    private String allLabel = "";
 
     @Nullable
     @Override
@@ -105,98 +100,98 @@ public class FragmentMultiSearch extends FragmentBase {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        
+
         // 初始化Repository和Adapter
-            if (getContext() != null) {
-                repository = RadioStationRepository.getInstance(getContext());
-                
-                // 初始化Adapter
-                if (getActivity() != null) {
-                    stationListAdapter = new ItemAdapterStation(getActivity(), R.layout.list_item_station);
-                    stationListAdapter.setStationActionsListener(new ItemAdapterStation.StationActionsListener() {
-                        @Override
-                        public void onStationClick(DataRadioStation station, int pos) {
-                            if (getActivity() == null) {
-                                Log.e(TAG, "Activity is null, cannot play station");
-                                return;
-                            }
-                            
-                            RadioDroidApp radioDroidApp = (RadioDroidApp) getActivity().getApplication();
-                            if (radioDroidApp == null) {
-                                Log.e(TAG, "RadioDroidApp is null, cannot play station");
-                                return;
-                            }
-                            
-                            Utils.showPlaySelection(radioDroidApp, station, getActivity().getSupportFragmentManager());
+        if (getContext() != null) {
+            repository = RadioStationRepository.getInstance(getContext());
+
+            // 初始化Adapter
+            if (getActivity() != null) {
+                stationListAdapter = new ItemAdapterStation(getActivity(), R.layout.list_item_station);
+                stationListAdapter.setStationActionsListener(new ItemAdapterStation.StationActionsListener() {
+                    @Override
+                    public void onStationClick(DataRadioStation station, int pos) {
+                        if (getActivity() == null) {
+                            Log.e(TAG, "Activity is null, cannot play station");
+                            return;
                         }
 
-                        @Override
-                        public void onStationSwiped(DataRadioStation station) {
-                            // 处理电台滑动事件
+                        RadioDroidApp radioDroidApp = (RadioDroidApp) getActivity().getApplication();
+                        if (radioDroidApp == null) {
+                            Log.e(TAG, "RadioDroidApp is null, cannot play station");
+                            return;
                         }
 
-                        @Override
-                        public void onStationMoved(int from, int to) {
-                            // 处理电台移动事件
-                        }
-
-                        @Override
-                        public void onStationMoveFinished() {
-                            // 处理电台移动完成事件
-                        }
-                    });
-                    recyclerViewStations.setAdapter(stationListAdapter);
-                    recyclerViewStations.setLayoutManager(new LinearLayoutManager(getActivity()));
-                    recyclerViewStations.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL));
-
-                    recyclerViewStations.addOnScrollListener(new RecyclerView.OnScrollListener() {
-                        @Override
-                        public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                            if (fabScrollToTop != null) {
-                                fabScrollToTop.setVisibility(recyclerView.canScrollVertically(-1) ? View.VISIBLE : View.GONE);
-                            }
-                        }
-                    });
-
-                    if (fabScrollToTop != null) {
-                        fabScrollToTop.setOnClickListener(v -> {
-                            if (recyclerViewStations != null) {
-                                recyclerViewStations.smoothScrollToPosition(0);
-                            }
-                        });
+                        Utils.showPlaySelection(radioDroidApp, station, getActivity().getSupportFragmentManager());
                     }
-                }
-                
-                // 加载所有国家、语言和标签
-                loadFilterOptions();
-                
-                // 禁用下拉刷新功能
-                swipeRefreshLayout.setEnabled(false);
-                swipeRefreshLayout.setRefreshing(false);
-                
-                // 根据主题设置按钮文字颜色
-                boolean isDarkTheme = Utils.isDarkTheme(getContext());
-                if (isDarkTheme) {
-                    // 暗色主题下使用白色文字
-                    btnResetFilters.setTextColor(android.graphics.Color.WHITE);
-                    btnToggleFilters.setTextColor(android.graphics.Color.WHITE);
-                    btnExpandFilters.setTextColor(android.graphics.Color.WHITE);
-                }
-                
-                // 设置事件监听器
-                setupEventListeners();
-                
-                // 设置Spinner下拉监听
 
-                
-                // 设置初始按钮文本和可见性
-                btnToggleFilters.setText(getString(R.string.multi_search_collapse_filters));
-                scrollViewFilters.setVisibility(View.VISIBLE);
-                btnExpandFilters.setVisibility(View.GONE);
+                    @Override
+                    public void onStationSwiped(DataRadioStation station) {
+                        // 处理电台滑动事件
+                    }
 
+                    @Override
+                    public void onStationMoved(int from, int to) {
+                        // 处理电台移动事件
+                    }
+
+                    @Override
+                    public void onStationMoveFinished() {
+                        // 处理电台移动完成事件
+                    }
+                });
+                recyclerViewStations.setAdapter(stationListAdapter);
+                recyclerViewStations.setLayoutManager(new LinearLayoutManager(getActivity()));
+                recyclerViewStations.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL));
+
+                recyclerViewStations.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                    @Override
+                    public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                        if (fabScrollToTop != null) {
+                            fabScrollToTop.setVisibility(recyclerView.canScrollVertically(-1) ? View.VISIBLE : View.GONE);
+                        }
+                    }
+                });
+
+                if (fabScrollToTop != null) {
+                    fabScrollToTop.setOnClickListener(v -> {
+                        if (recyclerViewStations != null) {
+                            recyclerViewStations.smoothScrollToPosition(0);
+                        }
+                    });
+                }
             }
+
+            allLabel = getString(R.string.multi_search_all);
+
+            // 加载所有国家、语言和标签
+            loadFilterOptions();
+
+            // 禁用下拉刷新功能
+            swipeRefreshLayout.setEnabled(false);
+            swipeRefreshLayout.setRefreshing(false);
+
+            // 根据主题设置按钮文字颜色
+            boolean isDarkTheme = Utils.isDarkTheme(getContext());
+            if (isDarkTheme) {
+                // 暗色主题下使用白色文字
+                btnResetFilters.setTextColor(android.graphics.Color.WHITE);
+                btnToggleFilters.setTextColor(android.graphics.Color.WHITE);
+                btnExpandFilters.setTextColor(android.graphics.Color.WHITE);
+            }
+
+            // 设置事件监听器
+            setupEventListeners();
+
+            // 设置初始按钮文本和可见性
+            btnToggleFilters.setText(getString(R.string.multi_search_collapse_filters));
+            scrollViewFilters.setVisibility(View.VISIBLE);
+            btnExpandFilters.setVisibility(View.GONE);
+
+            updateAllFilterButtonTexts();
+        }
     }
-    
+
     @Override
     public void onResume() {
         super.onResume();
@@ -205,163 +200,182 @@ public class FragmentMultiSearch extends FragmentBase {
             loadFilterOptions();
         }
     }
-    
 
-    
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        // 清理防抖任务，防止视图销毁后触发 performMultiSearch
+        if (searchHandler != null && searchRunnable != null) {
+            searchHandler.removeCallbacks(searchRunnable);
+        }
+    }
+
     private void loadFilterOptions() {
         // 清空列表，重新加载数据
         countriesList.clear();
         languagesList.clear();
         tagsList.clear();
-        
-        // 重置适配器
-        countryAdapter = null;
-        languageAdapter = null;
-        tagAdapter = null;
-        
-        // 加载国家列表
-        countriesList.add(getString(R.string.multi_search_all));
+
+        // 加载国家列表（首项为"全部"）
+        countriesList.add(new SearchableListDialogFragment.FilterOption(allLabel, 0));
         repository.getAllCountries().observe(getViewLifecycleOwner(), new Observer<List<String>>() {
             @Override
             public void onChanged(List<String> countries) {
                 if (countries != null && !countries.isEmpty()) {
-                    countriesList.addAll(countries);
-                    updateCountrySpinner();
+                    // 保留首项"全部"，追加新数据
+                    if (countriesList.size() > 0 && allLabel.equals(countriesList.get(0).name)) {
+                        countriesList.clear();
+                        countriesList.add(new SearchableListDialogFragment.FilterOption(allLabel, 0));
+                    }
+                    for (String c : countries) {
+                        countriesList.add(new SearchableListDialogFragment.FilterOption(c, 0));
+                    }
+                    updateAllFilterButtonTexts();
                 }
             }
         });
-        
+
         // 加载语言列表
-        languagesList.add(getString(R.string.multi_search_all));
+        languagesList.add(new SearchableListDialogFragment.FilterOption(allLabel, 0));
         repository.getAllLanguages().observe(getViewLifecycleOwner(), new Observer<List<String>>() {
             @Override
             public void onChanged(List<String> languages) {
                 if (languages != null && !languages.isEmpty()) {
-                    languagesList.addAll(languages);
-                    updateLanguageSpinner();
+                    if (languagesList.size() > 0 && allLabel.equals(languagesList.get(0).name)) {
+                        languagesList.clear();
+                        languagesList.add(new SearchableListDialogFragment.FilterOption(allLabel, 0));
+                    }
+                    for (String l : languages) {
+                        languagesList.add(new SearchableListDialogFragment.FilterOption(l, 0));
+                    }
+                    updateAllFilterButtonTexts();
                 }
             }
         });
-        
-        // 加载标签列表
-        tagsList.add(getString(R.string.multi_search_all));
-        repository.getAllTags().observe(getViewLifecycleOwner(), new Observer<List<String>>() {
-            @Override
-            public void onChanged(List<String> tags) {
-                if (tags != null && !tags.isEmpty()) {
-                    tagsList.addAll(tags);
-                    updateTagSpinner();
+
+        // 加载标签列表（后台拆分+计数，避免主线程全库扫描；F-2 修复：单标签而非逗号组合串）
+        tagsList.add(new SearchableListDialogFragment.FilterOption(allLabel, 0));
+        tagsLoaded = false;
+        new Thread(() -> {
+            try {
+                final List<RadioStationRepository.SearchableListOption> options = repository.getTagOptionsSortedByCount();
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        if (options != null) {
+                            if (tagsList.size() > 0 && allLabel.equals(tagsList.get(0).name)) {
+                                tagsList.clear();
+                                tagsList.add(new SearchableListDialogFragment.FilterOption(allLabel, 0));
+                            }
+                            for (RadioStationRepository.SearchableListOption o : options) {
+                                tagsList.add(new SearchableListDialogFragment.FilterOption(o.name, o.count));
+                            }
+                            tagsLoaded = true;
+                            updateAllFilterButtonTexts();
+                        }
+                    });
                 }
+            } catch (Exception e) {
+                Log.e(TAG, "加载标签列表失败", e);
             }
+        }).start();
+    }
+
+    private void updateAllFilterButtonTexts() {
+        if (getView() == null) return;
+        String allText = allLabel;
+        spinnerCountry.setText(selectedCountry.isEmpty() ? allText : selectedCountry);
+        spinnerLanguage.setText(selectedLanguage.isEmpty() ? allText : selectedLanguage);
+        spinnerTag.setText(selectedTag.isEmpty() ? allText : selectedTag);
+    }
+
+    private void showFilterDialog(final int filterType) {
+        if (getContext() == null) return;
+
+        String title;
+        List<SearchableListDialogFragment.FilterOption> options;
+        String selected;
+
+        switch (filterType) {
+            case FILTER_TYPE_COUNTRY:
+                title = getString(R.string.multi_search_country);
+                options = countriesList;
+                selected = selectedCountry;
+                break;
+            case FILTER_TYPE_LANGUAGE:
+                title = getString(R.string.multi_search_language);
+                options = languagesList;
+                selected = selectedLanguage;
+                break;
+            default:
+                title = getString(R.string.multi_search_tag);
+                options = tagsList;
+                selected = selectedTag;
+                break;
+        }
+
+        if (options == null || options.isEmpty()) {
+            return;
+        }
+
+        SearchableListDialogFragment dialog = SearchableListDialogFragment.newInstance(title, options, selected);
+        dialog.setOnOptionSelectedListener(name -> {
+            if (name == null) return;
+            String value = allLabel.equals(name) ? "" : name;
+            switch (filterType) {
+                case FILTER_TYPE_COUNTRY:
+                    selectedCountry = value;
+                    break;
+                case FILTER_TYPE_LANGUAGE:
+                    selectedLanguage = value;
+                    break;
+                default:
+                    selectedTag = value;
+                    break;
+            }
+            updateAllFilterButtonTexts();
+            performMultiSearch();
         });
+        dialog.show(getChildFragmentManager(), "searchable_list");
     }
-    
-    private void updateCountrySpinner() {
-        if (countryAdapter == null) {
-            countryAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, countriesList);
-            countryAdapter.setDropDownViewResource(R.layout.custom_spinner_dropdown_item);
-            spinnerCountry.setAdapter(countryAdapter);
-        } else {
-            countryAdapter.notifyDataSetChanged();
-        }
-    }
-    
-    private void updateLanguageSpinner() {
-        if (languageAdapter == null) {
-            languageAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, languagesList);
-            languageAdapter.setDropDownViewResource(R.layout.custom_spinner_dropdown_item);
-            spinnerLanguage.setAdapter(languageAdapter);
-        } else {
-            languageAdapter.notifyDataSetChanged();
-        }
-    }
-    
-    private void updateTagSpinner() {
-        if (tagAdapter == null) {
-            tagAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, tagsList);
-            tagAdapter.setDropDownViewResource(R.layout.custom_spinner_dropdown_item);
-            spinnerTag.setAdapter(tagAdapter);
-        } else {
-            tagAdapter.notifyDataSetChanged();
-        }
-    }
-    
 
-    
-
-    
-
-    
     private void setupEventListeners() {
-        // 国家选择监听器
-        spinnerCountry.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                selectedCountry = position == 0 ? "" : countriesList.get(position);
-                performMultiSearch();
-            }
-            
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
-        
-        // 语言选择监听器
-        spinnerLanguage.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                selectedLanguage = position == 0 ? "" : languagesList.get(position);
-                performMultiSearch();
-            }
-            
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
-        
-        // 标签选择监听器
-        spinnerTag.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                selectedTag = position == 0 ? "" : tagsList.get(position);
-                performMultiSearch();
-            }
-            
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
-        
+        // 国家选择
+        spinnerCountry.setOnClickListener(v -> showFilterDialog(FILTER_TYPE_COUNTRY));
+        // 语言选择
+        spinnerLanguage.setOnClickListener(v -> showFilterDialog(FILTER_TYPE_LANGUAGE));
+        // 标签选择
+        spinnerTag.setOnClickListener(v -> showFilterDialog(FILTER_TYPE_TAG));
+
         // 搜索关键词监听器
         etSearchQuery.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
-            
+
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
             }
-            
+
             @Override
             public void afterTextChanged(Editable s) {
                 searchQuery = s.toString();
-                
+
                 // 防抖处理
                 if (searchRunnable != null) {
                     searchHandler.removeCallbacks(searchRunnable);
                 }
-                
+
                 searchRunnable = new Runnable() {
                     @Override
                     public void run() {
                         performMultiSearch();
                     }
                 };
-                
+
                 searchHandler.postDelayed(searchRunnable, DEBOUNCE_DELAY);
             }
         });
-        
+
         // 搜索框焦点监听器
         etSearchQuery.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
@@ -369,17 +383,17 @@ public class FragmentMultiSearch extends FragmentBase {
                 // 移除自动折叠筛选条件的逻辑，允许用户在筛选条件展开时输入关键词
             }
         });
-        
+
         // 重置筛选条件按钮
         btnResetFilters.setOnClickListener(v -> resetFilters());
-        
+
         // 筛选条件折叠/展开按钮
         btnToggleFilters.setOnClickListener(v -> toggleFilters());
-        
+
         // 展开筛选条件按钮
         btnExpandFilters.setOnClickListener(v -> toggleFilters());
     }
-    
+
     /**
      * 切换筛选条件区域的显示/隐藏
      */
@@ -396,10 +410,13 @@ public class FragmentMultiSearch extends FragmentBase {
             btnExpandFilters.setVisibility(View.GONE);
         }
     }
-    
+
     private void performMultiSearch() {
+        if (getView() == null) {
+            return; // 视图已销毁（防抖任务延迟触发窗口）
+        }
         Log.d(TAG, "执行多条件搜索: 国家=" + selectedCountry + ", 语言=" + selectedLanguage + ", 标签=" + selectedTag + ", 关键词=" + searchQuery);
-        
+
         // 使用统一的空数据库检查
         LinearLayout errorLayout = getView().findViewById(R.id.layoutError);
         DatabaseEmptyHelper.checkAndShowEmptyDatabaseError(this, errorLayout, recyclerViewStations,
@@ -414,15 +431,18 @@ public class FragmentMultiSearch extends FragmentBase {
                             });
                     }
                 }
-                
+
                 @Override
                 public void onCheckError(String error) {
                     Log.e(TAG, "数据库检查错误: " + error);
                 }
             });
     }
-    
+
     private void handleSearchResults(List<RadioStation> radioStations) {
+        if (getView() == null) {
+            return; // 异步回调返回时视图可能已销毁
+        }
         if (radioStations != null && !radioStations.isEmpty()) {
             // 转换为DataRadioStation
             List<DataRadioStation> dataStations = new ArrayList<>(radioStations.size());
@@ -434,7 +454,7 @@ public class FragmentMultiSearch extends FragmentBase {
                     }
                 }
             }
-            
+
             stationListAdapter.updateList(null, dataStations);
             recyclerViewStations.setVisibility(View.VISIBLE);
             getView().findViewById(R.id.layoutError).setVisibility(View.GONE);
@@ -445,19 +465,17 @@ public class FragmentMultiSearch extends FragmentBase {
             getView().findViewById(R.id.layoutError).setVisibility(View.VISIBLE);
         }
     }
-    
+
     private void resetFilters() {
         // 重置所有筛选条件
-        spinnerCountry.setSelection(0);
-        spinnerLanguage.setSelection(0);
-        spinnerTag.setSelection(0);
-        etSearchQuery.setText("");
-        
         selectedCountry = "";
         selectedLanguage = "";
         selectedTag = "";
         searchQuery = "";
-        
+        etSearchQuery.setText("");
+
+        updateAllFilterButtonTexts();
+
         // 执行搜索
         performMultiSearch();
     }

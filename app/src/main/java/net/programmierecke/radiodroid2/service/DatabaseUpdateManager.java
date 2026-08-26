@@ -94,6 +94,37 @@ public class DatabaseUpdateManager {
         Log.d(TAG, "Started new database update work");
         // 不再显示初始通知，让应用内进度对话框处理用户界面
     }
+
+    /**
+     * 启动增量数据库更新（lastchange 端点，轻量）。
+     * 与全量更新使用同一 Worker 的静态锁互斥；独立 work name 避免互相 REPLACE。
+     */
+    public static void startIncrementalUpdate(Context context) {
+        if (DatabaseUpdateWorker.isUpdating(context)) {
+            Log.d(TAG, "Update already in progress, not starting incremental update");
+            return;
+        }
+
+        Constraints constraints = new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build();
+
+        Data inputData = new Data.Builder().putString("mode", "incremental").build();
+
+        OneTimeWorkRequest updateRequest = new OneTimeWorkRequest.Builder(DatabaseUpdateWorker.class)
+                .setInputData(inputData)
+                .setConstraints(constraints)
+                .addTag("database_update")
+                .build();
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+                "database_incremental_update_work",
+                ExistingWorkPolicy.REPLACE,
+                updateRequest
+        );
+
+        Log.d(TAG, "Started incremental database update work");
+    }
     
     /**
      * 取消数据库更新

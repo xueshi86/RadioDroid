@@ -45,6 +45,7 @@ import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
 import net.programmierecke.radiodroid2.ui.EqualizerActivity;
 import net.programmierecke.radiodroid2.utils.RecyclerItemSwipeHelper;
 import net.programmierecke.radiodroid2.utils.SwipeableViewHolder;
+import net.programmierecke.radiodroid2.ui.StationPlaceholderUtils;
 import net.programmierecke.radiodroid2.views.TagsView;
 
 public class ItemAdapterStation
@@ -85,8 +86,6 @@ public class ItemAdapterStation
 
     private int expandedPosition = -1;
     public int playingStationPosition = -1;
-
-    Drawable stationImagePlaceholder;
 
     private FavouriteManager favouriteManager;
 
@@ -170,8 +169,6 @@ public class ItemAdapterStation
     public ItemAdapterStation(FragmentActivity fragmentActivity, int resourceId) {
         this.activity = fragmentActivity;
         this.resourceId = resourceId;
-
-        stationImagePlaceholder = AppCompatResources.getDrawable(fragmentActivity, R.mipmap.ic_launcher);
 
         RadioDroidApp radioDroidApp = (RadioDroidApp) fragmentActivity.getApplication();
         favouriteManager = radioDroidApp.getFavouriteManager();
@@ -298,12 +295,12 @@ public class ItemAdapterStation
         } else {
             if (station.hasIcon()) {
                 setupIcon(useCircularIcons, holder.imageViewIcon, holder.transparentImageView);
-                PlayerServiceUtil.getStationIcon(holder.imageViewIcon, station.IconUrl, station.HomePageUrl, station.StationUuid);
+                PlayerServiceUtil.getStationIcon(holder.imageViewIcon, station.IconUrl, station.HomePageUrl, station.StationUuid, station.Name);
             } else if (!TextUtils.isEmpty(station.HomePageUrl)) {
                 setupIcon(useCircularIcons, holder.imageViewIcon, holder.transparentImageView);
-                PlayerServiceUtil.getStationIcon(holder.imageViewIcon, null, station.HomePageUrl, station.StationUuid);
+                PlayerServiceUtil.getStationIcon(holder.imageViewIcon, null, station.HomePageUrl, station.StationUuid, station.Name);
             } else {
-                holder.imageViewIcon.setImageDrawable(stationImagePlaceholder);
+                holder.imageViewIcon.setImageDrawable(StationPlaceholderUtils.createPlaceholderDrawable(getContext(), station.Name, station.StationUuid));
                 if (Utils.isDarkTheme(getContext())) {
                     holder.imageViewIcon.setBackgroundColor(getContext().getResources().getColor(R.color.windowBackgroundDark));
                 } else {
@@ -495,9 +492,14 @@ public class ItemAdapterStation
                     }
                 }
             });
-            // Android 5.x：应用内均衡器不可用（AudioFlinger 效果链重配置会爆音），隐藏入口
+            // ===[EXP-20260825-ANDROID5_EQ_SWITCH] 实验开关：Android 5.x 隐藏均衡器按钮受开关控制。
+            // 默认（开关关闭）按 v1.05 逻辑隐藏按钮；用户开启"Android 5 实验性均衡器"后显示。
+            // 回退：删除本标记块，恢复 v1.05 的 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) { ... }
+            // ===[/EXP-20260825-ANDROID5_EQ_SWITCH]
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                holder.buttonEqualizerSettings.setVisibility(View.GONE);
+                if (!prefs.getBoolean("equalizer_android5_experiment", false)) {
+                    holder.buttonEqualizerSettings.setVisibility(View.GONE);
+                }
             }
 
             holder.buttonAddAlarm.setOnClickListener(new View.OnClickListener() {

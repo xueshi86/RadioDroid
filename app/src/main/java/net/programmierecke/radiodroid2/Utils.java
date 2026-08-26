@@ -220,8 +220,8 @@ public class Utils {
     }
 
     public static String downloadFeedRelative(OkHttpClient httpClient, Context ctx, String theRelativeUri, boolean forceUpdate, Map<String, String> dictParams) {
-        // try current server for download
-        String currentServer = RadioBrowserServerManager.getCurrentServer();
+        // try current server for download（优先读持久化服务器）
+        String currentServer = RadioBrowserServerManager.getCurrentServer(ctx);
         if (currentServer == null) {
             return null;
         }
@@ -229,11 +229,12 @@ public class Utils {
         String endpoint = RadioBrowserServerManager.constructEndpoint(currentServer, theRelativeUri);
         String result = downloadFeed(httpClient, ctx, endpoint, forceUpdate, dictParams);
         if (result != null) {
+            RadioBrowserServerManager.setCurrentServer(currentServer, ctx);
             return result;
         }
 
-        // get a list of all servers
-        String[] serverList = RadioBrowserServerManager.getServerList(false);
+        // get a list of all servers（DNS 列表 + 官方静态兜底，去重）
+        String[] serverList = RadioBrowserServerManager.getOrderedServerCandidates(ctx);
 
         // try all other servers for download
         for (String newServer : serverList) {
@@ -244,8 +245,8 @@ public class Utils {
             endpoint = RadioBrowserServerManager.constructEndpoint(newServer, theRelativeUri);
             result = downloadFeed(httpClient, ctx, endpoint, forceUpdate, dictParams);
             if (result != null) {
-                // set the working server as new current server
-                RadioBrowserServerManager.setCurrentServer(newServer);
+                // set the working server as new current server and persist
+                RadioBrowserServerManager.setCurrentServer(newServer, ctx);
                 return result;
             }
         }
@@ -261,10 +262,18 @@ public class Utils {
         return downloadFeed(httpClient, ctx, endpoint, forceUpdate, dictParams);
     }
 
+    /**
+     * 防双计标志：getRealStationLink 成功调用 click 端点（json/url/<uuid>，服务端已计一次点击）后置位，
+     * 播放成功回调（ClickReporter）消费后跳过网络上报，避免同一播放被计两次。
+     */
+    public static volatile boolean lastResolveUsedClickEndpoint = false;
+
     public static String getRealStationLink(OkHttpClient httpClient, Context ctx, String stationId) {
         Log.i("UTIL", "StationUUID:" + stationId);
         String result = Utils.downloadFeedRelative(httpClient, ctx, "json/url/" + stationId, true, null);
         if (result != null) {
+            // 服务端 click 端点已计一次点击，置位防双计标志
+            Utils.lastResolveUsedClickEndpoint = true;
             Log.i("UTIL", result);
             JSONObject jsonObj;
             try {

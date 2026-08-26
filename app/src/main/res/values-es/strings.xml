@@ -299,7 +299,9 @@
     <string name="equalizer_bands">Bandas de frecuencia</string>
     <string name="equalizer_not_playing">Primero inicie la reproducción de una estación para usar el ecualizador</string>
     <string name="equalizer_settings_saved_hint">La configuración surtirá efecto al iniciar la reproducción</string>
-    <string name="equalizer_unsupported_android5">El ecualizador integrado no es compatible con Android 5.x. Utilice el ecualizador del sistema.</string>
+    <string name="equalizer_unsupported_android5">El ecualizador integrado está desactivado por defecto en Android 5.x (para evitar chasquidos). Para usarlo, active el interruptor «Ecualizador experimental de Android 5» en Ajustes.</string>
+    <string name="settings_android5_eq_experiment">Ecualizador experimental de Android 5</string>
+    <string name="settings_android5_eq_experiment_summary">Experimental: restaura el ecualizador integrado en Android 5.x. Desactivado por defecto para que la reproducción no tenga chasquidos. Si aparecen chasquidos o problemas de reproducción tras activarlo, desactívelo y reinicie la reproducción.</string>
     <string name="equalizer_init_failed">Error al inicializar el ecualizador. Su dispositivo puede no ser compatible con esta función.</string>
     <string name="equalizer_open_external">Abrir ecualizador del sistema</string>
     <string name="equalizer_open_external_summary">Abrir el panel de efectos de audio del dispositivo (si está disponible)</string>
@@ -741,4 +743,19 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
 
     <string name="language_german">Alemán</string>
     <string name="language_greek">Griego</string>
+<!-- v1.06: Incremental update + click reporting -->
+    <string name="settings_incremental_update">Actualización incremental</string>
+    <string name="settings_incremental_update_desc">Descargar solo las emisoras cambiadas desde la última sincronización (rápido, poco tráfico)</string>
+    <string name="settings_auto_incremental_update">Actualización incremental automática</string>
+    <string name="settings_auto_incremental_update_on">Sincronizar cambios automáticamente 24 h después de la última actualización</string>
+    <string name="settings_auto_incremental_update_off">Actualizar solo manualmente</string>
+    <string name="settings_auto_incremental_wifi_only">Actualización incremental solo por Wi-Fi</string>
+    <string name="settings_auto_incremental_wifi_only_on">Sincronizar automáticamente solo por Wi-Fi</string>
+    <string name="settings_auto_incremental_wifi_only_off">Permitir sincronización automática con datos móviles</string>
+    <string name="settings_report_click_counts">Notificar clics de reproducción</string>
+    <string name="settings_report_click_counts_on">Notificar las reproducciones de emisoras a la comunidad de radio-browser (mantiene el ranking de clics actualizado)</string>
+    <string name="settings_report_click_counts_off">Las reproducciones no se notifican; el contador local de clics sigue funcionando</string>
+    <string name="update_completed_incremental">Actualización incremental completada</string>
+    <string name="progress_incremental_update">Actualización incremental: sincronizando cambios</string>
+    <string name="error_inc_update_need_full">Aún no hay marca de sincronización. Ejecuta primero una actualización completa de la base de datos.</string>
 </resources>

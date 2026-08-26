@@ -54,6 +54,7 @@ import net.programmierecke.radiodroid2.service.PauseReason;
 import net.programmierecke.radiodroid2.service.PlayerService;
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
+import net.programmierecke.radiodroid2.ui.StationPlaceholderUtils;
 import net.programmierecke.radiodroid2.station.StationActions;
 import net.programmierecke.radiodroid2.station.live.ShoutcastInfo;
 import net.programmierecke.radiodroid2.station.live.StreamLiveInfo;
@@ -718,11 +719,11 @@ public class FragmentPlayerFull extends Fragment {
         if (TextUtils.isEmpty(liveInfo.getArtist()) || TextUtils.isEmpty(liveInfo.getTrack()) ||
                 LastFMApiKey.isEmpty()) {
             if (station.hasIcon()) {
-                loadStationIconWithFallback(artAndInfoPagerAdapter.imageViewArt, station.IconUrl, station.HomePageUrl, station.StationUuid);
+                loadStationIconWithFallback(artAndInfoPagerAdapter.imageViewArt, station.IconUrl, station.HomePageUrl, station.StationUuid, station.Name);
             } else if (!TextUtils.isEmpty(station.HomePageUrl)) {
-                loadStationIconWithFallback(artAndInfoPagerAdapter.imageViewArt, null, station.HomePageUrl, station.StationUuid);
+                loadStationIconWithFallback(artAndInfoPagerAdapter.imageViewArt, null, station.HomePageUrl, station.StationUuid, station.Name);
             } else {
-                artAndInfoPagerAdapter.imageViewArt.setImageResource(R.drawable.ic_launcher);
+                artAndInfoPagerAdapter.imageViewArt.setImageDrawable(StationPlaceholderUtils.createPlaceholderDrawable(getContext(), station.Name, station.StationUuid));
             }
             return;
         }
@@ -807,9 +808,11 @@ public class FragmentPlayerFull extends Fragment {
                     DataRadioStation station = Utils.getCurrentOrLastStation(fragment.requireContext());
 
                     if (station != null && station.hasIcon()) {
-                        fragment.loadStationIconWithFallback(fragment.artAndInfoPagerAdapter.imageViewArt, station.IconUrl, station.HomePageUrl, station.StationUuid);
+                        fragment.loadStationIconWithFallback(fragment.artAndInfoPagerAdapter.imageViewArt, station.IconUrl, station.HomePageUrl, station.StationUuid, station.Name);
                     } else if (station != null && !TextUtils.isEmpty(station.HomePageUrl)) {
-                        fragment.loadStationIconWithFallback(fragment.artAndInfoPagerAdapter.imageViewArt, null, station.HomePageUrl, station.StationUuid);
+                        fragment.loadStationIconWithFallback(fragment.artAndInfoPagerAdapter.imageViewArt, null, station.HomePageUrl, station.StationUuid, station.Name);
+                    } else if (station != null) {
+                        fragment.artAndInfoPagerAdapter.imageViewArt.setImageDrawable(StationPlaceholderUtils.createPlaceholderDrawable(fragment.getContext(), station.Name, station.StationUuid));
                     } else {
                         fragment.artAndInfoPagerAdapter.imageViewArt.setImageResource(R.drawable.ic_launcher);
                     }
@@ -1023,10 +1026,14 @@ public class FragmentPlayerFull extends Fragment {
     }
 
     private void loadStationIconWithFallback(final ImageView target, final String iconUrl, final String homePageUrl) {
-        loadStationIconWithFallback(target, iconUrl, homePageUrl, null);
+        loadStationIconWithFallback(target, iconUrl, homePageUrl, null, null);
     }
 
     private void loadStationIconWithFallback(final ImageView target, final String iconUrl, final String homePageUrl, final String stationUuid) {
-        PlayerServiceUtil.getStationIcon(target, iconUrl, homePageUrl, stationUuid);
+        loadStationIconWithFallback(target, iconUrl, homePageUrl, stationUuid, null);
+    }
+
+    private void loadStationIconWithFallback(final ImageView target, final String iconUrl, final String homePageUrl, final String stationUuid, final String stationName) {
+        PlayerServiceUtil.getStationIcon(target, iconUrl, homePageUrl, stationUuid, stationName);
     }
 }

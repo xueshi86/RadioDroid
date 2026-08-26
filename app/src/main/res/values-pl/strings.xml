@@ -257,4 +257,19 @@
     <string name="nav_item_about">O</string>
     <string name="refresh">Odśwież</string>
     <string name="alarm_fade_invalid_range">Głośność początkowa musi być niższa niż docelowa</string>
+<!-- v1.06: Incremental update + click reporting -->
+    <string name="settings_incremental_update">Aktualizacja przyrostowa</string>
+    <string name="settings_incremental_update_desc">Pobierz tylko stacje zmienione od ostatniej synchronizacji (szybko, mały ruch)</string>
+    <string name="settings_auto_incremental_update">Automatyczna aktualizacja przyrostowa</string>
+    <string name="settings_auto_incremental_update_on">Automatycznie synchronizuj zmiany 24 godziny po ostatniej aktualizacji</string>
+    <string name="settings_auto_incremental_update_off">Aktualizuj tylko ręcznie</string>
+    <string name="settings_auto_incremental_wifi_only">Aktualizacja przyrostowa tylko przez Wi-Fi</string>
+    <string name="settings_auto_incremental_wifi_only_on">Automatyczna synchronizacja tylko przez Wi-Fi</string>
+    <string name="settings_auto_incremental_wifi_only_off">Zezwól na automatyczną synchronizację przez dane mobilne</string>
+    <string name="settings_report_click_counts">Zgłaszaj kliknięcia odtwarzania</string>
+    <string name="settings_report_click_counts_on">Zgłaszaj odtworzenia stacji społeczności radio-browser (utrzymuje świeżość rankingu kliknięć)</string>
+    <string name="settings_report_click_counts_off">Odtworzenia nie są zgłaszane; lokalny licznik kliknięć nadal działa</string>
+    <string name="update_completed_incremental">Aktualizacja przyrostowa zakończona</string>
+    <string name="progress_incremental_update">Aktualizacja przyrostowa: synchronizowanie zmian</string>
+    <string name="error_inc_update_need_full">Brak znacznika synchronizacji. Najpierw wykonaj pełną aktualizację bazy danych.</string>
 </resources>

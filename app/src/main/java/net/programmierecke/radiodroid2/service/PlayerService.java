@@ -78,6 +78,7 @@ import net.programmierecke.radiodroid2.players.selector.PlayerType;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
 import net.programmierecke.radiodroid2.station.live.ShoutcastInfo;
 import net.programmierecke.radiodroid2.station.live.StreamLiveInfo;
+import net.programmierecke.radiodroid2.ui.StationPlaceholderUtils;
 import net.programmierecke.radiodroid2.players.RadioPlayer;
 import net.programmierecke.radiodroid2.recording.RecordingsManager;
 import net.programmierecke.radiodroid2.recording.RunningRecordingInfo;
@@ -1494,20 +1495,21 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     private void applyEqualizerSettings(int audioSessionId) {
         if (eqActivityOpen) return;
 
-        // Android 5.x（API < 23）的 AudioFlinger 在向正在播放的 audio session
-        // attach / detach AudioEffect（Equalizer / BassBoost）时会产生 DSP 层面的
-        // 瞬态爆音（pop/click），即使先 setVolume(0) 也无法消除——效果链重配置
-        // 发生在 AudioTrack 之外的 DSP 节点，会引入直流偏移瞬态。
-        // Android 6.0+ 的 AudioFlinger 对效果链变更有平滑处理，可安全实时 attach。
-        //
-        // 5.x 上不在实时播放会话 attach 均衡器，设置仅保存到 prefs；
-        // 这同时消除了三个爆音场景：
-        //   1) 切换电台时新 audioSessionId 触发 release 旧 EQ + attach 新 EQ
-        //   2) 打开 EqualizerActivity → ACTION_EQ_ACTIVITY_OPENED → releaseServiceEqualizer()
-        //   3) 关闭 EqualizerActivity → ACTION_EQ_ACTIVITY_CLOSED → 重新 attach
-        // 与 EqualizerActivity 自身的 5.x 行为一致（它也仅在 M+ 实时 attach）。
+        // ===[EXP-20260825-ANDROID5_EQ_SWITCH] 实验开关：Android 5.x 均衡器 attach 受开关控制。
+        // v1.05 为彻底解决安卓5爆音，曾在此直接 return（封禁安卓5均衡器），属"过头限制"。
+        // 用户反馈 v1.02（均衡器可用）在 A5.1.1 上所有广播站均正常；爆音根因实为 v1.03
+        // 引入的"缓冲硬静音截断 + 指数陡峭渐入 + 效果会话广播抖动"，v1.05 已通过
+        // fadeInVolumeLinearGain / 效果会话去抖 / PrePlaying 不硬静音 修复。
+        // 折中方案：默认保持封禁（开关默认 false，保证无爆音）；用户主动在设置中开启
+        // "Android 5 实验性均衡器"后放行。恢复后仍依赖下方 session 复用
+        // （serviceEqualizerSessionId）与 eqAndFadeInitialized 幂等，且 attach 前已静音。
+        // 回退：删除本标记块，恢复 v1.05 的 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return;
+        // ===[/EXP-20260825-ANDROID5_EQ_SWITCH]
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            return;
+            SharedPreferences eqPrefs = PreferenceManager.getDefaultSharedPreferences(itsContext);
+            if (!eqPrefs.getBoolean("equalizer_android5_experiment", false)) {
+                return;
+            }
         }
 
         // 均衡器已 attach 到同一 audio session 时直接复用，避免反复
@@ -1853,11 +1855,25 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         }
     }
 
+    /**
+     * 无图标电台的通知大图标占位：首字符 + UUID 稳定色（256px 方形，适配 setLargeIcon）。
+     */
+    private BitmapDrawable createPlaceholderRadioIcon() {
+        Bitmap bmp = StationPlaceholderUtils.createPlaceholderBitmap(itsContext, currentStation.Name, currentStation.StationUuid, 256);
+        final boolean useCircularIcons = Utils.useCircularIcons(itsContext);
+        if (useCircularIcons) {
+            RoundedBitmapDrawable rb = RoundedBitmapDrawableFactory.create(getResources(), bmp);
+            rb.setCircular(true);
+            return new BitmapDrawable(getResources(), rb.getBitmap());
+        }
+        return new BitmapDrawable(getResources(), bmp);
+    }
+
     private void downloadRadioIcon() {
         final float px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 70, getResources().getDisplayMetrics());
 
         if (!currentStation.hasIcon() && TextUtils.isEmpty(currentStation.HomePageUrl)) {
-            radioIcon = (BitmapDrawable) ResourcesCompat.getDrawable(getResources(), R.drawable.ic_launcher, null);
+            radioIcon = createPlaceholderRadioIcon();
             updateNotification();
             return;
         }
@@ -1885,7 +1901,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
                         @Override
                         public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-                            radioIcon = (BitmapDrawable) ResourcesCompat.getDrawable(getResources(), R.drawable.ic_launcher, null);
+                            radioIcon = createPlaceholderRadioIcon();
                             updateNotification();
                         }
 
@@ -1921,7 +1937,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
     private void tryLoadIconForNotification(final List<String> urls, final int index, final float px) {
         if (index >= urls.size()) {
-            radioIcon = (BitmapDrawable) ResourcesCompat.getDrawable(getResources(), R.drawable.ic_launcher, null);
+            radioIcon = createPlaceholderRadioIcon();
             updateNotification();
             return;
         }
@@ -2010,6 +2026,11 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                         }
 
                         playStateIsPlaying = true;
+
+                        // 播放点击上报（5s 冷却 + 防双计 + 失败静默，异步不阻塞）
+                        if (currentStation != null) {
+                            ClickReporter.report(itsContext, currentStation);
+                        }
 
                         // 效果会话广播去抖：仅当 sessionId 变化（首次播放或换台）才发 OPEN；
                         // 同一 session 的缓冲抖动、暂停恢复不再重复发送。

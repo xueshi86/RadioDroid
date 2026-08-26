@@ -178,7 +178,9 @@
     <string name="error_grant_audiofocus">Το αίτημα εστίασης στον ήχο δεν παραχωρήθηκε από το σύστημα.</string>
 
     <string name="error_no_equalizer_found">Δεν βρέθηκε εφαρμογή ισοστάθμισης.</string>
-    <string name="equalizer_unsupported_android5">Ο ενσωματωμένος ισοσταθμιστής δεν υποστηρίζεται σε Android 5.x. Χρησιμοποιήστε τον ισοσταθμιστή συστήματος.</string>
+    <string name="equalizer_unsupported_android5">Ο ενσωματωμένος ισοσταθμιστής είναι απενεργοποιημένος από προεπιλογή σε Android 5.x (για αποφυγή «κρότων»). Για να τον χρησιμοποιήσετε, ενεργοποιήστε τον διακόπτη «Πειραματικός ισοσταθμιστής Android 5» στις Ρυθμίσεις.</string>
+    <string name="settings_android5_eq_experiment">Πειραματικός ισοσταθμιστής Android 5</string>
+    <string name="settings_android5_eq_experiment_summary">Πειραματικό: επαναφέρει τον ενσωματωμένο ισοσταθμιστή σε Android 5.x. Απενεργοποιημένο από προεπιλογή για αναπαραγωγή χωρίς «κρότους». Εάν εμφανιστούν «κρότοι» ή προβλήματα αναπαραγωγής μετά την ενεργοποίηση, απενεργοποιήστε τον διακόπτη και επανεκκινήστε την αναπαραγωγή.</string>
 
     <string name="player_info_status">Κατάσταση: </string>
     <string name="player_info_status_stopped">σταματημένο</string>

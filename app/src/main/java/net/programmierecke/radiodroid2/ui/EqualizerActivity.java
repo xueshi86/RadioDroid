@@ -206,8 +206,15 @@ public class EqualizerActivity extends AppCompatActivity {
                 loadCachedCapabilities();
             }
             textNotPlaying.setVisibility(View.VISIBLE);
-            // Android 5.x：应用内均衡器不可用，显示禁用说明；其他情况（未播放）提示保存后生效
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            // ===[EXP-20260825-ANDROID5_EQ_SWITCH] 实验开关：Android 5.x 提示文案受开关控制。
+            // 默认（开关关闭）显示 equalizer_unsupported_android5（v1.05 封禁说明）；
+            // 用户开启"Android 5 实验性均衡器"后提示"已保存，下次生效"。
+            // 回退：删除本标记块，恢复 v1.05 的 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            //       textNotPlaying.setText(R.string.equalizer_unsupported_android5); } else {
+            //       textNotPlaying.setText(R.string.equalizer_settings_saved_hint); }
+            // ===[/EXP-20260825-ANDROID5_EQ_SWITCH]
+            boolean android5EqExperiment = prefs.getBoolean("equalizer_android5_experiment", false);
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M && !android5EqExperiment) {
                 textNotPlaying.setText(R.string.equalizer_unsupported_android5);
             } else {
                 textNotPlaying.setText(R.string.equalizer_settings_saved_hint);
@@ -386,9 +393,14 @@ public class EqualizerActivity extends AppCompatActivity {
         boolean wasEnabled = prefs.getBoolean(key(PREF_EQ_ENABLED), false);
         switchEnabled.setChecked(wasEnabled);
 
-        // Android 5.x：应用内均衡器不可用（AudioFlinger 效果链 attach/detach 会产生爆音），
-        // 禁用全部控件，避免用户误以为可以开启；说明见 textNotPlaying。
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+        // ===[EXP-20260825-ANDROID5_EQ_SWITCH] 实验开关：Android 5.x 控件禁用受开关控制。
+        // 默认（开关关闭）按 v1.05 逻辑禁用全部控件并 return（封禁入口）；
+        // 用户开启"Android 5 实验性均衡器"后放行：hasLiveEqualizer=false 时监听器仅写
+        // prefs，由 PlayerService 在播放会话 attach，安全。
+        // 回退：删除本标记块，恢复 v1.05 的 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) { ... return; }
+        // ===[/EXP-20260825-ANDROID5_EQ_SWITCH]
+        boolean android5EqExperiment = prefs.getBoolean("equalizer_android5_experiment", false);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M && !android5EqExperiment) {
             switchEnabled.setEnabled(false);
             switchBassBoost.setEnabled(false);
             updateControlsState(false);

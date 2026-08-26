@@ -3,6 +3,7 @@ package net.programmierecke.radiodroid2;
 import android.app.UiModeManager;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -14,8 +15,12 @@ import com.squareup.picasso.OkHttp3Downloader;
 import com.squareup.picasso.Picasso;
 
 import net.programmierecke.radiodroid2.alarm.RadioAlarmManager;
+import net.programmierecke.radiodroid2.database.RadioStationRepository;
 import net.programmierecke.radiodroid2.history.TrackHistoryRepository;
 import net.programmierecke.radiodroid2.players.mpd.MPDClient;
+import net.programmierecke.radiodroid2.service.ConnectivityChecker;
+import net.programmierecke.radiodroid2.service.DatabaseUpdateManager;
+import net.programmierecke.radiodroid2.service.DatabaseUpdateWorker;
 import net.programmierecke.radiodroid2.service.StationIconCache;
 import net.programmierecke.radiodroid2.station.live.metadata.TrackMetadataSearcher;
 import net.programmierecke.radiodroid2.proxy.ProxySettings;
@@ -119,6 +124,50 @@ public class RadioDroidApp extends MultiDexApplication {
         trackMetadataSearcher = new TrackMetadataSearcher(httpClient);
 
         recordingsManager.updateRecordingsList();
+
+        maybeAutoIncrementalUpdate();
+    }
+
+    /**
+     * 启动自动增量同步：距上次更新超过 24h 且满足网络条件时静默触发。
+     * 无增量水位（从未全量更新）或已有更新任务时不触发。
+     */
+    private void maybeAutoIncrementalUpdate() {
+        try {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            if (!prefs.getBoolean("auto_incremental_update", true)) {
+                return;
+            }
+            if (prefs.getBoolean("auto_incremental_wifi_only", false)) {
+                if (ConnectivityChecker.getCurrentConnectionType(this) != ConnectivityChecker.ConnectionType.NOT_METERED) {
+                    return;
+                }
+            }
+            // DB 检查（getDatabaseUpdateTime/hasIncrementalWatermark 为同步 Room 查询）须在后台线程，
+            // 主线程调用会被 Room 禁令抛异常，导致自动增量永远不触发
+            new Thread(() -> {
+                try {
+                    RadioStationRepository repository = RadioStationRepository.getInstance(this);
+                    long lastUpdate = repository.getDatabaseUpdateTime();
+                    long elapsed = System.currentTimeMillis() - lastUpdate;
+                    if (lastUpdate > 0 && elapsed < 24L * 60 * 60 * 1000) {
+                        return; // 24h 内已同步
+                    }
+                    if (!repository.hasIncrementalWatermark(this)) {
+                        return; // 无水位：需先全量更新
+                    }
+                    if (DatabaseUpdateWorker.isUpdating(this)) {
+                        return;
+                    }
+                    DatabaseUpdateManager.startIncrementalUpdate(this);
+                    Log.d("RadioDroidApp", "Auto incremental update scheduled");
+                } catch (Exception e) {
+                    Log.w("RadioDroidApp", "Auto incremental update skipped: " + e.getMessage());
+                }
+            }, "AutoIncrementalUpdate").start();
+        } catch (Exception e) {
+            Log.w("RadioDroidApp", "Auto incremental update skipped: " + e.getMessage());
+        }
     }
 
     public void setTestsInterceptor(Interceptor testsInterceptor) {

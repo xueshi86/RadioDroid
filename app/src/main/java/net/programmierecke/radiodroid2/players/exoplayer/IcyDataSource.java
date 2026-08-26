@@ -203,50 +203,63 @@ public class IcyDataSource implements HttpDataSource {
     }
 
     void sendToDataSourceListenersWithoutMetadata(byte[] buffer, int offset, int bytesAvailable) {
+        // 上一轮不完整 metadata 块遗留的字节，先整体跳过（不混入音频输出）
         int canSkip = Math.min(metadataBytesToSkip, bytesAvailable);
         offset += canSkip;
         bytesAvailable -= canSkip;
+        metadataBytesToSkip -= canSkip;
         remainingUntilMetadata -= canSkip;
+
         while (bytesAvailable > 0) {
+            // 当前 buffer 跨过下一个 metadata 边界
             if (bytesAvailable > remainingUntilMetadata) {
+                // 边界前的音频先行输出
                 if (remainingUntilMetadata > 0) {
                     dataSourceListener.onDataSourceBytesRead(buffer, offset, remainingUntilMetadata);
                     offset += remainingUntilMetadata;
                     bytesAvailable -= remainingUntilMetadata;
                 }
-                
+
+                // offset 现指向 metadata 长度字节（=size*16 bytes 的 metadata）
                 int metadataSizeByte = buffer[offset] & 0xFF;
-                metadataBytesToSkip = metadataSizeByte * 16 + 1;
-                
-                if (metadataSizeByte > 0) {
-                    if (bytesAvailable >= metadataBytesToSkip) {
-                        byte[] metadataBytes = new byte[metadataSizeByte * 16];
-                        System.arraycopy(buffer, offset + 1, metadataBytes, 0, metadataSizeByte * 16);
+                int metaBlockBytes = metadataSizeByte * 16; // metadata 数据，不含长度字节本身
+
+                if (bytesAvailable >= metaBlockBytes + 1) {
+                    // 完整块：跳过 1 个长度字节 + metadata 数据，下一边界间距重置
+                    if (metaBlockBytes > 0) {
+                        byte[] metadataBytes = new byte[metaBlockBytes];
+                        System.arraycopy(buffer, offset + 1, metadataBytes, 0, metaBlockBytes);
                         processMetadataBlock(metadataBytes);
-                    } else {
-                        Log.w(TAG, "Incomplete metadata block, need " + metadataBytesToSkip + " bytes, but only " + bytesAvailable + " available");
-                        if (bytesAvailable > 1) {
-                            int availableDataSize = bytesAvailable - 1;
-                            byte[] partialMetadataBytes = new byte[availableDataSize];
-                            System.arraycopy(buffer, offset + 1, partialMetadataBytes, 0, availableDataSize);
-                            processMetadataBlock(partialMetadataBytes);
-                        }
                     }
+                    offset += metaBlockBytes + 1;
+                    bytesAvailable -= metaBlockBytes + 1;
+                    metadataBytesToSkip = 0;
+                    remainingUntilMetadata = shoutcastInfo.metadataOffset;
+                } else {
+                    // 不完整块（buffer 截断）：已到位部分先解析，剩余字节数记入 metadataBytesToSkip，
+                    // 并在下一边界间距中计入待跳过的部分
+                    Log.w(TAG, "Incomplete metadata block, need " + (metaBlockBytes + 1) + " bytes, but only " + bytesAvailable + " available");
+                    if (bytesAvailable > 1) {
+                        int availableDataSize = bytesAvailable - 1;
+                        byte[] partialMetadataBytes = new byte[availableDataSize];
+                        System.arraycopy(buffer, offset + 1, partialMetadataBytes, 0, availableDataSize);
+                        processMetadataBlock(partialMetadataBytes);
+                    }
+                    metadataBytesToSkip = metaBlockBytes - (bytesAvailable - 1);
+                    offset += bytesAvailable;
+                    bytesAvailable = 0;
+                    remainingUntilMetadata = shoutcastInfo.metadataOffset + metadataBytesToSkip;
                 }
-                
-                remainingUntilMetadata = shoutcastInfo.metadataOffset;
             }
 
+            // 输出普通音频直到边界或 buffer 尾
             int bytesLeft = Math.min(bytesAvailable, remainingUntilMetadata);
-            int metadataInLeft = Math.min(bytesLeft, metadataBytesToSkip);
-            int audioInLeft = bytesLeft - metadataInLeft;
-            if (audioInLeft > 0) {
-                dataSourceListener.onDataSourceBytesRead(buffer, offset + metadataInLeft, audioInLeft);
+            if (bytesLeft > 0) {
+                dataSourceListener.onDataSourceBytesRead(buffer, offset, bytesLeft);
+                offset += bytesLeft;
+                bytesAvailable -= bytesLeft;
+                remainingUntilMetadata -= bytesLeft;
             }
-            metadataBytesToSkip -= metadataInLeft;
-            offset += bytesLeft;
-            bytesAvailable -= bytesLeft;
-            remainingUntilMetadata -= audioInLeft;
         }
     }
 

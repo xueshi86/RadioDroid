@@ -358,7 +358,9 @@
     <string name="equalizer_bands">频段</string>
     <string name="equalizer_not_playing">请先播放电台才能使用均衡器</string>
     <string name="equalizer_settings_saved_hint">设置将在播放电台时生效</string>
-    <string name="equalizer_unsupported_android5">Android 5.x 不支持应用内均衡器。如需均衡器效果，请在手机系统设置中调整。</string>
+    <string name="equalizer_unsupported_android5">Android 5.x 默认禁用应用内均衡器（避免爆音）。如需使用，请在设置中开启"Android 5 实验性均衡器"实验开关。</string>
+    <string name="settings_android5_eq_experiment">Android 5 实验性均衡器</string>
+    <string name="settings_android5_eq_experiment_summary">实验性功能：在 Android 5.x 上恢复应用内均衡器。默认关闭，以保障播放不出现爆音。如开启后出现爆音或播放异常，请关闭此开关并重启播放。</string>
     <string name="equalizer_init_failed">均衡器初始化失败，您的设备可能不支持此功能</string>
     <string name="equalizer_open_external">打开系统均衡器</string>
     <string name="equalizer_open_external_summary">打开设备自带的音频效果面板（如可用）</string>

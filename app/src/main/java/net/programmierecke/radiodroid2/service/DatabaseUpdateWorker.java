@@ -136,7 +136,29 @@ public class DatabaseUpdateWorker extends Worker implements RadioStationReposito
         sLock.lock();
         try {
             Log.d(TAG, "Acquired lock, starting database update work");
-            
+
+            // 增量更新模式：轻量、不占前台服务、复用同一把锁防与全量更新并发
+            String mode = getInputData().getString("mode");
+            if (mode == null) {
+                mode = "full";
+            }
+            if ("incremental".equals(mode)) {
+                Log.d(TAG, "Incremental update mode");
+                try {
+                    repository.syncIncrementalStationsBlocking(getApplicationContext(), this);
+                    prefs.edit()
+                            .putBoolean(KEY_IS_UPDATING, false)
+                            .apply();
+                    return Result.success();
+                } catch (Exception e) {
+                    Log.e(TAG, "Incremental database update failed", e);
+                    prefs.edit()
+                            .putBoolean(KEY_IS_UPDATING, false)
+                            .apply();
+                    return Result.failure();
+                }
+            }
+
             // 检查是否已有更新在进行中
             boolean isAlreadyUpdating = prefs.getBoolean(KEY_IS_UPDATING, false);
             boolean isCancelled = prefs.getBoolean(KEY_UPDATE_CANCELLED, false);

@@ -35,6 +35,7 @@ import net.programmierecke.radiodroid2.players.selector.PlayerType;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
 import net.programmierecke.radiodroid2.station.live.ShoutcastInfo;
 import net.programmierecke.radiodroid2.station.live.StreamLiveInfo;
+import net.programmierecke.radiodroid2.ui.StationPlaceholderUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -327,11 +328,40 @@ public class PlayerServiceUtil {
      * @param stationUuid 电台唯一ID，用于缓存key。为null时不使用缓存。
      */
     public static void getStationIcon(final ImageView holder, final String iconUrl, final String homePageUrl, final String stationUuid) {
+        getStationIcon(holder, iconUrl, homePageUrl, stationUuid, null);
+    }
+
+    /**
+     * 统一的电台图标加载方法。
+     *
+     * 核心原则：尽快显示图标，尽量显示主图标。
+     *
+     * 流程：
+     * 1. 有文件缓存 → 立即显示（不管来源，保证速度）
+     *    - 若缓存来自回退URL且距上次重试超4小时，加入待重试队列
+     * 2. 无文件缓存 → 先查 Picasso 内存/磁盘缓存（秒出）
+     * 3. Picasso 缓存也没有 → 联网加载 IconUrl（不延迟重试，快速失败）
+     *    - 成功 → 保存到文件缓存
+     *    - 失败 → 立即尝试回退URL（不等待）
+     * 4. 全部失败 → 后台延迟重试 IconUrl
+     *
+     * @param holder      目标ImageView
+     * @param iconUrl     电台图标URL（主图标）
+     * @param homePageUrl 电台主页URL（用于构建回退URL）
+     * @param stationUuid 电台唯一ID，用于缓存key。为null时不使用缓存。
+     * @param stationName 电台名称，用于无图标时生成动态占位符（可为null，null时回退应用图标）
+     */
+    public static void getStationIcon(final ImageView holder, final String iconUrl, final String homePageUrl, final String stationUuid, final String stationName) {
         Resources r = mainContext.getResources();
         final float px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 70, r.getDisplayMetrics());
         final int targetPxSize = (int) px;
         final int maxPxSize = Math.min(targetPxSize * 3, 512);
-        final Drawable placeholder = AppCompatResources.getDrawable(holder.getContext(), R.mipmap.ic_launcher);
+        final Drawable placeholder;
+        if (stationUuid != null && !stationUuid.isEmpty()) {
+            placeholder = StationPlaceholderUtils.createPlaceholderDrawable(holder.getContext(), stationName, stationUuid);
+        } else {
+            placeholder = AppCompatResources.getDrawable(holder.getContext(), R.mipmap.ic_launcher);
+        }
 
         holder.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
@@ -1132,7 +1162,7 @@ public class PlayerServiceUtil {
         }
 
         // 重新加载图标
-        getStationIcon(holder, station.IconUrl, station.HomePageUrl, stationUuid);
+        getStationIcon(holder, station.IconUrl, station.HomePageUrl, stationUuid, station.Name);
     }
 
     /**

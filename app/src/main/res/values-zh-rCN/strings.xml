@@ -100,6 +100,14 @@
     <string name="settings_local_database_update">本地数据库更新</string>
     <string name="settings_update_local_database">更新本地数据库</string>
     <string name="settings_update_local_database_desc">从网络下载所有电台数据并存储到本地</string>
+    <string name="settings_incremental_update">增量更新</string>
+    <string name="settings_incremental_update_desc">仅拉取上次同步以来变更的电台（快速、省流量）</string>
+    <string name="settings_auto_incremental_update">自动增量更新</string>
+    <string name="settings_auto_incremental_update_on">距上次更新 24 小时后自动同步变更</string>
+    <string name="settings_auto_incremental_update_off">仅手动更新</string>
+    <string name="settings_auto_incremental_wifi_only">仅 Wi-Fi 下自动增量</string>
+    <string name="settings_auto_incremental_wifi_only_on">仅在 Wi-Fi 下自动同步</string>
+    <string name="settings_auto_incremental_wifi_only_off">允许移动数据下自动同步</string>
     <string name="settings_check_network_connection">网络检查</string>
     <string name="settings_check_network_connection_desc">检查电台浏览器服务器连接状态</string>
     <string name="settings_local_database_status">本地数据库状态</string>
@@ -127,6 +135,9 @@
     <string name="settings_single_use_tags">显示不常用标签</string>
     <string name="settings_single_use_tags_desc_off">不显示不常用标签</string>
     <string name="settings_single_use_tags_desc_on">显示不常用标签</string>
+    <string name="settings_report_click_counts">上报播放点击</string>
+    <string name="settings_report_click_counts_on">将播放行为上报到 radio-browser 社区（保持点击热度排名新鲜）</string>
+    <string name="settings_report_click_counts_off">不上报播放，本地点击计数仍正常工作</string>
 
     <string name="settings_show_broken">无效电台</string>
     <string name="settings_show_broken_on">在列表中显示无效电台</string>
@@ -340,7 +351,9 @@
     <string name="equalizer_bands">频段</string>
     <string name="equalizer_not_playing">请先播放电台才能使用均衡器</string>
     <string name="equalizer_settings_saved_hint">设置将在播放电台时生效</string>
-    <string name="equalizer_unsupported_android5">Android 5.x 不支持应用内均衡器。如需均衡器效果，请在手机系统设置中调整。</string>
+    <string name="equalizer_unsupported_android5">Android 5.x 默认禁用应用内均衡器（避免爆音）。如需使用，请在设置中开启"Android 5 实验性均衡器"实验开关。</string>
+    <string name="settings_android5_eq_experiment">Android 5 实验性均衡器</string>
+    <string name="settings_android5_eq_experiment_summary">实验性功能：在 Android 5.x 上恢复应用内均衡器。默认关闭，以保障播放不出现爆音。如开启后出现爆音或播放异常，请关闭此开关并重启播放。</string>
     <string name="equalizer_init_failed">均衡器初始化失败，您的设备可能不支持此功能</string>
     <string name="equalizer_open_external">打开系统均衡器</string>
     <string name="equalizer_open_external_summary">打开设备自带的音频效果面板（如可用）</string>
@@ -474,6 +487,9 @@
     <string name="progress_writing_main_db">正在写入主数据库...</string>
     <string name="progress_switching_db">正在切换到新数据库...</string>
     <string name="update_completed">更新完成，共同步 %d 个电台，已切换到新数据</string>
+    <string name="update_completed_incremental">增量更新完成</string>
+    <string name="progress_incremental_update">增量更新：正在同步变更</string>
+    <string name="error_inc_update_need_full">尚无同步水位，请先执行一次全量数据库更新</string>
     <string name="update_confirm_replace_message">新数据(%1$d个)比现有数据(%2$d个)少，是否替换？</string>
     <string name="update_completed_keep_existing">更新完成，但用户选择继续使用现有数据</string>
     <string name="settings_language">界面语言</string>

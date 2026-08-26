@@ -20,6 +20,7 @@ import net.programmierecke.radiodroid2.players.mpd.MPDClient;
 import net.programmierecke.radiodroid2.service.ConnectivityChecker;
 import net.programmierecke.radiodroid2.service.PauseReason;
 import net.programmierecke.radiodroid2.service.PlayerService;
+import net.programmierecke.radiodroid2.ui.StationPlaceholderUtils;
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
 import net.programmierecke.radiodroid2.station.StationActions;
@@ -376,13 +377,17 @@ public class FragmentPlayerSmall extends Fragment {
             imageViewIcon.setVisibility(View.GONE);
         } else if (station != null && station.hasIcon()) {
             imageViewIcon.setVisibility(View.VISIBLE);
-            PlayerServiceUtil.getStationIcon(imageViewIcon, station.IconUrl, station.HomePageUrl, station.StationUuid);
+            PlayerServiceUtil.getStationIcon(imageViewIcon, station.IconUrl, station.HomePageUrl, station.StationUuid, station.Name);
         } else if (station != null && !TextUtils.isEmpty(station.HomePageUrl)) {
             imageViewIcon.setVisibility(View.VISIBLE);
-            PlayerServiceUtil.getStationIcon(imageViewIcon, null, station.HomePageUrl, station.StationUuid);
+            PlayerServiceUtil.getStationIcon(imageViewIcon, null, station.HomePageUrl, station.StationUuid, station.Name);
         } else {
             imageViewIcon.setVisibility(View.VISIBLE);
-            imageViewIcon.setImageResource(R.drawable.ic_launcher);
+            if (station != null) {
+                imageViewIcon.setImageDrawable(StationPlaceholderUtils.createPlaceholderDrawable(getContext(), station.Name, station.StationUuid));
+            } else {
+                imageViewIcon.setImageResource(R.drawable.ic_launcher);
+            }
         }
 
         if (role == Role.PLAYER) {

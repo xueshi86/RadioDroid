@@ -23,6 +23,7 @@ import android.widget.TextView;
 import net.programmierecke.radiodroid2.R;
 import net.programmierecke.radiodroid2.Utils;
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
+import net.programmierecke.radiodroid2.ui.StationPlaceholderUtils;
 import net.programmierecke.radiodroid2.utils.RecyclerItemMoveAndSwipeHelper;
 import net.programmierecke.radiodroid2.utils.SwipeableViewHolder;
 
@@ -83,12 +84,12 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
 
         if (station.hasIcon()) {
             setupIcon(useCircularIcons, holder.imageViewIcon, holder.transparentImageView);
-            PlayerServiceUtil.getStationIcon(holder.imageViewIcon, station.IconUrl, station.HomePageUrl, station.StationUuid);
+            PlayerServiceUtil.getStationIcon(holder.imageViewIcon, station.IconUrl, station.HomePageUrl, station.StationUuid, station.Name);
         } else if (!TextUtils.isEmpty(station.HomePageUrl)) {
             setupIcon(useCircularIcons, holder.imageViewIcon, holder.transparentImageView);
-            PlayerServiceUtil.getStationIcon(holder.imageViewIcon, null, station.HomePageUrl, station.StationUuid);
+            PlayerServiceUtil.getStationIcon(holder.imageViewIcon, null, station.HomePageUrl, station.StationUuid, station.Name);
         } else {
-            holder.imageViewIcon.setImageDrawable(stationImagePlaceholder);
+            holder.imageViewIcon.setImageDrawable(StationPlaceholderUtils.createPlaceholderDrawable(getContext(), station.Name, station.StationUuid));
             if (Utils.isDarkTheme(getContext())) {
                 holder.imageViewIcon.setBackgroundColor(getContext().getResources().getColor(R.color.windowBackgroundDark));
             } else {

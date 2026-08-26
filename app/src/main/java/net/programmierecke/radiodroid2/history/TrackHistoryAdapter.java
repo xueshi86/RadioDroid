@@ -22,6 +22,7 @@ import net.programmierecke.radiodroid2.Utils;
 import net.programmierecke.radiodroid2.database.RadioDroidDatabase;
 import net.programmierecke.radiodroid2.database.RadioStation;
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
+import net.programmierecke.radiodroid2.ui.StationPlaceholderUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,7 +50,6 @@ public class TrackHistoryAdapter extends PagedListAdapter<TrackHistoryEntry, Tra
     private FragmentActivity activity;
     private final LayoutInflater inflater;
     private boolean shouldLoadIcons;
-    private Drawable stationImagePlaceholder;
     private RadioDroidDatabase database;
     private final Map<String, String> homePageUrlCache = new HashMap<>();
 
@@ -59,7 +59,6 @@ public class TrackHistoryAdapter extends PagedListAdapter<TrackHistoryEntry, Tra
         this.context = activity;
         inflater = LayoutInflater.from(context);
 
-        stationImagePlaceholder = AppCompatResources.getDrawable(context, R.mipmap.ic_launcher);
         database = RadioDroidDatabase.getDatabase(activity.getApplication());
     }
 
@@ -84,9 +83,9 @@ public class TrackHistoryAdapter extends PagedListAdapter<TrackHistoryEntry, Tra
             String homePageUrl = homePageUrlCache.get(historyEntry.stationUuid);
 
             if (!TextUtils.isEmpty(iconUrl) || !TextUtils.isEmpty(homePageUrl)) {
-                PlayerServiceUtil.getStationIcon(holder.imageViewStationIcon, iconUrl, homePageUrl, historyEntry.stationUuid);
+                PlayerServiceUtil.getStationIcon(holder.imageViewStationIcon, iconUrl, homePageUrl, historyEntry.stationUuid, null);
             } else {
-                holder.imageViewStationIcon.setImageDrawable(stationImagePlaceholder);
+                holder.imageViewStationIcon.setImageDrawable(StationPlaceholderUtils.createPlaceholderDrawable(context, null, historyEntry.stationUuid));
             }
         } else {
             holder.imageViewStationIcon.setVisibility(View.GONE);

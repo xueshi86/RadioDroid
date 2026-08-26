@@ -1,23 +1,24 @@
-<p align="center">
-  <img src="app/src/main/res/drawable-xxxhdpi/ic_launcher.png" alt="RadioDroid Logo" width="96"/>
+<p align="center">  
+  <img src="app/src/main/res/drawable-xxxhdpi/ic_launcher.png" alt="RadioDroid Logo" width="96"/>  
 </p>
 
 <h1 align="center">RadioDroid</h1>
 
-<p align="center">
-  <b>全球电台收音机 · 离线数据库 · 魔改增强版</b><br>
-  <i>Global Radio Browser · Offline Database · Enhanced Edition</i>
+<p align="center">  
+  <b>全球电台收音机 · 离线数据库 · 魔改增强版</b>  
+  
+  <i>Global Radio Browser · Offline Database · Enhanced Edition</i>  
 </p>
 
-<p align="center">
-  <a href="#中文">中文介绍</a> ·
-  <a href="#english">English</a> ·
-  <a href="#changelog">Changelog</a>
+<p align="center">  
+  <a href="#中文">中文介绍</a> ·  
+  <a href="#english">English</a> ·  
+  <a href="CHANGELOG.md">Changelog</a>  
 </p>
 
 ---
 
-##   中文
+## 中文
 
 ### 项目由来
 
@@ -29,10 +30,10 @@
 
 本应用提供两种构建变体（Build Flavor）：
 
-| 版本 | 说明 |
-|------|------|
+| 版本       | 说明                                                                               |
+| -------- | -------------------------------------------------------------------------------- |
 | **Free** | 无 Google Play Services 依赖，不支持 Chromecast 投屏，不集成 SafetyNet。纯开源构建，适合 F-Droid 或自行构建 |
-| **Play** | 集成 Google Play Services，支持 Chromecast 投屏和 SafetyNet 完整性检查，适用于 Google Play 商店分发 |
+| **Play** | 集成 Google Play Services，支持 Chromecast 投屏和 SafetyNet 完整性检查，适用于 Google Play 商店分发   |
 
 两个版本的核心功能（收音机播放、离线数据库、搜索等）完全一致，区别仅在于是否包含 Google 专有服务。
 
@@ -40,7 +41,7 @@
 
 ### 与官方原版的主要区别
 
-####  核心架构变更：离线数据库模式
+#### 核心架构变更：离线数据库模式
 
 **原版方式**：每次浏览电台列表、搜索、按分类查看等操作，均实时向远在欧洲的 [radio-browser.info](https://www.radio-browser.info/) API 服务器发起网络请求。受服务器地理距离影响，延迟高且连接不稳定，体验较差。
 
@@ -51,31 +52,35 @@
 - 之后所有电台浏览、搜索、分类筛选、排序等操作均直接查询本地数据库，**无需网络连接**
 - 数据库更新过程中支持**后台执行**（通过 WorkManager 前台服务），可切换到其他 App 继续操作
 - 支持**断点续传**：中断的下载任务可在下次恢复继续，无需重新下载
+- 提供**增量更新**：基于 `json/stations/lastchange` 端点仅拉取自上次同步以来变更的电台（每次批量 1000 条，uuid 水位 + REPLACE 主库直写），秒级完成、流量消耗极小；可在设置中手动触发，或开启「自动增量更新」（距上次更新 24 小时后静默执行，可限制仅 Wi-Fi）
 - 更新前自动检查网络连通性、电量（<5% 拒绝更新，<20% 警告提示）、存储空间（需 ≥50MB 内部空间）
 - 提供**数据库导入/导出**功能，换机或重装时可迁移数据，避免重复下载
+- **镜像服务器级联容错**：最近成功的 API 服务器会被持久化，下次启动优先复用；请求失败自动级联 DNS 镜像列表与官方静态兜底服务器（de1/de2/fi1/at1），成功即回写；级联使用短超时（5s 连接），持久化服务器超过 7 天自动重新测速
 
 **优点**：
 
-| 方面 | 说明 |
-|------|------|
-|   响应速度 | 所有列表浏览、搜索、筛选均本地 SQLite 查询，毫秒级响应 |
-|  离线可用 | 无网络环境下正常浏览电台信息，播放时仅需网络传输音频流 |
-|  稳定性 | 不依赖远程 API 可用性，不受服务器故障或网络波动影响 |
-|  ️ 数据一致 | 搜索结果可复现，列表顺序稳定，不受服务器侧数据变更影响 |
-| ⚡ 交互流畅 | 电台切换、列表滚动、实时搜索反馈均流畅无卡顿 |
+| 方面     | 说明                              |
+| ------ | ------------------------------- |
+| 响应速度   | 所有列表浏览、搜索、筛选均本地 SQLite 查询，毫秒级响应 |
+| 离线可用   | 无网络环境下正常浏览电台信息，播放时仅需网络传输音频流     |
+| 稳定性    | 不依赖远程 API 可用性，不受服务器故障或网络波动影响    |
+| ️ 数据一致 | 搜索结果可复现，列表顺序稳定，不受服务器侧数据变更影响     |
+| ⚡ 交互流畅 | 电台切换、列表滚动、实时搜索反馈均流畅无卡顿          |
 
 **缺点**：
 
-| 方面 | 说明 |
-|------|------|
-|   首次初始化 | 全量下载 5 万+ 电台，耗时约 1-20 分钟（取决于网络质量） |
-|   数据时效性 | 电台数据为更新时的快照，新增/变更需手动触发更新 |
-| 存储空间 | 本地数据库约 40MB |
-| ️ 更新方式 | 非自动实时同步，需用户主动触发更新 |
+| 方面     | 说明                                |
+| ------ | --------------------------------- |
+| 首次初始化  | 全量下载 5 万+ 电台，耗时约 1-20 分钟（取决于网络质量） |
+| 数据时效性  | 增量更新大幅缓解：24h 后自动同步变更，手动增量秒级完成     |
+| 存储空间   | 本地数据库约 40MB                       |
+| ️ 更新方式 | 支持手动全量 / 手动增量 / 自动增量（可仅 Wi-Fi）    |
 
-####  预置数据库文件
+#### 预置数据库文件
 
 自 **v0.96** 起，每个版本的 Release 附件中将提供一份预下载的完整电台数据库文件。用户可直接下载并导入至应用中，无需经历耗时的首次全量同步过程，特别适合以下场景：
+
+
 
 - 首次使用者希望开箱即用
 - 网络条件有限或服务器连接不稳定的用户
@@ -83,7 +88,7 @@
 
 **用法**：在应用的「设置 → 本地数据库 → 导入数据库」中选择下载的数据库文件即可完成导入。
 
-####   本地电台智能显示
+#### 本地电台智能显示
 
 应用会根据用户手机的系统设置，智能优先展示与用户相关的电台：
 
@@ -94,55 +99,57 @@
 
 刷新列表时始终遵循此优先级逻辑，确保用户首先看到最可能感兴趣的电台。
 
-####   搜索功能
+#### 搜索功能
 
 系统提供两种搜索入口：
 
 **1. 快速搜索（电台 Tab 内）**
 
-电台主列表中直接输入关键词搜索，基于本地 SQLite 数据库的 `LIKE` 查询（`%keyword%`），实时返回匹配结果。
+电台主列表中直接输入关键词搜索，基于本地 SQLite 数据库的 `LIKE` 查询，实时返回匹配结果。搜索结果采用**加权排序**：前缀匹配 > 词边界匹配（空格/连字符/括号/点后起始）> 包含匹配，同等权重下按点击热度排序——搜 "jazz" 时 "Jazz FM" 优先于 "Ultra Jazz"。关键词中的 `%`/`_` 通配符会被转义，不会干扰匹配。
 
 **2. 高级多条件搜索**
 
 独立的高级搜索页面，支持同时设置四个维度的筛选条件：
 
-- **国家**：下拉选择，从数据库提取所有国家列表
-- **语言**：下拉选择，从数据库提取所有语言列表
-- **标签**：下拉选择，从数据库提取所有标签列表
+- **国家**：下拉选择，可输入过滤（前缀优先排序）
+- **语言**：下拉选择，可输入过滤（前缀优先排序）
+- **标签**：下拉选择，标签已拆分为单标签并按出现次数排序（热门优先），可输入过滤；修正了原版直接列出 "rock,pop" 组合串的问题
 - **关键词**：文本输入，500ms 防抖延迟，避免过度查询
 
 四个条件可任意组合（均为可选），任意条件变更时自动触发联合查询 (`searchStationsByMultiCriteria`)。支持一键重置所有筛选条件。筛选条件区域可折叠/展开，节省屏幕空间。
 
 #### SQLite FTS 全文搜索引擎
 
-数据库内置 `radio_stations_fts` 表（SQLite FTS4），对电台名称、标签、国家、语言建立全文索引，支持按键词前缀检索。`RadioStationDao` 提供按名称、标签、国家、语言的独立 FTS 快速搜索通道。
+数据库内置 `radio_stations_fts` 表（SQLite FTS4），对电台名称、标签、国家、语言建立全文索引，支持按键词前缀检索（`MATCH 'kw*'`），并按名称前缀/词边界加权排序。`RadioStationDao` 提供按名称、标签、国家、语言的独立 FTS 快速搜索通道。全量/增量数据库更新后会自动重建 FTS 索引，保证新入库电台可被即时搜索到（修复了更新后 FTS 索引与主库失步的问题）。
 
 #### 电台列表排序
 
 支持四种排序方式，点击 Toolbar 上的排序按钮弹出选择对话框：
 
-| 排序方式 | 说明 |
-|----------|------|
-| 按名称 | 字母序排列 |
-| 按点击量 | 按 radio-browser.info 全球用户点击热度排序 |
-| 按投票数 | 按社区投票数排列 |
-| 按最近变更 | 按电台信息最后更新时间排列 |
+| 排序方式  | 说明                              |
+| ----- | ------------------------------- |
+| 按名称   | 字母序排列                           |
+| 按点击量  | 按 radio-browser.info 全球用户点击热度排序 |
+| 按投票数  | 按社区投票数排列                        |
+| 按最近变更 | 按电台信息最后更新时间排列                   |
 
 当前排序模式高亮显示 ↑（升序）/ ↓（降序）指示，点击相同模式可切换排序方向。排序偏好自动持久化保存。
 
-####   随机播放
+#### 随机播放
 
 电台列表页 Toolbar 上提供随机播放按钮。点击后从本地数据库随机选取一个电台，最多尝试 10 次寻找有效播放源的电台，每次等待 10 秒验证连通性。找到有效电台则自动开始播放。
 
-####   回到顶部
+#### 回到顶部
 
 电台列表和高级搜索页面均提供浮动按钮（FAB），列表滚动离开顶部后自动浮现，点击平滑滚回顶部。
 
-####   曲目历史
+#### 曲目历史
 
 原版 RadioDroid 已有曲目历史功能。本应用针对流媒体 ICY 元数据中的曲目名称和艺术家信息段，优化了截取和解析逻辑，提升正确匹配和显示当前播放曲目名与艺术家的概率。同时支持通过 LastFM API 获取曲目附加元数据。
 
-####   电台图标
+**Ogg Vorbis / Opus 流元数据支持**（新增）：大量使用 Ogg/Opus 编码的电台（欧洲小众台、播客流）曲目信息此前无法显示，现已接入 ExoPlayer 元数据链路的 `VorbisComment` 解析（TITLE/ARTIST），曲目名、艺术家、通知与曲目历史均可正常展示；相同曲目自动去重，避免通知/历史高频刷新。
+
+#### 电台图标
 
 应用采用智能多级缓存策略加载电台图标，确保两个核心体验：**尽快显示图标，尽量显示主图标**。
 
@@ -155,27 +162,30 @@
    - `android-chrome-192x192.png`
    - `favicon.ico`
    - Google Favicons 服务（兜底）
+
 3. **HD 图标发现**（新增）：当仅有主页 URL 但无图标 URL 的回退图标加载成功后，后台解析主页 HTML 查找 Apple Touch Icon 等高分辨率 `<link>` 标签图标
 
 **智能显示逻辑**：
 
 图标加载后根据实际尺寸自动适配显示：
+
 - 图标 ≥ 显示区域 50% → 原图 `CENTER_INSIDE` 显示，清晰不模糊
 - 图标 < 显示区域 50% → 放大至显示区域尺寸，模糊但起标识作用
 - ImageView 强制保持正方形，防止行高变形
 
 **缓存策略**：
 
-| 特性 | 说明 |
-|------|------|
-| 分层缓存 | 收藏电台图标存入永久缓存（不删除），其他电台图标存入半永久缓存（7天过期） |
-| 快速显示 | 打开页面时，有缓存的图标立即显示（不管来源），保证用户第一眼看到图标 |
+| 特性   | 说明                                       |
+| ---- | ---------------------------------------- |
+| 分层缓存 | 收藏电台图标存入永久缓存（不删除），其他电台图标存入半永久缓存（7天过期）    |
+| 快速显示 | 打开页面时，有缓存的图标立即显示（不管来源），保证用户第一眼看到图标       |
 | 智能升级 | 缓存为回退图标的电台，后台每4小时静默尝试获取主图标；无主图标时尝试 HD 发现 |
-| 尺寸保护 | 后台获取的新图标尺寸小于当前显示图标时不替换，避免用更小的图覆盖清晰的大图 |
+| 尺寸保护 | 后台获取的新图标尺寸小于当前显示图标时不替换，避免用更小的图覆盖清晰的大图    |
 | 来源标记 | 系统会标记每个缓存图标的来源（主图标/回退），主图标永不再重试，回退图标定时升级 |
-| 用户控制 | 设置中可关闭电台图标显示，减少缓存占用，适合存储空间紧张的用户 |
+| 用户控制 | 设置中可关闭电台图标显示，减少缓存占用，适合存储空间紧张的用户          |
 
 **流程示意**：
+
 ```
 打开页面 → 缓存图标立即显示（保证速度）
         → 缓存是回退图标的电台：
@@ -188,10 +198,22 @@
 无缓存 → 联网加载 IconUrl → 成功 → 保存文件缓存 + 智能显示
                             → 失败 → 立即渐进回退（5级URL）
                                    → 任意成功 → 保存文件缓存 + 标记回退来源 + 智能显示
-                                   → 全部失败 → 显示占位图标
+                                   → 全部失败 → 显示动态占位图标
 ```
 
-####   播放器
+**动态电台占位符**（新增）：无图标电台不再显示统一的应用图标占位，而是自动生成「首字符 + 颜色」占位图——颜色按电台 UUID 哈希稳定分配 7 色 Material 色板（同一电台永远同色），字符取电台名称首个字母/数字或中文首字。列表、图标兜底、通知大图标三处显示完全一致；生成结果内存缓存，列表滚动零开销。
+
+#### 播放点击上报（社区回馈）
+
+播放成功时异步上报到 radio-browser.info 社区（`json/url/<uuid>` 端点），保持点击热度排名新鲜、回馈社区数据库：
+
+- **防双计**：经链接解析端点播放的电台不再重复上报（闹钟、手动解析等路径全覆盖）
+- **5 秒冷却**：同一电台冷却期内不重复上报，防缓冲抖动刷屏
+- **失败静默**：上报失败不影响播放，无任何弹窗或重试
+- **本地计数**：上报成功后本地 clickcount+1，点击热度排序即时生效
+- **隐私开关**：可在「设置 → 互动」中关闭上报（关闭后仅本地计数，不发任何网络请求）
+
+#### 播放器
 
 内置播放器基于 ExoPlayer 和 Android MediaPlayer 双引擎：
 
@@ -202,7 +224,7 @@
 
 同时支持：外部播放器调用、MPD（Music Player Daemon）协议、Chromecast 投屏（仅 Play 版）。
 
-####   音量指数级控制
+#### 音量指数级控制
 
 播放器提供「音量映射增强」开关（在「设置 → 播放器」中），用于在指数级音量控制和默认线性音量控制之间切换。
 
@@ -211,24 +233,24 @@
 
 **系统音量补偿**（开启时生效，分段线性）：
 
-| 系统音量区间 | 增益系数范围 | 效果 |
-|-------------|-------------|------|
-| < 35% | 0.5× → 1.0× | 降低 1 倍，安静环境不吵 |
-| 35% ~ 65% | 1.0× | 正常 |
-| > 65% | 1.0× → 2.0× | 提升 1 倍，嘈杂环境更易听清 |
+| 系统音量区间    | 增益系数范围      | 效果              |
+| --------- | ----------- | --------------- |
+| < 35%     | 0.5× → 1.0× | 降低 1 倍，安静环境不吵   |
+| 35% ~ 65% | 1.0×        | 正常              |
+| > 65%     | 1.0× → 2.0× | 提升 1 倍，嘈杂环境更易听清 |
 
 **应用内音量曲线**（开启时生效，以 50% 为对称点的指数曲线）：
 
-| 应用音量 | 输出增益 |
-|---------|---------|
-| 0 | 静音 |
-| 25% | maxGain × 0.5 |
-| 50% | maxGain × 1.0 |
+| 应用音量 | 输出增益          |
+| ---- | ------------- |
+| 0    | 静音            |
+| 25%  | maxGain × 0.5 |
+| 50%  | maxGain × 1.0 |
 | 100% | maxGain × 2.0 |
 
 低音量端增益低于线性（最低减半），高音量端增益高于线性（最高翻倍），全范围保持平滑过渡。
 
-####   MPD 播放器支持
+#### MPD 播放器支持
 
 MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通常运行在 Linux 服务器、NAS 或树莓派等设备上。RadioDroid 支持将电台流推送到远程 MPD 服务器进行播放，适用于以下场景：
 
@@ -252,48 +274,49 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 
 **技术说明**：
 
-| 项目 | 说明 |
-|------|------|
-| 协议 | MPD 原生文本协议（非 HTTP），基于 TCP Socket 直连 |
-| 认证 | 支持 MPD 密码认证（可选） |
-| 连接方式 | 应用直接与 MPD 服务器建立 TCP 连接，不经过中间代理 |
-| 支持操作 | 播放、暂停、恢复、停止、音量调节 |
-| 多服务器 | 支持保存多个 MPD 服务器配置并自由切换 |
-| 适用网络 | 局域网优先；公网访问需确保防火墙开放 MPD 端口 |
+| 项目   | 说明                                  |
+| ---- | ----------------------------------- |
+| 协议   | MPD 原生文本协议（非 HTTP），基于 TCP Socket 直连 |
+| 认证   | 支持 MPD 密码认证（可选）                     |
+| 连接方式 | 应用直接与 MPD 服务器建立 TCP 连接，不经过中间代理      |
+| 支持操作 | 播放、暂停、恢复、停止、音量调节                    |
+| 多服务器 | 支持保存多个 MPD 服务器配置并自由切换               |
+| 适用网络 | 局域网优先；公网访问需确保防火墙开放 MPD 端口           |
 
 **注意事项**：
+
 - MPD 功能为原版 RadioDroid 已有功能，本分支未对其进行修改测试，仅添加介绍
 - 手机与 MPD 服务器之间需要网络连通性（同一 WiFi 或 VPN）
 - 首次使用建议先确认 MPD 服务器可从手机正常访问（可用终端工具 `telnet <IP> 6600` 测试）
 - 如连接失败，请检查：MPD 服务是否运行、端口是否正确、防火墙规则、密码是否匹配
 
-####  代理支持
+#### 代理支持
 
 支持 HTTP 和 SOCKS5 代理，带认证用户名/密码。代理设置通过 Gson 序列化存储。每个 OkHttp 请求经 `proxyAuthenticator`（原版错误使用了 `authenticator`，已修正）处理认证。
 
-####  ️ 多语言界面
+#### ️ 多语言界面
 
 设置中提供界面语言选择，支持：跟随系统、中文、英文、俄语、西班牙语、德语、法语、意大利语、希腊语（共 8 种语言）。通过 `initAppLanguage()` 在 `ActivityMain.onCreate()` 中动态加载生效。针对所有新增和修改过的代码界面进行了多语言的全面适配，消除了原版代码中中英文混杂显示的问题。
 
-####   暗色主题
+#### 暗色主题
 
 支持亮色和暗色主题，可在设置中切换。修正了原版暗色模式下部分界面元素和字体颜色显示不正确的问题。常用界面元素（标题、标签、描述等）根据主题自动调整文字颜色。
 
-####   均衡器
+#### 均衡器
 
 提供双套预设方案。一套调用 Android 系统原生均衡器预设，不同设备厂商的预设名称和调音效果可能存在差异；另一套为应用内置预设，包含「人声」（适合新闻、访谈、脱口秀等以人声为主的节目）和「音乐」（适合音乐类电台的通用调音方案）。
 
 同时支持电台个性化均衡器设置：在电台详情中点击均衡器按钮，可为单个电台单独配置均衡器参数，实现不同电台自动切换不同音效的个性化体验。
 
-####   电台缓存策略
+#### 电台缓存策略
 
 电台详情中提供「缓存策略」配置按钮，允许为每个电台单独设置播放缓冲策略，实现个性化的播放体验：
 
-| 策略 | 说明 | 适用场景 |
-|------|------|------|
+| 策略   | 说明                      | 适用场景        |
+| ---- | ----------------------- | ----------- |
 | 轻度缓冲 | 缓冲 2.5 秒后开始播放，内存占用小、延迟低 | 网络稳定、追求快速播放 |
-| 增强缓冲 | 缓冲 10 秒后开始播放，有效吸收网络波动 | 网络偶尔不稳定 |
-| 极限缓冲 | 缓冲 30 秒后开始播放，最大限度抵御网络中断 | 网络中度不稳定 |
+| 增强缓冲 | 缓冲 10 秒后开始播放，有效吸收网络波动   | 网络偶尔不稳定     |
+| 极限缓冲 | 缓冲 30 秒后开始播放，最大限度抵御网络中断 | 网络中度不稳定     |
 
 **使用方式**：在电台详情界面点击「缓存策略」按钮，选择适合该电台的策略，配置自动保存并立即生效（若当前正在播放该电台则自动重启播放）。
 
@@ -301,7 +324,7 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 
 **注意事项**：缓冲时间越长，曲目历史记录与当前实际播放的内容可能出现时间差。因为曲目历史显示的是电台流当前的歌曲信息，而你的播放器由于较长的缓冲，实际播放的内容还在"排队"中——你可能听到的还是上一首歌，但曲目历史已经显示了下一首歌的标题。缓冲时间越长，这个时间差就越大。轻度缓冲（2.5 秒）基本不会出现此问题。
 
-####  ️ 其他功能
+#### ️ 其他功能
 
 - **收藏电台**：支持添加/移除收藏，滑动删除，撤销操作（Snackbar），M3U 导入/导出
 - **历史记录**：播放过的电台列表，支持 M3U 导出，一键清除
@@ -316,7 +339,7 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 
 ---
 
-##   English
+## English
 
 ### Introduction
 
@@ -326,10 +349,10 @@ This project is a heavily customized fork of [segler-alex/RadioDroid](https://gi
 
 ### Build Variants
 
-| Variant | Description |
-|---------|-------------|
+| Variant  | Description                                                                                                                            |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | **Free** | No Google Play Services dependency, no Chromecast casting, no SafetyNet. Pure open-source build, suitable for F-Droid or self-building |
-| **Play** | Includes Google Play Services, supports Chromecast casting and SafetyNet integrity checks, for Google Play Store distribution |
+| **Play** | Includes Google Play Services, supports Chromecast casting and SafetyNet integrity checks, for Google Play Store distribution          |
 
 Core functionality is identical across both variants. The difference is the availability of Google proprietary services.
 
@@ -337,7 +360,7 @@ Core functionality is identical across both variants. The difference is the avai
 
 ### Key Differences from Official RadioDroid
 
-####   Core Architecture: Offline Database Mode
+#### Core Architecture: Offline Database Mode
 
 **Original approach**: Every list browsing, search, or category operation made real-time API requests to [radio-browser.info](https://www.radio-browser.info/) servers in Europe, causing high latency and poor UX.
 
@@ -353,24 +376,24 @@ Core functionality is identical across both variants. The difference is the avai
 
 **Pros**:
 
-| Aspect | Description |
-|--------|-------------|
-|    Speed | All operations are local SQLite queries with millisecond response times |
-|   Offline | Browse and search stations without internet; only audio streaming needs network |
-|   Stability | Independent of remote API availability; unaffected by server outages |
-| ️  Consistency | Search results and list ordering are stable and reproducible |
-| ⚡ UX | Smooth station switching, scrolling, and real-time search feedback |
+| Aspect         | Description                                                                     |
+| -------------- | ------------------------------------------------------------------------------- |
+| Speed          | All operations are local SQLite queries with millisecond response times         |
+| Offline        | Browse and search stations without internet; only audio streaming needs network |
+| Stability      | Independent of remote API availability; unaffected by server outages            |
+| ️  Consistency | Search results and list ordering are stable and reproducible                    |
+| ⚡ UX           | Smooth station switching, scrolling, and real-time search feedback              |
 
 **Cons**:
 
-| Aspect | Description |
-|--------|-------------|
-|    Initial Setup | Full download of 50K+ stations takes 1-20 minutes (network-dependent) |
-|    Data Freshness | Station data is a snapshot; new/modified stations require manual refresh |
-|    Storage | Local database uses approximately 40MB |
-|  ️  Updates | Not real-time; manual user trigger required |
+| Aspect         | Description                                                              |
+| -------------- | ------------------------------------------------------------------------ |
+| Initial Setup  | Full download of 50K+ stations takes 1-20 minutes (network-dependent)    |
+| Data Freshness | Station data is a snapshot; new/modified stations require manual refresh |
+| Storage        | Local database uses approximately 40MB                                   |
+| ️  Updates     | Not real-time; manual user trigger required                              |
 
-####    Pre-built Database Files
+#### Pre-built Database Files
 
 Starting from **v0.96**, a pre-downloaded full radio database file will be attached to each release. Users can import it directly into the app, bypassing the time-consuming initial full sync. This is especially useful for:
 
@@ -380,7 +403,7 @@ Starting from **v0.96**, a pre-downloaded full radio database file will be attac
 
 **Usage**: Import the downloaded database file via **Settings → Local Database → Import Database** in the app.
 
-####    Smart Local Station Display
+#### Smart Local Station Display
 
 The app intelligently prioritizes stations based on the user's device locale:
 
@@ -391,7 +414,7 @@ The app intelligently prioritizes stations based on the user's device locale:
 
 Refreshing always follows this priority logic.
 
-####    Search
+#### Search
 
 Two search modes:
 
@@ -418,28 +441,28 @@ All four criteria are optional and combinable. Any change triggers an automatic 
 
 Four sorting modes via toolbar button dialog:
 
-| Mode | Description |
-|------|-------------|
-| Name | Alphabetical order |
-| Click Count | By global click popularity from radio-browser.info |
-| Votes | By community vote count |
-| Recent Change | By last modification timestamp |
+| Mode          | Description                                        |
+| ------------- | -------------------------------------------------- |
+| Name          | Alphabetical order                                 |
+| Click Count   | By global click popularity from radio-browser.info |
+| Votes         | By community vote count                            |
+| Recent Change | By last modification timestamp                     |
 
 Current sort mode displayed with ↑ (ascending) / ↓ (descending). Tapping the same mode toggles direction. Preferences are persisted.
 
-####   Shuffle Play
+#### Shuffle Play
 
 Random play button on the station list toolbar. Picks a random station from the local database, retrying up to 10 times (10-second timeout each) to find a working station.
 
-####   Scroll to Top
+#### Scroll to Top
 
 Floating action button appears when list is scrolled down. Tapping smoothly scrolls back to the top.
 
-####   Track History
+#### Track History
 
 Original RadioDroid already had track history. This version optimizes the parsing logic for stream ICY metadata (track name and artist), improving matching and display accuracy. Also fetches supplementary metadata via LastFM API.
 
-####   Station Icons
+#### Station Icons
 
 The app uses a smart multi-level caching strategy to ensure two core experiences: **show icons as fast as possible, show primary icons whenever possible**.
 
@@ -457,22 +480,24 @@ The app uses a smart multi-level caching strategy to ensure two core experiences
 **Smart Display Logic**:
 
 After loading, icons are automatically adapted based on actual size:
+
 - Icon ≥ 50% of display area → `CENTER_INSIDE` original display, crisp and clear
 - Icon < 50% of display area → Scaled up to display size, blurry but identifiable
 - ImageView forced to square aspect ratio to prevent row height distortion
 
 **Caching Strategy**:
 
-| Feature | Description |
-|---------|-------------|
-| Layered Cache | Favorite station icons go into permanent cache (never deleted), others go into semi-permanent cache (7-day expiry) |
-| Fast Display | When opening a page, cached icons display immediately regardless of source, ensuring users see icons at first glance |
-| Smart Upgrade | Stations with fallback icons silently retry the primary icon every 4 hours; if no primary icon exists, attempt HD discovery |
-| Size Protection | A newly fetched icon smaller than the currently displayed one will not replace it, preventing degradation |
+| Feature         | Description                                                                                                                              |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Layered Cache   | Favorite station icons go into permanent cache (never deleted), others go into semi-permanent cache (7-day expiry)                       |
+| Fast Display    | When opening a page, cached icons display immediately regardless of source, ensuring users see icons at first glance                     |
+| Smart Upgrade   | Stations with fallback icons silently retry the primary icon every 4 hours; if no primary icon exists, attempt HD discovery              |
+| Size Protection | A newly fetched icon smaller than the currently displayed one will not replace it, preventing degradation                                |
 | Source Tracking | Each cached icon is marked with its source (primary/fallback). Primary icons are never retried; fallback icons are periodically upgraded |
-| User Control | Icons can be disabled in Settings to reduce cache size, ideal for users with limited storage |
+| User Control    | Icons can be disabled in Settings to reduce cache size, ideal for users with limited storage                                             |
 
 **Flow Diagram**:
+
 ```
 Open page → Cached icons display immediately (speed first)
          → Stations with fallback icons:
@@ -488,7 +513,7 @@ No cache → Load IconUrl from network → Success → Save to file cache + smar
                                               → All failed → Show placeholder icon
 ```
 
-####   Player
+#### Player
 
 Dual-engine playback:
 
@@ -499,7 +524,7 @@ Dual-engine playback:
 
 Also supports: external player, MPD protocol, Chromecast (Play variant only).
 
-####   Exponential Volume Control
+#### Exponential Volume Control
 
 The player provides a **Volume Mapping Boost** toggle in **Settings → Player**, which switches between exponential volume control and default linear volume control.
 
@@ -508,24 +533,24 @@ The player provides a **Volume Mapping Boost** toggle in **Settings → Player**
 
 **System Volume Compensation** (active when toggled on, piecewise linear):
 
-| System Volume Range | Gain Coefficient Range | Effect |
-|--------------------|----------------------|--------|
-| < 35% | 0.5× → 1.0× | Reduced by half, quiet enough for silent environments |
-| 35% ~ 65% | 1.0× | Normal |
-| > 65% | 1.0× → 2.0× | Doubled, easier to hear in noisy environments |
+| System Volume Range | Gain Coefficient Range | Effect                                                |
+| ------------------- | ---------------------- | ----------------------------------------------------- |
+| < 35%               | 0.5× → 1.0×            | Reduced by half, quiet enough for silent environments |
+| 35% ~ 65%           | 1.0×                   | Normal                                                |
+| > 65%               | 1.0× → 2.0×            | Doubled, easier to hear in noisy environments         |
 
 **In-App Volume Curve** (active when toggled on, symmetric exponential curve centered at 50%):
 
-| App Volume | Output Gain |
-|-----------|-------------|
-| 0 | Mute |
-| 25% | maxGain × 0.5 |
-| 50% | maxGain × 1.0 |
-| 100% | maxGain × 2.0 |
+| App Volume | Output Gain   |
+| ---------- | ------------- |
+| 0          | Mute          |
+| 25%        | maxGain × 0.5 |
+| 50%        | maxGain × 1.0 |
+| 100%       | maxGain × 2.0 |
 
 Lower volumes fall below the linear curve (minimum halved), while higher volumes rise above it (maximum doubled), maintaining smooth transitions throughout.
 
-####   MPD (Music Player Daemon) Support
+#### MPD (Music Player Daemon) Support
 
 MPD (Music Player Daemon) is an open-source audio playback server program that typically runs on Linux servers, NAS devices, or Raspberry Pi. RadioDroid supports streaming radio stations to a remote MPD server for playback. This feature is useful for:
 
@@ -549,40 +574,41 @@ MPD (Music Player Daemon) is an open-source audio playback server program that t
 
 **Technical Details**:
 
-| Item | Description |
-|------|-------------|
-| Protocol | Native MPD text protocol (not HTTP), direct TCP Socket connection |
-| Authentication | Supports optional MPD password authentication |
-| Connection | App establishes direct TCP connection to MPD server, no intermediate proxy |
-| Supported Operations | Play, Pause, Resume, Stop, Volume Control |
-| Multi-Server | Save and switch between multiple MPD server configurations |
-| Network | LAN recommended; public access requires firewall rule for MPD port |
+| Item                 | Description                                                                |
+| -------------------- | -------------------------------------------------------------------------- |
+| Protocol             | Native MPD text protocol (not HTTP), direct TCP Socket connection          |
+| Authentication       | Supports optional MPD password authentication                              |
+| Connection           | App establishes direct TCP connection to MPD server, no intermediate proxy |
+| Supported Operations | Play, Pause, Resume, Stop, Volume Control                                  |
+| Multi-Server         | Save and switch between multiple MPD server configurations                 |
+| Network              | LAN recommended; public access requires firewall rule for MPD port         |
 
 **Notes**:
+
 - MPD is an existing feature from the original RadioDroid; this fork has not modified or tested it, documentation is provided for reference only
 - Network connectivity between phone and MPD server is required (same WiFi or VPN)
 - Before first use, verify MPD is reachable from your phone (test with `telnet <IP> 6600` in terminal)
 - If connection fails, check: MPD service running?, correct port?, firewall rules?, password match?
 
-####   Proxy Support
+#### Proxy Support
 
 HTTP and SOCKS5 proxy with username/password authentication. Settings serialized via Gson. Uses `proxyAuthenticator` (fixed from the original's incorrect `authenticator`).
 
-####   Equalizer
+#### Equalizer
 
 Two sets of presets available. One uses the Android system's built-in equalizer presets, whose names and sound profiles may vary across device manufacturers; the other is built into the app, featuring "Vocal" (optimized for news, talk shows, podcasts) and "Music" (general-purpose tuning for music stations).
 
 Also supports per-station equalizer customization: tap the equalizer button in station details to configure equalizer parameters for individual stations, enabling automatic switching to different sound profiles when switching stations.
 
-####   Per-Station Buffer Strategy
+#### Per-Station Buffer Strategy
 
 The station details page provides a **Buffer Strategy** configuration button, allowing you to set a specific playback buffering strategy for each individual station:
 
-| Strategy | Description | Best For |
-|----------|-------------|----------|
-| Light Buffer | Plays after 2.5s buffering, low memory usage, low latency | Stable networks, fast playback |
-| Enhanced Buffer | Plays after 10s buffering, absorbs network fluctuations | Occasionally unstable networks |
-| Extreme Buffer | Plays after 30s buffering, maximum resilience against interruptions | Moderately unstable networks |
+| Strategy        | Description                                                         | Best For                       |
+| --------------- | ------------------------------------------------------------------- | ------------------------------ |
+| Light Buffer    | Plays after 2.5s buffering, low memory usage, low latency           | Stable networks, fast playback |
+| Enhanced Buffer | Plays after 10s buffering, absorbs network fluctuations             | Occasionally unstable networks |
+| Extreme Buffer  | Plays after 30s buffering, maximum resilience against interruptions | Moderately unstable networks   |
 
 **How to Use**: Open station details, tap the "Buffer Strategy" button, and select the strategy that best fits the station. Settings are saved automatically and take effect immediately (if the station is currently playing, playback restarts with the new strategy).
 
@@ -590,15 +616,15 @@ The station details page provides a **Buffer Strategy** configuration button, al
 
 **Note**: Longer buffer times may cause the track history to get out of sync with what you're actually hearing. This is because the track history shows the current song from the radio stream, while your player — due to the longer buffer — is still playing content that entered the queue earlier. For example, you might still be hearing Song A, but the track history already shows Song B's title. The longer the buffer, the larger this gap becomes. Light buffer (2.5s) essentially avoids this issue.
 
-####  ️ Multi-Language UI
+#### ️ Multi-Language UI
 
 Language selector in settings: System, Chinese, English, Russian, Spanish, German, French, Italian, Greek (8 languages in total). Loaded dynamically in `ActivityMain.onCreate()` via `initAppLanguage()`. All new and modified UI code has full multi-language support.
 
-####   Dark Theme
+#### Dark Theme
 
 Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elements in dark mode. Text colors automatically adjust per theme.
 
-####  ️ Other Features
+#### ️ Other Features
 
 - **Favorites**: Add/remove with undo snackbar, swipe-to-delete, M3U import/export
 - **History**: Played station list with M3U export, one-tap clear
@@ -615,490 +641,10 @@ Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elemen
 
 ## Changelog
 
-> Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
-
-### v1.05
-*2026-08-23*
-
-**继续修复安卓 5.x 播放爆音问题**
-- **修复**：Android 5.x 设备彻底禁用均衡器效果 — Equalizer/BassBoost 不再附着到播放会话，从根源消除效果链挂载/卸载引发的瞬间爆音
-- **修复**：缓冲抖动期间不再反复收发音频效果会话广播 — 避免部分机型（如三星 SoundAlive）的系统音效随广播反复挂载/卸载产生全幅瞬态噪声；换台时正确补发旧会话的关闭广播
-- **修复**：播放中缓冲抖动不再将音量硬性截断为 0 — 消除数字音频阶跃产生的"咔哒"声，仅在真正停止播放时静音
-- **优化**：启动音量渐入由指数曲线改为线性增益渐入 — 消除起始瞬间的增益跳变，出声更平滑自然
-
-**QuickLyric not found error 修复**
-- **修复**：点击"查看歌词"时若未安装 QuickLyric（或其兼容应用）不再报错 — 改为弹窗询问，可选择前往 F-Droid 下载页安装
-
-**版本更新**
-- 版本号升级至 v1.05 (versionCode 114)
-
-### v1.04
-*2026-08-15*
-
-**低版本 Android（5.x）播放兼容性修复**
-- **修复**：多个电台"无法播放"（缓冲完成却静音不发声）— ExoPlayer 的 STATE_READY 回调在旧设备上可能延迟/丢失，新增轮询兜底在真正 READY 后补发 Playing 通知（不会提前渐入、不引入爆音）
-- **优化**：低版本启动缓冲延迟缩短（2500ms → 1000ms），点击播放后更快出声
-
-**低版本爆音修复（均衡器场景）**
-- **修复**：Android 5.x 打开均衡器或播放瞬间爆音 — 低版本（API < 23）不再在正在播放的 audio session 上 attach Equalizer/BassBoost（改用临时 session 探测能力），消除 AudioFlinger 效果链瞬态爆音；设置保存后下次播放生效
-- **修复**：BUFFERING 抖动时均衡器反复 attach/detach 引发的爆音 — 均衡器按 session 复用，仅停止（Idle）时释放
-
-**收藏夹导入修复**
-- **修复**：收藏夹跨版本导入失败 — M3U 导入改为纯本地流程（本地数据库查询 → M3U 内 URL 兜底），不再依赖联网查询 UUID，断网也能导入
-- **修复**：M3U 导入显式指定 UTF-8 编码，兼容 Android 5.1.1 等旧设备导出的文件
-
-**时间选择器界面重做**
-- **重做**：时间选择器由系统 TimePickerDialog 改为自定义双滚轮对话框 — 小时/分钟两个可循环滚轮（00-23 / 00-59、两位补零、禁止键盘输入、长按连续滚动）
-- **新增**：`CompactNumberPicker` 完全自绘滚轮 — 选中行放大加粗（44sp）、相邻行缩小半透明（26sp），突出当前选中值；支持拖动跟手、松手惯性吸附
-- **美化**：对话框新增标题、圆角卡片容器、居中按钮区，布局与闹钟编辑页风格统一
-- **适配**：滚轮数字、分割线、卡片背景、按钮文字颜色全部由主题属性控制，亮色/暗色主题下均显示正常
-
-**闹钟功能增强**
-- **修复**：闹钟起始音量允许 0% 导致渐增无效 — 起始音量下限改为 1%（应用永不将系统音量设为 0），旧数据加载时自动归一化到 [1,100]
-- **修复**：一次性（非重复）闹钟错过触发后仍显示"已开启" — 记录实际触发时间，应用启动/重注册时检测到已错过则自动禁用，避免跨天补响
-- **新增**：渐增参数实时校验 — 渐增开启时起始音量必须低于目标音量，否则禁用保存按钮并显示提示
-- **新增**：系统媒体音量为 0 时保存闹钟弹窗警告（闹钟可能无声）
-- **适配**：闹钟编辑对话框暗色主题下滑块、时间按钮颜色统一为白色，不再与深色背景混为一体
-
-**其他修复**
-- **修复**：录音播放完毕后再次点击播放无响应 — STATE_ENDED 状态下先 seek 回开头再播放
-- **优化**：Chromecast 投屏按钮始终显示在工具栏（无投屏设备时置灰），受"显示投屏按钮"设置控制，避免按钮消失误导用户
-- **优化**：电台列表 图标/列表 切换按钮改为"有空间才显示"，避免窄屏工具栏溢出
-
-**版本更新**
-- 版本号升级至 v1.04 (versionCode 113)
-
-### v1.03
-*2026-08-09*
-
-- **新增**：录音按钮提示，帮助用户识别录音操作
-- **修复**：低版本 Android 播放时的爆音问题
-- **新增**：德语、法语、意大利语、希腊语界面语言支持
-
-**闹钟播放时"扬声器零音量暂停"失效修复**
-- **修复**：闹钟触发的播放中，将系统音量调至 0 不再暂停播放（v1.01 引入闹钟音量渐增时，`alarmVolumeOverride` 期间整个跳过了零音量暂停检查，渐增完成后仍不生效）
-- **方案**：闹钟期间 app 永不将系统音量设为 0（起始音量强制 ≥ 1），因此任何 volume=0 必定是用户手动操作，零音量暂停在闹钟播放的任何阶段（含长渐增期间）均即时生效；暂停后系统音量自动恢复至闹钟响铃前水平
-
-**闹钟音量渐增跳变修复**
-- **修复**：渐增过程中音量按大步长突变而非平滑过渡 — 原步数上限仅 60 且步进间隔无上限（大音量范围设备每步跳 2-3 档，小音量范围设备每 2 秒才跳一步）
-- **方案**：步数上限提升至 200（每步不超过 1 个系统档位），步进间隔限制在 200ms 以内，实现平滑线性渐增
-
-**闹钟时间设置暗色主题显示修复**
-- **修复**：暗色主题下闹钟时间设置对话框时间数字为深灰色几乎不可见，部分区域残留白色背景
-- **方案**：`DialogTheme.Dark` 补全文字颜色（白色）与深色背景，与 `AlertTheme.Dark` 保持一致
-
-### v1.02
-*2026-07-31*
-
-**首次安装默认设置调整**
-- **优化**：外观 → 主题默认选项为「自动」，新安装用户首次启动即适配系统主题
-- **优化**：启动行为 → 启动时默认「显示所有电台」
-- **优化**：互动页「点击收藏」「自动收藏」「无效电台」「热度图标」默认不选中
-- **优化**：播放器页「显示网络类型指示器」「扬声器零音量暂停」「手机耳机断开暂停」「音量映射增强」默认选中
-- **说明**：以上均为首次安装时的默认值；用户若已修改设置，覆盖/升级安装不会覆盖用户设置
-
-**Android 5.1 播放兼容性修复（Let's Encrypt 证书）**
-- **新增**：`CompositeX509TrustManager` 组合式信任管理器 — 系统 CA 优先验证，失败后回退到内置的 ISRG Root X1
-- **新增**：打包 ISRG Root X1（Let's Encrypt 根证书）到 `res/raw`，解决 Android 5.1 手机系统 TrustStore 不含该证书导致使用 Let's Encrypt 证书的电台（如 rautemusik、radiohost、zeno.fm 等）SSL 握手失败、静音无声音的问题
-- **优化**：`RadioDroidApp.newHttpClient()` / `newHttpClientWithoutProxy()` 统一注入 ISRG Root X1；在有该证书的设备（Android 6+）上由系统直接验证，不影响原有行为
-
-**播放器与均衡器爆音修复**
-- **修复**：应用均衡器附着到音频会话前先静音应用层音量，消除 Android 5.1 等低版本上 DSP 管线重配置瞬间的爆音
-
-**播放错误提示**
-- **修复**：`ExoPlayerWrapper.onPlayerErrorChanged` 无条件停止并报告错误，不再因服务器返回错误码或 TLS 握手失败而静默停留在错误状态、无提示无声音
-
-**语言资源补全**
-- **新增**：清除图标缓存设置项的西班牙语、俄语翻译（此前显示英文）
-
-**收藏导入 M3U 文件选择修复**
-- **修复**：从播放列表导入收藏时，文件管理器中 `.m3u` 播放列表文件变灰不可选 — 原 `intent.setType("audio/x-mpegurl")` 按单一 MIME 过滤过窄，Android 各版本/各厂商文件管理器对 `.m3u` 的 MIME 映射不统一（`audio/x-mpegurl` / `application/octet-stream` / `application/vnd.apple.mpegurl` 等），导致文件被置灰无法选择
-- **修复方案**：改为 `intent.setType("*/*")` 且不设置 `EXTRA_MIME_TYPES`，确保所有文件可选；文件有效性由 `LoadM3U` 解析阶段保证（无效行自动跳过）
-
-**代码审查 — Critical（崩溃/数据丢失）**
-- **修复**：`StationSaveManager.addMultiple` 空/Null 列表前置防御 — 误导入空 M3U 不再清空已有数据
-- **修复**：`StationSaveManager.addMultiple` 导入电台未设置 `queue` 字段，播放切换时补 `station_new.queue`，避免 NPE
-- **修复**：`PlayState` Parcelable 反序列化序号越界 — `ordinal < 0` 或越界时返回 `Idle`，避免损坏 Parcel 崩溃
-- **修复**：`MediaPlayerWrapper` proxy 为 null 时 NPE — 增加 `proxy != null` 防御，`getExtension()` 返回 `"mp3"` 默认值
-- **修复**：`PlaylistM3U.getBasePath` 无分隔符路径 `substring(0, -1)` 抛 `StringIndexOutOfBoundsException` — 分隔符为 -1 时返回空串
-
-**Major（功能异常）**
-- **修复**：`PlayerService.foundLiveStreamInfo` 子线程竞态 — 回调统一 `handler.post()` 主线程串行化，null 安全比较标题变化
-- **修复**：`RadioPlayer.playState` 无 `volatile` 可见性 + `play()` 旧链接解析任务污染 — 加 `volatile` 并在 `play()` 开头 `cancelStationLinkRetrieval()`
-- **修复**：`StreamProxy.isStopped` 无 `volatile` ，JIT 缓存导致代理线程退出延迟 — 改 `volatile`，`stop()` 后及时释放 socket 与带宽
-- **修复**：`DatabaseUpdateWorker.cancelUpdate` 锁机制错误 — 改 `sLock.lock()` + try/finally unlock，取消失效问题
-- **修复**：`RadioBrowserServerManager.constructEndpoint` HTTP 明文传输 — 改为 `https://` 强制加密
-- **修复**：`PlayerService` 重复调用 `setMediaPlaybackState()` 及 `unregisterReceiver` 未注册抛异常 — 删除重复行、加 try-catch 保护
-- **修复**：`ConnectivityChecker` 未实现 `onLost()/onUnavailable()` — 网络断开后 UI 网络类型图标卡旧状态
-- **修复**：`NetworkCallback` 网络丢失未通知 UI
-
-**Minor（健壮性/体验）**
-- **修复**：`FragmentPlayerSmall.onDestroy` 用 `requireActivity()` — 改为 `getActivity()` + null 检查，避免 detach 后崩溃
-- **修复**：`AlarmReceiver` `WifiLock.acquire()` 带超时参数编译错误 — 去除超时重载
-- **修复**：values-zh-rCN `update_confirm_replace_message` 多占位符非位置格式 — 改为 `%1$d/%2$d`
-- **修复**：`PlaylistM3U` 单行解析失败中断整个列表 — 增加 `catch (RuntimeException)` 跳过异常行
-- **修复**：`ActivityMain` 广播接收器注册/反注册配对，避免泄漏
-- **新增**：`FragmentSettings` 图标缓存清除功能及 es/ru/zh 翻译
-- **修复**：`RadioDroidApp` 初始化异常保护与日志记录
-- **修复**：`BootReceiver` 主线程耗时处理 — 改异步线程避免 ANR
-- **修复**：`Utils` 缓存文件处理增强 — try-with-resources 与详细错误日志
-
-**版本更新**
-- 版本号升级至 v1.02 (versionCode 111)
-
-### v1.01
-*2026-07-27*
-
-**网络类型指示器（替代 Wi-Fi 警告弹窗）**
-- **新增**：迷你播放栏和完整播放界面显示 Wi-Fi 或移动数据图标，直观了解当前网络类型
-- **新增**：`ic_network_wifi` / `ic_network_mobile` 矢量图标资源
-- **重构**：移除计量连接警告对话框、提示音、自动暂停逻辑，改为非打断式信息展示
-- **重构**：设置项"未使用 Wi-Fi 时警告"更名为"显示网络类型指示器"，语义从警告变为指示
-- **新增**：`PLAYER_SERVICE_CONNECTION_TYPE_CHANGED` 广播，实时通知网络类型变化
-- **新增**：`ConnectivityChecker.ConnectionType.NONE` 枚举值，标识无网络状态
-- **修复**：`PauseReason` 反序列化增加序号越界保护，防止旧版本跨进程数据导致 `ArrayIndexOutOfBoundsException`
-
-**闹钟音量渐增**
-- **新增**：闹钟响铃时系统媒体音量从起始音量线性渐增至目标音量（默认 0%→50%，30 秒），不再突然全音量播放
-- **新增**：闹钟编辑对话框 — 点击闹钟列表项可编辑时间、起始音量、目标音量、渐增时长
-- **新增**：闹钟列表项显示渐增参数摘要（如"0% → 50% / 30 s"）
-- **新增**：`PlayerService.setAlarmFade()` / `startAlarmVolumeOverride()` / `startSystemVolumeFade()` / `stopAlarmVolumeOverride()` 闹钟音量控制系统
-- **新增**：闹钟结束后自动恢复响铃前的系统媒体音量
-- **优化**：闹钟播放期间跳过应用层音量映射和零音量自动暂停，避免干扰渐增
-- **优化**：闹钟播放期间不受短暂音频焦点丢失影响（不 duck、不暂停）
-- **优化**：ExoPlayer / MediaPlayer 音频流统一使用 `STREAM_MUSIC`，覆盖扬声器/有线/蓝牙所有输出
-- **优化**：`ExoPlayerWrapper` 新增 `volumeHandedOff` 标志，防止播放器内部逻辑重置 PlayerService 设定的音量
-
-**睡眠定时器重定位**
-- **重构**：睡眠定时器从"闹钟"设置页移至"播放器"设置页，不再依赖外部闹钟应用开关
-- **重构**：字符串 key 从 `settings_alarm_sleep_timer` 重命名为 `settings_sleep_timer`
-- **优化**：描述从"Stop playing after"改为"Stop current playback after"，更准确
-
-**扬声器零音量暂停**
-- **新增**：设置 → 播放器 → 扬声器零音量暂停开关 — 未连接耳机时，扬声器音量调至 0 自动暂停
-
-**导入/导出兼容性修复（Android 4.x）**
-- **修复**：Android 4.x (API 16-18) 设备上数据库导入/导出无法选择文件 — 低于 API 19 时回退到传统文件对话框（`OpenFileDialog` / `SaveFileDialog`）+ 运行时权限申请
-- **新增**：权限被拒绝时显示提示
-
-**收藏导入去重**
-- **修复**：从 M3U 文件导入收藏时，M3U 内部相同 UUID 的电台不再产生重复条目
-
-**播放器 Bug 修复**
-- **修复**：`RadioPlayer` HTTP 客户端丢失 User-Agent 拦截器，导致部分流媒体服务器拒绝请求 — 改用 `getHttpClient().newBuilder()` 保留全局拦截器
-- **修复**：HLS 流检测增强 — 增加 null 检查、`/hls/` 路径和 `.hls` 扩展名匹配、大小写不敏感
-- **修复**：取消收藏后 Snackbar 被底部播放面板遮挡 — 锚定到播放面板上方
-- **修复**：电台列表向右滑动背景边界错误 — 修正 `RecyclerItemSwipeHelper` bounds 计算
-- **修复**：电台列表滑动方向运算符错误 — `LEFT + RIGHT`（算术加=8）改为 `LEFT | RIGHT`（位或=12）
-- **修复**：全屏播放器取消收藏时 Snackbar 无锚点 — 传入实际 View 而非 null
-- **修复**：`RadioDroidBrowserService` 内存泄漏 — `onDestroy()` 注销广播接收器
-- **修复**：`AndroidManifest.xml` 恢复 `RadioDroidBrowserService` 声明（支持 Android Auto / 媒体浏览器）
-
-**翻译与清理**
-- **新增**：清除图标缓存功能的中英德繁翻译
-- **新增**：权限被拒绝提示的多语言字符串
-- **清理**：删除所有语言中不再使用的 `notify_metered_connection` 字符串资源
-- **清理**：删除 `Utils.playAndWarnIfMetered()` / `MeteredWarningCallback` 及所有调用点
-
-**版本更新**
-- 版本号升级至 v1.01 (versionCode 110)
-
-### v1.00
-*2026-07-08*
-
-**PLS 播放列表支持**
-- **新增**：`PlaylistParser` 播放列表解析工具类，支持 PLS 与 M3U 格式识别与解析
-- **新增**：播放流程（`PlayerService`、`PlayStationTask`）自动检测 `.pls/.m3u` 流地址，下载并解析为真实音频流 URL 后再播放，解决大量 PLS 格式电台无法播放的问题
-
-**播放音量控制重构**
-- **重构**：RadioPlayer 音量映射改为以 50% 为对称点的指数曲线，低音量端降低 1 倍、高音量端提升 1 倍，人耳听感更均匀
-- **重构**：PlayerService 系统音量补偿区间调整为 <35% / 35%-65% / >65% 三段式，低音量更安静、高音量在嘈杂环境更易听清
-- **新增**：设置 → 播放器 → 音量映射增强开关，默认开启；关闭后恢复原始线性音量控制
-
-**收藏交互修复**
-- **修复**：列表项展开状态下的收藏/撤销收藏按钮状态与点击逻辑，避免撤销收藏按钮失效或状态不刷新
-
-**主题与显示**
-- **新增**：设置 → 外观 → 主题增加「自动」模式，可跟随系统暗色/亮色状态自动切换
-- **优化**：主题默认选项改为「自动」，新安装用户首次启动即可适配系统主题
-
-**音频设备控制**
-- **新增**：设置 → 播放器 → 有线耳机零音量暂停开关
-- **新增**：设置 → 播放器 → 蓝牙耳机零音量暂停开关
-- **优化**：AudioDeviceMonitor 耳机连接检测方法暴露给 PlayerService，音量变化监听中实现零音量自动暂停逻辑
-
-**老版本兼容性修复**
-- **修复**：数据库初始化流程增加用户设置备份/恢复机制，重建数据库时保留原有偏好设置，避免老版本升级后配置丢失
-
-**版本更新**
-- 版本号升级至 v1.00 (versionCode 109)
-
-### v0.99
-*2026-06-02*
-
-**均衡器爆音修复**
-- **修复**：均衡器频段参数在全部配置完成后再启用（`setEnabled(true)`），避免中间态频段配置导致 Android 音频管道产生脉冲爆音
-- **修复**：BassBoost 增强器在设置强度值后再启用，与均衡器同理
-- **修复**：淡入渐入任务改用 `pendingFadeInTasks` 队列管理，50ms 延迟执行；每次新渐入前取消上一次未完成的任务，防止任务重叠引发音量突变爆音
-
-**播放电台高亮修复**
-- **修复**：`highlightCurrentStation()` 遍历查找前将 `playingStationPosition` 重置为 -1，确保列表变更（拖拽排序、取消收藏）后播放电台高亮始终绑定电台 UUID 而非列表位置
-- **修复**：`updateList()` 小变化分支在 `notifyDataSetChanged()` 前先调用 `highlightCurrentStation()`，确保高亮位置实时同步
-
-**电台图标显示优化**
-- **新增**：HD 图标发现机制 — 对仅有主页 URL 但无图标 URL 的电台，自动解析主页 HTML 查找 Apple Touch Icon 等高分辨率图标，成功后自动替换缓存和显示
-- **新增**：`applySmartDisplayLogic()` 图标智能显示逻辑，根据图标实际尺寸优化 ImageView 适配
-- **新增**：图标回退 URL 自动构建系统，根据主页域名自动构造 `favicon.ico` 和 `apple-touch-icon.png` 路径
-- **优化**：后台重试机制增强，回退图标缓存 4 小时后静默重试主图标
-
-**文档修复**
-- **修复**：README.md 目录锚点链接跳转错误
-
-### v0.98
-*2026-05-30*
-
-**播放爆音修复**
-- **修复**：采用播放会话代际标记（Session ID）机制，防止旧播放器延迟回调污染新播放器，消除快速切换电台时的爆音
-- **修复**：旧播放器停止前先静音再延迟释放（100ms），消除 AudioTrack 硬件瞬态脉冲导致的爆音
-- **修复**：允许 Playing→Playing 重入通知，确保淡入正确触发
-
-**播放时长修复**
-- **修复**：暂停不再计入总播放时长，跨会话累计
-- **修复**：播放起始时间在音频实际渲染后才开始计时，消除缓冲等待时间的虚增
-- **修复**：大播放器总时长不再显示 00:00
-
-**UI 界面优化**
-- **优化**：回到顶部按钮位置调整 — 水平方向右移至电台详情箭头附近不重叠，垂直方向下移至与最后一行电台详情按钮平行
-- **优化**：小播放器播放/暂停按钮放大 — Vector drawable 从 36dp 增至 48dp，使用 1:1 宽高比约束填满控制条高度
-- **优化**：收藏页切换视图按钮不再折叠到溢出菜单，始终显示在工具栏
-- **优化**：电台列表当前播放电台视觉标识（播放中指示覆盖层）
-- **优化**：大播放器"时长-缓冲-数据"三栏布局，修复部分语言文字与数字重叠问题
-
-**工具栏按钮自定义**
-- **新增**：设置 → 外观 → 工具栏按钮，6 个开关项可分别控制搜索、排序、定时关闭、随机播放、切换视图、投屏按钮的显示/隐藏
-- **新增**：多语言字符串支持（简体中文、English、Русский、Español）
-
-**功能增强**
-- **新增**：收藏夹网格/列表视图切换
-- **新增**：播放缓冲策略设置界面（轻度/增强/极限缓冲）
-- **删除**：移除电台详情/弹窗菜单中的"添加到桌面快捷方式"按钮及相关代码
-
-**版本更新**
-- 版本号升级至 v0.98 (versionCode 107)
-
-### v0.97
-*2026-05-23*
-
-**播放爆音修复**
-- **修复**：RadioPlayer 音量控制改用指数曲线映射（ratio²），低音量端变化更精细，避免爆音
-- **新增**：`setMaxGain()` 动态增益控制 — PlayerService 根据系统音量动态调整播放增益系数（0.1~4.0），低系统音量更安静，高系统音量可超增益提升响度
-
-**电台图标文件缓存系统**
-- **重构**：PlayerServiceUtil 图标加载流程重构为三级缓存：文件缓存 → Picasso 内存/磁盘缓存 → 网络加载
-- **新增**：`StationIconCache` 文件缓存层 — 收藏电台图标永久缓存，其他电台图标7天过期
-- **优化**：打开页面时优先从文件缓存加载图标，保证第一眼看到图标
-- **新增**：后台静默升级机制 — 缓存为回退图标的电台，500ms 延迟批量执行后台主图标重试，成功后自动替换显示
-- **优化**：网络加载失败后立即尝试回退 URL，不再等待重试延迟
-
-**电台个性化均衡器**
-- **新增**：EqualizerActivity 支持电台级别均衡器设置 — 每个电台可单独配置开关、预设、频段级别、低音增强
-- **新增**：`hasStationEqualizer()` / `getStationEqEnabledKey()` 等静态方法，支持 PlayerService 按电台切换均衡器参数
-- **优化**：均衡器标题栏显示电台名称，区分全局和电台专属设置
-
-**播放器界面优化**
-- **优化**：大播放器信息栏统一样式 — 播放时长、数据用量、缓冲时间三栏布局，添加标签前缀（Duration/Data/Buffered），统一字号和颜色
-- **优化**：缓冲时间显示位置调整，与播放时长和数据用量水平排列
-
-**播放服务增强**
-- **重构**：PlayerService 大幅增强（+254 行）— 均衡器与播放联动、音量控制优化、电台 UUID 传递
-- **重构**：PlayerServiceUtil 图标缓存系统重构（+411 行）
-- **新增**：`PlayerWrapper.playRemote()` 支持 stationUuid 参数传递
-- **新增**：RadioPlayer 记录当前电台 UUID，支持按电台切换均衡器
-
-**多语言更新**
-- **新增**：缓冲策略、均衡器设置相关中英文字符串
-- **优化**：电台图标设置描述更准确（"下载并显示电台图标" / "不下载图标，节省存储空间"）
-- **更新**：西班牙语、俄语翻译同步
-
-**代码质量与清理**
-- **清理**：移除 ExoPlayerWrapper 中 80+ 处调试日志（Log.d/Log.i），保留必要的运行状态日志
-- **清理**：移除 BufferSettingsDialog 中 6 处调试日志
-- **清理**：移除 PlayerService 中 rawMetadata 遍历调试日志
-- **修复**：12 处 `e.printStackTrace()` 替换为 `Log.e(TAG, message, e)`，统一异常日志输出
-- **删除**：废弃文件 `dialogs/DatabaseUpdateProgressDialog.java`（与 `ui.DatabaseUpdateProgressDialog` 重复）
-- **删除**：调试残留文档 `GRADLE_INSTALLATION_GUIDE.md`
-- **优化**：ExoPlayerWrapper 从 2864 行精简至 2596 行，功能逻辑不变
-
-### v0.96
-*2025-05-18*
-
-**电台图标增强**
-- **新增**：电台图标多级回退获取机制 — 优先使用服务器提供的 `IconUrl`，失败后回退到网站通用图标（`favicon.ico` / `apple-touch-icon.png`），最终使用 Google Favicons 服务兜底
-- **优化**：Picasso 图片库重试机制（最多 3 次，间隔 1s/3s/5s）
-- **修复**：收藏电台列表（FragmentStarred）使用图标仅显示适配器（`ItemAdapterIconOnlyStation`），统一图标展示风格
-
-**音频体验增强**
-- **新增**：音频均衡器功能 — `EqualizerActivity` 提供完整均衡器控制界面
-- **新增**：双套预设方案 — 系统原生预设（各厂商效果不同）+ 应用内置预设（「人声」适合新闻/访谈/脱口秀，「音乐」适合音乐类电台）
-- **新增**：PlayerService 服务端均衡器实现，支持预设设置和频段级别控制
-
-**闹钟系统现代化**
-- **重构**：闹钟播放器选择器（`PlayerSelectorDialog`）现代化改造，优化应用和设备选择交互逻辑
-- **优化**：`AlarmReceiver` 闹钟触发和播放逻辑
-- **优化**：`ItemAdapterRadioAlarm` 闹钟列表适配器
-
-**音频设备管理**
-- **新增**：`AudioDeviceMonitor` 音频设备监控系统，自动检测耳机插拔、蓝牙 A2DP 连接/断开等音频输出设备变更
-- **新增**：`HeadsetConnectionReceiver` 增强的音频设备连接状态管理 — 支持蓝牙耳机(A2DP/Headset 协议)和有线耳机的连接/断开检测，防抖处理（2秒窗口），`isAudioBluetoothDevice` 智能识别音频类蓝牙设备
-- **新增**：`BecomingNoisyReceiver` 音频噪声事件处理 — 拔出耳机或蓝牙断开时自动暂停播放，支持「暂停」和「关闭应用」两种策略（设置中配置）
-- **新增**：有线耳机重连后自动恢复播放（设置开关）
-- **新增**：蓝牙断开可配置为暂停或关闭应用
-- **新增**：蓝牙重连后自动恢复播放（设置开关）
-
-**播放历史修复**
-- **修复**：`TrackHistoryAdapter` 中图标 URL 处理逻辑，提升曲目历史图标显示成功率
-- **修复**：`TrackHistoryInfoDialog` 对话框显示问题
-
-**排序功能**
-- **新增**：电台列表排序功能（`FragmentLocalStations`）— 支持按名称/点击量/投票数/最近变更四种模式排序
-- **新增**：排序方向切换（升序/降序），点击相同模式切换方向，偏好持久化保存
-
-**录音播放器**
-- **新增**：录音功能完整实现 — `RecordingsManager` 管理录音列表和排序
-- **新增**：`RecordingsAdapter` 录音列表显示、播放、详情和删除功能
-- **新增**：`RadioPlayer` 录音管理接口，PlayerService 录音控制
-- **新增**：大小播放器界面录音控制按钮（开始/停止录音）
-
-**多语言和界面优化**
-- **优化**：FragmentSettings 设置界面多语言同步和代码重构（546 行变更）
-- **优化**：ApplicationSelectorDialog 应用选择器对话框现代化（162 行变更）
-- **优化**：FragmentAbout 关于页面内容更新
-- **优化**：FragmentHistory 历史记录界面优化
-- **优化**：FragmentPlayerFull/FragmentPlayerSmall 大小播放器界面优化
-- **优化**：FragmentStarred 收藏界面重构（171 行变更）
-- **优化**：FragmentTabs 标签页逻辑优化
-- **优化**：ActivityMain 主界面逻辑优化（250 行变更）
-- **优化**：RadioDroidApp 应用初始化逻辑优化
-- **优化**：Utils 工具类更新
-
-**数据库和导出修复**
-- **修复**：导出数据库报错信息截断问题 — `exportDatabase` 数据库查询操作移至后台线程，避免主线程访问导致 `IllegalStateException`
-- **新增**：缺失的中文翻译（导出成功/失败提示、进度条文本等）
-- **修复**：`e.getMessage()` 为 null 时的显示问题
-- **新增**：`getDisplayPathFromUri` 方法，将 content URI 转换为友好的文件路径显示
-- **修复**：英文 `strings.xml` 中 `warning_low_external_storage` 混入中文问题
-
-**数据库结构更新**
-- **更新**：`RadioDroidDatabase` 数据库结构
-- **更新**：`RadioStationDao` 数据访问对象，新增查询方法
-- **更新**：`RadioStationRepository` 数据仓库重构（207 行变更）
-- **更新**：`IPlayerService.aidl` 接口定义
-
-**其他修复**
-- **优化**：ExoPlayerWrapper ExoPlayer 封装层更新（50 行变更）
-- **优化**：IcyDataSource ICY 数据源简化（137 行变更，减少冗余代码）
-- **优化**：RadioDataSourceFactory 数据源工厂
-- **优化**：StreamProxy 流代理元数据解析增强
-- **更新**：AndroidManifest.xml 权限和组件声明
-- **更新**：.gitignore 忽略规则
-
-### v0.95
-*2025-05*
-
-- **修复**：Android 13+/15/16 上文件管理器无法打开 — `OpenDocument` 替换 `GetContent`，`CreateDocument` 替换直接文件写入，移除过时存储权限检查
-- **修复**：数据库导入数据丢失风险 — 先复制到临时文件验证后再替换正式文件
-- **修复**：`replaceMainFromTemp` 数据丢失风险 — 先读取临时数据库验证后再删除主库
-- **修复**：`cancelUpdate` 中危险的 `SharedPreferences` 直接文件操作
-- **修复**：数据库导入中无意义的 `Thread.sleep(1100ms)` 延迟
-- **优化**：数据库更新进度写入 — `commit` 改为 `apply`，减少磁盘 I/O
-- **优化**：批量插入大小从 1000 提升至 2000
-
-### v0.94
-*2025-05*
-
-- **修复**：HTTP/SOCKS 代理认证失败 — 修正 OkHttp 认证器调用错误（`authenticator` → `proxyAuthenticator`）
-- **新增**：SOCKS5 代理认证支持和无限重试保护
-- **修复**：`StreamProxy` 元数据解析缺少 EOF 检查导致的流结束崩溃
-- **修复**：`StationSaveManager` 导出 M3U 时 `BufferedWriter` 资源泄漏
-- **修复**：`ActivityMain` 广播接收器重复注册导致的内存泄漏
-- **修复**：历史记录列表 `subList` 视图引发的并发修改异常
-- **新增**：临时数据库文件（`.db`/`-wal`/`-shm`/`-journal`）自动清理
-- **修复**：`WakeLock`/`WifiLock` 释放时缺少异常保护导致的潜在崩溃
-- **修复**：`FragmentSettings` 对话框显示时缺少 Fragment 生命周期检查
-- **优化**：数据库更新失败时的资源回收逻辑
-
-### v0.93
-*2025-04*
-
-- **新增**：随机播放功能 — 电台界面 Toolbar 随机播放按钮，从本地数据库随机选取电台
-- **优化**：搜索算法 — 支持部分匹配和近似模糊匹配，支持标签组合搜索
-- **修复**：界面硬编码 — 基本消除中英文混杂的界面显示
-- **新增**：俄语语言支持
-- **修复**：暗色主题下部分界面和字体颜色错误
-- **修复**：均衡器和统计页面显示问题
-
-### v0.92
-*2025-04*
-
-- **优化**：电台播放逻辑 — 优先使用本地电台地址，降低远程服务器依赖
-- **降级**：Kotlin 版本以解决兼容性问题
-- **更新**：一批过时 API，适配新版 Android
-
-### v0.91
-*2025-03*
-
-- **国际化**：所有新增代码中中文硬编码改为中英文双语显示
-- **优化**：本地电台显示逻辑 — 手机系统国家电台 > 手机系统语言电台 > 全部电台
-- **修复**：服务器数据库地址硬编码 — 改为 DNS 获取，解决服务器变更引发崩溃
-- **新增**：设置 → 外观目录下界面语言选项
-- **更新**：关于页面内容
-- **修复**：关键代码中的数组越界、空指针等问题
-
-### v0.90
-*2025-03*
-
-- **重构**：整合国家、语言、标签、搜索界面，全新设计高级搜索
-- **优化**：本地数据库更新逻辑 — 多线程并行下载，耗时缩短 50%+
-- 搭配欧洲代理时更新时间可缩短至 **1 分钟以内**
-- **修复**：若干小 Bug
-
-### v0.89
-*2025-02*
-
-- **修复**：数据库更新、导入、导出各类 Bug
-- **修复**：数据库状态显示错误
-- **修复**：睡眠定时器失效
-- **修复**：收藏导入导出异常
-- **修复**：大播放器按钮图标不切换
-- **修复**：曲目历史中文乱码和英文字段截取错误
-
-### v0.88
-*2025-02*
-
-- **新增**：更新本地数据库时可切换后台运行
-- **优化**：更新逻辑和用户提示
-- **调整**：数据库导出导入功能
-
-### v0.87
-*2025-01*
-
-> **里程碑版本** — 架构级重构
-
-- **核心重构**：引入本地离线数据库模式，所有电台操作基于 SQLite 本地数据库
-- **新增**：服务器连接测试 — 网络不佳时提示不宜更新
-- **新增**：本地数据库导入/导出 — 换机或重装免除再次下载
-- ⚠️ 首次全量下载 5 万+ 电台约需 10-60 分钟（视网络）
-- 功能初步跑通，后续持续完善
-
-### v0.86 修改版
-*2025-01*
-
-- **修复**：App 无法中文搜索节目
-- **修复**：部分英文搜索结果不显示
-- RadioDroid v0.86 原版有多个影响使用的 Bug，自 2023 年无人维护，开启本分支
+> 完整的历史记录已迁移至 [CHANGELOG.md](CHANGELOG.md)。
 
 ---
 
-<p align="center">
-  <sub>Built with ❤️ based on <a href="https://github.com/segler-alex/RadioDroid">segler-alex/RadioDroid</a></sub>
+<p align="center">  
+  <sub>Built with ❤️ based on <a href="https://github.com/segler-alex/RadioDroid">segler-alex/RadioDroid</a></sub>  
 </p>

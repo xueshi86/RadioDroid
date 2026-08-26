@@ -437,7 +437,9 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="equalizer_bands">Частотные полосы</string>
     <string name="equalizer_not_playing">Сначала начните воспроизведение станции для использования эквалайзера</string>
     <string name="equalizer_settings_saved_hint">Настройки вступят в силу при начале воспроизведения</string>
-    <string name="equalizer_unsupported_android5">Встроенный эквалайзер не поддерживается на Android 5.x. Используйте системный эквалайзер.</string>
+    <string name="equalizer_unsupported_android5">Встроенный эквалайзер по умолчанию отключён на Android 5.x (во избежание щелчков). Чтобы использовать его, включите переключатель «Экспериментальный эквалайзер Android 5» в настройках.</string>
+    <string name="settings_android5_eq_experiment">Экспериментальный эквалайзер Android 5</string>
+    <string name="settings_android5_eq_experiment_summary">Экспериментально: восстановить встроенный эквалайзер на Android 5.x. По умолчанию выключено, чтобы воспроизведение было без щелчков. Если после включения появятся щелчки или проблемы с воспроизведением, выключите переключатель и перезапустите воспроизведение.</string>
     <string name="equalizer_init_failed">Не удалось инициализировать эквалайзер. Ваше устройство может не поддерживать эту функцию.</string>
     <string name="equalizer_open_external">Открыть системный эквалайзер</string>
     <string name="equalizer_open_external_summary">Открыть встроенную панель аудиоэффектов устройства (если доступна)</string>
@@ -750,4 +752,19 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
 
     <string name="language_german">Немецкий</string>
     <string name="language_greek">Греческий</string>
+<!-- v1.06: Incremental update + click reporting -->
+    <string name="settings_incremental_update">Инкрементальное обновление</string>
+    <string name="settings_incremental_update_desc">Загружать только станции, изменённые после последней синхронизации (быстро, мало трафика)</string>
+    <string name="settings_auto_incremental_update">Автоматическое инкрементальное обновление</string>
+    <string name="settings_auto_incremental_update_on">Автоматически синхронизировать изменения через 24 часа после последнего обновления</string>
+    <string name="settings_auto_incremental_update_off">Обновлять только вручную</string>
+    <string name="settings_auto_incremental_wifi_only">Инкрементальное обновление только через Wi-Fi</string>
+    <string name="settings_auto_incremental_wifi_only_on">Автосинхронизация только через Wi-Fi</string>
+    <string name="settings_auto_incremental_wifi_only_off">Разрешить автосинхронизацию по мобильным данным</string>
+    <string name="settings_report_click_counts">Сообщать о кликах воспроизведения</string>
+    <string name="settings_report_click_counts_on">Сообщать о прослушиваниях станции сообществу radio-browser (поддерживает актуальность рейтинга кликов)</string>
+    <string name="settings_report_click_counts_off">Прослушивания не сообщаются; локальный счётчик кликов продолжает работать</string>
+    <string name="update_completed_incremental">Инкрементальное обновление завершено</string>
+    <string name="progress_incremental_update">Инкрементальное обновление: синхронизация изменений</string>
+    <string name="error_inc_update_need_full">Нет метки синхронизации. Сначала выполните полное обновление базы данных.</string>
 </resources>

@@ -157,7 +157,9 @@
     <string name="error_grant_audiofocus">Das System gab den Audiokanal nicht frei.</string>
 
     <string name="error_no_equalizer_found">Keine Equalizer-App gefunden!</string>
-    <string name="equalizer_unsupported_android5">Der integrierte Equalizer wird auf Android 5.x nicht unterstützt. Verwenden Sie den System-Equalizer.</string>
+    <string name="equalizer_unsupported_android5">Der integrierte Equalizer ist auf Android 5.x standardmäßig deaktiviert (um Knackgeräusche zu vermeiden). Um ihn zu verwenden, aktivieren Sie den Schalter „Experimenteller Equalizer Android 5“ in den Einstellungen.</string>
+    <string name="settings_android5_eq_experiment">Experimenteller Equalizer Android 5</string>
+    <string name="settings_android5_eq_experiment_summary">Experimentell: Stellt den integrierten Equalizer auf Android 5.x wieder her. Standardmäßig deaktiviert, um eine knackfreie Wiedergabe zu gewährleisten. Falls nach dem Aktivieren Knackgeräusche oder Wiedergabeprobleme auftreten, deaktivieren Sie den Schalter und starten Sie die Wiedergabe neu.</string>
 
     <string name="player_info_status">Status:&#160;</string>
     <string name="player_info_status_stopped">gestoppt</string>
@@ -315,4 +317,19 @@
     <string name="recording_play_external">Mit externem Player abspielen</string>
     <string name="recording_empty_file">Die Aufnahmedatei ist leer</string>
     <string name="alarm_fade_invalid_range">Die Startlautstärke muss niedriger sein als die Ziellautstärke</string>
+<!-- v1.06: Incremental update + click reporting -->
+    <string name="settings_incremental_update">Inkrementelles Update</string>
+    <string name="settings_incremental_update_desc">Nur seit der letzten Synchronisierung geänderte Sender abrufen (schnell, geringer Datentraffic)</string>
+    <string name="settings_auto_incremental_update">Automatisches inkrementelles Update</string>
+    <string name="settings_auto_incremental_update_on">Änderungen 24 Stunden nach dem letzten Update automatisch synchronisieren</string>
+    <string name="settings_auto_incremental_update_off">Nur manuell aktualisieren</string>
+    <string name="settings_auto_incremental_wifi_only">Inkrementelles Update nur per WLAN</string>
+    <string name="settings_auto_incremental_wifi_only_on">Nur im WLAN automatisch synchronisieren</string>
+    <string name="settings_auto_incremental_wifi_only_off">Automatische Synchronisierung im Mobilfunknetz erlauben</string>
+    <string name="settings_report_click_counts">Wiedergabe-Clicks melden</string>
+    <string name="settings_report_click_counts_on">Sender-Wiedergaben an die radio-browser-Community melden (hält das Click-Ranking aktuell)</string>
+    <string name="settings_report_click_counts_off">Wiedergaben werden nicht gemeldet, der lokale Click-Zähler funktioniert weiterhin</string>
+    <string name="update_completed_incremental">Inkrementelles Update abgeschlossen</string>
+    <string name="progress_incremental_update">Inkrementelles Update: Änderungen werden synchronisiert</string>
+    <string name="error_inc_update_need_full">Noch kein Synchronisations-Wasserzeichen. Bitte führen Sie zuerst ein vollständiges Datenbank-Update durch.</string>
 </resources>

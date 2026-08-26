@@ -29,6 +29,7 @@ import com.google.android.exoplayer2.metadata.Metadata;
 import com.google.android.exoplayer2.metadata.icy.IcyHeaders;
 import com.google.android.exoplayer2.metadata.icy.IcyInfo;
 import com.google.android.exoplayer2.metadata.id3.Id3Frame;
+import com.google.android.exoplayer2.metadata.vorbis.VorbisComment;
 
 import java.io.ByteArrayOutputStream;
 import com.google.android.exoplayer2.source.MediaSource;
@@ -66,6 +67,8 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
     private int playSessionId;
 
     private String streamUrl;
+    /** Vorbis 元数据同值去重标记（换台时重置） */
+    private String lastVorbisTitle;
 
     private final DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
 
@@ -128,6 +131,8 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
 
         this.context = context;
         this.streamUrl = streamUrl;
+        // 换台时重置 Vorbis 去重标记，避免新台首条同值曲目被吞
+        lastVorbisTitle = null;
 
         cancelStopTask();
         cancelPlaybackDelay();
@@ -357,6 +362,9 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
     public void onMetadata(@NonNull Metadata metadata) {
         final int length = metadata.length();
         if (length > 0) {
+            // Vorbis comment 为逐条键值对（TITLE/ARTIST 各一个 entry），先聚合再组合广播
+            String vorbisTitle = null;
+            String vorbisArtist = null;
             for (int i = 0; i < length; i++) {
                 final Metadata.Entry entry = metadata.get(i);
                 if (entry == null) {
@@ -388,8 +396,38 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
                 } else if (entry instanceof IcyHeaders) {
                     final IcyHeaders icyHeaders = ((IcyHeaders) entry);
                     onDataSourceShoutcastInfo(new ShoutcastInfo(icyHeaders));
+                } else if (entry instanceof VorbisComment) {
+                    // Ogg Vorbis/Opus 流元数据（Vorbis comment 键值对，TITLE/ARTIST 各为独立 entry）
+                    final VorbisComment vorbisComment = ((VorbisComment) entry);
+                    if ("TITLE".equalsIgnoreCase(vorbisComment.key) && vorbisTitle == null) {
+                        vorbisTitle = vorbisComment.value;
+                    } else if ("ARTIST".equalsIgnoreCase(vorbisComment.key) && vorbisArtist == null) {
+                        vorbisArtist = vorbisComment.value;
+                    }
                 } else if (entry instanceof Id3Frame) {
                     final Id3Frame id3Frame = ((Id3Frame) entry);
+                }
+            }
+
+            if (vorbisTitle != null || vorbisArtist != null) {
+                String combined;
+                if (vorbisTitle != null && !vorbisTitle.isEmpty() && vorbisArtist != null && !vorbisArtist.isEmpty()) {
+                    combined = vorbisArtist + " - " + vorbisTitle;
+                } else if (vorbisTitle != null && !vorbisTitle.isEmpty()) {
+                    combined = vorbisTitle;
+                } else if (vorbisArtist != null && !vorbisArtist.isEmpty()) {
+                    combined = vorbisArtist;
+                } else {
+                    combined = "";
+                }
+                if (!combined.isEmpty() && !combined.equals(lastVorbisTitle)) {
+                    // 同值去重：相同曲目不重复广播，防通知/曲目历史高频写入
+                    lastVorbisTitle = combined;
+                    Map<String, String> rawMetadata = new HashMap<String, String>();
+                    rawMetadata.put("StreamTitle", combined);
+                    StreamLiveInfo streamLiveInfo = new StreamLiveInfo(rawMetadata);
+                    onDataSourceStreamLiveInfo(streamLiveInfo);
+                    Log.d(TAG, "VorbisComment metadata: " + combined);
                 }
             }
         }

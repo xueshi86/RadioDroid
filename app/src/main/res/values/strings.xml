@@ -120,6 +120,14 @@
     <string name="settings_local_database_update">Local Database Update</string>
     <string name="settings_update_local_database">Update Local Database</string>
     <string name="settings_update_local_database_desc">Download all radio stations from network and store them locally</string>
+    <string name="settings_incremental_update">Incremental Update</string>
+    <string name="settings_incremental_update_desc">Fetch only stations changed since last sync (fast, low traffic)</string>
+    <string name="settings_auto_incremental_update">Auto incremental update</string>
+    <string name="settings_auto_incremental_update_on">Automatically sync changes 24h after last update</string>
+    <string name="settings_auto_incremental_update_off">Only update manually</string>
+    <string name="settings_auto_incremental_wifi_only">Incremental update Wi-Fi only</string>
+    <string name="settings_auto_incremental_wifi_only_on">Only auto-sync on Wi-Fi</string>
+    <string name="settings_auto_incremental_wifi_only_off">Allow auto-sync on mobile data</string>
     <string name="settings_check_network_connection">Check Network Connection</string>
     <string name="settings_check_network_connection_desc">Test connection to radio browser server</string>
     <string name="settings_local_database_status">Local Database Status</string>
@@ -252,6 +260,10 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="settings_single_use_tags">Show rarely-used tags</string>
     <string name="settings_single_use_tags_desc_off">Rarely-used tags will not be shown</string>
     <string name="settings_single_use_tags_desc_on">Rarely-used tags will be shown</string>
+
+    <string name="settings_report_click_counts">Report play clicks</string>
+    <string name="settings_report_click_counts_on">Report station plays to radio-browser community (keeps click ranking fresh)</string>
+    <string name="settings_report_click_counts_off">Plays are not reported, local click count still works</string>
 
     <string name="settings_show_broken">Broken stations</string>
     <string name="settings_show_broken_on">Show broken stations in lists</string>
@@ -467,7 +479,9 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="equalizer_bands">Frequency Bands</string>
     <string name="equalizer_not_playing">Start playing a station first to use the equalizer</string>
     <string name="equalizer_settings_saved_hint">Settings will take effect when playback starts</string>
-    <string name="equalizer_unsupported_android5">In-app equalizer is not supported on Android 5.x. Use the system equalizer instead.</string>
+    <string name="equalizer_unsupported_android5">In-app equalizer is disabled by default on Android 5.x to avoid popping. To use it, enable the "Android 5 Experimental Equalizer" toggle in Settings.</string>
+    <string name="settings_android5_eq_experiment">Android 5 Experimental Equalizer</string>
+    <string name="settings_android5_eq_experiment_summary">Experimental: restore the in-app equalizer on Android 5.x. Off by default to keep playback pop-free. If popping or playback issues occur after enabling, turn it off and restart playback.</string>
     <string name="equalizer_init_failed">Failed to initialize equalizer. Your device may not support this feature.</string>
     <string name="equalizer_open_external">Open System Equalizer</string>
     <string name="equalizer_open_external_summary">Open your device\'s built-in audio effect panel (if available)</string>
@@ -648,6 +662,9 @@ The app will automatically restart to load the new database.</string>
     <string name="progress_writing_main_db">Writing to main database...</string>
     <string name="progress_switching_db">Switching to new database...</string>
     <string name="update_completed">Update completed, synchronized %d stations, switched to new data</string>
+    <string name="update_completed_incremental">Incremental update completed</string>
+    <string name="progress_incremental_update">Incremental update: syncing changes</string>
+    <string name="error_inc_update_need_full">No sync watermark yet. Please run a full database update first.</string>
     <string name="update_confirm_replace_message">New data (%1$d stations) has fewer stations than existing data (%2$d stations), do you want to replace?</string>
     <string name="update_completed_keep_existing">Update completed, but user chose to keep existing data</string>
     <string name="language_brazilian_portuguese">Português (Brasil)</string>

@@ -44,6 +44,16 @@
     <color name="swipeDeleteBackgroundColor">#ee0000</color>
     <color name="swipeDeleteBackgroundColorDark">#dd0000</color>
 
+    <!-- 无图标电台动态占位符色板（Material 500 系，白字，双主题通用） -->
+    <color name="placeholderColor1">#F44336</color>
+    <color name="placeholderColor2">#FF9800</color>
+    <color name="placeholderColor3">#FFC107</color>
+    <color name="placeholderColor4">#4CAF50</color>
+    <color name="placeholderColor5">#2196F3</color>
+    <color name="placeholderColor6">#9C27B0</color>
+    <color name="placeholderColor7">#607D8B</color>
+
+
 
     <color name="startRecordingColor">#ff3333</color>
 

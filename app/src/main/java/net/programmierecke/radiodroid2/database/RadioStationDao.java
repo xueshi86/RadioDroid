@@ -23,6 +23,10 @@ public interface RadioStationDao {
     @Update
     void update(RadioStation station);
 
+    // 播放点击上报成功后本地计数 +1，并刷新 lastclicktime
+    @Query("UPDATE radio_stations SET clickcount = clickcount + 1, lastclicktime = :now WHERE station_uuid = :uuid")
+    void incrementClickCount(String uuid, String now);
+
     @Delete
     void delete(RadioStation station);
 
@@ -164,30 +168,31 @@ public interface RadioStationDao {
     @Query("SELECT DISTINCT tags FROM radio_stations WHERE tags != '' AND tags != ','")
     List<String> getAllTagStringsSync();
 
-    @Query("SELECT * FROM radio_stations WHERE name LIKE :query || '%' OR name LIKE '%' || :query || '%' OR tags LIKE '%' || :query || ',%' OR tags LIKE :query || ',%' OR tags LIKE '%,' || :query OR tags = :query OR country LIKE :query || '%' OR country LIKE '%' || :query || '%' OR language LIKE :query || '%' OR language LIKE '%' || :query || '%' ORDER BY CASE WHEN name LIKE :query || '%' THEN 0 WHEN name LIKE '%' || :query || '%' THEN 1 WHEN tags LIKE :query || ',%' THEN 2 WHEN tags = :query THEN 3 ELSE 4 END, clickcount DESC LIMIT 100")
+    // 加权搜索：前缀匹配(0) > 词边界(1) > 包含(2) > 标签前缀(3) > 标签等值(4)；clickcount 次级排序
+    @Query("SELECT * FROM radio_stations WHERE name LIKE :query || '%' ESCAPE '\\' OR name LIKE '%' || :query || '%' ESCAPE '\\' OR tags LIKE '%' || :query || ',%' ESCAPE '\\' OR tags LIKE :query || ',%' ESCAPE '\\' OR tags LIKE '%,' || :query ESCAPE '\\' OR tags = :query OR country LIKE :query || '%' ESCAPE '\\' OR country LIKE '%' || :query || '%' ESCAPE '\\' OR language LIKE :query || '%' ESCAPE '\\' OR language LIKE '%' || :query || '%' ESCAPE '\\' ORDER BY CASE WHEN name LIKE :query || '%' ESCAPE '\\' THEN 0 WHEN name LIKE '% ' || :query || '%' ESCAPE '\\' OR name LIKE '%-' || :query || '%' ESCAPE '\\' OR name LIKE '%(' || :query || '%' ESCAPE '\\' OR name LIKE '%.' || :query || '%' ESCAPE '\\' THEN 1 WHEN name LIKE '%' || :query || '%' ESCAPE '\\' THEN 2 WHEN tags LIKE :query || ',%' ESCAPE '\\' THEN 3 WHEN tags = :query THEN 4 ELSE 5 END, clickcount DESC LIMIT 100")
     LiveData<List<RadioStation>> searchStations(String query);
     
-    // 使用FTS进行快速搜索
-    @Query("SELECT rs.* FROM radio_stations rs JOIN radio_stations_fts fts ON rs.station_uuid = fts.station_uuid WHERE radio_stations_fts MATCH :query ORDER BY rs.clickcount DESC LIMIT 100")
+    // 使用FTS进行快速搜索（前缀 token + 加权排序）
+    @Query("SELECT rs.* FROM radio_stations rs JOIN radio_stations_fts fts ON rs.station_uuid = fts.station_uuid WHERE radio_stations_fts MATCH :query || '*' ORDER BY CASE WHEN rs.name LIKE :query || '%' ESCAPE '\\' THEN 0 WHEN rs.name LIKE '% ' || :query || '%' ESCAPE '\\' OR rs.name LIKE '%-' || :query || '%' ESCAPE '\\' OR rs.name LIKE '%(' || :query || '%' ESCAPE '\\' OR rs.name LIKE '%.' || :query || '%' ESCAPE '\\' THEN 1 ELSE 2 END, rs.clickcount DESC LIMIT 100")
     LiveData<List<RadioStation>> searchStationsFast(String query);
     
     // 使用FTS按名称搜索
-    @Query("SELECT rs.* FROM radio_stations rs JOIN radio_stations_fts fts ON rs.station_uuid = fts.station_uuid WHERE radio_stations_fts MATCH :query ORDER BY rs.clickcount DESC LIMIT 100")
+    @Query("SELECT rs.* FROM radio_stations rs JOIN radio_stations_fts fts ON rs.station_uuid = fts.station_uuid WHERE radio_stations_fts MATCH :query || '*' ORDER BY CASE WHEN rs.name LIKE :query || '%' ESCAPE '\\' THEN 0 WHEN rs.name LIKE '% ' || :query || '%' ESCAPE '\\' OR rs.name LIKE '%-' || :query || '%' ESCAPE '\\' OR rs.name LIKE '%(' || :query || '%' ESCAPE '\\' OR rs.name LIKE '%.' || :query || '%' ESCAPE '\\' THEN 1 ELSE 2 END, rs.clickcount DESC LIMIT 100")
     LiveData<List<RadioStation>> searchStationsByNameFast(String query);
     
     // 使用FTS按标签搜索
-    @Query("SELECT rs.* FROM radio_stations rs JOIN radio_stations_fts fts ON rs.station_uuid = fts.station_uuid WHERE radio_stations_fts MATCH :query ORDER BY rs.clickcount DESC LIMIT 100")
+    @Query("SELECT rs.* FROM radio_stations rs JOIN radio_stations_fts fts ON rs.station_uuid = fts.station_uuid WHERE radio_stations_fts MATCH :query || '*' ORDER BY CASE WHEN rs.name LIKE :query || '%' ESCAPE '\\' THEN 0 WHEN rs.name LIKE '% ' || :query || '%' ESCAPE '\\' OR rs.name LIKE '%-' || :query || '%' ESCAPE '\\' OR rs.name LIKE '%(' || :query || '%' ESCAPE '\\' OR rs.name LIKE '%.' || :query || '%' ESCAPE '\\' THEN 1 ELSE 2 END, rs.clickcount DESC LIMIT 100")
     LiveData<List<RadioStation>> searchStationsByTagsFast(String query);
     
     // 使用FTS按国家搜索
-    @Query("SELECT rs.* FROM radio_stations rs JOIN radio_stations_fts fts ON rs.station_uuid = fts.station_uuid WHERE radio_stations_fts MATCH :query ORDER BY rs.clickcount DESC LIMIT 100")
+    @Query("SELECT rs.* FROM radio_stations rs JOIN radio_stations_fts fts ON rs.station_uuid = fts.station_uuid WHERE radio_stations_fts MATCH :query || '*' ORDER BY CASE WHEN rs.name LIKE :query || '%' ESCAPE '\\' THEN 0 WHEN rs.name LIKE '% ' || :query || '%' ESCAPE '\\' OR rs.name LIKE '%-' || :query || '%' ESCAPE '\\' OR rs.name LIKE '%(' || :query || '%' ESCAPE '\\' OR rs.name LIKE '%.' || :query || '%' ESCAPE '\\' THEN 1 ELSE 2 END, rs.clickcount DESC LIMIT 100")
     LiveData<List<RadioStation>> searchStationsByCountryFast(String query);
     
     // 使用FTS按语言搜索
-    @Query("SELECT rs.* FROM radio_stations rs JOIN radio_stations_fts fts ON rs.station_uuid = fts.station_uuid WHERE radio_stations_fts MATCH :query ORDER BY rs.clickcount DESC LIMIT 100")
+    @Query("SELECT rs.* FROM radio_stations rs JOIN radio_stations_fts fts ON rs.station_uuid = fts.station_uuid WHERE radio_stations_fts MATCH :query || '*' ORDER BY CASE WHEN rs.name LIKE :query || '%' ESCAPE '\\' THEN 0 WHEN rs.name LIKE '% ' || :query || '%' ESCAPE '\\' OR rs.name LIKE '%-' || :query || '%' ESCAPE '\\' OR rs.name LIKE '%(' || :query || '%' ESCAPE '\\' OR rs.name LIKE '%.' || :query || '%' ESCAPE '\\' THEN 1 ELSE 2 END, rs.clickcount DESC LIMIT 100")
     LiveData<List<RadioStation>> searchStationsByLanguageFast(String query);
 
-    @Query("SELECT * FROM radio_stations WHERE name LIKE :query || '%' OR name LIKE '%' || :query || '%' OR tags LIKE '%' || :query || ',%' OR tags LIKE :query || ',%' OR tags LIKE '%,' || :query OR tags = :query ORDER BY CASE WHEN name LIKE :query || '%' THEN 0 WHEN name LIKE '%' || :query || '%' THEN 1 WHEN tags LIKE :query || ',%' THEN 2 WHEN tags = :query THEN 3 ELSE 4 END, clickcount DESC LIMIT 100")
+    @Query("SELECT * FROM radio_stations WHERE name LIKE :query || '%' ESCAPE '\\' OR name LIKE '%' || :query || '%' ESCAPE '\\' OR tags LIKE '%' || :query || ',%' ESCAPE '\\' OR tags LIKE :query || ',%' ESCAPE '\\' OR tags LIKE '%,' || :query ESCAPE '\\' OR tags = :query ORDER BY CASE WHEN name LIKE :query || '%' ESCAPE '\\' THEN 0 WHEN name LIKE '% ' || :query || '%' ESCAPE '\\' OR name LIKE '%-' || :query || '%' ESCAPE '\\' OR name LIKE '%(' || :query || '%' ESCAPE '\\' OR name LIKE '%.' || :query || '%' ESCAPE '\\' THEN 1 WHEN name LIKE '%' || :query || '%' ESCAPE '\\' THEN 2 WHEN tags LIKE :query || ',%' ESCAPE '\\' THEN 3 WHEN tags = :query THEN 4 ELSE 5 END, clickcount DESC LIMIT 100")
     LiveData<List<RadioStation>> searchStationsByName(String query);
 
     @Query("SELECT * FROM radio_stations WHERE tags LIKE '%' || :query || ',%' OR tags LIKE :query || ',%' OR tags LIKE '%,' || :query OR tags = :query ORDER BY clickcount DESC LIMIT 100")
@@ -225,7 +230,7 @@ public interface RadioStationDao {
     @Query("SELECT * FROM radio_stations ORDER BY lastchangetime DESC")
     DataSource.Factory<Integer, RadioStation> getStationsByLastChangeTimePaged();
 
-    @Query("SELECT * FROM radio_stations WHERE name LIKE '%' || :query || '%' OR tags LIKE '%' || :query || '%' OR country LIKE '%' || :query || '%' OR language LIKE '%' || :query || '%' ORDER BY clickcount DESC")
+    @Query("SELECT * FROM radio_stations WHERE name LIKE '%' || :query || '%' ESCAPE '\\' OR tags LIKE '%' || :query || '%' ESCAPE '\\' OR country LIKE '%' || :query || '%' ESCAPE '\\' OR language LIKE '%' || :query || '%' ESCAPE '\\' ORDER BY CASE WHEN name LIKE :query || '%' ESCAPE '\\' THEN 0 WHEN name LIKE '% ' || :query || '%' ESCAPE '\\' OR name LIKE '%-' || :query || '%' ESCAPE '\\' OR name LIKE '%(' || :query || '%' ESCAPE '\\' OR name LIKE '%.' || :query || '%' ESCAPE '\\' THEN 1 ELSE 2 END, clickcount DESC")
     DataSource.Factory<Integer, RadioStation> searchStationsPaged(String query);
 
     @Query("SELECT * FROM radio_stations WHERE station_uuid = :stationId")
@@ -239,6 +244,21 @@ public interface RadioStationDao {
 
     @Query("DELETE FROM radio_stations WHERE station_uuid IN (:stationIds)")
     void deleteStationsByIds(List<String> stationIds);
+
+    /**
+     * FTS4 外部内容表索引重建（'rebuild' 命令）。
+     * F-1 修复：全量/增量更新后必须调用，否则 FTS 索引与主表失步，新台 FTS 搜不到。
+     * 5 万行实测数秒级，应在后台线程执行。
+     */
+    @Query("INSERT INTO radio_stations_fts(radio_stations_fts) VALUES('rebuild')")
+    void rebuildFtsIndex();
+
+    /**
+     * 获取本地库中最大的 lastchangetime（增量更新时间水位锚点）。
+     * 格式 YYYY-MM-DD HH:mm:ss，定宽字符串可直接比较。
+     */
+    @Query("SELECT lastchangetime FROM radio_stations ORDER BY lastchangetime DESC LIMIT 1")
+    String getMaxLastChangeTime();
     
     /**
      * 多条件搜索电台
@@ -248,7 +268,7 @@ public interface RadioStationDao {
      * @param keyword 关键词搜索，为空表示不搜索
      * @return 符合条件的电台列表
      */
-    @Query("SELECT * FROM radio_stations WHERE (:country = '' OR country = :country) AND (:language = '' OR language = :language) AND (:tag = '' OR tags LIKE ',' || :tag || ',' OR tags LIKE :tag || ',%' OR tags LIKE '%,' || :tag OR tags = :tag) AND (:keyword = '' OR name LIKE :keyword || '%' OR name LIKE '%' || :keyword || '%' OR country LIKE :keyword || '%' OR country LIKE '%' || :keyword || '%' OR language LIKE :keyword || '%' OR language LIKE '%' || :keyword || '%' OR tags LIKE '%' || :keyword || '%') ORDER BY CASE WHEN :keyword != '' AND name LIKE :keyword || '%' THEN 0 WHEN :keyword != '' AND name LIKE '%' || :keyword || '%' THEN 1 ELSE 2 END, clickcount DESC LIMIT 1000")
+    @Query("SELECT * FROM radio_stations WHERE (:country = '' OR country = :country) AND (:language = '' OR language = :language) AND (:tag = '' OR tags LIKE ',' || :tag || ',' OR tags LIKE :tag || ',%' OR tags LIKE '%,' || :tag OR tags = :tag) AND (:keyword = '' OR name LIKE :keyword || '%' ESCAPE '\\' OR name LIKE '%' || :keyword || '%' ESCAPE '\\' OR country LIKE :keyword || '%' ESCAPE '\\' OR country LIKE '%' || :keyword || '%' ESCAPE '\\' OR language LIKE :keyword || '%' ESCAPE '\\' OR language LIKE '%' || :keyword || '%' ESCAPE '\\' OR tags LIKE '%' || :keyword || '%' ESCAPE '\\') ORDER BY CASE WHEN :keyword != '' AND name LIKE :keyword || '%' ESCAPE '\\' THEN 0 WHEN :keyword != '' AND (name LIKE '% ' || :keyword || '%' ESCAPE '\\' OR name LIKE '%-' || :keyword || '%' ESCAPE '\\' OR name LIKE '%(' || :keyword || '%' ESCAPE '\\' OR name LIKE '%.' || :keyword || '%' ESCAPE '\\') THEN 1 WHEN :keyword != '' AND name LIKE '%' || :keyword || '%' ESCAPE '\\' THEN 2 ELSE 3 END, clickcount DESC LIMIT 1000")
     LiveData<List<RadioStation>> searchStationsByMultiCriteria(String country, String language, String tag, String keyword);
     
     // 获取搜索建议

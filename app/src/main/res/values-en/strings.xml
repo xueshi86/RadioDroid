@@ -304,7 +304,9 @@
     <string name="equalizer_bands">Frequency Bands</string>
     <string name="equalizer_not_playing">Start playing a station first to use the equalizer</string>
     <string name="equalizer_settings_saved_hint">Settings will take effect when playback starts</string>
-    <string name="equalizer_unsupported_android5">In-app equalizer is not supported on Android 5.x. Use the system equalizer instead.</string>
+    <string name="equalizer_unsupported_android5">In-app equalizer is disabled by default on Android 5.x to avoid popping. To use it, enable the "Android 5 Experimental Equalizer" toggle in Settings.</string>
+    <string name="settings_android5_eq_experiment">Android 5 Experimental Equalizer</string>
+    <string name="settings_android5_eq_experiment_summary">Experimental: restore the in-app equalizer on Android 5.x. Off by default to keep playback pop-free. If popping or playback issues occur after enabling, turn it off and restart playback.</string>
     <string name="equalizer_init_failed">Failed to initialize equalizer. Your device may not support this feature.</string>
     <string name="equalizer_open_external">Open System Equalizer</string>
     <string name="equalizer_open_external_summary">Open your device\'s built-in audio effect panel (if available)</string>

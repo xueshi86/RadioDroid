@@ -239,7 +239,9 @@
     <string name="error_grant_audiofocus">La richiesta dell\'audio non è stata accettata dal sistema</string>
 
     <string name="error_no_equalizer_found">Nessuna applicazione di equalizzazione</string>
-    <string name="equalizer_unsupported_android5">L\'equalizzatore integrato non è supportato su Android 5.x. Utilizza l\'equalizzatore di sistema.</string>
+    <string name="equalizer_unsupported_android5">L\'equalizzatore integrato è disabilitato per impostazione predefinita su Android 5.x (per evitare scoppiettii). Per usarlo, attiva l\'interruttore «Equalizzatore sperimentale Android 5» nelle impostazioni.</string>
+    <string name="settings_android5_eq_experiment">Equalizzatore sperimentale Android 5</string>
+    <string name="settings_android5_eq_experiment_summary">Sperimentale: ripristina l\'equalizzatore integrato su Android 5.x. Disattivato per impostazione predefinita per garantire una riproduzione senza scoppiettii. Se dopo l\'attivazione compaiono scoppiettii o problemi di riproduzione, disattiva l\'interruttore e riavvia la riproduzione.</string>
 
     <string name="player_info_status">Stato:&#160;</string>
     <string name="player_info_status_stopped">interrotto</string>
@@ -397,4 +399,19 @@
     <string name="recording_detail_duration">Durata (stimata):</string>
     <string name="recording_detail_modified">Modificato:</string>
     <string name="alarm_fade_invalid_range">Il volume iniziale deve essere inferiore al volume target</string>
+<!-- v1.06: Incremental update + click reporting -->
+    <string name="settings_incremental_update">Aggiornamento incrementale</string>
+    <string name="settings_incremental_update_desc">Scarica solo le stazioni modificate dall\'ultima sincronizzazione (veloce, basso traffico)</string>
+    <string name="settings_auto_incremental_update">Aggiornamento incrementale automatico</string>
+    <string name="settings_auto_incremental_update_on">Sincronizza automaticamente le modifiche 24 ore dopo l\'ultimo aggiornamento</string>
+    <string name="settings_auto_incremental_update_off">Aggiorna solo manualmente</string>
+    <string name="settings_auto_incremental_wifi_only">Aggiornamento incrementale solo Wi-Fi</string>
+    <string name="settings_auto_incremental_wifi_only_on">Sincronizzazione automatica solo in Wi-Fi</string>
+    <string name="settings_auto_incremental_wifi_only_off">Consenti sincronizzazione automatica con dati mobili</string>
+    <string name="settings_report_click_counts">Segnala clic di riproduzione</string>
+    <string name="settings_report_click_counts_on">Segnala le riproduzioni delle stazioni alla community di radio-browser (mantiene aggiornata la classifica dei clic)</string>
+    <string name="settings_report_click_counts_off">Le riproduzioni non vengono segnalate; il contatore locale dei clic funziona comunque</string>
+    <string name="update_completed_incremental">Aggiornamento incrementale completato</string>
+    <string name="progress_incremental_update">Aggiornamento incrementale: sincronizzazione modifiche</string>
+    <string name="error_inc_update_need_full">Nessun riferimento di sincronizzazione. Esegui prima un aggiornamento completo del database.</string>
 </resources>

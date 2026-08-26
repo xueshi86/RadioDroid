@@ -21,6 +21,26 @@
             android:summary="@string/settings_update_local_database_desc" />
 
         <Preference
+            android:key="incremental_update"
+            android:title="@string/settings_incremental_update"
+            android:summary="@string/settings_incremental_update_desc" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="auto_incremental_update"
+            android:summaryOff="@string/settings_auto_incremental_update_off"
+            android:summaryOn="@string/settings_auto_incremental_update_on"
+            android:title="@string/settings_auto_incremental_update" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:dependency="auto_incremental_update"
+            android:key="auto_incremental_wifi_only"
+            android:summaryOff="@string/settings_auto_incremental_wifi_only_off"
+            android:summaryOn="@string/settings_auto_incremental_wifi_only_on"
+            android:title="@string/settings_auto_incremental_wifi_only" />
+
+        <Preference
             android:key="local_database_status"
             android:title="@string/settings_local_database_status"
             android:summary="@string/settings_local_database_status_default"
@@ -207,6 +227,13 @@
             android:summaryOn="@string/settings_single_use_tags_desc_on"
             android:title="@string/settings_single_use_tags" />
 
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="report_click_counts"
+            android:summaryOff="@string/settings_report_click_counts_off"
+            android:summaryOn="@string/settings_report_click_counts_on"
+            android:title="@string/settings_report_click_counts" />
+
     </PreferenceScreen>
 
     <PreferenceScreen android:title="@string/settings_play"
@@ -306,6 +333,18 @@
             android:key="equalizer"
             android:title="@string/settings_equalizer"
             android:summary="@string/equalizer_use_builtin" />
+
+        <!-- ===[EXP-20260825-ANDROID5_EQ_SWITCH] 实验开关：Android 5.x 恢复内置均衡器。
+             默认关闭（保持 v1.05 封禁行为，保证无爆音）；用户主动开启后，
+             PlayerService/EqualizerActivity/FragmentSettings/ItemAdapterStation
+             四处条件判断均放行。仅在 Android 5.x（API < 23）有意义，6.0+ 由
+             FragmentSettings 动态隐藏。回退：删除本 Preference 节点。
+             ===[/EXP-20260825-ANDROID5_EQ_SWITCH] -->
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="equalizer_android5_experiment"
+            android:title="@string/settings_android5_eq_experiment"
+            android:summary="@string/settings_android5_eq_experiment_summary" />
 
         <Preference
             android:key="sleep_timer"

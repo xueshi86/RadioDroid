@@ -90,6 +90,181 @@ public class RadioStationRepository {
             syncAllStationsFromNetworkInternal(context, callback);
         });
     }
+
+    /**
+     * 播放点击上报成功后本地 clickcount+1（单线程 executor，不阻塞 UI）。
+     */
+    public void incrementStationClickCount(final String uuid) {
+        if (uuid == null || uuid.isEmpty()) {
+            return;
+        }
+        final java.text.SimpleDateFormat sdf =
+                new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US);
+        sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+        final String now = sdf.format(new java.util.Date());
+        executor.execute(() -> {
+            try {
+                radioStationDao.incrementClickCount(uuid, now);
+            } catch (Exception e) {
+                Log.e(TAG, "incrementClickCount failed for " + uuid + ": " + e.getMessage());
+            }
+        });
+    }
+
+    // ==================== 增量数据库更新（lastchange 端点） ====================
+
+    private static final String PREF_INC_LASTCHANGE_TIME = "incremental_lastchange_time";
+    private static final int INCREMENTAL_PAGE_SIZE = 1000;
+
+    /**
+     * 增量同步：官方服务器实测（v0.7.45）忽略 lastchangeuuid 游标参数，
+     * lastchange 端点行为等价于 order=changetimestamp&reverse=true 的降序变更日志。
+     * 因此实现为「时间水位 + offset 分页」：
+     *   - 每次从 offset=0 起分页拉取最近变更（降序，最新在前），
+     *   - 遇到 lastchangetime <= 本地水位（上次同步到的最新变更时间）即停止，
+     *   - 新数据主库直写 REPLACE（uuid 主键幂等覆盖），全部落库后重建 FTS 索引。
+     * 断点续传：水位为时间字符串持久化，中断重跑自动跳过已处理数据。
+     */
+    public void syncIncrementalStations(Context context, SyncCallback callback) {
+        executor.execute(() -> syncIncrementalStationsInternal(context, callback));
+    }
+
+    /**
+     * 增量同步（阻塞版）：供 Worker 在后台线程直接调用，
+     * 使 doWork 能等待真实结果并正确返回 success/failure。
+     * 注意：不得在主线程调用。
+     */
+    public void syncIncrementalStationsBlocking(Context context, SyncCallback callback) {
+        syncIncrementalStationsInternal(context, callback);
+    }
+
+    private void syncIncrementalStationsInternal(Context context, SyncCallback callback) {
+        synchronized (sSyncLock) {
+            try {
+                if (!isNetworkAvailable(context)) {
+                    callback.onError(context.getString(R.string.error_network_unavailable));
+                    throw new RuntimeException(context.getString(R.string.error_network_unavailable));
+                }
+
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+                String watermarkTime = prefs.getString(PREF_INC_LASTCHANGE_TIME, null);
+
+                // 冷启动：无水位时以本地库最大 lastchangetime 为锚点
+                //（本地库反映上次全量同步时的服务器状态，格式 YYYY-MM-DD HH:mm:ss 定宽可直接比较）
+                if (watermarkTime == null || watermarkTime.isEmpty()) {
+                    watermarkTime = radioStationDao.getMaxLastChangeTime();
+                    if (watermarkTime == null || watermarkTime.isEmpty()) {
+                        callback.onError(context.getString(R.string.error_inc_update_need_full));
+                        throw new RuntimeException(context.getString(R.string.error_inc_update_need_full));
+                    }
+                    Log.d(TAG, "Incremental cold start, watermark = " + watermarkTime);
+                }
+
+                int total = 0;
+                int offset = 0;
+                boolean done = false;
+                String newWatermark = null; // 本轮处理到的最大变更时间（降序下即首条新数据的时间）
+                while (!done && !Thread.currentThread().isInterrupted()) {
+                    // 官方服务器忽略 lastchangeuuid，仅 offset/limit 生效；
+                    // 显式按变更时间降序（lastchange 端点的固定行为）
+                    String path = "json/stations/lastchange?offset=" + offset
+                            + "&limit=" + INCREMENTAL_PAGE_SIZE;
+                    String result = RadioBrowserServerManager.downloadWithFailover(context, path, true);
+                    if (result == null) {
+                        callback.onError(context.getString(R.string.error_sync_failed));
+                        throw new RuntimeException(context.getString(R.string.error_sync_failed));
+                    }
+
+                    List<DataRadioStation> stations = DataRadioStation.DecodeJson(result);
+                    if (stations == null || stations.isEmpty()) {
+                        done = true;
+                        break;
+                    }
+
+                    // 过滤出水位之后的变更；遇 <= 水位即已到达已处理区（降序），停止
+                    List<DataRadioStation> fresh = new ArrayList<>(stations.size());
+                    for (DataRadioStation s : stations) {
+                        if (s == null || s.StationUuid == null || s.StationUuid.isEmpty()) {
+                            continue;
+                        }
+                        String t = s.LastChangeTime;
+                        if (t == null || t.isEmpty()) {
+                            continue; // 无变更时间记录，保守跳过
+                        }
+                        if (watermarkTime != null && t.compareTo(watermarkTime) <= 0) {
+                            done = true;
+                            break;
+                        }
+                        fresh.add(s);
+                        if (newWatermark == null || t.compareTo(newWatermark) > 0) {
+                            newWatermark = t;
+                        }
+                    }
+                    if (fresh.isEmpty()) {
+                        done = true;
+                        break;
+                    }
+
+                    // 主库直写 REPLACE（uuid 主键，天然去重/覆盖）
+                    List<RadioStation> entities = new ArrayList<>(fresh.size());
+                    for (DataRadioStation s : fresh) {
+                        entities.add(RadioStation.fromDataRadioStation(s));
+                    }
+                    final int batchSize = 1000;
+                    for (int i = 0; i < entities.size(); i += batchSize) {
+                        int end = Math.min(i + batchSize, entities.size());
+                        radioStationDao.insertAll(new ArrayList<>(entities.subList(i, end)));
+                    }
+
+                    total += entities.size();
+                    callback.onProgress(context.getString(R.string.progress_incremental_update) + " (" + total + ")", total, total);
+
+                    offset += stations.size();
+                    if (stations.size() < INCREMENTAL_PAGE_SIZE) {
+                        done = true; // 已到变更日志尾部
+                    }
+                }
+
+                // 推进时间水位（仅在有新数据处理时）
+                if (total > 0 && newWatermark != null
+                        && (watermarkTime == null || newWatermark.compareTo(watermarkTime) > 0)) {
+                    prefs.edit().putString(PREF_INC_LASTCHANGE_TIME, newWatermark).apply();
+                }
+
+                // F-1：增量写入后重建 FTS 索引，保证新台可被 FTS 搜索
+                radioStationDao.rebuildFtsIndex();
+                Log.d(TAG, "FTS index rebuilt after incremental sync");
+
+                updateDatabaseTimestamp(context);
+                Log.d(TAG, "Incremental sync completed, total updated = " + total);
+
+                Intent databaseUpdatedIntent = new Intent("net.programmierecke.radiodroid2.DATABASE_UPDATED");
+                LocalBroadcastManager.getInstance(context).sendBroadcast(databaseUpdatedIntent);
+
+                String message = context.getString(R.string.update_completed_incremental) + " (" + total + ")";
+                callback.onSuccess(message);
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception e) {
+                Log.e(TAG, "增量同步出错", e);
+                callback.onError(context.getString(R.string.error_sync_failed) + ": " + e.getMessage());
+                throw new RuntimeException(context.getString(R.string.error_sync_failed) + ": " + e.getMessage(), e);
+            }
+        }
+    }
+
+    /**
+     * 增量水位是否已建立（决定是否可执行增量同步）。
+     * 水位 = 持久化的最新变更时间，或本地库存在 lastchangetime 可作冷启动锚点。
+     */
+    public boolean hasIncrementalWatermark(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        String t = prefs.getString(PREF_INC_LASTCHANGE_TIME, null);
+        if (t != null && !t.isEmpty()) {
+            return true;
+        }
+        return radioStationDao.getMaxLastChangeTime() != null;
+    }
     
     /**
      * 清空临时数据库
@@ -157,8 +332,8 @@ public class RadioStationRepository {
         RadioDroidApp radioDroidApp = (RadioDroidApp) context.getApplicationContext();
         OkHttpClient httpClient = radioDroidApp.getHttpClient();
         
-        // 设置当前使用的服务器
-        RadioBrowserServerManager.setCurrentServer(fastestServer.server);
+        // 设置当前使用的服务器（持久化，供下次启动复用）
+        RadioBrowserServerManager.setCurrentServer(fastestServer.server, context);
         
         callback.onProgress(context.getString(R.string.progress_getting_station_count), 0, 100);
     // 首先获取电台总数
@@ -599,6 +774,15 @@ public class RadioStationRepository {
                     List<RadioStation> batch = new ArrayList<>(allStationsFromTemp.subList(i, endIndex));
                     radioStationDao.insertAll(batch);
                 }
+
+                // F-1 修复：FTS4 外部内容表不会随主表自动同步，全量替换后重建索引，
+                // 否则新入库电台在 FTS 搜索（searchStationsFast）中不可见。
+                try {
+                    radioStationDao.rebuildFtsIndex();
+                    Log.d(TAG, "FTS index rebuilt after full replace");
+                } catch (Exception e) {
+                    Log.e(TAG, "FTS index rebuild failed", e);
+                }
                 
                 int finalCount = radioStationDao.getCount();
                 Log.d(TAG, "主数据库最终数量: " + finalCount);
@@ -788,6 +972,7 @@ public class RadioStationRepository {
     }
     
     // 获取所有国家
+    // 获取所有国家（LiveData）
     public LiveData<List<String>> getAllCountries() {
         return radioStationDao.getAllCountries();
     }
@@ -894,6 +1079,50 @@ public class RadioStationRepository {
     public List<String> getAllTagStringsSync() {
         return radioStationDao.getAllTagStringsSync();
     }
+
+    /**
+     * 拆分全部标签为单标签并统计出现次数（Java 内存拆分，兼容低版本 SQLite，避免递归 CTE）。
+     * 按出现次数降序、名称升序排序 —— 热门标签优先（F-2 修复：原 getAllTags 返回逗号组合串）。
+     * 全库扫描约数万行，须在后台线程调用。
+     */
+    public List<SearchableListOption> getTagOptionsSortedByCount() {
+        List<String> rawTags = radioStationDao.getAllTagStringsSync();
+        java.util.Map<String, Integer> counts = new java.util.HashMap<>();
+        if (rawTags != null) {
+            for (String s : rawTags) {
+                if (s == null || s.isEmpty()) {
+                    continue;
+                }
+                for (String t : s.split(",")) {
+                    String tag = t.trim();
+                    if (!tag.isEmpty()) {
+                        Integer c = counts.get(tag);
+                        counts.put(tag, c == null ? 1 : c + 1);
+                    }
+                }
+            }
+        }
+        List<SearchableListOption> result = new java.util.ArrayList<>(counts.size());
+        for (java.util.Map.Entry<String, Integer> e : counts.entrySet()) {
+            result.add(new SearchableListOption(e.getKey(), e.getValue()));
+        }
+        java.util.Collections.sort(result, (a, b) -> {
+            int c = Long.compare(b.count, a.count);
+            return c != 0 ? c : a.name.compareToIgnoreCase(b.name);
+        });
+        return result;
+    }
+
+    /** 可搜索列表选项（名称 + 次数） */
+    public static class SearchableListOption {
+        public final String name;
+        public final long count;
+
+        public SearchableListOption(String name, long count) {
+            this.name = name;
+            this.count = count;
+        }
+    }
     
     // 获取语言对应的电台数量
     public LiveData<Integer> getStationCountByLanguage(String language) {
@@ -905,39 +1134,64 @@ public class RadioStationRepository {
         return radioStationDao.getStationCountByLanguageSync(language);
     }
     
-    // 搜索电台
-    public LiveData<List<RadioStation>> searchStations(String query) {
-        return radioStationDao.searchStations(query);
+    /**
+     * 转义 LIKE 通配符（%/_），配合 DAO 查询中的 ESCAPE '\' 使用，防止用户输入被当作通配符。
+     */
+    public static String escapeLike(String s) {
+        if (s == null || s.isEmpty()) {
+            return s == null ? "" : s;
+        }
+        return s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
-    
-    // 使用FTS快速搜索电台
+
+    /**
+     * 净化 FTS4 MATCH 查询串：去除会破坏 MATCH 语法的特殊字符（引号等），
+     * 为空时返回不可命中串，避免空查询导致 MATCH 抛异常。
+     */
+    public static String sanitizeFtsQuery(String query) {
+        if (query == null) {
+            return "__no_match__";
+        }
+        String cleaned = query.replace("\"", " ").replace("*", " ").trim();
+        if (cleaned.isEmpty()) {
+            return "__no_match__";
+        }
+        return cleaned;
+    }
+
+    // 搜索电台（关键词做 LIKE 通配符转义，配合 DAO 的 ESCAPE '\' 防止 %/_ 被当作通配符）
+    public LiveData<List<RadioStation>> searchStations(String query) {
+        return radioStationDao.searchStations(escapeLike(query));
+    }
+
+    // 使用FTS快速搜索电台（净化 FTS 特殊字符后传参）
     public LiveData<List<RadioStation>> searchStationsFast(String query) {
-        return radioStationDao.searchStationsFast(query);
+        return radioStationDao.searchStationsFast(sanitizeFtsQuery(query));
     }
     
     // 使用FTS按名称快速搜索电台
     public LiveData<List<RadioStation>> searchStationsByNameFast(String query) {
-        return radioStationDao.searchStationsByNameFast(query);
+        return radioStationDao.searchStationsByNameFast(sanitizeFtsQuery(query));
     }
     
     // 使用FTS按标签快速搜索电台
     public LiveData<List<RadioStation>> searchStationsByTagsFast(String query) {
-        return radioStationDao.searchStationsByTagsFast(query);
+        return radioStationDao.searchStationsByTagsFast(sanitizeFtsQuery(query));
     }
     
     // 使用FTS按国家快速搜索电台
     public LiveData<List<RadioStation>> searchStationsByCountryFast(String query) {
-        return radioStationDao.searchStationsByCountryFast(query);
+        return radioStationDao.searchStationsByCountryFast(sanitizeFtsQuery(query));
     }
     
     // 使用FTS按语言快速搜索电台
     public LiveData<List<RadioStation>> searchStationsByLanguageFast(String query) {
-        return radioStationDao.searchStationsByLanguageFast(query);
+        return radioStationDao.searchStationsByLanguageFast(sanitizeFtsQuery(query));
     }
     
     // 按名称搜索电台
     public LiveData<List<RadioStation>> searchStationsByName(String query) {
-        return radioStationDao.searchStationsByName(query);
+        return radioStationDao.searchStationsByName(escapeLike(query));
     }
     
     // 按标签搜索电台
@@ -988,7 +1242,7 @@ public class RadioStationRepository {
     }
     
     public DataSource.Factory<Integer, RadioStation> searchStationsPaged(String query) {
-        return radioStationDao.searchStationsPaged(query);
+        return radioStationDao.searchStationsPaged(escapeLike(query));
     }
     
     // 根据UUID获取电台
@@ -1005,7 +1259,7 @@ public class RadioStationRepository {
      * @return 符合条件的电台列表
      */
     public LiveData<List<RadioStation>> searchStationsByMultiCriteria(String country, String language, String tag, String keyword) {
-        return radioStationDao.searchStationsByMultiCriteria(country, language, tag, keyword);
+        return radioStationDao.searchStationsByMultiCriteria(country, language, tag, escapeLike(keyword));
     }
     
     // 获取数据库更新时间戳
