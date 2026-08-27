@@ -137,6 +137,13 @@ public class SearchableListDialogFragment extends DialogFragment {
 
         androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(context);
         builder.setView(view);
+        // 重置按钮（neutral 渲染在 negative 左侧）：一键恢复"全部"，免去长列表下拉回顶部
+        builder.setNeutralButton(R.string.multi_search_reset, (d, w) -> {
+            if (listener != null) {
+                listener.onOptionSelected(allLabel);
+            }
+            d.dismiss();
+        });
         builder.setNegativeButton(android.R.string.cancel, (d, w) -> d.dismiss());
         return builder.create();
     }

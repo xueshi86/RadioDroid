@@ -588,6 +588,8 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="alarm_backup">Alternative Alarm</string>
     <string name="alarm_fallback_info">System alarm adopted as selected radio station failed to load</string>
     <string name="alarm_back_desc">Alternative system alarm adopted when the radio station fails to load</string>
+    <string name="alarm_no_history_auto_pick">No playback history. Auto-selected the first playable station as the alarm. The alarm will be saved and play normally.</string>
+    <string name="alarm_no_available_station">No playable stations available. Unable to create the alarm. Please update the station database and try again.</string>
 
     <string name="context_menu_share">@string/detail_share</string>
     <string name="context_menu_visit_homepage">@string/action_station_visit_website</string>
@@ -698,6 +700,7 @@ The app will automatically restart to load the new database.</string>
     <string name="error_stats_parse_failed">Failed to parse statistics</string>
     <string name="error_no_stations_found">No radio stations found</string>
     <string name="error_sync_failed">Synchronization failed</string>
+    <string name="error_sync_timeout">Synchronization timed out, please try again</string>
     <string name="error_network_check_failed">Network check failed</string>
     <string name="error_no_servers_available">No servers available</string>
     

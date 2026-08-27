@@ -57,6 +57,7 @@
                     android:paddingEnd="8dp"
                     android:text="@string/multi_search_all"
                     android:textAllCaps="false"
+                    android:textColor="?android:attr/textColorPrimary"
                     android:textSize="14sp"
                     app:cornerRadius="4dp" />
             </LinearLayout>
@@ -88,6 +89,7 @@
                     android:paddingEnd="8dp"
                     android:text="@string/multi_search_all"
                     android:textAllCaps="false"
+                    android:textColor="?android:attr/textColorPrimary"
                     android:textSize="14sp"
                     app:cornerRadius="4dp" />
             </LinearLayout>
@@ -119,6 +121,7 @@
                     android:paddingEnd="8dp"
                     android:text="@string/multi_search_all"
                     android:textAllCaps="false"
+                    android:textColor="?android:attr/textColorPrimary"
                     android:textSize="14sp"
                     app:cornerRadius="4dp" />
             </LinearLayout>

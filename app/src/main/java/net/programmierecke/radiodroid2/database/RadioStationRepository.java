@@ -115,6 +115,8 @@ public class RadioStationRepository {
 
     private static final String PREF_INC_LASTCHANGE_TIME = "incremental_lastchange_time";
     private static final int INCREMENTAL_PAGE_SIZE = 1000;
+    /** 单次增量同步看门狗：超过该时长强制中止，避免 UI 永久停在"准备中" */
+    private static final long INCREMENTAL_TIMEOUT_MS = 90_000L;
 
     /**
      * 增量同步：官方服务器实测（v0.7.45）忽略 lastchangeuuid 游标参数，
@@ -141,6 +143,7 @@ public class RadioStationRepository {
     private void syncIncrementalStationsInternal(Context context, SyncCallback callback) {
         synchronized (sSyncLock) {
             try {
+                Log.d(TAG, "Incremental sync: acquired sync lock");
                 if (!isNetworkAvailable(context)) {
                     callback.onError(context.getString(R.string.error_network_unavailable));
                     throw new RuntimeException(context.getString(R.string.error_network_unavailable));
@@ -163,12 +166,19 @@ public class RadioStationRepository {
                 int total = 0;
                 int offset = 0;
                 boolean done = false;
+                long startedAt = System.currentTimeMillis();
                 String newWatermark = null; // 本轮处理到的最大变更时间（降序下即首条新数据的时间）
                 while (!done && !Thread.currentThread().isInterrupted()) {
+                    // 看门狗：单次增量同步超过 90 秒强制中止，避免"准备中..."永久挂死
+                    if (System.currentTimeMillis() - startedAt > INCREMENTAL_TIMEOUT_MS) {
+                        callback.onError(context.getString(R.string.error_sync_timeout));
+                        throw new RuntimeException(context.getString(R.string.error_sync_timeout));
+                    }
                     // 官方服务器忽略 lastchangeuuid，仅 offset/limit 生效；
                     // 显式按变更时间降序（lastchange 端点的固定行为）
                     String path = "json/stations/lastchange?offset=" + offset
                             + "&limit=" + INCREMENTAL_PAGE_SIZE;
+                    Log.d(TAG, "Incremental sync: fetching offset=" + offset);
                     String result = RadioBrowserServerManager.downloadWithFailover(context, path, true);
                     if (result == null) {
                         callback.onError(context.getString(R.string.error_sync_failed));
@@ -1028,6 +1038,19 @@ public class RadioStationRepository {
 
     public LiveData<List<RadioStation>> getStationsByCountryCodeAll(String countryCode) {
         return radioStationDao.getStationsByCountryCodeAll(countryCode);
+    }
+
+    // 以下三个同步查询与"本地电台"列表页加载链路一致，供无播放历史时后台线程取第一个可播放电台
+    public List<RadioStation> getStationsByCountryCodeAllSync(String countryCode) {
+        return radioStationDao.getStationsByCountryCodeAllSync(countryCode);
+    }
+
+    public List<RadioStation> getStationsByLanguageAllSync(String language) {
+        return radioStationDao.getStationsByLanguageAllSync(language);
+    }
+
+    public List<RadioStation> getAllStationsByClickCountSync() {
+        return radioStationDao.getAllStationsByClickCountSync();
     }
     
     // 获取所有标签

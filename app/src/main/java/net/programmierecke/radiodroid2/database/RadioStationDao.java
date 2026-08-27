@@ -118,6 +118,17 @@ public interface RadioStationDao {
     @Query("SELECT * FROM radio_stations WHERE countrycode = :countryCode ORDER BY clickcount DESC")
     LiveData<List<RadioStation>> getStationsByCountryCodeAll(String countryCode);
 
+    // 以下三个同步查询与"本地电台"列表页的加载链路（国家→语言→全部，点击量降序）保持一致，
+    // 供无播放历史时在后台线程取"列表中第一个可播放电台"（LIMIT 与列表页最大显示数一致）。
+    @Query("SELECT * FROM radio_stations WHERE countrycode = :countryCode ORDER BY clickcount DESC LIMIT 1000")
+    List<RadioStation> getStationsByCountryCodeAllSync(String countryCode);
+
+    @Query("SELECT * FROM radio_stations WHERE language = :language ORDER BY clickcount DESC LIMIT 1000")
+    List<RadioStation> getStationsByLanguageAllSync(String language);
+
+    @Query("SELECT * FROM radio_stations ORDER BY clickcount DESC LIMIT 1000")
+    List<RadioStation> getAllStationsByClickCountSync();
+
     @Query("SELECT DISTINCT tags FROM radio_stations WHERE tags != ''")
     LiveData<List<String>> getAllTags();
     

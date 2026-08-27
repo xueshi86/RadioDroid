@@ -20,6 +20,8 @@
 
 ## 中文
 
+> **更新日志**：[CHANGELOG.md](CHANGELOG.md) — 查看完整版本变更记录
+
 ### 项目由来
 
 **RadioDroid** 是一款基于 Android 平台的全球电台收音机应用，电台数据来源于 [radio-browser.info](https://www.radio-browser.info/) 社区数据库，收录了全球数万个在线电台。
@@ -340,6 +342,8 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 ---
 
 ## English
+
+> **Changelog**: [CHANGELOG.md](CHANGELOG.md) — view the full version history
 
 ### Introduction
 

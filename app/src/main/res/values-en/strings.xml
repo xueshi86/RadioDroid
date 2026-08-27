@@ -407,6 +407,8 @@
     <string name="refresh">Refresh</string>
 
     <string name="alarm_backup">Alternative Alarm</string>
+    <string name="alarm_no_history_auto_pick">No playback history. Auto-selected the first playable station as the alarm. The alarm will be saved and play normally.</string>
+    <string name="alarm_no_available_station">No playable stations available. Unable to create the alarm. Please update the station database and try again.</string>
     <string name="alarm_fallback_info">System alarm adopted as selected radio station failed to load</string>
     <string name="alarm_back_desc">Alternative system alarm adopted when the radio station fails to load</string>
 

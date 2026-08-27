@@ -538,6 +538,8 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="refresh">Обновить</string>
 
     <string name="alarm_backup">Альтернативный будильник</string>
+    <string name="alarm_no_history_auto_pick">Нет истории воспроизведения. Автоматически выбрана первая доступная станция в качестве будильника. Будильник будет сохранён и будет воспроизводиться нормально.</string>
+    <string name="alarm_no_available_station">Нет доступных для воспроизведения станций. Не удалось создать будильник. Обновите базу станций и повторите попытку.</string>
     <string name="alarm_fallback_info">Системный будильник использован, так как выбранная радиостанция не загрузилась</string>
     <string name="alarm_back_desc">Альтернативный системный будильник, используемый при неудачной загрузке радиостанции</string>
 

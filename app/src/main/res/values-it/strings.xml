@@ -337,6 +337,8 @@
     <string name="refresh">Ricarica</string>
 
     <string name="alarm_backup">Sveglia alternativa</string>
+    <string name="alarm_no_history_auto_pick">Nessuna cronologia di riproduzione. La prima stazione disponibile è stata selezionata automaticamente come sveglia. La sveglia verrà salvata e riprodotta correttamente.</string>
+    <string name="alarm_no_available_station">Nessuna stazione riproducibile disponibile. Impossibile creare la sveglia. Aggiorna il database delle stazioni e riprova.</string>
     <string name="alarm_fallback_info">Sveglia del sistema adottata se la stazione radio selezionata ha fallito il caricamento</string>
     <string name="alarm_back_desc">Il sistema alternativo di sveglia adottato quando il caricamento della stazione radio fallisce</string>
 

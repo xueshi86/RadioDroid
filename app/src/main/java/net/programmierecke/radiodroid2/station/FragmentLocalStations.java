@@ -69,6 +69,22 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
         return currentSortMode;
     }
 
+    /**
+     * 从当前显示的列表（尊重用户选择的排序方式）中取第一个可播放电台。
+     * 供无播放历史时新建闹钟兜底使用；列表未加载过时返回 null。
+     */
+    public DataRadioStation getFirstPlayableStation() {
+        if (allStations.isEmpty()) {
+            return null;
+        }
+        for (DataRadioStation station : getSortedStations()) {
+            if (station != null && station.Working) {
+                return station;
+            }
+        }
+        return null;
+    }
+
     public boolean isSortAscending() {
         return sortAscending;
     }
@@ -124,7 +140,16 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
     }
 
     private void updateStationsList(List<DataRadioStation> stations) {
-        allStations = new ArrayList<>(stations);
+        // 无效电台过滤：用户可在设置中关闭"在列表中显示无效电台"（show_broken=false 时隐藏 lastcheckok=0 的台）
+        boolean showBroken = PreferenceManager.getDefaultSharedPreferences(getContext())
+                .getBoolean("show_broken", false);
+        List<DataRadioStation> filtered = new ArrayList<>(stations.size());
+        for (DataRadioStation station : stations) {
+            if (station != null && (showBroken || station.Working)) {
+                filtered.add(station);
+            }
+        }
+        allStations = filtered;
         List<DataRadioStation> displayList = getSortedStations();
         stationListAdapter.updateList(null, displayList);
     }

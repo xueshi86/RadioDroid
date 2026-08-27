@@ -502,16 +502,10 @@ public class DatabaseUpdateProgressDialog {
                             .commit();
                     } else {
                         Log.w(TAG, "检测到系统暂停：WorkManager显示更新中，但SharedPreferences显示未更新");
-                        // 这种情况下，任务可能被系统暂停，但WorkManager仍认为在运行
+                        // 仅在本轮 UI 提示，不写回 prefs：
+                        // 避免覆盖 Worker 写出的真实进度消息，防止"更新被系统暂停"被固化后永久显示
                         isUpdating = true;
                         progressMessage = context.getString(R.string.update_system_paused);
-                        
-                        // 强制更新SharedPreferences状态，确保下次检测一致
-                        SharedPreferences prefsUpdate = context.getSharedPreferences("database_update_prefs", Context.MODE_PRIVATE);
-                        prefsUpdate.edit()
-                            .putBoolean(KEY_IS_UPDATING, true)
-                            .putString(KEY_PROGRESS_MESSAGE, progressMessage)
-                            .commit();
                     }
                 }
             }

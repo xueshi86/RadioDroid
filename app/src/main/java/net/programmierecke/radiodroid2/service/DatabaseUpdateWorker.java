@@ -19,6 +19,7 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -132,8 +133,24 @@ public class DatabaseUpdateWorker extends Worker implements RadioStationReposito
         // 添加线程信息日志
         Log.d(TAG, "Starting database update work on thread: " + Thread.currentThread().getId() + ", name: " + Thread.currentThread().getName());
         
-        // 使用锁确保只有一个DatabaseUpdateWorker实例在运行
-        sLock.lock();
+        // 使用锁确保只有一个DatabaseUpdateWorker实例在运行。
+        // 采用有界等待：若旧实例异常长期未释放锁，快速失败并给出明确提示，
+        // 避免后续任务永久阻塞在锁上（WorkManager 一直报 RUNNING，UI 卡在"正在准备更新"）。
+        boolean lockAcquired;
+        try {
+            lockAcquired = sLock.tryLock(5, TimeUnit.SECONDS);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            lockAcquired = false;
+        }
+        if (!lockAcquired) {
+            Log.e(TAG, "Could not acquire update lock within 5s, another update instance may be stuck; aborting");
+            prefs.edit()
+                    .putBoolean(KEY_IS_UPDATING, false)
+                    .putString(KEY_PROGRESS_MESSAGE, getApplicationContext().getString(R.string.update_failed))
+                    .apply();
+            return Result.failure();
+        }
         try {
             Log.d(TAG, "Acquired lock, starting database update work");
 
@@ -145,15 +162,30 @@ public class DatabaseUpdateWorker extends Worker implements RadioStationReposito
             if ("incremental".equals(mode)) {
                 Log.d(TAG, "Incremental update mode");
                 try {
+                    // 增量模式开始时立即写入更新状态，避免 UI（进度对话框）误判为"系统暂停"
+                    prefs.edit()
+                            .putBoolean(KEY_IS_UPDATING, true)
+                            .putLong(KEY_UPDATE_ID, System.currentTimeMillis())
+                            .putLong(KEY_UPDATE_START_TIME, System.currentTimeMillis())
+                            .putString(KEY_PROGRESS_MESSAGE, getApplicationContext().getString(R.string.progress_preparing_update))
+                            .putInt(KEY_PROGRESS_CURRENT, 0)
+                            .putInt(KEY_PROGRESS_TOTAL, 0)
+                            .apply();
+                    Log.d(TAG, "Incremental: state written, calling syncIncrementalStationsBlocking");
                     repository.syncIncrementalStationsBlocking(getApplicationContext(), this);
+                    Log.d(TAG, "Incremental: sync complete, marking done");
+                    // 仅清除更新状态；完成消息由 repository 的 onSuccess（含统计数据）写入，
+                    // 此处不覆盖，避免显示未替换占位符的文案
                     prefs.edit()
                             .putBoolean(KEY_IS_UPDATING, false)
                             .apply();
                     return Result.success();
                 } catch (Exception e) {
                     Log.e(TAG, "Incremental database update failed", e);
+                    // 失败时明确写失败状态，通知 UI 停止"准备中"并给出错误
                     prefs.edit()
                             .putBoolean(KEY_IS_UPDATING, false)
+                            .putString(KEY_PROGRESS_MESSAGE, getApplicationContext().getString(R.string.update_failed))
                             .apply();
                     return Result.failure();
                 }
@@ -290,8 +322,6 @@ public class DatabaseUpdateWorker extends Worker implements RadioStationReposito
                     .commit();
                 
                 return Result.failure();
-            } finally {
-                sLock.unlock();
             }
         } catch (Exception e) {
             Log.e(TAG, "Unexpected error in doWork", e);
@@ -302,6 +332,12 @@ public class DatabaseUpdateWorker extends Worker implements RadioStationReposito
                 .commit();
             
             return Result.failure();
+        } finally {
+            // 关键修复：无论成功/失败/异常，都必须释放静态锁。
+            // 此前增量分支在 return 前从不解锁，导致锁永久泄漏，
+            // 后续所有增量任务都阻塞在 sLock 上，WorkManager 持续报 RUNNING，
+            // 进度对话框永远停留在"正在准备更新"。
+            sLock.unlock();
         }
     }
 

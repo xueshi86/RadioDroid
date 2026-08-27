@@ -67,6 +67,7 @@ import net.programmierecke.radiodroid2.station.FragmentLocalStations;
 import net.programmierecke.radiodroid2.FragmentStarred;
 import net.programmierecke.radiodroid2.FragmentTabs;
 import net.programmierecke.radiodroid2.cast.CastAwareActivity;
+import net.programmierecke.radiodroid2.database.RadioDroidDatabase;
 import net.programmierecke.radiodroid2.database.RadioStation;
 import net.programmierecke.radiodroid2.database.RadioStationRepository;
 import net.programmierecke.radiodroid2.interfaces.IFragmentSearchable;
@@ -80,6 +81,7 @@ import net.programmierecke.radiodroid2.service.PlayerService;
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
 import net.programmierecke.radiodroid2.station.StationsFilter;
+import net.programmierecke.radiodroid2.utils.StationFirstPlayablePicker;
 
 
 import java.io.BufferedReader;
@@ -1220,10 +1222,64 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
         HistoryManager historyManager = radioDroidApp.getHistoryManager();
         Fragment currentFragment = mFragmentManager.getFragments().get(mFragmentManager.getFragments().size() - 2);
-        if (historyManager.size() > 0 && currentFragment instanceof FragmentAlarm) {
-            DataRadioStation station = historyManager.getList().get(0);
-            ((FragmentAlarm) currentFragment).getRam().add(station, hourOfDay, minute);
+        if (!(currentFragment instanceof FragmentAlarm)) {
+            return;
         }
+        final FragmentAlarm alarmFragment = (FragmentAlarm) currentFragment;
+
+        if (historyManager.size() > 0) {
+            // 有播放历史：使用最近播放的电台作为闹钟电台
+            DataRadioStation station = historyManager.getList().get(0);
+            alarmFragment.getRam().add(station, hourOfDay, minute);
+            return;
+        }
+
+        // 无播放历史（如首次安装）：优先从"本地电台"页当前显示的列表取第一个可播放电台
+        //（与用户看到的列表一致，并尊重用户选择的排序方式）。
+        Fragment topFragment = mFragmentManager.findFragmentById(R.id.containerView);
+        if (topFragment instanceof FragmentTabs) {
+            FragmentLocalStations localFragment = ((FragmentTabs) topFragment).getLocalStationsFragment();
+            if (localFragment != null) {
+                DataRadioStation firstPlayable = localFragment.getFirstPlayableStation();
+                if (firstPlayable != null) {
+                    Toast.makeText(this, getString(R.string.alarm_no_history_auto_pick), Toast.LENGTH_LONG).show();
+                    alarmFragment.getRam().add(firstPlayable, hourOfDay, minute);
+                    return;
+                }
+            }
+        }
+
+        // 列表从未加载过（用户还没打开过该 Tab）：按列表页相同的加载链路
+        //（系统国家→系统语言→全部，均按点击量降序）在后台线程取第一个可播放电台，
+        // 避免历史为空时闹钟静默创建失败。Room 同步查询不能在主线程执行，故切换至查询线程。
+        RadioDroidDatabase.getDatabase(this).getQueryExecutor().execute(() -> {
+            RadioStationRepository repo = RadioStationRepository.getInstance(this);
+            RadioStation fallback = null;
+            java.util.Locale locale = java.util.Locale.getDefault();
+            String systemCountry = locale.getCountry();
+            String systemLanguage = locale.getLanguage();
+
+            if (systemCountry != null && !systemCountry.isEmpty()) {
+                fallback = StationFirstPlayablePicker.firstPlayableOf(repo.getStationsByCountryCodeAllSync(systemCountry));
+            }
+            if (fallback == null && systemLanguage != null && !systemLanguage.isEmpty()) {
+                String languageCode = "zh".equals(systemLanguage) ? "chinese" : systemLanguage;
+                fallback = StationFirstPlayablePicker.firstPlayableOf(repo.getStationsByLanguageAllSync(languageCode));
+            }
+            if (fallback == null) {
+                fallback = StationFirstPlayablePicker.firstPlayableOf(repo.getAllStationsByClickCountSync());
+            }
+
+            final RadioStation picked = fallback;
+            runOnUiThread(() -> {
+                if (picked != null) {
+                    Toast.makeText(this, getString(R.string.alarm_no_history_auto_pick), Toast.LENGTH_LONG).show();
+                    alarmFragment.getRam().add(picked.toDataRadioStation(), hourOfDay, minute);
+                } else {
+                    Toast.makeText(this, getString(R.string.alarm_no_available_station), Toast.LENGTH_LONG).show();
+                }
+            });
+        });
     }
 
     @Override

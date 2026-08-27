@@ -17,6 +17,7 @@ import android.widget.ScrollView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -444,12 +445,15 @@ public class FragmentMultiSearch extends FragmentBase {
             return; // 异步回调返回时视图可能已销毁
         }
         if (radioStations != null && !radioStations.isEmpty()) {
+            // 无效电台过滤：用户可在设置中关闭"在列表中显示无效电台"
+            boolean showBroken = PreferenceManager.getDefaultSharedPreferences(getContext())
+                    .getBoolean("show_broken", false);
             // 转换为DataRadioStation
             List<DataRadioStation> dataStations = new ArrayList<>(radioStations.size());
             for (RadioStation radioStation : radioStations) {
                 if (radioStation != null) {
                     DataRadioStation dataStation = radioStation.toDataRadioStation();
-                    if (dataStation != null) {
+                    if (dataStation != null && (showBroken || dataStation.Working)) {
                         dataStations.add(dataStation);
                     }
                 }

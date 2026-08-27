@@ -402,6 +402,8 @@
     <string name="refresh">Recargar</string>
 
     <string name="alarm_backup">Alarma alternativa</string>
+    <string name="alarm_no_history_auto_pick">Sin historial de reproducción. Se ha seleccionado automáticamente la primera emisora disponible como alarma. La alarma se guardará y reproducirá con normalidad.</string>
+    <string name="alarm_no_available_station">No hay emisoras disponibles. No se ha podido crear la alarma. Actualice la base de datos de emisoras e inténtelo de nuevo.</string>
     <string name="alarm_fallback_info">Alarma del sistema adoptada como estación de radio seleccionada falló al cargar</string>
     <string name="alarm_back_desc">Sistema alternativo de alarma adoptado cuando falla la carga de la estación de radio</string>
     <string name="context_menu_share">@string/detail_share</string>

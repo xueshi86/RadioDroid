@@ -464,6 +464,8 @@
     <string name="refresh">刷新</string>
 
     <string name="alarm_backup">备用闹钟</string>
+    <string name="alarm_no_history_auto_pick">无播放历史，已自动选择第一个可播放电台作为闹钟，闹钟可正常保存与播放。</string>
+    <string name="alarm_no_available_station">没有可用的电台，无法创建闹钟。请先更新电台数据库后再试。</string>
     <string name="alarm_fallback_info">系统闹钟已采用，因为所选电台加载失败</string>
     <string name="alarm_back_desc">当电台加载失败时采用备用系统闹钟</string>
 

@@ -111,6 +111,24 @@ public class DatabaseUpdateManager {
 
         Data inputData = new Data.Builder().putString("mode", "incremental").build();
 
+        // 重置增量更新的状态，确保 UI（进度对话框）能正确感知任务开始，
+        // 避免沿用上次更新的 update_id/update_start_time 造成"系统暂停"误判
+        SharedPreferences prefs = context.getSharedPreferences("database_update_prefs", Context.MODE_PRIVATE);
+
+        // 清除历史取消标记：DatabaseUpdateWorker.cancelUpdate() 会写入 update_cancelled/cancel_timestamp，
+        // 若不清除，isUpdating() 会因取消标记恒返回 false（界面与后台任务脱节），
+        // 且 Worker.onProgress() 的二次取消检查会把运行中的增量同步误判为"已取消"而中断。
+        prefs.edit()
+                .putBoolean("update_cancelled", false)
+                .putLong("cancel_timestamp", 0)
+                .putBoolean("is_updating", false)  // 由 Worker 在运行时置为 true
+                .putLong("update_id", System.currentTimeMillis())
+                .putLong("update_start_time", System.currentTimeMillis())
+                .putString("progress_message", context.getString(R.string.update_preparing))
+                .putInt("progress_current", 0)
+                .putInt("progress_total", 0)
+                .commit();
+
         OneTimeWorkRequest updateRequest = new OneTimeWorkRequest.Builder(DatabaseUpdateWorker.class)
                 .setInputData(inputData)
                 .setConstraints(constraints)

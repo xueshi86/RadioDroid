@@ -125,6 +125,13 @@ public class FragmentTabs extends Fragment implements IFragmentRefreshable, IFra
         return null;
     }
 
+    /**
+     * 提供"本地电台"页实例，供 ActivityMain 在无播放历史时获取用户当前显示的本地电台列表。
+     */
+    public FragmentLocalStations getLocalStationsFragment() {
+        return (FragmentLocalStations) fragments[IDX_LOCAL];
+    }
+
     private String getCountryCode() {
         Context ctx = getContext();
         String countryCode = null;
