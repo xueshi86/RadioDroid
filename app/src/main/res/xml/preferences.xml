@@ -31,7 +31,7 @@
             android:summary="@string/settings_incremental_update_note" />
 
         <CheckBoxPreference
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:key="auto_incremental_update"
             android:summaryOff="@string/settings_auto_incremental_update_off"
             android:summaryOn="@string/settings_auto_incremental_update_on"
