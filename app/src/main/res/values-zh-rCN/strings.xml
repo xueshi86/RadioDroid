@@ -114,7 +114,7 @@
     <string name="settings_local_database_status_default">尚未更新</string>
     <string name="settings_local_database_status_success">最后更新时间: %1$s\n本地电台数量: %2$d\n远程电台数量: %3$d</string>
     <string name="settings_local_database_status_success_no_remote">最后更新时间: %1$s\n本地电台数量: %2$d</string>
-    <string name="settings_incremental_update_note">注意：增量更新仅同步远程新增和变更的电台，无法感知远程已删除的电台。每次更新后，请自行比对下方“本地数据库状态”中的“本地电台数量”与“远程电台数量”。远程数量随社区增删改分钟级变化，相差几十条属正常（镜像间复制延迟亦为分钟级，个别时候与刚同步的结果略有出入）；若差异较大（如数百条以上），请点击“更新本地数据库”执行一次全量更新。</string>
+    <string name="settings_incremental_update_note">注意：增量更新仅同步远程新增和变更的电台，无法感知远程已删除的电台。每次更新后，请自行比对下方“本地数据库状态”中的“本地电台数量”与“远程电台数量”。远程数量随社区增删改分钟级变化，相差几十条属正常（镜像间复制延迟亦为分钟级，个别时候与刚同步的结果略有出入）；若差异较大（如千条以上），请点击“更新本地数据库”执行一次全量更新。</string>
     <string name="settings_local_database_status_failed">更新失败: %s</string>
     <string name="settings_theme_selection_title">主题</string>
     <string name="theme_light">亮色</string>
