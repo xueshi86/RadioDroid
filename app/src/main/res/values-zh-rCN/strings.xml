@@ -492,6 +492,8 @@
     <string name="update_completed_incremental">增量更新完成</string>
     <string name="progress_incremental_update">增量更新：正在同步变更</string>
     <string name="error_inc_update_need_full">尚无同步水位，请先执行一次全量数据库更新</string>
+    <string name="error_inc_update_too_large">待同步的变更过多，增量更新无法完成，请执行一次全量数据库更新</string>
+    <string name="error_inc_update_aborted">增量更新异常中止，请重试；若反复失败请执行一次全量数据库更新</string>
     <string name="update_confirm_replace_message">新数据(%1$d个)比现有数据(%2$d个)少，是否替换？</string>
     <string name="update_completed_keep_existing">更新完成，但用户选择继续使用现有数据</string>
     <string name="settings_language">界面语言</string>

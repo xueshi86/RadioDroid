@@ -33,6 +33,10 @@ public class DatabaseUpdateProgressDialog {
     
     private Context context;
     private Dialog dialog;
+    // 临时数据库进度探测专用线程：getTempDatabaseCount 会争抢 sSyncLock，
+    // 而增量/全量同步全程持有该锁，主线程直接调用会被阻塞直至 ANR
+    private final java.util.concurrent.ExecutorService probeExecutor =
+            java.util.concurrent.Executors.newSingleThreadExecutor();
     
     // 资源ID映射表，用于根据消息内容查找对应的资源ID
     private static final java.util.HashMap<String, Integer> MESSAGE_TO_RES_ID = new java.util.HashMap<>();
@@ -278,13 +282,42 @@ public class DatabaseUpdateProgressDialog {
     }
     
     /**
+     * 后台探测临时数据库实际下载进度（全量更新用）。
+     * 发现更多数据时写回 prefs 并触发一次主线程刷新，让正常轮询路径读到修正值。
+     */
+    private void probeProgressFromTempDb(final int capturedProgress) {
+        if (probeExecutor.isShutdown()) {
+            return;
+        }
+        final Context appContext = context.getApplicationContext();
+        probeExecutor.execute(() -> {
+            try {
+                RadioStationRepository repository = RadioStationRepository.getInstance(appContext);
+                int tempDatabaseCount = repository.getTempDatabaseCount();
+                if (tempDatabaseCount > capturedProgress) {
+                    Log.w(TAG, "发现临时数据库中有更多数据: " + tempDatabaseCount + " > " + capturedProgress);
+                    SharedPreferences prefs = appContext.getSharedPreferences("database_update_prefs", Context.MODE_PRIVATE);
+                    prefs.edit()
+                        .putInt("progress_current", tempDatabaseCount)
+                        .commit();
+                    // 回到主线程走正常刷新路径
+                    handler.post(() -> updateProgress());
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "获取临时数据库进度失败: " + e.getMessage());
+            }
+        });
+    }
+
+    /**
      * 完全销毁进度对话框
      */
     public void dismiss() {
         Log.d(TAG, "dismiss() called, isShowing=" + isShowing);
-        
+
         isShowing = false;
         handler.removeCallbacks(updateRunnable);
+        probeExecutor.shutdownNow();
         
         if (dialog != null) {
             if (dialog.isShowing()) {
@@ -517,24 +550,9 @@ public class DatabaseUpdateProgressDialog {
             if (currentProgress == lastProgressValue && currentTime - lastProgressTime > 10000) {
                 Log.w(TAG, "检测到进度长时间未变化，可能卡死，当前进度: " + currentProgress);
                 progressMessage = context.getString(R.string.progress_stalled);
-                
-                // 尝试从临时数据库获取实际进度
-                try {
-                    RadioStationRepository repository = RadioStationRepository.getInstance(context);
-                    int tempDatabaseCount = repository.getTempDatabaseCount();
-                    if (tempDatabaseCount > currentProgress) {
-                        Log.w(TAG, "发现临时数据库中有更多数据: " + tempDatabaseCount + " > " + currentProgress);
-                        currentProgress = tempDatabaseCount;
-                        progressMessage = context.getString(R.string.progress_downloading_data);
-                        // 更新SharedPreferences，确保下次读取到正确的进度
-                        SharedPreferences prefs = context.getSharedPreferences("database_update_prefs", Context.MODE_PRIVATE);
-                        prefs.edit()
-                            .putInt(KEY_PROGRESS_CURRENT, currentProgress)
-                            .commit();
-                    }
-                } catch (Exception e) {
-                    Log.w(TAG, "获取临时数据库进度失败: " + e.getMessage());
-                }
+
+                // 异步探测临时数据库实际进度：同步锁由 Worker 持有，主线程探测会阻塞 UI
+                probeProgressFromTempDb(currentProgress);
             }
             
             // 更新最后检测到的进度值和时间

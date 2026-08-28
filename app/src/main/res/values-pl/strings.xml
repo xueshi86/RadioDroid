@@ -272,4 +272,6 @@
     <string name="update_completed_incremental">Aktualizacja przyrostowa zakończona</string>
     <string name="progress_incremental_update">Aktualizacja przyrostowa: synchronizowanie zmian</string>
     <string name="error_inc_update_need_full">Brak znacznika synchronizacji. Najpierw wykonaj pełną aktualizację bazy danych.</string>
+    <string name="error_inc_update_too_large">Zbyt wiele oczekujących zmian do aktualizacji przyrostowej. Wykonaj pełną aktualizację bazy danych.</string>
+    <string name="error_inc_update_aborted">Aktualizacja przyrostowa została nieoczekiwanie przerwana. Spróbuj ponownie lub wykonaj pełną aktualizację bazy danych.</string>
 </resources>

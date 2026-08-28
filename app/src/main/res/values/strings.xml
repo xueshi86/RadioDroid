@@ -667,6 +667,8 @@ The app will automatically restart to load the new database.</string>
     <string name="update_completed_incremental">Incremental update completed</string>
     <string name="progress_incremental_update">Incremental update: syncing changes</string>
     <string name="error_inc_update_need_full">No sync watermark yet. Please run a full database update first.</string>
+    <string name="error_inc_update_too_large">Too many pending changes for incremental update. Please run a full database update.</string>
+    <string name="error_inc_update_aborted">Incremental update aborted abnormally. Please try again, or run a full database update.</string>
     <string name="update_confirm_replace_message">New data (%1$d stations) has fewer stations than existing data (%2$d stations), do you want to replace?</string>
     <string name="update_completed_keep_existing">Update completed, but user chose to keep existing data</string>
     <string name="language_brazilian_portuguese">Português (Brasil)</string>

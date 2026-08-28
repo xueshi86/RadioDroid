@@ -115,8 +115,15 @@ public class RadioStationRepository {
 
     private static final String PREF_INC_LASTCHANGE_TIME = "incremental_lastchange_time";
     private static final int INCREMENTAL_PAGE_SIZE = 1000;
-    /** 单次增量同步看门狗：超过该时长强制中止，避免 UI 永久停在"准备中" */
-    private static final long INCREMENTAL_TIMEOUT_MS = 90_000L;
+    /**
+     * 兜底看门狗：单次增量同步总时限。注意水位只能在整轮成功后推进（降序变更日志中
+     * 中途推进会让未处理的更旧分页被 `<=` 水位判断跳过，造成数据丢失），
+     * 因此中断/超时后下一轮必须从头重放，总时限必须足够宽裕让一轮完整放完。
+     * 正常终止由「空页 / 短页 / 命中水位」保证，此看门狗仅防御网络极端恶化等异常。
+     */
+    private static final long INCREMENTAL_TIMEOUT_MS = 10 * 60_000L;
+    /** 分页数上限：防御服务端忽略 offset 参数导致同一页被无限重复拉取的死循环 */
+    private static final int INCREMENTAL_MAX_PAGES = 600;
 
     /**
      * 增量同步：官方服务器实测（v0.7.45）忽略 lastchangeuuid 游标参数，
@@ -152,6 +159,17 @@ public class RadioStationRepository {
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
                 String watermarkTime = prefs.getString(PREF_INC_LASTCHANGE_TIME, null);
 
+                // 防御：本地库为空但水位残留（如数据库被重置/破坏性迁移后 prefs 未清）。
+                // 若继续增量，只会写回"自水位以来的变更"，用户得到一个几乎为空却显示
+                // "已更新"的假数据库 —— 必须清除水位并要求先全量更新
+                if (watermarkTime != null && !watermarkTime.isEmpty()
+                        && radioStationDao.getCount() == 0) {
+                    Log.w(TAG, "Incremental: local DB is empty but watermark exists, requiring full update");
+                    prefs.edit().remove(PREF_INC_LASTCHANGE_TIME).apply();
+                    callback.onError(context.getString(R.string.error_inc_update_need_full));
+                    throw new RuntimeException(context.getString(R.string.error_inc_update_need_full));
+                }
+
                 // 冷启动：无水位时以本地库最大 lastchangetime 为锚点
                 //（本地库反映上次全量同步时的服务器状态，格式 YYYY-MM-DD HH:mm:ss 定宽可直接比较）
                 if (watermarkTime == null || watermarkTime.isEmpty()) {
@@ -165,15 +183,23 @@ public class RadioStationRepository {
 
                 int total = 0;
                 int offset = 0;
+                int pageCount = 0;
                 boolean done = false;
                 long startedAt = System.currentTimeMillis();
+                String prevPageFirstTime = null; // 上一页首条时间，用于检测 offset 未前进
                 String newWatermark = null; // 本轮处理到的最大变更时间（降序下即首条新数据的时间）
                 while (!done && !Thread.currentThread().isInterrupted()) {
-                    // 看门狗：单次增量同步超过 90 秒强制中止，避免"准备中..."永久挂死
+                    // 兜底看门狗 + 分页上限：防止服务端异常（如忽略 offset）导致死循环挂死 UI
                     if (System.currentTimeMillis() - startedAt > INCREMENTAL_TIMEOUT_MS) {
                         callback.onError(context.getString(R.string.error_sync_timeout));
                         throw new RuntimeException(context.getString(R.string.error_sync_timeout));
                     }
+                    if (pageCount >= INCREMENTAL_MAX_PAGES) {
+                        String err = context.getString(R.string.error_inc_update_too_large);
+                        callback.onError(err);
+                        throw new RuntimeException(err);
+                    }
+                    pageCount++;
                     // 官方服务器忽略 lastchangeuuid，仅 offset/limit 生效；
                     // 显式按变更时间降序（lastchange 端点的固定行为）
                     String path = "json/stations/lastchange?offset=" + offset
@@ -189,6 +215,22 @@ public class RadioStationRepository {
                     if (stations == null || stations.isEmpty()) {
                         done = true;
                         break;
+                    }
+
+                    // 防死循环：降序日志下本页首条时间不得晚于上一页首条时间，
+                    // 否则说明服务端未按 offset 前进（同一页被重复返回）
+                    String pageFirstTime = stations.get(0).LastChangeTime;
+                    if (pageFirstTime != null && !pageFirstTime.isEmpty()
+                            && prevPageFirstTime != null
+                            && pageFirstTime.compareTo(prevPageFirstTime) > 0) {
+                        Log.e(TAG, "Incremental sync: server did not advance offset (first="
+                                + pageFirstTime + " prev=" + prevPageFirstTime + "), aborting");
+                        String err = context.getString(R.string.error_inc_update_aborted);
+                        callback.onError(err);
+                        throw new RuntimeException(err);
+                    }
+                    if (pageFirstTime != null && !pageFirstTime.isEmpty()) {
+                        prevPageFirstTime = pageFirstTime;
                     }
 
                     // 过滤出水位之后的变更；遇 <= 水位即已到达已处理区（降序），停止
@@ -241,9 +283,12 @@ public class RadioStationRepository {
                     prefs.edit().putString(PREF_INC_LASTCHANGE_TIME, newWatermark).apply();
                 }
 
-                // F-1：增量写入后重建 FTS 索引，保证新台可被 FTS 搜索
-                radioStationDao.rebuildFtsIndex();
-                Log.d(TAG, "FTS index rebuilt after incremental sync");
+                // F-1：增量写入后重建 FTS 索引，保证新台可被 FTS 搜索。
+                // 无新数据时跳过：FTS rebuild 在大库上开销可观，无变更时纯属浪费
+                if (total > 0) {
+                    radioStationDao.rebuildFtsIndex();
+                    Log.d(TAG, "FTS index rebuilt after incremental sync");
+                }
 
                 updateDatabaseTimestamp(context);
                 Log.d(TAG, "Incremental sync completed, total updated = " + total);
@@ -271,7 +316,13 @@ public class RadioStationRepository {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String t = prefs.getString(PREF_INC_LASTCHANGE_TIME, null);
         if (t != null && !t.isEmpty()) {
-            return true;
+            // 水位存在但本地库为空（数据库被重置）时不具备增量条件，与同步内部防御保持一致
+            try {
+                return radioStationDao.getCount() > 0;
+            } catch (Exception e) {
+                Log.w(TAG, "hasIncrementalWatermark: count query failed", e);
+                return false;
+            }
         }
         return radioStationDao.getMaxLastChangeTime() != null;
     }

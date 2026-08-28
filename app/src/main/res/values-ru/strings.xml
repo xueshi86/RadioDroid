@@ -769,4 +769,6 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="update_completed_incremental">Инкрементальное обновление завершено</string>
     <string name="progress_incremental_update">Инкрементальное обновление: синхронизация изменений</string>
     <string name="error_inc_update_need_full">Нет метки синхронизации. Сначала выполните полное обновление базы данных.</string>
+    <string name="error_inc_update_too_large">Слишком много ожидающих изменений для инкрементального обновления. Сначала выполните полное обновление базы данных.</string>
+    <string name="error_inc_update_aborted">Инкрементальное обновление прервано из-за непредвиденной ошибки. Повторите попытку или выполните полное обновление базы данных.</string>
 </resources>

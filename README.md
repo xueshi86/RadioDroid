@@ -4,17 +4,16 @@
 
 <h1 align="center">RadioDroid</h1>
 
-<p align="center">  
-  <b>全球电台收音机 · 离线数据库 · 魔改增强版</b>  
-  
-  <i>Global Radio Browser · Offline Database · Enhanced Edition</i>  
-</p>
+<div align="center">
+  <b>全球电台收音机 · 离线数据库 · 魔改增强版</b><br/>
+  <i>Global Radio Browser · Offline Database · Enhanced Edition</i><br/>
+</div>
 
-<p align="center">  
-  <a href="#中文">中文介绍</a> ·  
-  <a href="#english">English</a> ·  
-  <a href="CHANGELOG.md">Changelog</a>  
-</p>
+<div align="center">
+  <a href="#中文">中文介绍</a> ·
+  <a href="#english">English</a> ·
+  <a href="CHANGELOG.md">Changelog</a>
+</div>
 
 ---
 

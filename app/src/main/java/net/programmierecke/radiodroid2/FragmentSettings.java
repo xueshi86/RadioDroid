@@ -660,13 +660,34 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
     /**
      * 手动触发增量更新（lastchange 端点）。若无水位则提示先执行全量更新。
      * 水位检查含同步 Room 查询，须在后台线程执行，避免主线程禁令崩溃。
+     * context 统一在 UI 线程捕获：Fragment.requireContext() 只允许主线程调用，
+     * 后台线程触发时会抛 IllegalStateException 导致未捕获异常。
      */
     private void startIncrementalUpdate() {
         final RadioStationRepository repository = RadioStationRepository.getInstance(requireContext());
+        final android.content.Context appContext = requireContext().getApplicationContext();
         new Thread(() -> {
+            // 网络预检：离线时 WorkManager 因 CONNECTED 约束只会无限期排队，
+            // 进度框将永远停在"准备中"且无任何提示，故此处提前拦截并明确报错
+            if (!isNetworkAvailableForUpdate(appContext)) {
+                if (getActivity() == null) {
+                    return;
+                }
+                getActivity().runOnUiThread(() -> {
+                    if (!isAdded()) {
+                        return;
+                    }
+                    androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()));
+                    builder.setTitle(R.string.settings_incremental_update);
+                    builder.setMessage(R.string.error_network_unavailable);
+                    builder.setPositiveButton(android.R.string.ok, null);
+                    builder.show();
+                });
+                return;
+            }
             boolean hasWatermark = false;
             try {
-                hasWatermark = repository.hasIncrementalWatermark(requireContext());
+                hasWatermark = repository.hasIncrementalWatermark(appContext);
             } catch (Exception e) {
                 android.util.Log.w("FragmentSettings", "hasIncrementalWatermark failed: " + e.getMessage());
             }
@@ -695,6 +716,25 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 }
             });
         }, "ManualIncrementalUpdate").start();
+    }
+
+    /**
+     * 增量更新前的网络可用性预检（后台线程调用）。
+     * 与 WorkManager 的 CONNECTED 约束语义保持一致：有任一可用网络即认为可用。
+     */
+    private boolean isNetworkAvailableForUpdate(android.content.Context ctx) {
+        try {
+            android.net.ConnectivityManager cm = (android.net.ConnectivityManager) ctx.getSystemService(android.content.Context.CONNECTIVITY_SERVICE);
+            if (cm == null) {
+                return false;
+            }
+            android.net.NetworkInfo info = cm.getActiveNetworkInfo();
+            return info != null && info.isConnected();
+        } catch (Exception e) {
+            android.util.Log.w("FragmentSettings", "isNetworkAvailableForUpdate failed: " + e.getMessage());
+            // 检查失败时不阻断更新，交由 WorkManager 约束与 Worker 内部网络检查兜底
+            return true;
+        }
     }
 
     // Method to perform a new network test

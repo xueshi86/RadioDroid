@@ -760,4 +760,6 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="update_completed_incremental">Actualización incremental completada</string>
     <string name="progress_incremental_update">Actualización incremental: sincronizando cambios</string>
     <string name="error_inc_update_need_full">Aún no hay marca de sincronización. Ejecuta primero una actualización completa de la base de datos.</string>
+    <string name="error_inc_update_too_large">Demasiados cambios pendientes para la actualización incremental. Ejecuta primero una actualización completa de la base de datos.</string>
+    <string name="error_inc_update_aborted">La actualización incremental se interrumpió de forma anómala. Inténtalo de nuevo o ejecuta una actualización completa de la base de datos.</string>
 </resources>

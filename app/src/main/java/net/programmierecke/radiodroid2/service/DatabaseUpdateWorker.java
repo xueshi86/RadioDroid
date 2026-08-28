@@ -145,10 +145,19 @@ public class DatabaseUpdateWorker extends Worker implements RadioStationReposito
         }
         if (!lockAcquired) {
             Log.e(TAG, "Could not acquire update lock within 5s, another update instance may be stuck; aborting");
-            prefs.edit()
-                    .putBoolean(KEY_IS_UPDATING, false)
-                    .putString(KEY_PROGRESS_MESSAGE, getApplicationContext().getString(R.string.update_failed))
-                    .apply();
+            // 若确有更新在正常运行（如全量更新持锁数分钟），不得篡改其状态——
+            // 此时写 is_updating=false/"更新失败" 会把运行中的更新误标为失败，
+            // 导致 UI 状态与实际脱节。仅当状态已陈旧（无运行中更新）时才清理。
+            boolean runningUpdate = prefs.getBoolean(KEY_IS_UPDATING, false);
+            long runningStartTime = prefs.getLong(KEY_UPDATE_START_TIME, 0);
+            boolean recent = runningUpdate && runningStartTime > 0
+                    && (System.currentTimeMillis() - runningStartTime) < 30 * 60 * 1000;
+            if (!recent) {
+                prefs.edit()
+                        .putBoolean(KEY_IS_UPDATING, false)
+                        .putString(KEY_PROGRESS_MESSAGE, getApplicationContext().getString(R.string.update_failed))
+                        .apply();
+            }
             return Result.failure();
         }
         try {
@@ -182,10 +191,21 @@ public class DatabaseUpdateWorker extends Worker implements RadioStationReposito
                     return Result.success();
                 } catch (Exception e) {
                     Log.e(TAG, "Incremental database update failed", e);
-                    // 失败时明确写失败状态，通知 UI 停止"准备中"并给出错误
+                    // 失败时写失败状态并保留具体原因：
+                    // repository 抛出的 RuntimeException 消息已是本地化的错误描述
+                    // （网络不可用/超时/已取消等），在此覆盖成笼统的"更新失败"会丢失原因
+                    String detail = e.getMessage();
+                    String cancelledText = getApplicationContext().getString(R.string.update_cancelled);
+                    String userMessage;
+                    if (detail != null && detail.contains(cancelledText)) {
+                        userMessage = cancelledText;
+                    } else {
+                        userMessage = getApplicationContext().getString(R.string.update_failed)
+                                + (detail != null && !detail.isEmpty() ? (": " + detail) : "");
+                    }
                     prefs.edit()
                             .putBoolean(KEY_IS_UPDATING, false)
-                            .putString(KEY_PROGRESS_MESSAGE, getApplicationContext().getString(R.string.update_failed))
+                            .putString(KEY_PROGRESS_MESSAGE, userMessage)
                             .apply();
                     return Result.failure();
                 }
@@ -603,8 +623,19 @@ public class DatabaseUpdateWorker extends Worker implements RadioStationReposito
     public static void cancelUpdate(Context context) {
         // 使用与 doWork() 相同的 ReentrantLock（sLock.lock()），
         // synchronized(sLock) 用的是对象内置 monitor，与 ReentrantLock 互不阻塞，
-        // 会导致 cancelUpdate 与 doWork 并发修改 SharedPreferences，取消失效
-        sLock.lock();
+        // 会导致 cancelUpdate 与 doWork 并发修改 SharedPreferences，取消失效。
+        // 有界等待：doWork 全程持锁（增量同步一轮可达数分钟），cancelUpdate 在主线程调用，
+        // 无界 lock() 会阻塞 UI 直至 ANR；超时后仍继续清理状态——onProgress 每页都会
+        // 复查取消标志，运行中的同步会被及时中断
+        boolean lockAcquired = false;
+        try {
+            lockAcquired = sLock.tryLock(3, TimeUnit.SECONDS);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
+        if (!lockAcquired) {
+            Log.w(TAG, "cancelUpdate: could not acquire update lock within 3s, proceeding with state cleanup anyway");
+        }
         try {
             Log.d(TAG, "Starting cancelUpdate process");
             

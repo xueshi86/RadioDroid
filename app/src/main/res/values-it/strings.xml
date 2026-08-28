@@ -416,4 +416,6 @@
     <string name="update_completed_incremental">Aggiornamento incrementale completato</string>
     <string name="progress_incremental_update">Aggiornamento incrementale: sincronizzazione modifiche</string>
     <string name="error_inc_update_need_full">Nessun riferimento di sincronizzazione. Esegui prima un aggiornamento completo del database.</string>
+    <string name="error_inc_update_too_large">Troppe modifiche in sospeso per l\'aggiornamento incrementale. Esegui prima un aggiornamento completo del database.</string>
+    <string name="error_inc_update_aborted">L\'aggiornamento incrementale è stato interrotto in modo anomalo. Riprova oppure esegui un aggiornamento completo del database.</string>
 </resources>

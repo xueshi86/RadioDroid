@@ -420,4 +420,6 @@
     <string name="update_completed_incremental">Mise à jour incrémentale terminée</string>
     <string name="progress_incremental_update">Mise à jour incrémentale : synchronisation des changements</string>
     <string name="error_inc_update_need_full">Aucun jalon de synchronisation. Veuillez d\'abord effectuer une mise à jour complète de la base de données.</string>
+    <string name="error_inc_update_too_large">Trop de modifications en attente pour la mise à jour incrémentielle. Veuillez d\'abord effectuer une mise à jour complète de la base de données.</string>
+    <string name="error_inc_update_aborted">La mise à jour incrémentielle s\'est interrompue anormalement. Veuillez réessayer ou effectuer une mise à jour complète de la base de données.</string>
 </resources>
