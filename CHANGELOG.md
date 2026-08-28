@@ -3,8 +3,6 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
-
 > 以下为 fork 后本项目发布历史（原维护于 README 的 Changelog 章节，2026-08-26 整合迁入，README 现仅保留入口链接）。
 
 ## v1.06
