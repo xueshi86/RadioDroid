@@ -91,3 +91,8 @@ radio_droid_database_*.db
 
 # Handover notes (local-only, not tracked / not pushed)
 /HANDOVER*.md
+
+# Root-level project notes (local-only, not tracked / not pushed)
+# 项目根目录只追踪 README.md 与 CHANGELOG.md
+/AMARadio*.md
+/定时*.md
