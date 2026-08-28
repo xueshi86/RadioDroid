@@ -156,10 +156,6 @@ public class RadioStationRepository {
                     throw new RuntimeException(context.getString(R.string.error_network_unavailable));
                 }
 
-                // 顺带刷新远程电台总数（轻量 stats 请求，供状态页与本地/远程数量比对；
-                // 失败静默保留旧值，绝不影响本次增量同步的结果）
-                refreshRemoteStationCountQuietly(context);
-
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
                 String watermarkTime = prefs.getString(PREF_INC_LASTCHANGE_TIME, null);
 
@@ -293,6 +289,11 @@ public class RadioStationRepository {
                     radioStationDao.rebuildFtsIndex();
                     Log.d(TAG, "FTS index rebuilt after incremental sync");
                 }
+
+                // 刷新远程电台总数（轻量 stats 请求，供状态页与本地/远程数量比对）。
+                // 放在同步末尾：此时分页下载已验证网络可用，刷新成功率最高；
+                // 失败静默保留旧值，绝不影响本次增量同步的结果
+                refreshRemoteStationCountQuietly(context);
 
                 updateDatabaseTimestamp(context);
                 Log.d(TAG, "Incremental sync completed, total updated = " + total);
@@ -483,16 +484,21 @@ public class RadioStationRepository {
             throw new RuntimeException(context.getString(R.string.error_stats_parse_failed) + ": " + e.getMessage());
         }
         
-        // 保存服务器统计信息到SharedPreferences
-        if (workingStations != null && brokenStations != null) {
+        // 保存服务器统计信息到SharedPreferences。
+        // 注意：stations_total 必须无条件写入——线上 /json/stats 实测只返回 stations 与
+        // stations_broken，没有 stations_working 字段，若沿用旧的
+        // "working/broken 都存在才写入" 条件，全量更新后远程电台数量将永远不刷新
+        {
             SharedPreferences sharedPref = context.getSharedPreferences("ServerStatistics", Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPref.edit();
             editor.putInt("stations_total", totalStations);
-            editor.putInt("stations_working", workingStations);
-            editor.putInt("stations_broken", brokenStations);
+            if (workingStations != null && brokenStations != null) {
+                editor.putInt("stations_working", workingStations);
+                editor.putInt("stations_broken", brokenStations);
+            }
             editor.putLong("last_updated", System.currentTimeMillis());
             editor.apply();
-            Log.d(TAG, "已保存服务器统计信息到SharedPreferences");
+            Log.d(TAG, "已保存服务器统计信息到SharedPreferences: stations_total=" + totalStations);
         }
 
         
