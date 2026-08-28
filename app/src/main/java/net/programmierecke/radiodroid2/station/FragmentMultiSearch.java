@@ -26,9 +26,11 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import net.programmierecke.radiodroid2.FragmentBase;
+import net.programmierecke.radiodroid2.CountryCodeDictionary;
 import net.programmierecke.radiodroid2.R;
 import net.programmierecke.radiodroid2.RadioDroidApp;
 import net.programmierecke.radiodroid2.Utils;
+import net.programmierecke.radiodroid2.database.CountryCount;
 import net.programmierecke.radiodroid2.database.RadioStation;
 import net.programmierecke.radiodroid2.database.RadioStationRepository;
 import net.programmierecke.radiodroid2.ui.SearchableListDialogFragment;
@@ -59,8 +61,9 @@ public class FragmentMultiSearch extends FragmentBase {
     private ItemAdapterStation stationListAdapter;
     private RadioStationRepository repository;
 
-    // 筛选条件
+    // 筛选条件（selectedCountry 存 ISO 代码，selectedCountryLabel 存本地化显示名）
     private String selectedCountry = "";
+    private String selectedCountryLabel = "";
     private String selectedLanguage = "";
     private String selectedTag = "";
     private String searchQuery = "";
@@ -217,24 +220,43 @@ public class FragmentMultiSearch extends FragmentBase {
         languagesList.clear();
         tagsList.clear();
 
-        // 加载国家列表（首项为"全部"）
+        // 加载国家列表（首项为"全部"）。
+        // 按 ISO 代码分组取计数：name=代码（筛选值），label=本地化国名（显示值），
+        // 中文界面显示"中国 (1234)"而非"China"；后台线程执行（同步 Room 全表分组查询）
         countriesList.add(new SearchableListDialogFragment.FilterOption(allLabel, 0));
-        repository.getAllCountries().observe(getViewLifecycleOwner(), new Observer<List<String>>() {
-            @Override
-            public void onChanged(List<String> countries) {
-                if (countries != null && !countries.isEmpty()) {
-                    // 保留首项"全部"，追加新数据
-                    if (countriesList.size() > 0 && allLabel.equals(countriesList.get(0).name)) {
-                        countriesList.clear();
-                        countriesList.add(new SearchableListDialogFragment.FilterOption(allLabel, 0));
+        new Thread(() -> {
+            try {
+                final List<CountryCount> counts = repository.getAllCountriesWithCountByCodeSync();
+                final java.text.Collator collator = java.text.Collator.getInstance(java.util.Locale.getDefault());
+                final List<SearchableListDialogFragment.FilterOption> options = new ArrayList<>(counts == null ? 0 : counts.size());
+                if (counts != null) {
+                    for (CountryCount cc : counts) {
+                        if (cc == null || cc.country == null || cc.country.isEmpty()) {
+                            continue;
+                        }
+                        String label = CountryCodeDictionary.getLocalizedCountryName(cc.country);
+                        if (label == null) {
+                            label = cc.country; // 系统不认识的代码，兜底显示代码本身
+                        }
+                        options.add(new SearchableListDialogFragment.FilterOption(cc.country, label, cc.stationCount));
                     }
-                    for (String c : countries) {
-                        countriesList.add(new SearchableListDialogFragment.FilterOption(c, 0));
-                    }
-                    updateAllFilterButtonTexts();
                 }
+                // 按本地化名排序（Collator 支持中文拼音序）
+                java.util.Collections.sort(options, (a, b) -> collator.compare(a.displayText(), b.displayText()));
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        if (countriesList.size() > 0 && allLabel.equals(countriesList.get(0).name)) {
+                            countriesList.clear();
+                            countriesList.add(new SearchableListDialogFragment.FilterOption(allLabel, 0));
+                        }
+                        countriesList.addAll(options);
+                        updateAllFilterButtonTexts();
+                    });
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "加载国家列表失败", e);
             }
-        });
+        }, "LoadCountryOptions").start();
 
         // 加载语言列表
         languagesList.add(new SearchableListDialogFragment.FilterOption(allLabel, 0));
@@ -284,7 +306,9 @@ public class FragmentMultiSearch extends FragmentBase {
     private void updateAllFilterButtonTexts() {
         if (getView() == null) return;
         String allText = allLabel;
-        spinnerCountry.setText(selectedCountry.isEmpty() ? allText : selectedCountry);
+        // 国家按钮显示本地化名（选中值为 ISO 代码）
+        spinnerCountry.setText(selectedCountry.isEmpty() ? allText
+                : (selectedCountryLabel.isEmpty() ? findCountryLabel(selectedCountry) : selectedCountryLabel));
         spinnerLanguage.setText(selectedLanguage.isEmpty() ? allText : selectedLanguage);
         spinnerTag.setText(selectedTag.isEmpty() ? allText : selectedTag);
     }
@@ -318,13 +342,14 @@ public class FragmentMultiSearch extends FragmentBase {
             return;
         }
 
-        SearchableListDialogFragment dialog = SearchableListDialogFragment.newInstance(title, options, selected);
+        SearchableListDialogFragment dialog = SearchableListDialogFragment.newInstance(title, options, filterType == FILTER_TYPE_COUNTRY ? selectedCountry : selected);
         dialog.setOnOptionSelectedListener(name -> {
             if (name == null) return;
             String value = allLabel.equals(name) ? "" : name;
             switch (filterType) {
                 case FILTER_TYPE_COUNTRY:
                     selectedCountry = value;
+                    selectedCountryLabel = findCountryLabel(value);
                     break;
                 case FILTER_TYPE_LANGUAGE:
                     selectedLanguage = value;
@@ -337,6 +362,19 @@ public class FragmentMultiSearch extends FragmentBase {
             performMultiSearch();
         });
         dialog.show(getChildFragmentManager(), "searchable_list");
+    }
+
+    /** 按筛选值（ISO 代码）查选项的本地化显示名；"全部"或未找到返回空串 */
+    private String findCountryLabel(String code) {
+        if (code == null || code.isEmpty()) {
+            return "";
+        }
+        for (SearchableListDialogFragment.FilterOption option : countriesList) {
+            if (code.equals(option.name)) {
+                return option.displayText();
+            }
+        }
+        return code; // 列表尚未加载完成时兜底显示代码
     }
 
     private void setupEventListeners() {
@@ -473,6 +511,7 @@ public class FragmentMultiSearch extends FragmentBase {
     private void resetFilters() {
         // 重置所有筛选条件
         selectedCountry = "";
+        selectedCountryLabel = "";
         selectedLanguage = "";
         selectedTag = "";
         searchQuery = "";

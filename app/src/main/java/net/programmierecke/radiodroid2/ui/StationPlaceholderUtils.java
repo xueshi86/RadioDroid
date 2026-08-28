@@ -16,17 +16,30 @@ import androidx.annotation.Nullable;
 import net.programmierecke.radiodroid2.R;
 
 /**
- * 无图标电台动态占位符：首字符 + 按 UUID 哈希稳定分配的 7 色板。
+ * 无图标电台动态占位符：名称关键词/首词 + 按 UUID 哈希稳定分配的 7 色板。
+ *
+ * 相比早期的"首字符"方案，显示完整关键词（如 "BBC"、"济南新闻"、"Antenne"）
+ * 显著提高同首字母电台之间的辨识度；提取规则见 {@link StationWordExtractor}，
+ * 提取失败（空名/纯符号）回退 ♪。字号按词长自适应收缩，超长词在可读下限内截断。
  *
  * 所有需要占位符的地方（列表、图标兜底、通知大图标）统一使用本工具，
- * 保证同一电台在任意位置显示一致的"颜色 + 字符"，避免多份实现漂移。
+ * 保证同一电台在任意位置显示一致的"颜色 + 词"，避免多份实现漂移。
  *
- * 生成结果按 (uuid, size) 缓存于内存 LruCache，列表滚动零成本。
+ * 生成结果按 (uuid, size, word) 缓存于内存 LruCache，列表滚动零成本。
  */
 public class StationPlaceholderUtils {
 
-    private static final String DEFAULT_GLYPH = "\u266A"; // ♪（电台名无法提取字符时使用）
+    private static final String DEFAULT_GLYPH = "\u266A"; // ♪（电台名无法提取关键词时使用）
     private static final int CACHE_MAX = 64;
+
+    /** 文字最大宽度占图标边长比例 */
+    private static final float TEXT_MAX_WIDTH_RATIO = 0.84f;
+    /** 多字词起始字号占边长比例 */
+    private static final float TEXT_START_SIZE_RATIO = 0.42f;
+    /** 单字符（含 ♪）起始字号占边长比例 */
+    private static final float TEXT_SINGLE_SIZE_RATIO = 0.5f;
+    /** 可读字号下限占边长比例 */
+    private static final float TEXT_MIN_SIZE_RATIO = 0.16f;
 
     private static final int[] COLOR_RES_IDS = {
             R.color.placeholderColor1,
@@ -41,27 +54,6 @@ public class StationPlaceholderUtils {
     private static final LruCache<String, Bitmap> sBitmapCache = new LruCache<>(CACHE_MAX);
 
     private StationPlaceholderUtils() {
-    }
-
-    /**
-     * 从电台名称提取占位字符：跳过前导空白/符号，取首个字母或数字（大写）或中文首字；
-     * 空名/无可提取字符时回退为 ♪。
-     */
-    public static String firstCharacter(@Nullable String name) {
-        if (name == null) {
-            return DEFAULT_GLYPH;
-        }
-        String s = name.trim();
-        if (s.isEmpty()) {
-            return DEFAULT_GLYPH;
-        }
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (Character.isLetterOrDigit(c)) {
-                return String.valueOf(Character.toUpperCase(c));
-            }
-        }
-        return DEFAULT_GLYPH;
     }
 
     /**
@@ -97,7 +89,9 @@ public class StationPlaceholderUtils {
         if (sizePx <= 0) {
             sizePx = 56;
         }
-        String key = (stationUuid != null ? stationUuid : "anon") + "|" + sizePx;
+        String word = StationWordExtractor.extractDisplayWord(stationName);
+        String glyph = (word != null && !word.isEmpty()) ? word : DEFAULT_GLYPH;
+        String key = (stationUuid != null ? stationUuid : "anon") + "|" + sizePx + "|" + glyph;
         Bitmap cached = sBitmapCache.get(key);
         if (cached != null) {
             return cached;
@@ -110,12 +104,31 @@ public class StationPlaceholderUtils {
         Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         textPaint.setColor(Color.WHITE);
         textPaint.setTextAlign(Paint.Align.CENTER);
-        textPaint.setTextSize(sizePx * 0.5f);
         textPaint.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
 
-        String glyph = firstCharacter(stationName);
+        float startSize = sizePx * (glyph.length() == 1 ? TEXT_SINGLE_SIZE_RATIO : TEXT_START_SIZE_RATIO);
+        float minSize = sizePx * TEXT_MIN_SIZE_RATIO;
+        float maxWidth = sizePx * TEXT_MAX_WIDTH_RATIO;
+
+        // 字号自适应：先按起始字号绘制，超宽则按比例收缩至下限；
+        // 仍超宽（极端长词）时在最小字号下从尾部截字直至放下
+        float textSize = startSize;
         Rect bounds = new Rect();
-        textPaint.getTextBounds(glyph, 0, glyph.length(), bounds);
+        while (true) {
+            textPaint.setTextSize(textSize);
+            textPaint.getTextBounds(glyph, 0, glyph.length(), bounds);
+            if (bounds.width() <= maxWidth) {
+                break;
+            }
+            if (textSize > minSize) {
+                textSize = Math.max(minSize, textSize * 0.9f);
+            } else if (glyph.length() > 1) {
+                glyph = glyph.substring(0, glyph.length() - 1);
+            } else {
+                break;
+            }
+        }
+
         float baseline = sizePx / 2f - (bounds.top + bounds.bottom) / 2f;
         canvas.drawText(glyph, sizePx / 2f, baseline, textPaint);
 

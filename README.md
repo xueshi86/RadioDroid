@@ -112,7 +112,8 @@
 
 独立的高级搜索页面，支持同时设置四个维度的筛选条件：
 
-- **国家**：下拉选择，可输入过滤（前缀优先排序）
+- **国家**：下拉选择，可输入过滤（本地化名/英文名双通道命中）；每个选项标注本地电台数量，如「中国 (3821)」；国名本地化显示——中文界面显示「中国/日本」而非 "China/Japan"（系统 Locale API 按 ISO 代码解析，跟随应用内语言，支持全部 8 种语言）
+- **国家**（数据口径）：选项按 ISO 国家代码分组，同名变体（如 "Russia"/"Russian Federation"）自动合并，计数更准确；筛选按 `countrycode` 精确匹配
 - **语言**：下拉选择，可输入过滤（前缀优先排序）
 - **标签**：下拉选择，标签已拆分为单标签并按出现次数排序（热门优先），可输入过滤；修正了原版直接列出 "rock,pop" 组合串的问题
 - **关键词**：文本输入，500ms 防抖延迟，避免过度查询
@@ -202,7 +203,7 @@
                                    → 全部失败 → 显示动态占位图标
 ```
 
-**动态电台占位符**（新增）：无图标电台不再显示统一的应用图标占位，而是自动生成「首字符 + 颜色」占位图——颜色按电台 UUID 哈希稳定分配 7 色 Material 色板（同一电台永远同色），字符取电台名称首个字母/数字或中文首字。列表、图标兜底、通知大图标三处显示完全一致；生成结果内存缓存，列表滚动零开销。
+**动态电台占位符**（新增）：无图标电台不再显示统一的应用图标占位，而是自动生成「关键词/首词 + 颜色」占位图——颜色按电台 UUID 哈希稳定分配 7 色 Material 色板（同一电台永远同色）；文字取电台名称的**关键词**（跳过 FM/Radio/The 等噪声词与频率数字，如 "BBC Radio 1"→"BBC"），中文剥离「广播/电台/频率/台」等通用后缀后取前 4 字保留区分度（"济南新闻广播"→"济南新闻"），数字品牌前缀智能识别（"500首华语经典电台"→"500首"、"80后音悦台"→"80后"）；关键词提取失败时降级为首词，仍失败显示 ♪。字号按词长自适应收缩，任何长度都能放进图标。列表、图标兜底、通知大图标三处显示完全一致；生成结果内存缓存，列表滚动零开销。
 
 #### 播放点击上报（社区回馈）
 
@@ -332,7 +333,7 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 - **睡眠定时器**：SeekBar 设置分钟数，终点自动停止播放，保存默认值
 - **闹钟**：支持设置指定时间自动播放指定电台。闹钟默认仅生效一次，如需每天重复请在闹钟编辑界面开启「重复」开关
 - **录音功能**：录制当前播放的电台流为音频文件
-- **电台详情展开**：点击展开按钮显示网站访问、分享、添加闹钟、创建桌面快捷方式等操作
+- **电台详情展开**：点击展开按钮显示网站访问、分享、添加闹钟等操作
 - **趋势图标**：电台列表显示点击量趋势（上升/下降/持平）
 - **国家图标**：电台列表显示所属国家的国旗图标
 - **Android TV 支持**：检测 TV 设备自动启用频道管理
@@ -634,7 +635,7 @@ Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elemen
 - **Sleep Timer**: SeekBar dialog, auto-stops playback, saves default
 - **Alarm**: Schedule a station to play at a specified time. Alarms are one-time by default; enable the "repeat" toggle in the alarm editor for daily recurrence
 - **Recording**: Record live radio streams to audio files
-- **Station Detail Expansion**: Website visit, share, alarm, desktop shortcut creation
+- **Station Detail Expansion**: Website visit, share, alarm
 - **Trend Icons**: Click trend indicators (rising/falling/flat)
 - **Country Flags**: Flag icons per station in list view
 - **Android TV**: Auto-detect TV devices, channel management

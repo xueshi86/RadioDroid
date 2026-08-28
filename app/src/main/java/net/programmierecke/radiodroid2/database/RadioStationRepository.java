@@ -1143,6 +1143,15 @@ public class RadioStationRepository {
     public List<CountryCount> getAllCountriesWithCountSync() {
         return radioStationDao.getAllCountriesWithCountSync();
     }
+
+    /**
+     * 按 ISO 国家代码分组统计（CountryCount.country 字段存代码）。
+     * 供搜索筛选下拉：配合 CountryCodeDictionary.getCountryByCode 显示本地化国名，
+     * 筛选值（代码）与显示值（本地化名称）解耦。
+     */
+    public List<CountryCount> getAllCountriesWithCountByCodeSync() {
+        return radioStationDao.getAllCountriesWithCountByCodeSync();
+    }
     
     // 优化的查询方法 - 一次性获取所有语言及其电台数量
     public List<LanguageCount> getAllLanguagesWithCountSync() {

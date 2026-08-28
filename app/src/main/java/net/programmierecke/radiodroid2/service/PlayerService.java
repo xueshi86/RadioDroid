@@ -1856,7 +1856,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     }
 
     /**
-     * 无图标电台的通知大图标占位：首字符 + UUID 稳定色（256px 方形，适配 setLargeIcon）。
+     * 无图标电台的通知大图标占位：名称关键词/首词 + UUID 稳定色（256px 方形，适配 setLargeIcon）。
      */
     private BitmapDrawable createPlaceholderRadioIcon() {
         Bitmap bmp = StationPlaceholderUtils.createPlaceholderBitmap(itsContext, currentStation.Name, currentStation.StationUuid, 256);

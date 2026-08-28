@@ -170,7 +170,15 @@ public interface RadioStationDao {
     // 优化的查询方法 - 一次性获取所有国家及其电台数量
     @Query("SELECT country, COUNT(*) as stationCount FROM radio_stations WHERE country != '' GROUP BY country HAVING COUNT(*) > 0 ORDER BY country ASC")
     List<CountryCount> getAllCountriesWithCountSync();
-    
+
+    /**
+     * 按 ISO 国家代码分组统计（country 列复用为代码值）。
+     * 供搜索筛选下拉使用：同一代码下的英文国名变体（如 "Russia"/"Russian Federation"）
+     * 合并为一个选项，计数更准确，且筛选可按 countrycode 精确匹配。
+     */
+    @Query("SELECT countrycode AS country, COUNT(*) AS stationCount FROM radio_stations WHERE countrycode != '' GROUP BY countrycode HAVING COUNT(*) > 0 ORDER BY COUNT(*) DESC")
+    List<CountryCount> getAllCountriesWithCountByCodeSync();
+
     // 优化的查询方法 - 一次性获取所有语言及其电台数量
     @Query("SELECT language, COUNT(*) as stationCount FROM radio_stations WHERE language != '' GROUP BY language HAVING COUNT(*) > 0 ORDER BY language ASC")
     List<LanguageCount> getAllLanguagesWithCountSync();
@@ -273,13 +281,13 @@ public interface RadioStationDao {
     
     /**
      * 多条件搜索电台
-     * @param country 国家筛选条件，为空表示不筛选
+     * @param country 国家筛选条件（ISO 2 位代码，匹配 countrycode 列），为空表示不筛选
      * @param language 语言筛选条件，为空表示不筛选
      * @param tag 标签筛选条件，为空表示不筛选
      * @param keyword 关键词搜索，为空表示不搜索
      * @return 符合条件的电台列表
      */
-    @Query("SELECT * FROM radio_stations WHERE (:country = '' OR country = :country) AND (:language = '' OR language = :language) AND (:tag = '' OR tags LIKE ',' || :tag || ',' OR tags LIKE :tag || ',%' OR tags LIKE '%,' || :tag OR tags = :tag) AND (:keyword = '' OR name LIKE :keyword || '%' ESCAPE '\\' OR name LIKE '%' || :keyword || '%' ESCAPE '\\' OR country LIKE :keyword || '%' ESCAPE '\\' OR country LIKE '%' || :keyword || '%' ESCAPE '\\' OR language LIKE :keyword || '%' ESCAPE '\\' OR language LIKE '%' || :keyword || '%' ESCAPE '\\' OR tags LIKE '%' || :keyword || '%' ESCAPE '\\') ORDER BY CASE WHEN :keyword != '' AND name LIKE :keyword || '%' ESCAPE '\\' THEN 0 WHEN :keyword != '' AND (name LIKE '% ' || :keyword || '%' ESCAPE '\\' OR name LIKE '%-' || :keyword || '%' ESCAPE '\\' OR name LIKE '%(' || :keyword || '%' ESCAPE '\\' OR name LIKE '%.' || :keyword || '%' ESCAPE '\\') THEN 1 WHEN :keyword != '' AND name LIKE '%' || :keyword || '%' ESCAPE '\\' THEN 2 ELSE 3 END, clickcount DESC LIMIT 1000")
+    @Query("SELECT * FROM radio_stations WHERE (:country = '' OR countrycode = :country) AND (:language = '' OR language = :language) AND (:tag = '' OR tags LIKE ',' || :tag || ',' OR tags LIKE :tag || ',%' OR tags LIKE '%,' || :tag OR tags = :tag) AND (:keyword = '' OR name LIKE :keyword || '%' ESCAPE '\\' OR name LIKE '%' || :keyword || '%' ESCAPE '\\' OR country LIKE :keyword || '%' ESCAPE '\\' OR country LIKE '%' || :keyword || '%' ESCAPE '\\' OR language LIKE :keyword || '%' ESCAPE '\\' OR language LIKE '%' || :keyword || '%' ESCAPE '\\' OR tags LIKE '%' || :keyword || '%' ESCAPE '\\') ORDER BY CASE WHEN :keyword != '' AND name LIKE :keyword || '%' ESCAPE '\\' THEN 0 WHEN :keyword != '' AND (name LIKE '% ' || :keyword || '%' ESCAPE '\\' OR name LIKE '%-' || :keyword || '%' ESCAPE '\\' OR name LIKE '%(' || :keyword || '%' ESCAPE '\\' OR name LIKE '%.' || :keyword || '%' ESCAPE '\\') THEN 1 WHEN :keyword != '' AND name LIKE '%' || :keyword || '%' ESCAPE '\\' THEN 2 ELSE 3 END, clickcount DESC LIMIT 1000")
     LiveData<List<RadioStation>> searchStationsByMultiCriteria(String country, String language, String tag, String keyword);
     
     // 获取搜索建议

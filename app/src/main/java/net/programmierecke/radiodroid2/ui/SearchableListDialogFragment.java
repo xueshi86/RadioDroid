@@ -38,14 +38,28 @@ public class SearchableListDialogFragment extends DialogFragment {
     public static final String ARG_SELECTED = "selected";
     public static final String ARG_OPTIONS = "options";
 
-    /** 过滤选项：名称 + 出现次数（可选，用于标签热门排序显示） */
+    /** 过滤选项：筛选值 name + 显示标签 label（可选）+ 出现次数（可选）。
+     *  name 恒为传回查询的原始值（国家筛选时为 ISO 代码，语言/标签为原文）；
+     *  label 仅为显示（如本地化国名"中国"），为 null 时显示 name 本身。 */
     public static class FilterOption implements Serializable {
         public final String name;
+        @Nullable
+        public final String label;
         public final long count;
 
         public FilterOption(String name, long count) {
+            this(name, null, count);
+        }
+
+        public FilterOption(String name, @Nullable String label, long count) {
             this.name = name;
+            this.label = label;
             this.count = count;
+        }
+
+        /** 实际显示文本：label 优先，回退 name */
+        public String displayText() {
+            return label != null && !label.isEmpty() ? label : name;
         }
     }
 
@@ -155,20 +169,22 @@ public class SearchableListDialogFragment extends DialogFragment {
             filteredOptions.addAll(allOptions);
         } else {
             for (FilterOption option : allOptions) {
-                if (option.name.toLowerCase(Locale.US).contains(q)) {
+                // 同时匹配筛选值与显示标签：搜"中国"或"China"都能命中
+                if (option.name.toLowerCase(Locale.US).contains(q)
+                        || option.displayText().toLowerCase(Locale.US).contains(q)) {
                     filteredOptions.add(option);
                 }
             }
-            // 前缀命中优先，其次按名称排序
+            // 前缀命中优先，其次按显示文本排序
             Collections.sort(filteredOptions, new Comparator<FilterOption>() {
                 @Override
                 public int compare(FilterOption a, FilterOption b) {
-                    boolean aPrefix = a.name.toLowerCase(Locale.US).startsWith(q);
-                    boolean bPrefix = b.name.toLowerCase(Locale.US).startsWith(q);
+                    boolean aPrefix = a.displayText().toLowerCase(Locale.US).startsWith(q);
+                    boolean bPrefix = b.displayText().toLowerCase(Locale.US).startsWith(q);
                     if (aPrefix != bPrefix) {
                         return aPrefix ? -1 : 1;
                     }
-                    return a.name.compareToIgnoreCase(b.name);
+                    return a.displayText().compareToIgnoreCase(b.displayText());
                 }
             });
         }
@@ -201,11 +217,11 @@ public class SearchableListDialogFragment extends DialogFragment {
             FilterOption option = getItem(position);
             if (option != null) {
                 if (allLabel.equals(option.name)) {
-                    textView.setText(option.name);
+                    textView.setText(option.displayText());
                 } else if (option.count > 0) {
-                    textView.setText(option.name + " (" + option.count + ")");
+                    textView.setText(option.displayText() + " (" + option.count + ")");
                 } else {
-                    textView.setText(option.name);
+                    textView.setText(option.displayText());
                 }
             }
             return textView;
