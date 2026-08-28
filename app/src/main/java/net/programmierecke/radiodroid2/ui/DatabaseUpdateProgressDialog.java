@@ -17,6 +17,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import androidx.annotation.Nullable;
+
 import java.io.File;
 import java.util.Date;
 
@@ -663,9 +665,11 @@ public class DatabaseUpdateProgressDialog {
                         // 确认确实不是在更新状态，才关闭对话框
                         Log.d(TAG, "Update confirmed finished, dismissing dialog, progress=" + mProgressPercentage + "%");
                         dismiss();
-                        
-                        // 如果不是正常完成（进度不到99%），通知用户下载中断
-                        if (mProgressPercentage < 99) {
+
+                        // 进度不足 99% 且最终消息不是完成消息时，才提示中断。
+                        // 增量更新"无任何变更"时进度为 0/0（onProgress 从未调用），
+                        // 若只看百分比会每次完成都误报"更新已中断"
+                        if (mProgressPercentage < 99 && !isCompletionMessage(delayedProgress.message)) {
                             Log.d(TAG, "Update was interrupted, showing toast notification");
                             Toast.makeText(context, R.string.update_interrupted_message, Toast.LENGTH_LONG).show();
                         }
@@ -719,8 +723,33 @@ public class DatabaseUpdateProgressDialog {
     public boolean isShowing() {
         // 直接返回对话框的实际显示状态，确保与隐藏状态同步
         boolean result = dialog != null && dialog.isShowing();
-        Log.d(TAG, "isShowing() called, returning " + result + " (dialog=" + (dialog != null ? "not null" : "null") + 
+        Log.d(TAG, "isShowing() called, returning " + result + " (dialog=" + (dialog != null ? "not null" : "null") +
                   ", dialog.isShowing=" + (dialog != null ? dialog.isShowing() : "N/A") + ", internal isShowing=" + isShowing + ")");
         return result;
+    }
+
+    /**
+     * 判断消息是否为三种正常完成的收尾文案（全量完成/增量完成/保留现有数据）。
+     * 含格式化参数的文案（如"更新完成，共同步 %d 个电台…"）取 % 之前的前缀匹配，
+     * 与实际写入的消息（%d 已被替换为数字）对齐。
+     */
+    private boolean isCompletionMessage(@Nullable String message) {
+        if (message == null || message.isEmpty()) {
+            return false;
+        }
+        int[] completionIds = {
+                R.string.update_completed,
+                R.string.update_completed_incremental,
+                R.string.update_completed_keep_existing
+        };
+        for (int id : completionIds) {
+            String pattern = context.getString(id);
+            int cut = pattern.indexOf('%');
+            String prefix = cut > 0 ? pattern.substring(0, cut) : pattern;
+            if (message.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
