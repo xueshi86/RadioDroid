@@ -183,6 +183,19 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
 
         initAppLanguage();
 
+        // 启动时静默刷新远程电台总数（轻量 stats 请求，供设置页"本地/远程电台数量"比对）。
+        // 全部失败/离线/中途被杀均静默保留旧值；10 分钟节流防止 Activity 重建引发请求风暴
+        new Thread(() -> {
+            try {
+                RadioStationRepository repository = RadioStationRepository.getInstance(getApplicationContext());
+                if (!repository.isRemoteStationCountFresh()) {
+                    repository.refreshRemoteStationCountQuietly(getApplicationContext());
+                }
+            } catch (Exception e) {
+                Log.w("ActivityMain", "Remote station count refresh skipped: " + e.getMessage());
+            }
+        }, "StartupRemoteCountRefresh").start();
+
         super.onCreate(savedInstanceState);
 
         if (sharedPref == null) {

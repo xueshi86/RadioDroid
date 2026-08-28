@@ -100,7 +100,9 @@
     <string name="settings_check_network_connection_desc">Test connection to radio browser server</string>
     <string name="settings_local_database_status">Local Database Status</string>
     <string name="settings_local_database_status_default">Not updated yet</string>
-    <string name="settings_local_database_status_success">Last update: %1$s\nStation count: %2$d</string>
+    <string name="settings_local_database_status_success">Last updated: %1$s\nLocal station count: %2$d\nRemote station count: %3$d</string>
+    <string name="settings_local_database_status_success_no_remote">Last updated: %1$s\nLocal station count: %2$d</string>
+    <string name="settings_incremental_update_note">Note: Incremental update only syncs stations added or changed remotely — remotely deleted stations cannot be detected. After each update, compare the \"Local station count\" and \"Remote station count\" in the local database status below yourself. The remote count changes minute by minute with community edits, so a difference of a few dozen is normal (mirror replication also lags by minutes and may occasionally differ slightly from freshly synced data). If the difference is large (e.g. hundreds), tap \"Update local database\" to run a full update.</string>
     <string name="settings_local_database_status_failed">Update failed: %s</string>
     <string name="settings_theme_selection_title">Theme</string>
     <string name="theme_light">Light</string>

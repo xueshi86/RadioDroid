@@ -1108,7 +1108,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                                     }
                                     
                                     // 更新状态显示
-                                    statusPref.setSummary(getString(R.string.settings_local_database_status_success, updateTime, statusInfo.stationCount));
+                                    statusPref.setSummary(formatDatabaseStatusSummary(getContext(), updateTime, statusInfo.stationCount));
                                     
                                     // 更新数据库状态摘要信息
                                     String statusSummary = getString(R.string.db_status_summary, updateTime, statusInfo.stationCount);
@@ -1175,7 +1175,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                                 }
                                 
                                 // 更新状态显示
-                                statusPref.setSummary(getString(R.string.settings_local_database_status_success, updateTime, statusInfo.stationCount));
+                                statusPref.setSummary(formatDatabaseStatusSummary(getContext(), updateTime, statusInfo.stationCount));
                                 
                                 // 更新数据库状态摘要信息
                                 String statusSummary = getString(R.string.db_status_summary, updateTime, statusInfo.stationCount);
@@ -1196,11 +1196,25 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
     private static class DatabaseStatusInfo {
         public long timestamp;
         public int stationCount;
-        
+
         public DatabaseStatusInfo(long timestamp, int stationCount) {
             this.timestamp = timestamp;
             this.stationCount = stationCount;
         }
+    }
+
+    /**
+     * 组装"本地数据库状态"多行摘要：最后更新时间 + 本地电台数量 + 远程电台数量。
+     * 远程数量取自 ServerStatistics（全量/增量更新与启动刷新写入）；
+     * 从未获取到时回退两行版，避免显示误导性的"远程电台数量: 0"。
+     */
+    private static String formatDatabaseStatusSummary(Context context, String updateTime, int localCount) {
+        SharedPreferences stats = context.getSharedPreferences("ServerStatistics", Context.MODE_PRIVATE);
+        int remoteCount = stats.getInt("stations_total", 0);
+        if (remoteCount > 0) {
+            return context.getString(R.string.settings_local_database_status_success, updateTime, localCount, remoteCount);
+        }
+        return context.getString(R.string.settings_local_database_status_success_no_remote, updateTime, localCount);
     }
 
     private void getStationCountAndUpdateStatus(String lastUpdateTime, RadioStationRepository repository, Preference statusPref) {
@@ -1214,7 +1228,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                         // 再次检查Fragment状态，防止在UI操作中Fragment已分离
                         if (isAdded() && getContext() != null) {
                             // 更新状态显示
-                            statusPref.setSummary(getString(R.string.settings_local_database_status_success, lastUpdateTime, count));
+                            statusPref.setSummary(formatDatabaseStatusSummary(getContext(), lastUpdateTime, count));
                             
                             // 更新数据库状态摘要信息
                             String statusSummary = getString(R.string.db_status_summary, lastUpdateTime, count);

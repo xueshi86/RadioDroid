@@ -132,8 +132,6 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="settings_check_network_connection_desc">Протестировать подключение к серверу браузера радиостанций</string>
     <string name="settings_local_database_status">Статус локальной базы данных</string>
     <string name="settings_local_database_status_default">Еще не обновлено</string>
-    <string name="settings_local_database_status_success">Последнее обновление: %1$s
-Количество станций: %2$d</string>
     <string name="settings_local_database_status_failed">Обновление не удалось: %s</string>
     
     <string name="settings_language">Язык интерфейса</string>
@@ -771,4 +769,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="error_inc_update_need_full">Нет метки синхронизации. Сначала выполните полное обновление базы данных.</string>
     <string name="error_inc_update_too_large">Слишком много ожидающих изменений для инкрементального обновления. Сначала выполните полное обновление базы данных.</string>
     <string name="error_inc_update_aborted">Инкрементальное обновление прервано из-за непредвиденной ошибки. Повторите попытку или выполните полное обновление базы данных.</string>
+    <string name="settings_local_database_status_success">Время последнего обновления: %1$s\nЛокальные станции: %2$d\nСтанции на сервере: %3$d</string>
+    <string name="settings_local_database_status_success_no_remote">Время последнего обновления: %1$s\nЛокальные станции: %2$d</string>
+    <string name="settings_incremental_update_note">Внимание: инкрементальное обновление синхронизирует только добавленные и изменённые станции — удалённые на сервере станции не обнаруживаются. После каждого обновления самостоятельно сравните указанные ниже количества локальных и серверных станций. Серверное количество меняется поминутно из-за правок сообщества — расхождение в несколько десятков нормально (зеркала тоже реплицируются с задержкой в минуты и порой слегка отличаются от свежесинхронизированных данных). При заметной разнице (например, в сотни) выполните полное обновление через «Обновить локальную базу данных».</string>
 </resources>

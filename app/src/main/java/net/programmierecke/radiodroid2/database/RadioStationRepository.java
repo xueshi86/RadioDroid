@@ -156,6 +156,10 @@ public class RadioStationRepository {
                     throw new RuntimeException(context.getString(R.string.error_network_unavailable));
                 }
 
+                // 顺带刷新远程电台总数（轻量 stats 请求，供状态页与本地/远程数量比对；
+                // 失败静默保留旧值，绝不影响本次增量同步的结果）
+                refreshRemoteStationCountQuietly(context);
+
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
                 String watermarkTime = prefs.getString(PREF_INC_LASTCHANGE_TIME, null);
 
@@ -325,6 +329,49 @@ public class RadioStationRepository {
             }
         }
         return radioStationDao.getMaxLastChangeTime() != null;
+    }
+
+    // ==================== 远程电台总数（状态页显示 + 本地/远程数量比对） ====================
+
+    /**
+     * ServerStatistics 里的远程总数是否在 10 分钟内刷新过（启动刷新节流用：
+     * Activity 旋转/重建会重复走 onCreate，避免请求风暴）。
+     */
+    public boolean isRemoteStationCountFresh() {
+        SharedPreferences sp = context.getSharedPreferences("ServerStatistics", Context.MODE_PRIVATE);
+        long last = sp.getLong("last_updated", 0);
+        return last > 0 && (System.currentTimeMillis() - last) < 10 * 60_000L;
+    }
+
+    /**
+     * 拉取 /json/stats 并把远程电台总数写入 ServerStatistics（键与全量更新保持一致）。
+     * 供启动时与增量更新流程调用；任何失败——网络不可用、超时、全部镜像失败、
+     * JSON 畸形——一律静默保留旧值，绝不抛出。须在后台线程调用。
+     */
+    public void refreshRemoteStationCountQuietly(Context context) {
+        try {
+            String result = RadioBrowserServerManager.downloadWithFailover(context, "json/stats", true);
+            if (result == null) {
+                Log.w(TAG, "Remote station count refresh: all servers failed, keeping old value");
+                return;
+            }
+            org.json.JSONObject stats = new org.json.JSONObject(result);
+            int total = stats.getInt("stations");
+            SharedPreferences sp = context.getSharedPreferences("ServerStatistics", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sp.edit();
+            editor.putInt("stations_total", total);
+            // 与全量更新相同的存储语义：working/broken 仅在两者都存在时写入
+            if (stats.has("stations_working") && stats.has("stations_broken")) {
+                editor.putInt("stations_working", stats.getInt("stations_working"));
+                editor.putInt("stations_broken", stats.getInt("stations_broken"));
+            }
+            // 单次 apply() 原子落盘：中途被杀则旧值原样保留，无半截状态
+            editor.putLong("last_updated", System.currentTimeMillis());
+            editor.apply();
+            Log.d(TAG, "Remote station count refreshed: " + total);
+        } catch (Exception e) {
+            Log.w(TAG, "Remote station count refresh failed, keeping old value: " + e.getMessage());
+        }
     }
     
     /**

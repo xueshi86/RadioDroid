@@ -336,4 +336,7 @@
     <string name="error_inc_update_need_full">Noch kein Synchronisations-Wasserzeichen. Bitte führen Sie zuerst ein vollständiges Datenbank-Update durch.</string>
     <string name="error_inc_update_too_large">Zu viele ausstehende Änderungen für die inkrementelle Aktualisierung. Bitte führen Sie zuerst ein vollständiges Datenbank-Update durch.</string>
     <string name="error_inc_update_aborted">Die inkrementelle Aktualisierung wurde unerwartet abgebrochen. Bitte versuchen Sie es erneut oder führen Sie ein vollständiges Datenbank-Update durch.</string>
+    <string name="settings_local_database_status_success">Letzte Aktualisierung: %1$s\nLokale Sender: %2$d\nRemote-Sender: %3$d</string>
+    <string name="settings_local_database_status_success_no_remote">Letzte Aktualisierung: %1$s\nLokale Sender: %2$d</string>
+    <string name="settings_incremental_update_note">Achtung: Die inkrementelle Aktualisierung synchronisiert nur neue und geänderte Sender – remote gelöschte Sender werden nicht erkannt. Vergleichen Sie nach jedem Update selbst die unten angezeigte lokale und remote Senderanzahl. Die Remote-Anzahl ändert sich minütlich durch die Community, eine Abweichung von einigen Dutzend ist normal (Spiegelserver replizieren ebenfalls mit Minutenverzögerung und weichen gelegentlich leicht vom frisch synchronisierten Stand ab). Bei deutlich größerer Abweichung (z. B. einige Hundert) führen Sie über „Lokale Datenbank aktualisieren“ ein vollständiges Update durch.</string>
 </resources>

@@ -25,6 +25,11 @@
             android:title="@string/settings_incremental_update"
             android:summary="@string/settings_incremental_update_desc" />
 
+        <Preference
+            android:key="incremental_update_note"
+            android:selectable="false"
+            android:summary="@string/settings_incremental_update_note" />
+
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="auto_incremental_update"

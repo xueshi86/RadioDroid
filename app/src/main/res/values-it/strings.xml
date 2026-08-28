@@ -418,4 +418,7 @@
     <string name="error_inc_update_need_full">Nessun riferimento di sincronizzazione. Esegui prima un aggiornamento completo del database.</string>
     <string name="error_inc_update_too_large">Troppe modifiche in sospeso per l\'aggiornamento incrementale. Esegui prima un aggiornamento completo del database.</string>
     <string name="error_inc_update_aborted">L\'aggiornamento incrementale è stato interrotto in modo anomalo. Riprova oppure esegui un aggiornamento completo del database.</string>
+    <string name="settings_local_database_status_success">Ultimo aggiornamento: %1$s\nStazioni locali: %2$d\nStazioni remote: %3$d</string>
+    <string name="settings_local_database_status_success_no_remote">Ultimo aggiornamento: %1$s\nStazioni locali: %2$d</string>
+    <string name="settings_incremental_update_note">Nota: l\'aggiornamento incrementale sincronizza solo le stazioni aggiunte o modificate in remoto — le stazioni eliminate dal server non vengono rilevate. Dopo ogni aggiornamento, confronta tu il numero di stazioni locali e remote mostrato sotto. Il numero remoto cambia di minuto in minuto con le modifiche della community — una differenza di alcune decine è normale (anche i mirror replicano con alcuni minuti di ritardo e a volte discostano leggermente dai dati appena sincronizzati). Se la differenza è marcata (es. alcune centinaia), tocca «Aggiorna database locale» per eseguire un aggiornamento completo.</string>
 </resources>
