@@ -88,3 +88,6 @@ de_missing_values.tsv
 # Exported data
 RadioDroid_Favorites_*.m3u
 radio_droid_database_*.db
+
+# Handover notes (local-only, not tracked / not pushed)
+/HANDOVER*.md
