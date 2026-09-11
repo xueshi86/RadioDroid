@@ -339,18 +339,6 @@
             android:title="@string/settings_equalizer"
             android:summary="@string/equalizer_use_builtin" />
 
-        <!-- ===[EXP-20260825-ANDROID5_EQ_SWITCH] 实验开关：Android 5.x 恢复内置均衡器。
-             默认关闭（保持 v1.05 封禁行为，保证无爆音）；用户主动开启后，
-             PlayerService/EqualizerActivity/FragmentSettings/ItemAdapterStation
-             四处条件判断均放行。仅在 Android 5.x（API < 23）有意义，6.0+ 由
-             FragmentSettings 动态隐藏。回退：删除本 Preference 节点。
-             ===[/EXP-20260825-ANDROID5_EQ_SWITCH] -->
-        <SwitchPreferenceCompat
-            android:defaultValue="false"
-            android:key="equalizer_android5_experiment"
-            android:title="@string/settings_android5_eq_experiment"
-            android:summary="@string/settings_android5_eq_experiment_summary" />
-
         <Preference
             android:key="sleep_timer"
             android:summary="@string/settings_sleep_timer_desc"

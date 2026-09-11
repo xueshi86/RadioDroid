@@ -157,10 +157,7 @@
     <string name="error_grant_audiofocus">Das System gab den Audiokanal nicht frei.</string>
 
     <string name="error_no_equalizer_found">Keine Equalizer-App gefunden!</string>
-    <string name="equalizer_unsupported_android5">Der integrierte Equalizer ist auf Android 5.x standardmäßig deaktiviert (um Knackgeräusche zu vermeiden). Um ihn zu verwenden, aktivieren Sie den Schalter „Experimenteller Equalizer Android 5“ in den Einstellungen.</string>
-    <string name="settings_android5_eq_experiment">Experimenteller Equalizer Android 5</string>
-    <string name="settings_android5_eq_experiment_summary">Experimentell: Stellt den integrierten Equalizer auf Android 5.x wieder her. Standardmäßig deaktiviert, um eine knackfreie Wiedergabe zu gewährleisten. Falls nach dem Aktivieren Knackgeräusche oder Wiedergabeprobleme auftreten, deaktivieren Sie den Schalter und starten Sie die Wiedergabe neu.</string>
-
+    <string name="equalizer_unsupported_android5">Der integrierte Equalizer ist auf Android 5.x standardmäßig deaktiviert (um Knackgeräusche zu vermeiden).</string>
     <string name="player_info_status">Status:&#160;</string>
     <string name="player_info_status_stopped">gestoppt</string>
     <string name="player_info_status_playing">Wiedergabe läuft</string>
@@ -305,6 +302,9 @@
     <string name="recording_delete_failed">Aufnahme konnte nicht gelöscht werden</string>
     <string name="recording_file_not_found">Aufnahmedatei nicht gefunden</string>
     <string name="recording_play_error">Aufnahme kann nicht wiedergegeben werden</string>
+    <string name="recording_start_failed">Aufnahme konnte nicht gestartet werden. Bitte überprüfen Sie den Speicherzugriff und versuchen Sie es erneut.</string>
+    <string name="recording_write_failed">Die Aufnahme wurde beendet, weil die Datei nicht geschrieben werden konnte.</string>
+    <string name="recording_not_available">Aufnahme für diesen Stream nicht verfügbar</string>
     <string name="recording_details">Details</string>
     <string name="recording_detail_name">Dateiname:</string>
     <string name="recording_detail_path">Dateipfad:</string>
@@ -323,8 +323,8 @@
     <string name="settings_incremental_update">Inkrementelles Update</string>
     <string name="settings_incremental_update_desc">Nur seit der letzten Synchronisierung geänderte Sender abrufen (schnell, geringer Datentraffic)</string>
     <string name="settings_auto_incremental_update">Automatisches inkrementelles Update</string>
-    <string name="settings_auto_incremental_update_on">Änderungen 24 Stunden nach dem letzten Update automatisch synchronisieren</string>
-    <string name="settings_auto_incremental_update_off">Nur manuell aktualisieren</string>
+    <string name="settings_auto_incremental_update_on">Beim Start der App Änderungen automatisch synchronisieren, wenn das letzte Update länger als 24 Stunden her ist</string>
+    <string name="settings_auto_incremental_update_off">Keine automatischen Updates; tippen Sie oben auf „Inkrementelles Update“, um manuell zu synchronisieren</string>
     <string name="settings_auto_incremental_wifi_only">Inkrementelles Update nur per WLAN</string>
     <string name="settings_auto_incremental_wifi_only_on">Nur im WLAN automatisch synchronisieren</string>
     <string name="settings_auto_incremental_wifi_only_off">Automatische Synchronisierung im Mobilfunknetz erlauben</string>

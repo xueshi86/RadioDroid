@@ -272,17 +272,23 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             Preference equalizerPref = findPreference("equalizer");
             if (equalizerPref == null) return;
 
-            // ===[EXP-20260825-ANDROID5_EQ_SWITCH] 实验开关：Android 5.x 均衡器入口置灰受开关控制。
-            // 默认（开关关闭）按 v1.05 逻辑置灰入口并显示封禁说明；用户开启
-            // "Android 5 实验性均衡器"后入口可点。6.0+ 恒可点。
-            // 开关本身仅在 Android 5.x 显示（见 setupAndroid5EqualizerExperimentSwitch）。
-            // 回退：删除本标记块及 refreshAndroid5EqualizerPreference() /
-            //       setupAndroid5EqualizerExperimentSwitch() 两个辅助方法与
-            //       onSharedPreferenceChanged 中的开关分支，恢复 v1.05 的
-            //       if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) { ... } else { ... }
-            // ===[/EXP-20260825-ANDROID5_EQ_SWITCH]
-            refreshAndroid5EqualizerPreference();
-            setupAndroid5EqualizerExperimentSwitch();
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                equalizerPref.setEnabled(false);
+                equalizerPref.setSummary(R.string.equalizer_unsupported_android5);
+            } else {
+                equalizerPref.setEnabled(true);
+                equalizerPref.setSummary(R.string.equalizer_use_builtin);
+                equalizerPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                    @Override
+                    public boolean onPreferenceClick(Preference preference) {
+                        Intent intent = new Intent(getContext(), net.programmierecke.radiodroid2.ui.EqualizerActivity.class);
+                        startActivity(intent);
+                        return true;
+                    }
+                });
+            }
+
+
             setupBluetoothPermissionPreference();
 
             // 初始化睡眠定时器摘要文本
@@ -1265,35 +1271,6 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         });
     }
 
-    // ===[EXP-20260825-ANDROID5_EQ_SWITCH] 实验开关辅助方法（回退时与标记块一起删除）
-    private void refreshAndroid5EqualizerPreference() {
-        Preference equalizerPref = findPreference("equalizer");
-        if (equalizerPref == null) return;
-        SharedPreferences sp = getPreferenceManager().getSharedPreferences();
-        boolean experimentOn = sp.getBoolean("equalizer_android5_experiment", false);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M && !experimentOn) {
-            equalizerPref.setEnabled(false);
-            equalizerPref.setSummary(R.string.equalizer_unsupported_android5);
-        } else {
-            equalizerPref.setEnabled(true);
-            equalizerPref.setSummary(R.string.equalizer_use_builtin);
-            equalizerPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                @Override
-                public boolean onPreferenceClick(Preference preference) {
-                    Intent intent = new Intent(getContext(), net.programmierecke.radiodroid2.ui.EqualizerActivity.class);
-                    startActivity(intent);
-                    return true;
-                }
-            });
-        }
-    }
-
-    private void setupAndroid5EqualizerExperimentSwitch() {
-        Preference switchPref = findPreference("equalizer_android5_experiment");
-        if (switchPref == null) return;
-        switchPref.setVisible(Build.VERSION.SDK_INT < Build.VERSION_CODES.M);
-    }
-    // ===[/EXP-20260825-ANDROID5_EQ_SWITCH]
 
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
                                           String key) {
@@ -1309,11 +1286,6 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 newFragment.show(getActivity().getSupportFragmentManager(), "appPicker");
             }
         }
-        // ===[EXP-20260825-ANDROID5_EQ_SWITCH] 实验开关联动：切换时刷新均衡器入口置灰/摘要（回退时删除）
-        if (key.equals("equalizer_android5_experiment")) {
-            refreshAndroid5EqualizerPreference();
-        }
-        // ===[/EXP-20260825-ANDROID5_EQ_SWITCH]
         if (key.equals("theme_name") || key.equals("circular_icons") || key.equals("bottom_navigation")) {
             if (key.equals("circular_icons"))
                 ((RadioDroidApp) getActivity().getApplication()).getFavouriteManager().updateShortcuts();

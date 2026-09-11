@@ -306,9 +306,7 @@
     <string name="equalizer_bands">Frequency Bands</string>
     <string name="equalizer_not_playing">Start playing a station first to use the equalizer</string>
     <string name="equalizer_settings_saved_hint">Settings will take effect when playback starts</string>
-    <string name="equalizer_unsupported_android5">In-app equalizer is disabled by default on Android 5.x to avoid popping. To use it, enable the "Android 5 Experimental Equalizer" toggle in Settings.</string>
-    <string name="settings_android5_eq_experiment">Android 5 Experimental Equalizer</string>
-    <string name="settings_android5_eq_experiment_summary">Experimental: restore the in-app equalizer on Android 5.x. Off by default to keep playback pop-free. If popping or playback issues occur after enabling, turn it off and restart playback.</string>
+    <string name="equalizer_unsupported_android5">In-app equalizer is disabled by default on Android 5.x to avoid popping.</string>
     <string name="equalizer_init_failed">Failed to initialize equalizer. Your device may not support this feature.</string>
     <string name="equalizer_open_external">Open System Equalizer</string>
     <string name="equalizer_open_external_summary">Open your device\'s built-in audio effect panel (if available)</string>
@@ -341,6 +339,11 @@
     <string name="image_button_record">Record</string>
     <string name="image_button_record_request_permission">Request permissions for recording</string>
     <string name="image_button_recordings">Recordings</string>
+    <string name="recording_play_error">Unable to play recording</string>
+    <string name="recording_start_failed">Unable to start recording. Check storage access and try again.</string>
+    <string name="recording_write_failed">Recording stopped because the file could not be written.</string>
+    <string name="recording_not_available">Recording is not available for this stream</string>
+    <string name="recording_details">Details</string>
     <string name="image_button_delete">Delete</string>
     <string name="image_button_more">More</string>
     <string name="image_button_less">Less</string>

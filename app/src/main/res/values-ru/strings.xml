@@ -435,9 +435,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="equalizer_bands">Частотные полосы</string>
     <string name="equalizer_not_playing">Сначала начните воспроизведение станции для использования эквалайзера</string>
     <string name="equalizer_settings_saved_hint">Настройки вступят в силу при начале воспроизведения</string>
-    <string name="equalizer_unsupported_android5">Встроенный эквалайзер по умолчанию отключён на Android 5.x (во избежание щелчков). Чтобы использовать его, включите переключатель «Экспериментальный эквалайзер Android 5» в настройках.</string>
-    <string name="settings_android5_eq_experiment">Экспериментальный эквалайзер Android 5</string>
-    <string name="settings_android5_eq_experiment_summary">Экспериментально: восстановить встроенный эквалайзер на Android 5.x. По умолчанию выключено, чтобы воспроизведение было без щелчков. Если после включения появятся щелчки или проблемы с воспроизведением, выключите переключатель и перезапустите воспроизведение.</string>
+    <string name="equalizer_unsupported_android5">Встроенный эквалайзер по умолчанию отключён на Android 5.x (во избежание щелчков).</string>
     <string name="equalizer_init_failed">Не удалось инициализировать эквалайзер. Ваше устройство может не поддерживать эту функцию.</string>
     <string name="equalizer_open_external">Открыть системный эквалайзер</string>
     <string name="equalizer_open_external_summary">Открыть встроенную панель аудиоэффектов устройства (если доступна)</string>
@@ -687,6 +685,9 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="recording_delete_failed">Не удалось удалить запись</string>
     <string name="recording_file_not_found">Файл записи не найден</string>
     <string name="recording_play_error">Не удалось воспроизвести запись</string>
+    <string name="recording_start_failed">Не удалось начать запись. Проверьте доступ к хранилищу и повторите попытку.</string>
+    <string name="recording_write_failed">Запись остановлена, поскольку файл невозможно записать.</string>
+    <string name="recording_not_available">Для этого потока запись недоступна</string>
     <string name="recording_details">Подробности</string>
     <string name="recording_detail_name">Имя файла:</string>
     <string name="recording_detail_path">Путь к файлу:</string>
@@ -756,8 +757,8 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="settings_incremental_update">Инкрементальное обновление</string>
     <string name="settings_incremental_update_desc">Загружать только станции, изменённые после последней синхронизации (быстро, мало трафика)</string>
     <string name="settings_auto_incremental_update">Автоматическое инкрементальное обновление</string>
-    <string name="settings_auto_incremental_update_on">Автоматически синхронизировать изменения через 24 часа после последнего обновления</string>
-    <string name="settings_auto_incremental_update_off">Обновлять только вручную</string>
+    <string name="settings_auto_incremental_update_on">При запуске приложения автоматически синхронизировать изменения, если с последнего обновления прошло более 24 часов</string>
+    <string name="settings_auto_incremental_update_off">Без автоматического обновления; нажмите «Инкрементальное обновление» выше, чтобы синхронизировать вручную</string>
     <string name="settings_auto_incremental_wifi_only">Инкрементальное обновление только через Wi-Fi</string>
     <string name="settings_auto_incremental_wifi_only_on">Автосинхронизация только через Wi-Fi</string>
     <string name="settings_auto_incremental_wifi_only_off">Разрешить автосинхронизацию по мобильным данным</string>

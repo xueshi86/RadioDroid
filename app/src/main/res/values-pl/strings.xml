@@ -261,8 +261,8 @@
     <string name="settings_incremental_update">Aktualizacja przyrostowa</string>
     <string name="settings_incremental_update_desc">Pobierz tylko stacje zmienione od ostatniej synchronizacji (szybko, mały ruch)</string>
     <string name="settings_auto_incremental_update">Automatyczna aktualizacja przyrostowa</string>
-    <string name="settings_auto_incremental_update_on">Automatycznie synchronizuj zmiany 24 godziny po ostatniej aktualizacji</string>
-    <string name="settings_auto_incremental_update_off">Aktualizuj tylko ręcznie</string>
+    <string name="settings_auto_incremental_update_on">Po uruchomieniu aplikacji automatycznie synchronizuj zmiany, jeśli od ostatniej aktualizacji minęło ponad 24 godziny</string>
+    <string name="settings_auto_incremental_update_off">Brak automatycznej aktualizacji; dotknij „Aktualizacja przyrostowa” powyżej, aby zsynchronizować ręcznie</string>
     <string name="settings_auto_incremental_wifi_only">Aktualizacja przyrostowa tylko przez Wi-Fi</string>
     <string name="settings_auto_incremental_wifi_only_on">Automatyczna synchronizacja tylko przez Wi-Fi</string>
     <string name="settings_auto_incremental_wifi_only_off">Zezwól na automatyczną synchronizację przez dane mobilne</string>

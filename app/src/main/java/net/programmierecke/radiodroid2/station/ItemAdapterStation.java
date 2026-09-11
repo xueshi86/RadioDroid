@@ -492,14 +492,8 @@ public class ItemAdapterStation
                     }
                 }
             });
-            // ===[EXP-20260825-ANDROID5_EQ_SWITCH] 实验开关：Android 5.x 隐藏均衡器按钮受开关控制。
-            // 默认（开关关闭）按 v1.05 逻辑隐藏按钮；用户开启"Android 5 实验性均衡器"后显示。
-            // 回退：删除本标记块，恢复 v1.05 的 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) { ... }
-            // ===[/EXP-20260825-ANDROID5_EQ_SWITCH]
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                if (!prefs.getBoolean("equalizer_android5_experiment", false)) {
-                    holder.buttonEqualizerSettings.setVisibility(View.GONE);
-                }
+                holder.buttonEqualizerSettings.setVisibility(View.GONE);
             }
 
             holder.buttonAddAlarm.setOnClickListener(new View.OnClickListener() {

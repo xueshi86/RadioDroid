@@ -123,8 +123,8 @@
     <string name="settings_incremental_update">Incremental Update</string>
     <string name="settings_incremental_update_desc">Fetch only stations changed since last sync (fast, low traffic)</string>
     <string name="settings_auto_incremental_update">Auto incremental update</string>
-    <string name="settings_auto_incremental_update_on">Automatically sync changes 24h after last update</string>
-    <string name="settings_auto_incremental_update_off">Only update manually</string>
+    <string name="settings_auto_incremental_update_on">When the app starts, automatically sync changes if the last update was over 24 hours ago</string>
+    <string name="settings_auto_incremental_update_off">No automatic updates; tap \"Incremental Update\" above to sync manually</string>
     <string name="settings_auto_incremental_wifi_only">Incremental update Wi-Fi only</string>
     <string name="settings_auto_incremental_wifi_only_on">Only auto-sync on Wi-Fi</string>
     <string name="settings_auto_incremental_wifi_only_off">Allow auto-sync on mobile data</string>
@@ -481,9 +481,7 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="equalizer_bands">Frequency Bands</string>
     <string name="equalizer_not_playing">Start playing a station first to use the equalizer</string>
     <string name="equalizer_settings_saved_hint">Settings will take effect when playback starts</string>
-    <string name="equalizer_unsupported_android5">In-app equalizer is disabled by default on Android 5.x to avoid popping. To use it, enable the "Android 5 Experimental Equalizer" toggle in Settings.</string>
-    <string name="settings_android5_eq_experiment">Android 5 Experimental Equalizer</string>
-    <string name="settings_android5_eq_experiment_summary">Experimental: restore the in-app equalizer on Android 5.x. Off by default to keep playback pop-free. If popping or playback issues occur after enabling, turn it off and restart playback.</string>
+    <string name="equalizer_unsupported_android5">In-app equalizer is disabled by default on Android 5.x to avoid popping.</string>
     <string name="equalizer_init_failed">Failed to initialize equalizer. Your device may not support this feature.</string>
     <string name="equalizer_open_external">Open System Equalizer</string>
     <string name="equalizer_open_external_summary">Open your device\'s built-in audio effect panel (if available)</string>
@@ -718,6 +716,9 @@ The app will automatically restart to load the new database.</string>
     <string name="recording_delete_failed">Failed to delete recording</string>
     <string name="recording_file_not_found">Recording file not found</string>
     <string name="recording_play_error">Unable to play recording</string>
+    <string name="recording_start_failed">Unable to start recording. Check storage access and try again.</string>
+    <string name="recording_write_failed">Recording stopped because the file could not be written.</string>
+    <string name="recording_not_available">Recording is not available for this stream</string>
     <string name="recording_details">Details</string>
     <string name="recording_detail_name">File name:</string>
     <string name="recording_detail_path">File path:</string>

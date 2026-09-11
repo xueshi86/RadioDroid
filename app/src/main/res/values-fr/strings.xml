@@ -240,10 +240,7 @@
     <string name="error_grant_audiofocus">La demande de focus audio n\'a pas été accordée par le système.</string>
 
     <string name="error_no_equalizer_found">Aucun égaliseur trouvé !</string>
-    <string name="equalizer_unsupported_android5">L\'égaliseur intégré est désactivé par défaut sur Android 5.x (pour éviter les craquements). Pour l\'utiliser, activez le commutateur « Égaliseur expérimental Android 5 » dans les paramètres.</string>
-    <string name="settings_android5_eq_experiment">Égaliseur expérimental Android 5</string>
-    <string name="settings_android5_eq_experiment_summary">Expérimental : restaure l\'égaliseur intégré sur Android 5.x. Désactivé par défaut pour une lecture sans craquements. Si des craquements ou des problèmes de lecture apparaissent après activation, désactivez le commutateur et redémarrez la lecture.</string>
-
+    <string name="equalizer_unsupported_android5">L\'égaliseur intégré est désactivé par défaut sur Android 5.x (pour éviter les craquements).</string>
     <string name="player_info_status">Status :</string>
     <string name="player_info_status_stopped">Arrêté</string>
     <string name="player_info_status_playing">en lecture</string>
@@ -398,6 +395,9 @@
     <string name="recording_delete_failed">Échec de la suppression de l\'enregistrement</string>
     <string name="recording_file_not_found">Fichier d\'enregistrement introuvable</string>
     <string name="recording_play_error">Impossible de lire l\'enregistrement</string>
+    <string name="recording_start_failed">Impossible de démarrer l\'enregistrement. Vérifiez l\'accès au stockage et réessayez.</string>
+    <string name="recording_write_failed">L\'enregistrement a été arrêté car le fichier n\'a pas pu être écrit.</string>
+    <string name="recording_not_available">L\'enregistrement n\'est pas disponible pour ce flux</string>
     <string name="recording_details">Détails</string>
     <string name="recording_detail_name">Nom du fichier :</string>
     <string name="recording_detail_path">Chemin du fichier :</string>
@@ -409,8 +409,8 @@
     <string name="settings_incremental_update">Mise à jour incrémentale</string>
     <string name="settings_incremental_update_desc">Ne récupérer que les stations modifiées depuis la dernière synchro (rapide, peu de données)</string>
     <string name="settings_auto_incremental_update">Mise à jour incrémentale automatique</string>
-    <string name="settings_auto_incremental_update_on">Synchroniser automatiquement les changements 24 h après la dernière mise à jour</string>
-    <string name="settings_auto_incremental_update_off">Mise à jour uniquement manuelle</string>
+    <string name="settings_auto_incremental_update_on">Au démarrage de l\'application, synchroniser automatiquement les changements si la dernière mise à jour date de plus de 24 heures</string>
+    <string name="settings_auto_incremental_update_off">Pas de mise à jour automatique ; touchez « Mise à jour incrémentale » ci-dessus pour synchroniser manuellement</string>
     <string name="settings_auto_incremental_wifi_only">Mise à jour incrémentale Wi-Fi uniquement</string>
     <string name="settings_auto_incremental_wifi_only_on">Synchronisation automatique uniquement en Wi-Fi</string>
     <string name="settings_auto_incremental_wifi_only_off">Autoriser la synchro automatique en données mobiles</string>

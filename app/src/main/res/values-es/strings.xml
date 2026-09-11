@@ -299,9 +299,7 @@
     <string name="equalizer_bands">Bandas de frecuencia</string>
     <string name="equalizer_not_playing">Primero inicie la reproducción de una estación para usar el ecualizador</string>
     <string name="equalizer_settings_saved_hint">La configuración surtirá efecto al iniciar la reproducción</string>
-    <string name="equalizer_unsupported_android5">El ecualizador integrado está desactivado por defecto en Android 5.x (para evitar chasquidos). Para usarlo, active el interruptor «Ecualizador experimental de Android 5» en Ajustes.</string>
-    <string name="settings_android5_eq_experiment">Ecualizador experimental de Android 5</string>
-    <string name="settings_android5_eq_experiment_summary">Experimental: restaura el ecualizador integrado en Android 5.x. Desactivado por defecto para que la reproducción no tenga chasquidos. Si aparecen chasquidos o problemas de reproducción tras activarlo, desactívelo y reinicie la reproducción.</string>
+    <string name="equalizer_unsupported_android5">El ecualizador integrado está desactivado por defecto en Android 5.x (para evitar chasquidos).</string>
     <string name="equalizer_init_failed">Error al inicializar el ecualizador. Su dispositivo puede no ser compatible con esta función.</string>
     <string name="equalizer_open_external">Abrir ecualizador del sistema</string>
     <string name="equalizer_open_external_summary">Abrir el panel de efectos de audio del dispositivo (si está disponible)</string>
@@ -681,6 +679,9 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="recording_delete_failed">Error al eliminar la grabación</string>
     <string name="recording_file_not_found">Archivo de grabación no encontrado</string>
     <string name="recording_play_error">No se puede reproducir la grabación</string>
+    <string name="recording_start_failed">No se pudo iniciar la grabación. Comprueba el acceso al almacenamiento e inténtalo de nuevo.</string>
+    <string name="recording_write_failed">La grabación se detuvo porque no se pudo escribir el archivo.</string>
+    <string name="recording_not_available">La grabación no está disponible para este flujo</string>
     <string name="recording_details">Detalles</string>
     <string name="recording_detail_name">Nombre del archivo:</string>
     <string name="recording_detail_path">Ruta del archivo:</string>
@@ -751,8 +752,8 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="settings_incremental_update">Actualización incremental</string>
     <string name="settings_incremental_update_desc">Descargar solo las emisoras cambiadas desde la última sincronización (rápido, poco tráfico)</string>
     <string name="settings_auto_incremental_update">Actualización incremental automática</string>
-    <string name="settings_auto_incremental_update_on">Sincronizar cambios automáticamente 24 h después de la última actualización</string>
-    <string name="settings_auto_incremental_update_off">Actualizar solo manualmente</string>
+    <string name="settings_auto_incremental_update_on">Al iniciar la aplicación, sincronizar automáticamente los cambios si la última actualización fue hace más de 24 horas</string>
+    <string name="settings_auto_incremental_update_off">Sin actualización automática; pulse «Actualización incremental» arriba para sincronizar manualmente</string>
     <string name="settings_auto_incremental_wifi_only">Actualización incremental solo por Wi-Fi</string>
     <string name="settings_auto_incremental_wifi_only_on">Sincronizar automáticamente solo por Wi-Fi</string>
     <string name="settings_auto_incremental_wifi_only_off">Permitir sincronización automática con datos móviles</string>

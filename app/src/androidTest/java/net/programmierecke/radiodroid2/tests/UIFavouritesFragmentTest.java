@@ -34,7 +34,6 @@ import net.programmierecke.radiodroid2.tests.utils.FirstViewMatcher;
 import net.programmierecke.radiodroid2.tests.utils.TestUtils;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -86,8 +85,6 @@ public class UIFavouritesFragmentTest {
         onView(allOf((withId(R.id.recyclerViewStations)), FirstViewMatcher.firstView())).check(matches(recyclerRecycles()));
     }
 
-    @Ignore("Disabled until drag and drop is fixed, see " +
-            "https://stackoverflow.com/questions/27992427/recyclerview-adapter-notifyitemmoved0-1-scrolls-screen")
     @Test
     public void stationInFavourites_ShouldBeReordered_WithDragAndDrop() {
         onView(ViewMatchers.withId(R.id.nav_item_starred)).perform(ViewActions.click());
@@ -118,8 +115,6 @@ public class UIFavouritesFragmentTest {
         assertEquals(getFakeRadioStationName(0), favouriteManager.getList().get(2).Name);
     }
 
-    @Ignore("Disabled until drag and drop is fixed, see " +
-            "https://stackoverflow.com/questions/27992427/recyclerview-adapter-notifyitemmoved0-1-scrolls-screen")
     @Test
     public void stationInFavourites_ShouldBeReordered_WithSimpleDragAndDrop() {
         onView(ViewMatchers.withId(R.id.nav_item_starred)).perform(ViewActions.click());
@@ -134,6 +129,41 @@ public class UIFavouritesFragmentTest {
         onView(withRecyclerView(R.id.recyclerViewStations).atPosition(1))
                 .check(matches(hasDescendant(withText(getFakeRadioStationName(0)))));
         assertEquals(getFakeRadioStationName(0), favouriteManager.getList().get(1).Name);
+    }
+
+    @Test
+    public void stationInFavourites_ShouldBeReorderedDownward_WithDragAndDrop() {
+        onView(ViewMatchers.withId(R.id.nav_item_starred)).perform(ViewActions.click());
+        // 0 1 2 3 4
+
+        onView(withId(R.id.recyclerViewStations)).perform(scrollToRecyclerItem(0));
+        onView(withId(R.id.recyclerViewStations)).perform(recyclerDragAndDrop(0, 1));
+        // 1 0 2 3 4
+        onView(withRecyclerView(R.id.recyclerViewStations).atPosition(0))
+                .check(matches(hasDescendant(withText(getFakeRadioStationName(1)))));
+        assertEquals(getFakeRadioStationName(1), favouriteManager.getList().get(0).Name);
+        onView(withRecyclerView(R.id.recyclerViewStations).atPosition(1))
+                .check(matches(hasDescendant(withText(getFakeRadioStationName(0)))));
+        assertEquals(getFakeRadioStationName(0), favouriteManager.getList().get(1).Name);
+
+        onView(withId(R.id.recyclerViewStations)).perform(scrollToRecyclerItem(0));
+        onView(withId(R.id.recyclerViewStations)).perform(recyclerDragAndDrop(0, 2));
+        // 0 2 1 3 4
+        onView(withRecyclerView(R.id.recyclerViewStations).atPosition(2))
+                .check(matches(hasDescendant(withText(getFakeRadioStationName(1)))));
+        assertEquals(getFakeRadioStationName(1), favouriteManager.getList().get(2).Name);
+    }
+
+    @SdkSuppress(maxSdkVersion = 32)
+    @Test
+    public void stationInFavourites_ShouldBeDeleted_WithSwipeLeft() {
+        onView(withId(R.id.nav_item_starred)).perform(ViewActions.click());
+
+        onView(allOf((withId(R.id.recyclerViewStations)), FirstViewMatcher.firstView())).perform(scrollToRecyclerItem(0));
+        onView(withRecyclerView(R.id.recyclerViewStations).atPosition(0)).perform(ViewActions.swipeLeft());
+        waitForView(withId(com.google.android.material.R.id.snackbar_action));
+        SystemClock.sleep(1000);
+        assertEquals(STATIONS_COUNT - 1, favouriteManager.getList().size());
     }
 
     @SdkSuppress(maxSdkVersion = 32)

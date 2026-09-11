@@ -5,6 +5,9 @@
     <string name="language_french">Γαλλικά</string>
     <string name="language_italian">Ιταλικά</string>
     <string name="language_greek">Ελληνικά</string>
+    <string name="recording_start_failed">Αδυναμία έναρξης ηχογράφησης. Ελέγξτε την πρόσβαση στον χώρο αποθήκευσης και δοκιμάστε ξανά.</string>
+    <string name="recording_write_failed">Η ηχογράφηση σταμάτησε επειδή δεν ήταν δυνατή η εγγραφή του αρχείου.</string>
+    <string name="recording_not_available">Η ηχογράφηση δεν είναι διαθέσιμη για αυτήν τη ροή</string>
     <string name="detail_name">Όνομα</string>
     <string name="detail_tags">Καρτέλες</string>
     <string name="detail_country">Χώρα</string>
@@ -178,10 +181,7 @@
     <string name="error_grant_audiofocus">Το αίτημα εστίασης στον ήχο δεν παραχωρήθηκε από το σύστημα.</string>
 
     <string name="error_no_equalizer_found">Δεν βρέθηκε εφαρμογή ισοστάθμισης.</string>
-    <string name="equalizer_unsupported_android5">Ο ενσωματωμένος ισοσταθμιστής είναι απενεργοποιημένος από προεπιλογή σε Android 5.x (για αποφυγή «κρότων»). Για να τον χρησιμοποιήσετε, ενεργοποιήστε τον διακόπτη «Πειραματικός ισοσταθμιστής Android 5» στις Ρυθμίσεις.</string>
-    <string name="settings_android5_eq_experiment">Πειραματικός ισοσταθμιστής Android 5</string>
-    <string name="settings_android5_eq_experiment_summary">Πειραματικό: επαναφέρει τον ενσωματωμένο ισοσταθμιστή σε Android 5.x. Απενεργοποιημένο από προεπιλογή για αναπαραγωγή χωρίς «κρότους». Εάν εμφανιστούν «κρότοι» ή προβλήματα αναπαραγωγής μετά την ενεργοποίηση, απενεργοποιήστε τον διακόπτη και επανεκκινήστε την αναπαραγωγή.</string>
-
+    <string name="equalizer_unsupported_android5">Ο ενσωματωμένος ισοσταθμιστής είναι απενεργοποιημένος από προεπιλογή σε Android 5.x (για αποφυγή «κρότων»).</string>
     <string name="player_info_status">Κατάσταση: </string>
     <string name="player_info_status_stopped">σταματημένο</string>
     <string name="player_info_status_playing">παίζει</string>

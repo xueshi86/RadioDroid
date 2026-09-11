@@ -135,7 +135,7 @@ public class RadioDroidApp extends MultiDexApplication {
     private void maybeAutoIncrementalUpdate() {
         try {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-            if (!prefs.getBoolean("auto_incremental_update", true)) {
+            if (!prefs.getBoolean("auto_incremental_update", false)) {
                 return;
             }
             if (prefs.getBoolean("auto_incremental_wifi_only", false)) {

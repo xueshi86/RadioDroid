@@ -3,7 +3,10 @@ package net.programmierecke.radiodroid2.recording;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
@@ -47,11 +50,13 @@ public class RecordingsManager {
 
     private class RunningRecordableListener implements RecordableListener {
         private RunningRecordingInfo runningRecordingInfo;
+        private Context context;
         private boolean ended;
         private long lastFlushBytes;
 
-        private RunningRecordableListener(@NonNull RunningRecordingInfo runningRecordingInfo) {
+        private RunningRecordableListener(@NonNull RunningRecordingInfo runningRecordingInfo, @NonNull Context context) {
             this.runningRecordingInfo = runningRecordingInfo;
+            this.context = context.getApplicationContext();
         }
 
         @Override
@@ -68,7 +73,8 @@ public class RecordingsManager {
                     }
                 }
             } catch (IOException e) {
-                Log.e(TAG, "Error writing recording bytes: " + e.getMessage());
+                Log.e(TAG, "Error writing recording bytes: " + e.getMessage(), e);
+                showRecordingMessage(context, R.string.recording_write_failed, Toast.LENGTH_LONG);
                 runningRecordingInfo.getRecordable().stopRecording();
             }
         }
@@ -101,9 +107,15 @@ public class RecordingsManager {
     private Map<Recordable, RunningRecordingInfo> runningRecordings = new HashMap<>();
     private ArrayList<DataRecording> savedRecordings = new ArrayList<>();
 
+    private void showRecordingMessage(@NonNull Context context, int messageId, int duration) {
+        Context applicationContext = context.getApplicationContext();
+        new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(applicationContext, messageId, duration).show());
+    }
+
     public void record(@NonNull Context context, @NonNull Recordable recordable) {
         if (!recordable.canRecord()) {
             Log.w(TAG, "Cannot record: canRecord() returned false");
+            showRecordingMessage(context, R.string.recording_not_available, Toast.LENGTH_SHORT);
             return;
         }
 
@@ -147,11 +159,12 @@ public class RecordingsManager {
             try {
                 info.setOutputStream(new FileOutputStream(filePath));
             } catch (FileNotFoundException e) {
-                Log.e(TAG, "Recording file not found: " + filePath, e);
+                Log.e(TAG, "Could not open recording file for writing: " + filePath, e);
+                showRecordingMessage(context, R.string.recording_start_failed, Toast.LENGTH_LONG);
                 return;
             }
 
-            recordable.startRecording(new RunningRecordableListener(info));
+            recordable.startRecording(new RunningRecordableListener(info, context));
 
             runningRecordings.put(recordable, info);
             Log.d(TAG, "Recording started successfully: " + info.getFileName());

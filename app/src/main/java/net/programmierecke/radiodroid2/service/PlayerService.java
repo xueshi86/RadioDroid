@@ -1495,21 +1495,8 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     private void applyEqualizerSettings(int audioSessionId) {
         if (eqActivityOpen) return;
 
-        // ===[EXP-20260825-ANDROID5_EQ_SWITCH] 实验开关：Android 5.x 均衡器 attach 受开关控制。
-        // v1.05 为彻底解决安卓5爆音，曾在此直接 return（封禁安卓5均衡器），属"过头限制"。
-        // 用户反馈 v1.02（均衡器可用）在 A5.1.1 上所有广播站均正常；爆音根因实为 v1.03
-        // 引入的"缓冲硬静音截断 + 指数陡峭渐入 + 效果会话广播抖动"，v1.05 已通过
-        // fadeInVolumeLinearGain / 效果会话去抖 / PrePlaying 不硬静音 修复。
-        // 折中方案：默认保持封禁（开关默认 false，保证无爆音）；用户主动在设置中开启
-        // "Android 5 实验性均衡器"后放行。恢复后仍依赖下方 session 复用
-        // （serviceEqualizerSessionId）与 eqAndFadeInitialized 幂等，且 attach 前已静音。
-        // 回退：删除本标记块，恢复 v1.05 的 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return;
-        // ===[/EXP-20260825-ANDROID5_EQ_SWITCH]
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            SharedPreferences eqPrefs = PreferenceManager.getDefaultSharedPreferences(itsContext);
-            if (!eqPrefs.getBoolean("equalizer_android5_experiment", false)) {
-                return;
-            }
+            return;
         }
 
         // 均衡器已 attach 到同一 audio session 时直接复用，避免反复

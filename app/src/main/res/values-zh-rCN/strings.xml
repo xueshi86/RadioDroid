@@ -103,8 +103,8 @@
     <string name="settings_incremental_update">增量更新</string>
     <string name="settings_incremental_update_desc">仅拉取上次同步以来变更的电台（快速、省流量）</string>
     <string name="settings_auto_incremental_update">自动增量更新</string>
-    <string name="settings_auto_incremental_update_on">距上次更新 24 小时后自动同步变更</string>
-    <string name="settings_auto_incremental_update_off">仅手动更新</string>
+    <string name="settings_auto_incremental_update_on">启动应用时，若距最后一次更新超过 24 小时，自动同步变更</string>
+    <string name="settings_auto_incremental_update_off">不自动更新；点击上方“增量更新”手动同步</string>
     <string name="settings_auto_incremental_wifi_only">仅 Wi-Fi 下自动增量</string>
     <string name="settings_auto_incremental_wifi_only_on">仅在 Wi-Fi 下自动同步</string>
     <string name="settings_auto_incremental_wifi_only_off">允许移动数据下自动同步</string>
@@ -353,9 +353,7 @@
     <string name="equalizer_bands">频段</string>
     <string name="equalizer_not_playing">请先播放电台才能使用均衡器</string>
     <string name="equalizer_settings_saved_hint">设置将在播放电台时生效</string>
-    <string name="equalizer_unsupported_android5">Android 5.x 默认禁用应用内均衡器（避免爆音）。如需使用，请在设置中开启"Android 5 实验性均衡器"实验开关。</string>
-    <string name="settings_android5_eq_experiment">Android 5 实验性均衡器</string>
-    <string name="settings_android5_eq_experiment_summary">实验性功能：在 Android 5.x 上恢复应用内均衡器。默认关闭，以保障播放不出现爆音。如开启后出现爆音或播放异常，请关闭此开关并重启播放。</string>
+    <string name="equalizer_unsupported_android5">Android 5.x 默认禁用应用内均衡器（避免爆音）。</string>
     <string name="equalizer_init_failed">均衡器初始化失败，您的设备可能不支持此功能</string>
     <string name="equalizer_open_external">打开系统均衡器</string>
     <string name="equalizer_open_external_summary">打开设备自带的音频效果面板（如可用）</string>
@@ -555,6 +553,9 @@
     <string name="recording_delete_failed">删除录音失败</string>
     <string name="recording_file_not_found">录音文件未找到</string>
     <string name="recording_play_error">无法播放录音</string>
+    <string name="recording_start_failed">无法开始录音，请检查存储访问权限后重试。</string>
+    <string name="recording_write_failed">由于无法写入录音文件，录音已停止。</string>
+    <string name="recording_not_available">当前音频流不支持录音</string>
     <string name="recording_details">详情</string>
     <string name="recording_detail_name">文件名：</string>
     <string name="recording_detail_path">保存路径：</string>

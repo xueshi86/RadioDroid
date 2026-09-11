@@ -3,7 +3,6 @@ package net.programmierecke.radiodroid2.utils;
 import android.content.Context;
 import android.graphics.Canvas;
 
-import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class RecyclerItemMoveAndSwipeHelper<ViewHolderType extends SwipeableViewHolder> extends RecyclerItemSwipeHelper {
@@ -29,14 +28,18 @@ public class RecyclerItemMoveAndSwipeHelper<ViewHolderType extends SwipeableView
 
     @Override
     public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
-        return true;
-    }
+        int fromPos = viewHolder.getAdapterPosition();
+        int toPos = target.getAdapterPosition();
 
-    @Override
-    public void onMoved(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, int fromPos, @NonNull RecyclerView.ViewHolder target, int toPos, int x, int y) {
+        if (fromPos < 0 || toPos < 0 || fromPos == toPos) {
+            return false;
+        }
+
         @SuppressWarnings("unchecked")
         ViewHolderType viewHolderType = (ViewHolderType) viewHolder;
         moveAndSwipeListener.onMoved(viewHolderType, fromPos, toPos);
+
+        return true;
     }
 
     @Override
