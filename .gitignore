@@ -75,6 +75,9 @@ logcat*.txt
 # Trae IDE
 .trae/
 
+# Code graph tool cache (local-only)
+/.codegraph/
+
 # Local analysis / temp artifacts
 analyze.py
 _extract_missing.py
