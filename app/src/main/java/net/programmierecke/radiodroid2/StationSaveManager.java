@@ -34,6 +34,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -111,31 +112,53 @@ public class StationSaveManager extends Observable {
         }
     }
 
-    public void addMultiple(List<DataRadioStation> stations) {
-        // 防御空列表：避免误导入空 M3U 时静默清空已有数据
+    public boolean addMultiple(List<DataRadioStation> stations) {
         if (stations == null || stations.isEmpty()) {
             Log.w("SAVE", "addMultiple called with empty list, ignoring to protect existing data");
-            notifyAllListeners();
-            return;
+            return false;
         }
 
-        // 清空现有列表，实现覆盖式导入
-        listStations.clear();
-
-        // 添加新导入的电台，同时按 UUID 去重，避免 M3U 内部重复导致列表重复
-        for (DataRadioStation station_new: stations){
-            if (!has(station_new.StationUuid)) {
-                // 与 add()/addFront()/addAll() 保持一致：设置 queue 字段，
-                // 否则 PlayerService 调用 getNextById/getPreviousById 时会 NPE
-                if (station_new.queue == null) {
-                    station_new.queue = this;
-                }
-                listStations.add(station_new);
+        ArrayList<DataRadioStation> importedStations = new ArrayList<>();
+        for (DataRadioStation station : stations) {
+            if (station == null || station.StationUuid == null || station.StationUuid.isEmpty()) {
+                Log.w("SAVE", "Skipping imported station with missing UUID");
+                continue;
+            }
+            if (!containsStationWithUuid(importedStations, station.StationUuid)) {
+                station.queue = this;
+                importedStations.add(station);
             }
         }
-        Save();
 
-        notifyAllListeners();
+        if (importedStations.isEmpty()) {
+            Log.w("SAVE", "No valid stations found in import, keeping existing data");
+            return false;
+        }
+
+        List<DataRadioStation> previousStations = listStations;
+        listStations = importedStations;
+        try {
+            if (!Save()) {
+                listStations = previousStations;
+                Log.e("SAVE", "Unable to persist imported stations");
+                return false;
+            }
+            notifyAllListeners();
+            return true;
+        } catch (RuntimeException e) {
+            listStations = previousStations;
+            Log.e("SAVE", "Unable to import stations", e);
+            return false;
+        }
+    }
+
+    private boolean containsStationWithUuid(List<DataRadioStation> stations, String stationUuid) {
+        for (DataRadioStation station : stations) {
+            if (stationUuid.equals(station.StationUuid)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void replaceList(List<DataRadioStation> stations_new) {
@@ -419,7 +442,7 @@ public class StationSaveManager extends Observable {
         }
     }
 
-    void Save() {
+    boolean Save() {
         JSONArray arr = new JSONArray();
         for (DataRadioStation station : listStations) {
             arr.put(station.toJson());
@@ -432,7 +455,7 @@ public class StationSaveManager extends Observable {
             Log.d("SAVE", "wrote: " + str);
         }
         editor.putString(getSaveId(), str);
-        editor.commit();
+        return editor.commit();
     }
 
     public static String getSaveDir() {
@@ -521,14 +544,18 @@ public class StationSaveManager extends Observable {
         new AsyncTask<Void, Void, List<DataRadioStation>>() {
             @Override
             protected List<DataRadioStation> doInBackground(Void... params) {
-                return LoadM3UInternal(filePath, fileName);
+                try {
+                    return LoadM3UInternal(filePath, fileName);
+                } catch (RuntimeException e) {
+                    Log.e("LOAD", "Import failed", e);
+                    return null;
+                }
             }
 
             @Override
             protected void onPostExecute(List<DataRadioStation> result) {
-                if (result != null) {
-                    Log.i("LOAD", "Loaded " + result.size() + "stations");
-                    addMultiple(result);
+                if (result != null && !result.isEmpty() && addMultiple(result)) {
+                    Log.i("LOAD", "Loaded " + result.size() + " stations");
                     Toast toast = Toast.makeText(context, context.getResources().getString(R.string.notify_load_playlist_ok, result.size(), filePath, fileName), Toast.LENGTH_LONG);
                     toast.show();
                 } else {
@@ -536,8 +563,6 @@ public class StationSaveManager extends Observable {
                     Toast toast = Toast.makeText(context, context.getResources().getString(R.string.notify_load_playlist_nok, filePath, fileName), Toast.LENGTH_LONG);
                     toast.show();
                 }
-
-                notifyAllListeners();
 
                 super.onPostExecute(result);
             }
@@ -560,9 +585,7 @@ public class StationSaveManager extends Observable {
 
             @Override
             protected void onPostExecute(List<DataRadioStation> result) {
-                if (result != null) {
-                    Log.i("LOAD", "Loaded " + result.size() + "stations");
-                    addMultiple(result);
+                if (result != null && !result.isEmpty() && addMultiple(result)) {
                     Toast toast = Toast.makeText(context, context.getResources().getString(R.string.notify_load_playlist_ok, result.size(), filePath, fileName), Toast.LENGTH_LONG);
                     toast.show();
                 } else {
@@ -570,8 +593,6 @@ public class StationSaveManager extends Observable {
                     Toast toast = Toast.makeText(context, context.getResources().getString(R.string.notify_load_playlist_nok, filePath, fileName), Toast.LENGTH_LONG);
                     toast.show();
                 }
-
-                notifyAllListeners();
 
                 super.onPostExecute(result);
             }
@@ -587,7 +608,7 @@ public class StationSaveManager extends Observable {
         File f = new File(filePath, fileName);
         // 显式指定 UTF-8 字符集，与 SaveM3UToStream 保持一致，避免默认字符集导致乱码
         try (BufferedWriter bw = new BufferedWriter(
-                new OutputStreamWriter(new FileOutputStream(f), StandardCharsets.UTF_8))) {
+                new OutputStreamWriter(new FileOutputStream(f), Charset.forName("UTF-8")))) {
             SaveM3UWriter(bw);
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
                 context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC))));
@@ -631,7 +652,7 @@ public class StationSaveManager extends Observable {
         // 注意：不关闭底层 outputStream（调用方负责），仅确保 BufferedWriter 的缓冲被刷新
         BufferedWriter bw = null;
         try {
-            bw = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
+            bw = new BufferedWriter(new OutputStreamWriter(outputStream, Charset.forName("UTF-8")));
             return SaveM3UWriter(bw);
         } catch (Exception e) {
             Log.e("Exception", "Stream write failed: " + e.toString());
@@ -649,7 +670,7 @@ public class StationSaveManager extends Observable {
     List<DataRadioStation> LoadM3UInternal(String filePath, String fileName) {
         // 显式指定 UTF-8 字符集，与 SaveM3U 保持一致
         try (InputStream is = new FileInputStream(new File(filePath, fileName))) {
-            return LoadM3UReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+            return LoadM3UReader(new InputStreamReader(is, Charset.forName("UTF-8")));
         } catch (Exception e) {
             Log.e("LOAD", "File read failed: " + e.toString());
             return null;
@@ -737,6 +758,7 @@ public class StationSaveManager extends Observable {
                         fallback.Name = url;
                     }
                     fallback.StreamUrl = url;
+                    fallback.TagsAll = "";
                     listStationsSorted.add(fallback);
                 }
             }

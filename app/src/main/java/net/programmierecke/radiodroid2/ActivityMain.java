@@ -89,9 +89,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -867,77 +868,75 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             }
         }
         if (requestCode == ACTION_LOAD_FILE && resultCode == RESULT_OK) {
-            Uri uri = null;
-            if (resultData != null) {
-                final Uri finalUri = resultData.getData();
-                Log.d(TAG, "Choosen load path: " + finalUri);
-                
-                // 立即返回应用，在后台执行导入操作
-                new AsyncTask<Void, Void, Void>() {
-                    private String fileName;
-                    private Exception exception;
-                    private int importedCount = 0;
-                    private List<DataRadioStation> importedStations;
-                    
-                    @Override
-                    protected Void doInBackground(Void... params) {
-                        try {
-                            // 在后台线程中获取文件名
-                            fileName = getFileNameFromUri(finalUri);
-                            if (fileName == null || fileName.isEmpty()) {
-                                fileName = "playlist.m3u";
-                            }
-                            
-                            // 检查文件是否为M3U格式
-                            if (!fileName.toLowerCase().endsWith(".m3u")) {
-                                exception = new Exception(getResources().getString(R.string.error_invalid_file_format));
-                                return null;
-                            }
-                            
-                            RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
-                            FavouriteManager favouriteManager = radioDroidApp.getFavouriteManager();
-                            
-                            InputStream is = getContentResolver().openInputStream(finalUri);
-                            // 显式指定 UTF-8，与 SaveM3U/LoadM3UInternal 保持一致，避免
-                            // 平台默认编码差异导致 5.1.1 等旧设备导出的文件解析乱码
-                            InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-                            
-                            // 直接调用LoadM3UReader获取结果
-                            importedStations = favouriteManager.LoadM3UReader(reader);
-                            if (importedStations != null) {
-                                importedCount = importedStations.size();
-                                // 不在这里调用addMultiple，只保存数据
-                            } else {
-                                exception = new Exception(getResources().getString(R.string.error_import_failed_parse));
-                            }
-                            
-                            reader.close();
-                            is.close();
-                        } catch (Exception e) {
-                            exception = e;
-                            Log.e(TAG, "Unable to load file " + e);
-                        }
-                        return null;
-                    }
-
-                    @Override
-                    protected void onPostExecute(Void result) {
-                        if (exception != null) {
-                            if (exception.getMessage() != null && exception.getMessage().contains("M3U")) {
-                                Toast.makeText(ActivityMain.this, exception.getMessage(), Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(ActivityMain.this, getResources().getString(R.string.error_import_failed, exception.getMessage()), Toast.LENGTH_SHORT).show();
-                            }
-                        } else if (importedStations != null) {
-                            // 在主线程中添加电台到收藏列表
-                            RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
-                            FavouriteManager favouriteManager = radioDroidApp.getFavouriteManager();
-                            favouriteManager.addMultiple(importedStations);
-                            Toast.makeText(ActivityMain.this, getResources().getString(R.string.success_imported_stations, importedCount, fileName), Toast.LENGTH_LONG).show();
-                        }
-                    }
-                }.execute();
+            if (resultData == null || resultData.getData() == null) {
+                Toast.makeText(this, R.string.error_import_failed_parse, Toast.LENGTH_SHORT).show();
+                return;
             }
+            final Uri finalUri = resultData.getData();
+            Log.d(TAG, "Choosen load path: " + finalUri);
+
+            new AsyncTask<Void, Void, Void>() {
+                private String fileName;
+                private Exception exception;
+                private int importedCount = 0;
+                private List<DataRadioStation> importedStations;
+                
+                @Override
+                protected Void doInBackground(Void... params) {
+                    try {
+                        fileName = getFileNameFromUri(finalUri);
+                        if (fileName == null || fileName.isEmpty()) {
+                            exception = new Exception(getResources().getString(R.string.error_invalid_file_format));
+                            return null;
+                        }
+
+                        if (!fileName.toLowerCase(Locale.ROOT).endsWith(".m3u")) {
+                            exception = new Exception(getResources().getString(R.string.error_invalid_file_format));
+                            return null;
+                        }
+
+                        RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
+                        FavouriteManager favouriteManager = radioDroidApp.getFavouriteManager();
+                        try (InputStream is = getContentResolver().openInputStream(finalUri)) {
+                            if (is == null) {
+                                throw new IOException("Unable to open selected file");
+                            }
+                            try (InputStreamReader reader = new InputStreamReader(is, Charset.forName("UTF-8"))) {
+                                importedStations = favouriteManager.LoadM3UReader(reader);
+                            }
+                        }
+                        if (importedStations == null || importedStations.isEmpty()) {
+                            exception = new Exception(getResources().getString(R.string.error_import_failed_parse));
+                        } else {
+                            importedCount = importedStations.size();
+                        }
+                    } catch (Exception e) {
+                        exception = e;
+                        Log.e(TAG, "Unable to load file", e);
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void onPostExecute(Void result) {
+                    if (exception != null) {
+                        Toast.makeText(ActivityMain.this, getResources().getString(R.string.error_import_failed, exception.getMessage()), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    try {
+                        RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
+                        FavouriteManager favouriteManager = radioDroidApp.getFavouriteManager();
+                        if (!favouriteManager.addMultiple(importedStations)) {
+                            Toast.makeText(ActivityMain.this, R.string.error_import_failed_parse, Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        Toast.makeText(ActivityMain.this, getResources().getString(R.string.success_imported_stations, importedCount, fileName), Toast.LENGTH_LONG).show();
+                    } catch (RuntimeException e) {
+                        Log.e(TAG, "Unable to apply imported stations", e);
+                        Toast.makeText(ActivityMain.this, getResources().getString(R.string.error_import_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }.execute();
         }
     }
 
@@ -959,7 +958,8 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
                 favouriteManager.LoadM3U(file.getParent(), file.getName());
             }
         } catch (Exception e) {
-            Log.e("MAIN", e.toString());
+            Log.e("MAIN", "Unable to select file", e);
+            Toast.makeText(this, getResources().getString(R.string.error_import_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
         }
     }
 

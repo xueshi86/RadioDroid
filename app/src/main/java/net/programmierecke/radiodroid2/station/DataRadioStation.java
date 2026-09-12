@@ -125,6 +125,18 @@ public class DataRadioStation implements Parcelable {
 	}
 
 	private void fixStationFields() {
+		if (Name == null || TextUtils.isEmpty(Name.trim())) {
+			Name = "Unknown Station";
+		}
+		if (StationUuid == null) {
+			StationUuid = "";
+		}
+		if (StreamUrl == null) {
+			StreamUrl = "";
+		}
+		if (TagsAll == null) {
+			TagsAll = "";
+		}
 		if (IconUrl == null || TextUtils.isEmpty(IconUrl.trim())) {
 			IconUrl = "";
 		}

@@ -105,7 +105,7 @@ public class FragmentStarred extends Fragment implements IAdapterRefreshable, Ob
 
         switch (currentSortMode) {
             case SORT_NAME:
-                comparator = Comparator.comparing(s -> s.Name.toLowerCase());
+                comparator = Comparator.comparing(s -> s.Name == null ? "" : s.Name.toLowerCase());
                 break;
             case SORT_CLICK_COUNT:
                 comparator = Comparator.comparingInt(s -> s.ClickCount);

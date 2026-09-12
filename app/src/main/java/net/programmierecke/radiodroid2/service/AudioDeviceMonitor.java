@@ -29,6 +29,7 @@ public class AudioDeviceMonitor {
     private static final String PREF_BT_DISCONNECT_HANDLED = "bluetooth_disconnect_handled";
     private static final String PREF_HEADSET_WAS_CONNECTED = "headset_was_connected_before_disconnect";
     private static final String PREF_WIRED_DISCONNECT_HANDLED = "wired_disconnect_handled";
+    private static final int ROUTE_DEVICE_TYPE_BLUETOOTH = 26;
 
     private final Context context;
     private final AudioManager audioManager;
@@ -223,7 +224,7 @@ public class AudioDeviceMonitor {
             MediaRouter.RouteInfo selectedRoute = mediaRouter.getSelectedRoute();
             if (selectedRoute != null) {
                 int deviceType = selectedRoute.getDeviceType();
-                if (deviceType == MediaRouter.RouteInfo.DEVICE_TYPE_BLUETOOTH) {
+                if (deviceType == ROUTE_DEVICE_TYPE_BLUETOOTH) {
                     return true;
                 }
                 String routeName = selectedRoute.getName() != null ? selectedRoute.getName().toString().toLowerCase() : "";
@@ -235,7 +236,7 @@ public class AudioDeviceMonitor {
             java.util.List<MediaRouter.RouteInfo> routes = mediaRouter.getRoutes();
             for (MediaRouter.RouteInfo route : routes) {
                 if (route != null && route.isEnabled()) {
-                    if (route.getDeviceType() == MediaRouter.RouteInfo.DEVICE_TYPE_BLUETOOTH) {
+                    if (route.getDeviceType() == ROUTE_DEVICE_TYPE_BLUETOOTH) {
                         return true;
                     }
                 }

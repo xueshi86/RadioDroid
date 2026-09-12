@@ -1,5 +1,6 @@
 package net.programmierecke.radiodroid2.recording;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -230,15 +231,16 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
         AlertDialog dialog = new AlertDialog.Builder(context)
                 .setTitle(R.string.recording_player_title)
                 .setView(dialogView)
-                .setOnDismissListener(d -> {
-                    stopSeekUpdate();
-                    if (activePlayer != null) {
-                        activePlayer.release();
-                        activePlayer = null;
-                    }
-                })
-                .setPositiveButton(R.string.action_ok, null)
                 .create();
+        dialog.setOnDismissListener(d -> {
+            stopSeekUpdate();
+            if (activePlayer != null) {
+                activePlayer.release();
+                activePlayer = null;
+            }
+        });
+        dialog.setButton(AlertDialog.BUTTON_POSITIVE, context.getString(R.string.action_ok), (dialogInterface, which) -> {
+        });
 
         activePlayerDialog = dialog;
         dialog.show();

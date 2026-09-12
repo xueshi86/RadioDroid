@@ -8,9 +8,14 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.annotation.SuppressLint;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.Manifest;
+import android.app.Activity;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -125,7 +130,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 if (!updateDialog.isShowing()) {
                     Log.d("FragmentSettings", "Dialog is not showing, calling show()");
                     // 确保在主线程中显示对话框
-                    if (isAdded() && getActivity() != null && !getActivity().isFinishing() && !getActivity().isDestroyed()) {
+                    if (isActivityUsable()) {
                         // 添加一个小延迟，确保UI准备好
                         new Handler().postDelayed(new Runnable() {
                             @Override
@@ -135,8 +140,8 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                                     Log.d("FragmentSettings", "In delayed runnable: updateDialog.isShowing=" + (updateDialog != null ? updateDialog.isShowing() : "null"));
                                     
                                     // 只有在真正有更新进行时才显示对话框
-                                    if (updateDialog != null && DatabaseUpdateManager.isUpdating(requireContext()) && 
-                                        isAdded() && getActivity() != null && !getActivity().isFinishing() && !getActivity().isDestroyed()) {
+                                    if (updateDialog != null && DatabaseUpdateManager.isUpdating(requireContext()) &&
+                                        isActivityUsable()) {
                                         updateDialog.show();
                                         Log.d("FragmentSettings", "Dialog shown successfully");
                                     } else {
@@ -219,6 +224,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         }
     }
 
+    @SuppressLint("NewApi")
     @Override
     public void onCreatePreferences(Bundle bundle, String s) {
         setPreferencesFromResource(R.xml.preferences, s);
@@ -657,7 +663,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         DatabaseUpdateManager.startUpdate(requireContext());
         if (updateDialog != null && updateDialog.isShowing()) {
             // 对话框已在显示
-        } else if (isAdded() && getActivity() != null && !getActivity().isFinishing() && !getActivity().isDestroyed()) {
+        } else if (isActivityUsable()) {
             updateDialog = new DatabaseUpdateProgressDialog(requireContext());
             updateDialog.show();
         }
@@ -716,7 +722,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 DatabaseUpdateManager.startIncrementalUpdate(requireContext());
                 if (updateDialog != null && updateDialog.isShowing()) {
                     // 对话框已在显示
-                } else if (isAdded() && getActivity() != null && !getActivity().isFinishing() && !getActivity().isDestroyed()) {
+                } else if (isActivityUsable()) {
                     updateDialog = new DatabaseUpdateProgressDialog(requireContext());
                     updateDialog.show();
                 }
@@ -1416,6 +1422,14 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
     
     // 导出主数据库到用户选择的URI
     private void exportDatabaseToUri(Uri uri) {
+        if (uri == null || !isAdded() || getContext() == null) {
+            return;
+        }
+        final Context context = requireContext().getApplicationContext();
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
         androidx.appcompat.app.AlertDialog.Builder progressBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()));
         progressBuilder.setTitle(R.string.export_database_title);
         progressBuilder.setMessage(getString(R.string.progress_exporting_database));
@@ -1423,39 +1437,68 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         progressDialog.show();
         
         new Thread(() -> {
+            boolean databaseClosed = false;
             try {
-                File mainDatabaseFile = requireContext().getDatabasePath("radio_droid_database");
-                
+                File mainDatabaseFile = context.getDatabasePath("radio_droid_database");
+                RadioStationRepository repository = RadioStationRepository.getInstance(context);
+                repository.closeDatabase();
+                databaseClosed = true;
+                validateDatabaseFile(mainDatabaseFile);
+
                 try (java.io.InputStream inputStream = new java.io.FileInputStream(mainDatabaseFile);
-                     java.io.OutputStream outputStream = requireContext().getContentResolver().openOutputStream(uri)) {
+                     java.io.OutputStream outputStream = context.getContentResolver().openOutputStream(uri)) {
                     if (outputStream == null) {
-                        throw new IOException("Unable to open output stream for URI: " + uri);
+                        throw new IOException("Unable to open output stream");
                     }
                     byte[] buffer = new byte[8192];
                     int length;
-                    while ((length = inputStream.read(buffer)) > 0) {
-                        outputStream.write(buffer, 0, length);
+                    while ((length = inputStream.read(buffer)) != -1) {
+                        if (length > 0) {
+                            outputStream.write(buffer, 0, length);
+                        }
                     }
+                    outputStream.flush();
                 }
-                
-                requireActivity().runOnUiThread(() -> {
-                    progressDialog.dismiss();
+                repository.reinitializeDatabase(context);
+                databaseClosed = false;
+                activity.runOnUiThread(() -> {
+                    if (progressDialog.isShowing()) {
+                        progressDialog.dismiss();
+                    }
+                    if (!isAdded() || getActivity() == null) {
+                        return;
+                    }
                     String displayPath = getDisplayPathFromUri(uri);
-                    androidx.appcompat.app.AlertDialog.Builder successBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()));
+                    androidx.appcompat.app.AlertDialog.Builder successBuilder = new androidx.appcompat.app.AlertDialog.Builder(
+                            getContext(), Utils.getAlertDialogThemeResId(getContext()));
                     successBuilder.setTitle(R.string.export_success_title);
                     successBuilder.setMessage(getString(R.string.export_success_message, displayPath));
                     successBuilder.setPositiveButton(R.string.action_ok, null);
                     successBuilder.show();
                 });
-                
-            } catch (IOException e) {
+            } catch (Exception e) {
                 Log.e(TAG, "Failed to export data", e);
-                requireActivity().runOnUiThread(() -> {
-                    progressDialog.dismiss();
-                    String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-                    androidx.appcompat.app.AlertDialog.Builder errorBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()));
+                if (databaseClosed) {
+                    try {
+                        RadioStationRepository.getInstance(context).reinitializeDatabase(context);
+                    } catch (Exception reinitializeException) {
+                        Log.e(TAG, "Failed to reopen database after export", reinitializeException);
+                    }
+                }
+                final String errorMessage = e.getMessage() != null
+                        ? e.getMessage()
+                        : e.getClass().getSimpleName();
+                activity.runOnUiThread(() -> {
+                    if (progressDialog.isShowing()) {
+                        progressDialog.dismiss();
+                    }
+                    if (!isAdded() || getActivity() == null) {
+                        return;
+                    }
+                    androidx.appcompat.app.AlertDialog.Builder errorBuilder = new androidx.appcompat.app.AlertDialog.Builder(
+                            getContext(), Utils.getAlertDialogThemeResId(getContext()));
                     errorBuilder.setTitle(R.string.export_failed_title);
-                    errorBuilder.setMessage(getString(R.string.export_failed_message, errorMsg));
+                    errorBuilder.setMessage(getString(R.string.export_failed_message, errorMessage));
                     errorBuilder.setPositiveButton(R.string.action_ok, null);
                     errorBuilder.show();
                 });
@@ -1575,8 +1618,124 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         return uriString;
     }
     
+    private static final long MAX_DATABASE_IMPORT_SIZE = 512L * 1024L * 1024L;
+
+    private void validateDatabaseFile(File databaseFile) throws IOException {
+        if (databaseFile == null || !databaseFile.isFile()) {
+            throw new IOException(getString(R.string.import_failed_invalid));
+        }
+        if (databaseFile.length() <= 0 || databaseFile.length() > MAX_DATABASE_IMPORT_SIZE) {
+            throw new IOException(databaseFile.length() <= 0
+                    ? getString(R.string.import_failed_empty)
+                    : getString(R.string.import_failed_invalid));
+        }
+        try (FileInputStream inputStream = new FileInputStream(databaseFile)) {
+            byte[] header = new byte[16];
+            int read = inputStream.read(header);
+            byte[] expected = new byte[] {
+                    'S', 'Q', 'L', 'i', 't', 'e', ' ', 'f', 'o', 'r', 'm', 'a', 't', ' ', '3', 0
+            };
+            if (read != expected.length || !java.util.Arrays.equals(header, expected)) {
+                throw new IOException(getString(R.string.import_failed_invalid));
+            }
+        }
+
+        SQLiteDatabase database = null;
+        Cursor cursor = null;
+        try {
+            database = SQLiteDatabase.openDatabase(
+                    databaseFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
+            cursor = database.rawQuery("PRAGMA integrity_check", null);
+            if (!cursor.moveToFirst() || !"ok".equalsIgnoreCase(cursor.getString(0))) {
+                throw new IOException(getString(R.string.error_database_corrupted));
+            }
+            cursor.close();
+            cursor = database.rawQuery(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name IN (?, ?, ?, ?)",
+                    new String[] {"radio_stations", "song_history", "update_timestamp", "radio_stations_fts"});
+            int tableCount = cursor.getCount();
+            if (tableCount < 3) {
+                throw new IOException(getString(R.string.import_failed_invalid));
+            }
+        } catch (SQLiteException e) {
+            throw new IOException(getString(R.string.error_database_corrupted), e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            if (database != null) {
+                database.close();
+            }
+        }
+    }
+
+    private void copyFile(File source, File target) throws IOException {
+        try (FileInputStream inputStream = new FileInputStream(source);
+             FileOutputStream outputStream = new FileOutputStream(target)) {
+            byte[] buffer = new byte[8192];
+            int length;
+            while ((length = inputStream.read(buffer)) != -1) {
+                if (length > 0) {
+                    outputStream.write(buffer, 0, length);
+                }
+            }
+            outputStream.getFD().sync();
+        }
+    }
+
+    private void deleteDatabaseSidecars(File databaseFile) {
+        String path = databaseFile.getAbsolutePath();
+        new File(path + "-wal").delete();
+        new File(path + "-shm").delete();
+        new File(path + "-journal").delete();
+    }
+
+    private void replaceDatabaseFile(File mainDatabaseFile, File importedFile) throws IOException {
+        File backupFile = new File(mainDatabaseFile.getParentFile(), mainDatabaseFile.getName() + ".backup");
+        File replacementFile = new File(mainDatabaseFile.getParentFile(), mainDatabaseFile.getName() + ".replacement");
+        if (replacementFile.exists() && !replacementFile.delete()) {
+            throw new IOException(getString(R.string.error_cannot_delete_old_db));
+        }
+        copyFile(importedFile, replacementFile);
+        validateDatabaseFile(replacementFile);
+        if (backupFile.exists() && !backupFile.delete()) {
+            throw new IOException(getString(R.string.error_cannot_delete_old_db));
+        }
+        if (mainDatabaseFile.exists() && !mainDatabaseFile.renameTo(backupFile)) {
+            throw new IOException(getString(R.string.error_cannot_delete_old_db));
+        }
+        deleteDatabaseSidecars(mainDatabaseFile);
+        if (!replacementFile.renameTo(mainDatabaseFile)) {
+            if (mainDatabaseFile.exists()) {
+                mainDatabaseFile.delete();
+            }
+            if (backupFile.exists()) {
+                backupFile.renameTo(mainDatabaseFile);
+            }
+            throw new IOException(getString(R.string.error_database_corrupted));
+        }
+        try {
+            validateDatabaseFile(mainDatabaseFile);
+        } catch (IOException e) {
+            mainDatabaseFile.delete();
+            if (backupFile.exists()) {
+                backupFile.renameTo(mainDatabaseFile);
+            }
+            throw e;
+        }
+        backupFile.delete();
+    }
+
     // 从外部存储导入主数据库
     private void importDatabase(Uri uri) {
+        if (uri == null || !isAdded() || getContext() == null) {
+            return;
+        }
+        final Context context = requireContext().getApplicationContext();
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
         androidx.appcompat.app.AlertDialog.Builder progressBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()));
         progressBuilder.setTitle(R.string.import_database_title);
         progressBuilder.setMessage(getString(R.string.progress_importing_database));
@@ -1585,106 +1744,57 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         
         new Thread(() -> {
             try {
-                File mainDatabaseFile = requireContext().getDatabasePath("radio_droid_database");
-                Log.d("FragmentSettings", "主数据库文件路径: " + mainDatabaseFile.getAbsolutePath());
-                
-                RadioStationRepository repository = RadioStationRepository.getInstance(requireContext());
-                repository.closeDatabase();
-                Log.d("FragmentSettings", "数据库连接已关闭");
-                
+                File mainDatabaseFile = context.getDatabasePath("radio_droid_database");
                 File databaseDir = mainDatabaseFile.getParentFile();
-                if (!databaseDir.exists()) {
-                    databaseDir.mkdirs();
-                    Log.d("FragmentSettings", "创建数据库目录: " + databaseDir.getAbsolutePath());
+                if (databaseDir == null || (!databaseDir.exists() && !databaseDir.mkdirs())) {
+                    throw new IOException(getString(R.string.error_target_file_not_exist));
                 }
-                
-                // 先复制到临时文件，验证成功后再替换，防止数据丢失
+
                 File tempImportFile = new File(databaseDir, "radio_droid_database_import_temp.db");
-                if (tempImportFile.exists()) {
-                    tempImportFile.delete();
+                if (tempImportFile.exists() && !tempImportFile.delete()) {
+                    throw new IOException(getString(R.string.import_failed_invalid));
                 }
-                
-                try (java.io.InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
+
+                long totalCopied = 0;
+                try (java.io.InputStream inputStream = context.getContentResolver().openInputStream(uri);
                      java.io.FileOutputStream outputStream = new java.io.FileOutputStream(tempImportFile)) {
                     if (inputStream == null) {
-                        tempImportFile.delete();
-                        throw new Exception(getString(R.string.import_failed_invalid));
+                        throw new IOException(getString(R.string.import_failed_invalid));
                     }
-                    
                     byte[] buffer = new byte[8192];
                     int length;
-                    long totalCopied = 0;
-                    while ((length = inputStream.read(buffer)) > 0) {
-                        outputStream.write(buffer, 0, length);
-                        totalCopied += length;
-                    }
-                    outputStream.flush();
-                    
-                    Log.d("FragmentSettings", "已复制 " + totalCopied + " 字节到临时文件");
-                    
-                    if (totalCopied == 0) {
-                        tempImportFile.delete();
-                        throw new Exception(getString(R.string.import_failed_empty));
-                    }
-                }
-                
-                if (!tempImportFile.exists()) {
-                    throw new Exception(getString(R.string.error_target_file_not_exist));
-                }
-                
-                long targetFileSize = tempImportFile.length();
-                Log.d("FragmentSettings", "临时文件大小: " + targetFileSize + " 字节");
-                
-                if (targetFileSize == 0) {
-                    tempImportFile.delete();
-                    throw new Exception(getString(R.string.import_failed_empty));
-                }
-                
-                // 验证成功后再替换旧数据库
-                if (mainDatabaseFile.exists()) {
-                    boolean deleted = mainDatabaseFile.delete();
-                    Log.d("FragmentSettings", "删除旧数据库文件: " + deleted);
-                    if (!deleted) {
-                        tempImportFile.delete();
-                        throw new Exception(getString(R.string.error_cannot_delete_old_db));
-                    }
-                }
-                
-                boolean renamed = tempImportFile.renameTo(mainDatabaseFile);
-                if (!renamed) {
-                    // 如果重命名失败，尝试复制
-                    try (java.io.FileInputStream fis = new java.io.FileInputStream(tempImportFile);
-                         java.io.FileOutputStream fos = new java.io.FileOutputStream(mainDatabaseFile)) {
-                        byte[] buffer = new byte[8192];
-                        int length;
-                        while ((length = fis.read(buffer)) > 0) {
-                            fos.write(buffer, 0, length);
+                    while ((length = inputStream.read(buffer)) != -1) {
+                        if (length > 0) {
+                            totalCopied += length;
+                            if (totalCopied > MAX_DATABASE_IMPORT_SIZE) {
+                                throw new IOException(getString(R.string.import_failed_invalid));
+                            }
+                            outputStream.write(buffer, 0, length);
                         }
-                        fos.flush();
                     }
-                    tempImportFile.delete();
+                    outputStream.getFD().sync();
                 }
-                
-                if (!mainDatabaseFile.exists()) {
-                    throw new Exception(getString(R.string.error_target_file_not_exist));
+                if (totalCopied == 0) {
+                    throw new IOException(getString(R.string.import_failed_empty));
                 }
-                
-                repository.reinitializeDatabase(requireContext());
-                
+                validateDatabaseFile(tempImportFile);
+
+                RadioStationRepository repository = RadioStationRepository.getInstance(context);
+                repository.closeDatabase();
+                replaceDatabaseFile(mainDatabaseFile, tempImportFile);
+                if (tempImportFile.exists() && !tempImportFile.delete()) {
+                    Log.w(TAG, "Unable to delete temporary import file");
+                }
+                repository.reinitializeDatabase(context);
                 repository.ensureUpdateTimestampTable();
-                Log.d("FragmentSettings", "已确保update_timestamp表存在");
-                
                 int stationCount = repository.getStationCountSync();
                 if (stationCount < 0) {
-                    throw new Exception(getString(R.string.error_database_corrupted));
+                    throw new IOException(getString(R.string.error_database_corrupted));
                 }
-                
-                Log.d("FragmentSettings", "数据库导入成功，电台数量: " + stationCount);
-                
+
+                Log.d(TAG, "数据库导入成功，电台数量: " + stationCount);
                 final long dbUpdateTime = repository.getDatabaseUpdateTime();
-                Log.d("FragmentSettings", "从数据库读取的更新时间戳: " + dbUpdateTime);
                 final int finalStationCount = stationCount;
-                
                 long finalUpdateTime = dbUpdateTime;
                 if (finalUpdateTime <= 0) {
                     try {
@@ -1754,7 +1864,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     successBuilder.setTitle(R.string.import_success_title);
                     successBuilder.setMessage(getString(R.string.import_success_message, finalStationCount));
                     successBuilder.setPositiveButton(R.string.action_ok, (dialog, which) -> {
-                        PreferenceManager.getDefaultSharedPreferences(requireContext()).edit().commit();
+                        PreferenceManager.getDefaultSharedPreferences(getContext()).edit().commit();
                         
                         Intent intent = new Intent(requireContext(), ActivityMain.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -1768,12 +1878,20 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 
             } catch (Exception e) {
                 Log.e("FragmentSettings", "导入数据库失败", e);
-                // 在UI线程显示错误
-                requireActivity().runOnUiThread(() -> {
-                    progressDialog.dismiss();
-                    androidx.appcompat.app.AlertDialog.Builder errorBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()));
+                final String errorMessage = e.getMessage() != null
+                        ? e.getMessage()
+                        : e.getClass().getSimpleName();
+                activity.runOnUiThread(() -> {
+                    if (progressDialog.isShowing()) {
+                        progressDialog.dismiss();
+                    }
+                    if (!isAdded() || getActivity() == null) {
+                        return;
+                    }
+                    androidx.appcompat.app.AlertDialog.Builder errorBuilder = new androidx.appcompat.app.AlertDialog.Builder(
+                            getContext(), Utils.getAlertDialogThemeResId(getContext()));
                     errorBuilder.setTitle(R.string.import_failed_title);
-                    errorBuilder.setMessage(getString(R.string.import_failed_message, e.getMessage()));
+                    errorBuilder.setMessage(getString(R.string.import_failed_message, errorMessage));
                     errorBuilder.setPositiveButton(R.string.action_ok, null);
                     errorBuilder.show();
                 });
@@ -1781,6 +1899,13 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         }).start();
     }
     
+    private boolean isActivityUsable() {
+        Activity currentActivity = getActivity();
+        return isAdded() && currentActivity != null && !currentActivity.isFinishing()
+                && (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN
+                || !currentActivity.isDestroyed());
+    }
+
     private void showSleepTimerDialog() {
         final androidx.appcompat.app.AlertDialog.Builder seekDialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()));
         View seekView = View.inflate(requireContext(), R.layout.layout_timer_chooser, null);

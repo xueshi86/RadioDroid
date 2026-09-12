@@ -1,5 +1,7 @@
 package net.programmierecke.radiodroid2.ui;
 
+import android.annotation.SuppressLint;
+
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
@@ -247,6 +249,7 @@ public final class StationWordExtractor {
         return isWordCp(cp) && isCjkCp(cp) == curIsCjk;
     }
 
+    @SuppressLint("NewApi")
     private static boolean isCjkCp(int cp) {
         Character.UnicodeBlock block = Character.UnicodeBlock.of(cp);
         if (block == null) {

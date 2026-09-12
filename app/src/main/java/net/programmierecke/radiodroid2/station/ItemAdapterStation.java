@@ -14,6 +14,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
+import android.annotation.SuppressLint;
 import android.text.TextUtils;
 
 import androidx.appcompat.content.res.AppCompatResources;
@@ -270,6 +271,13 @@ public class ItemAdapterStation
         return new StationViewHolder(v);
     }
 
+    @SuppressLint("NewApi")
+    private boolean isActivityUsable() {
+        return activity != null && !activity.isFinishing()
+                && (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN
+                || !activity.isDestroyed());
+    }
+
     @Override
     public void onBindViewHolder(final StationViewHolder holder, int position) {
         if (filteredStationsList == null || position < 0 || position >= filteredStationsList.size()) {
@@ -389,7 +397,7 @@ public class ItemAdapterStation
         }
 
         holder.textViewShortDescription.setText(station.getShortDetails(getContext()));
-        holder.textViewTags.setText(station.TagsAll.replace(",", ", "));
+        holder.textViewTags.setText(station.TagsAll != null ? station.TagsAll.replace(",", ", ") : "");
         
         // 设置简短描述和标签的文本颜色
         if (isDarkTheme) {
@@ -448,14 +456,14 @@ public class ItemAdapterStation
             holder.buttonVisitWebsite.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                    if (isActivityUsable()) {
                         StationActions.openStationHomeUrl(activity, station);
                     }
                 }
             });
 
             holder.buttonShare.setOnClickListener(view -> {
-                if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                if (isActivityUsable()) {
                     StationActions.share(activity, station);
                 }
             });
@@ -474,7 +482,7 @@ public class ItemAdapterStation
             holder.buttonBufferSettings.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                    if (isActivityUsable()) {
                         BufferSettingsDialog dialog = BufferSettingsDialog.newInstance(station.StationUuid, station.Name);
                         dialog.show(activity.getSupportFragmentManager(), "buffer_settings_dialog");
                     }
@@ -484,7 +492,7 @@ public class ItemAdapterStation
             holder.buttonEqualizerSettings.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                    if (isActivityUsable()) {
                         Intent intent = new Intent(activity, net.programmierecke.radiodroid2.ui.EqualizerActivity.class);
                         intent.putExtra(EqualizerActivity.EXTRA_STATION_UUID, station.StationUuid);
                         intent.putExtra(EqualizerActivity.EXTRA_STATION_NAME, station.Name);
@@ -499,7 +507,7 @@ public class ItemAdapterStation
             holder.buttonAddAlarm.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                    if (isActivityUsable()) {
                         StationActions.setAsAlarm(activity, station);
                     }
                 }
@@ -519,7 +527,7 @@ public class ItemAdapterStation
             holder.buttonRefreshIcon.setOnClickListener(v -> {
                 PlayerServiceUtil.forceRefreshStationIcon(station, holder.imageViewIcon);
             });
-            String[] tags = station.TagsAll.split(",");
+            String[] tags = station.TagsAll == null || station.TagsAll.isEmpty() ? new String[0] : station.TagsAll.split(",");
             holder.viewTags.setTags(Arrays.asList(tags));
             holder.viewTags.setTagSelectionCallback(tagSelectionCallback);
         }

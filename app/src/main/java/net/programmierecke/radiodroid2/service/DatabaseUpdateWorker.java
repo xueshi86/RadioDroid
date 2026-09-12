@@ -634,7 +634,8 @@ public class DatabaseUpdateWorker extends Worker implements RadioStationReposito
             Thread.currentThread().interrupt();
         }
         if (!lockAcquired) {
-            Log.w(TAG, "cancelUpdate: could not acquire update lock within 3s, proceeding with state cleanup anyway");
+            Log.w(TAG, "cancelUpdate: could not acquire update lock within 3s");
+            return;
         }
         try {
             Log.d(TAG, "Starting cancelUpdate process");
@@ -713,7 +714,9 @@ public class DatabaseUpdateWorker extends Worker implements RadioStationReposito
             
             Log.d(TAG, "CancelUpdate process completed");
         } finally {
-            sLock.unlock();
+            if (lockAcquired) {
+                sLock.unlock();
+            }
         }
     }
     
