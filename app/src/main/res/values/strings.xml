@@ -517,6 +517,7 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="equalizer_open_external_summary">Open your device\'s built-in audio effect panel (if available)</string>
     <string name="equalizer_use_builtin">Use Built-in Equalizer</string>
     <string name="equalizer_no_external">No system equalizer found. Using built-in equalizer.</string>
+    <string name="sort_by_none">Custom Order</string>
     <string name="sort_by_name">Sort by Name</string>
     <string name="sort_by_click_count">Sort by Popularity</string>
     <string name="sort_by_votes">Sort by Votes</string>

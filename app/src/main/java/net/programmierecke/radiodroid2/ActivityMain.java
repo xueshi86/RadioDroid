@@ -1158,6 +1158,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         if (currentFragment instanceof FragmentStarred) {
             final FragmentStarred starredFragment = (FragmentStarred) currentFragment;
             sortModes = new int[]{
+                    FragmentStarred.SORT_NONE,
                     FragmentStarred.SORT_NAME,
                     FragmentStarred.SORT_CLICK_COUNT,
                     FragmentStarred.SORT_VOTES,
@@ -1166,13 +1167,14 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             currentMode = starredFragment.getCurrentSortMode();
             isAscending = starredFragment.isSortAscending();
 
-            String[] displayOptions = new String[sortOptions.length];
-            for (int i = 0; i < sortOptions.length; i++) {
+            String[] displayOptions = new String[sortModes.length];
+            for (int i = 0; i < sortModes.length; i++) {
+                String label = (i == 0) ? getString(R.string.sort_by_none) : sortOptions[i - 1];
                 String indicator = "";
-                if (sortModes[i] == currentMode) {
+                if (sortModes[i] == currentMode && sortModes[i] != FragmentStarred.SORT_NONE) {
                     indicator = isAscending ? " ↑" : " ↓";
                 }
-                displayOptions[i] = sortOptions[i] + indicator;
+                displayOptions[i] = label + indicator;
             }
 
             int checkedItem = -1;

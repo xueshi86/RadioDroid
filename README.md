@@ -127,16 +127,17 @@
 
 #### 电台列表排序
 
-支持四种排序方式，点击 Toolbar 上的排序按钮弹出选择对话框：
+点击 Toolbar 上的排序按钮弹出选择对话框：
 
 | 排序方式  | 说明                              |
 | ----- | ------------------------------- |
+| 自定义顺序 | 手动排列（仅收藏夹可选；长按拖拽电台调整位置）      |
 | 按名称   | 字母序排列                           |
 | 按点击量  | 按 radio-browser.info 全球用户点击热度排序 |
 | 按投票数  | 按社区投票数排列                        |
 | 按最近变更 | 按电台信息最后更新时间排列                   |
 
-当前排序模式高亮显示 ↑（升序）/ ↓（降序）指示，点击相同模式可切换排序方向。排序偏好自动持久化保存。
+当前排序模式高亮显示 ↑（升序）/ ↓（降序）指示，点击相同模式可切换排序方向。排序偏好自动持久化保存。任意排序状态下均可长按拖拽电台调整位置：拖拽时当前显示顺序自动固化为「自定义顺序」，手动排序即时生效并持久保留，其余电台保持原排序相对顺序。
 
 #### 随机播放
 
@@ -329,7 +330,7 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 
 #### ️ 其他功能
 
-- **收藏电台**：支持添加/移除收藏，滑动删除，撤销操作（Snackbar），M3U 导入/导出
+- **收藏电台**：支持添加/移除收藏，长按拖拽排序（任意排序状态下可用，拖拽后自动切换为自定义顺序），滑动删除，撤销操作（Snackbar），M3U 导入/导出
 - **历史记录**：播放过的电台列表，支持 M3U 导出，一键清除
 - **睡眠定时器**：SeekBar 设置分钟数，终点自动停止播放，保存默认值
 - **闹钟**：支持设置指定时间自动播放指定电台。闹钟默认仅生效一次，如需每天重复请在闹钟编辑界面开启「重复」开关
@@ -445,16 +446,17 @@ All four criteria are optional and combinable. Any change triggers an automatic 
 
 #### Station List Sorting
 
-Four sorting modes via toolbar button dialog:
+Sort options via toolbar button dialog:
 
 | Mode          | Description                                        |
 | ------------- | -------------------------------------------------- |
+| Custom Order  | Manual arrangement (favorites only; long-press drag to reorder) |
 | Name          | Alphabetical order                                 |
 | Click Count   | By global click popularity from radio-browser.info |
 | Votes         | By community vote count                            |
 | Recent Change | By last modification timestamp                     |
 
-Current sort mode displayed with ↑ (ascending) / ↓ (descending). Tapping the same mode toggles direction. Preferences are persisted.
+Current sort mode displayed with ↑ (ascending) / ↓ (descending). Tapping the same mode toggles direction. Preferences are persisted. Long-press drag to reorder works in any sort mode: dragging bakes the currently displayed order into "Custom Order", so manual reordering takes effect immediately and persists, while the remaining stations keep their sorted relative order.
 
 #### Shuffle Play
 
@@ -632,7 +634,7 @@ Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elemen
 
 #### ️ Other Features
 
-- **Favorites**: Add/remove with undo snackbar, swipe-to-delete, M3U import/export
+- **Favorites**: Add/remove with undo snackbar, long-press drag to reorder (works in any sort mode; dragging switches to Custom Order), swipe-to-delete, M3U import/export
 - **History**: Played station list with M3U export, one-tap clear
 - **Sleep Timer**: SeekBar dialog, auto-stops playback, saves default
 - **Alarm**: Schedule a station to play at a specified time. Alarms are one-time by default; enable the "repeat" toggle in the alarm editor for daily recurrence

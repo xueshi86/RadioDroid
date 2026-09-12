@@ -15,10 +15,12 @@ import static net.programmierecke.radiodroid2.tests.utils.conditionwatcher.ViewM
 import static org.hamcrest.Matchers.allOf;
 import static org.junit.Assert.assertEquals;
 
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.os.Build;
 import android.os.SystemClock;
 
+import androidx.preference.PreferenceManager;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.espresso.action.ViewActions;
 import androidx.test.espresso.matcher.ViewMatchers;
@@ -152,6 +154,56 @@ public class UIFavouritesFragmentTest {
         onView(withRecyclerView(R.id.recyclerViewStations).atPosition(2))
                 .check(matches(hasDescendant(withText(getFakeRadioStationName(1)))));
         assertEquals(getFakeRadioStationName(1), favouriteManager.getList().get(2).Name);
+    }
+
+    @Test
+    public void stationInFavourites_DragInSortMode_BakesCustomOrder() {
+        // 预设收藏夹为按名称排序（FragmentStarred.SORT_NAME）
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(
+                ApplicationProvider.getApplicationContext());
+        prefs.edit().putInt("favorites_sort_mode", 1).commit();
+
+        onView(ViewMatchers.withId(R.id.nav_item_starred)).perform(ViewActions.click());
+
+        // 排序模式生效：名称字符串排序后顺序为 0, 1, 10, 11, ..., 19, 2, ..., 9
+        onView(withId(R.id.recyclerViewStations)).perform(scrollToRecyclerItem(0));
+        onView(withRecyclerView(R.id.recyclerViewStations).atPosition(2))
+                .check(matches(hasDescendant(withText(getFakeRadioStationName(10)))));
+
+        // 排序状态下长按拖拽（向下 0→1）：拖拽生效，当前显示顺序固化为自定义顺序
+        onView(withId(R.id.recyclerViewStations)).perform(recyclerDragAndDrop(0, 1));
+        // 固化后顺序：1, 0, 10, 11, ..., 19, 2, ..., 9
+        onView(withRecyclerView(R.id.recyclerViewStations).atPosition(0))
+                .check(matches(hasDescendant(withText(getFakeRadioStationName(1)))));
+        onView(withRecyclerView(R.id.recyclerViewStations).atPosition(1))
+                .check(matches(hasDescendant(withText(getFakeRadioStationName(0)))));
+        assertEquals(getFakeRadioStationName(1), favouriteManager.getList().get(0).Name);
+        assertEquals(getFakeRadioStationName(0), favouriteManager.getList().get(1).Name);
+        // 其余电台保持排序后的相对顺序
+        assertEquals(getFakeRadioStationName(10), favouriteManager.getList().get(2).Name);
+        // 排序模式已自动切换为自定义顺序（SORT_NONE = 0）
+        assertEquals(0, prefs.getInt("favorites_sort_mode", -1));
+
+        // 自定义顺序下向下拖拽（0→2）正常
+        onView(withId(R.id.recyclerViewStations)).perform(scrollToRecyclerItem(0));
+        onView(withId(R.id.recyclerViewStations)).perform(recyclerDragAndDrop(0, 2));
+        // 顺序变为：0, 10, 1, 11, ...
+        onView(withRecyclerView(R.id.recyclerViewStations).atPosition(2))
+                .check(matches(hasDescendant(withText(getFakeRadioStationName(1)))));
+        assertEquals(getFakeRadioStationName(1), favouriteManager.getList().get(2).Name);
+
+        // 自定义顺序下向上拖拽（2→0，跨两项）与向下走同一逻辑
+        onView(withId(R.id.recyclerViewStations)).perform(scrollToRecyclerItem(0));
+        onView(withId(R.id.recyclerViewStations)).perform(recyclerDragAndDrop(2, 0));
+        // 顺序变为：1, 0, 10, 11, ...
+        onView(withRecyclerView(R.id.recyclerViewStations).atPosition(0))
+                .check(matches(hasDescendant(withText(getFakeRadioStationName(1)))));
+        onView(withRecyclerView(R.id.recyclerViewStations).atPosition(1))
+                .check(matches(hasDescendant(withText(getFakeRadioStationName(0)))));
+        onView(withRecyclerView(R.id.recyclerViewStations).atPosition(2))
+                .check(matches(hasDescendant(withText(getFakeRadioStationName(10)))));
+        assertEquals(getFakeRadioStationName(1), favouriteManager.getList().get(0).Name);
+        assertEquals(getFakeRadioStationName(10), favouriteManager.getList().get(2).Name);
     }
 
     @SdkSuppress(maxSdkVersion = 32)

@@ -62,7 +62,7 @@ public class FragmentStarred extends Fragment implements IAdapterRefreshable, Ob
     }
 
     void setSortMode(int mode) {
-        if (currentSortMode == mode) {
+        if (currentSortMode == mode && mode != SORT_NONE) {
             sortAscending = !sortAscending;
         } else {
             currentSortMode = mode;
@@ -74,6 +74,25 @@ public class FragmentStarred extends Fragment implements IAdapterRefreshable, Ob
                 .putBoolean(PREF_SORT_ASCENDING, sortAscending)
                 .apply();
         RefreshListGui();
+    }
+
+    /**
+     * 排序状态下开始手动拖拽时，将当前显示顺序（排序副本）固化到底层收藏列表，
+     * 并切换为"自定义顺序"，使拖拽即时生效且不被重新排序覆盖。
+     * 注意：直接赋引用（非副本），使 moveWithoutNotify 的每次移动同步作用于
+     * adapter 显示列表，拖拽过程中数据与视图保持一致（与非排序模式行为统一）。
+     */
+    private void bakeDisplayedOrderAsCustomOrder() {
+        RecyclerView.Adapter<?> adapter = rvStations.getAdapter();
+        if (adapter instanceof ItemAdapterStation) {
+            List<DataRadioStation> displayed = ((ItemAdapterStation) adapter).getDisplayedStations();
+            if (displayed != null) {
+                favouriteManager.listStations = displayed;
+            }
+        }
+        currentSortMode = SORT_NONE;
+        PreferenceManager.getDefaultSharedPreferences(getContext())
+                .edit().putInt(PREF_SORT_MODE, SORT_NONE).apply();
     }
 
     void onStationClick(DataRadioStation theStation) {
@@ -203,6 +222,10 @@ public class FragmentStarred extends Fragment implements IAdapterRefreshable, Ob
 
                 @Override
                 public void onStationMoved(int from, int to) {
+                    // 排序状态下拖拽：先把当前显示顺序固化为自定义顺序，再执行移动
+                    if (currentSortMode != SORT_NONE) {
+                        bakeDisplayedOrderAsCustomOrder();
+                    }
                     favouriteManager.moveWithoutNotify(from, to);
                 }
 

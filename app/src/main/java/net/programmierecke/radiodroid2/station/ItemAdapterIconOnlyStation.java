@@ -31,6 +31,7 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
 
     class StationViewHolder extends ItemAdapterStation.StationViewHolder implements View.OnClickListener, View.OnCreateContextMenuListener, SwipeableViewHolder {
         PopupMenu contextMenu = null;
+        boolean suppressContextMenu = false;
 
         StationViewHolder(View itemView) {
             super(itemView);
@@ -54,7 +55,8 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
 
         @Override
         public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-            if (contextMenu != null)
+            // 拖拽排序进行中不弹上下文菜单（长按同时触发拖拽与菜单，菜单会打断拖拽）
+            if (suppressContextMenu || contextMenu != null)
                 return;
             int pos = getAdapterPosition();
             DataRadioStation station = filteredStationsList.get(pos);
@@ -124,8 +126,26 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
     }
 
     public void enableItemMove(RecyclerView recyclerView) {
-        RecyclerItemMoveAndSwipeHelper swipeAndMoveHelper = new RecyclerItemMoveAndSwipeHelper<>(getContext(), ItemTouchHelper.UP | ItemTouchHelper.DOWN | ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT, 0, this);
-        new ItemTouchHelper(swipeAndMoveHelper).attachToRecyclerView(recyclerView);
+        moveAndSwipeHelper = new RecyclerItemMoveAndSwipeHelper<>(getContext(), ItemTouchHelper.UP | ItemTouchHelper.DOWN | ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT, 0, this);
+        new ItemTouchHelper(moveAndSwipeHelper).attachToRecyclerView(recyclerView);
+    }
+
+    @Override
+    public void onDragStarted(ItemAdapterStation.StationViewHolder viewHolder) {
+        // 拖拽开始时抑制长按上下文菜单（PopupMenu 会接管触摸事件并终止拖拽）
+        if (viewHolder instanceof StationViewHolder) {
+            StationViewHolder holder = (StationViewHolder) viewHolder;
+            holder.suppressContextMenu = true;
+            holder.dismissContextMenu();
+        }
+    }
+
+    @Override
+    public void onMoveEnded(ItemAdapterStation.StationViewHolder viewHolder) {
+        super.onMoveEnded(viewHolder);
+        if (viewHolder instanceof StationViewHolder) {
+            ((StationViewHolder) viewHolder).suppressContextMenu = false;
+        }
     }
 }
 

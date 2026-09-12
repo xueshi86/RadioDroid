@@ -236,6 +236,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         findPreference("pref_category_recordings").setIcon(Utils.IconicsIcon(getContext(), CommunityMaterial.Icon2.cmd_record_rec));
         findPreference("pref_category_mpd").setIcon(Utils.IconicsIcon(getContext(), CommunityMaterial.Icon2.cmd_speaker_wireless));
         findPreference("pref_category_local_database_update").setIcon(Utils.IconicsIcon(getContext(), CommunityMaterial.Icon2.cmd_refresh));
+        findPreference("pref_category_webdav_backup_restore").setIcon(Utils.IconicsIcon(getContext(), GoogleMaterial.Icon.gmd_cloud_upload));
         findPreference("pref_category_other").setIcon(Utils.IconicsIcon(getContext(), CommunityMaterial.Icon2.cmd_information_outline));
     }
 

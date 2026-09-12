@@ -3,6 +3,7 @@ package net.programmierecke.radiodroid2.utils;
 import android.content.Context;
 import android.graphics.Canvas;
 
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class RecyclerItemMoveAndSwipeHelper<ViewHolderType extends SwipeableViewHolder> extends RecyclerItemSwipeHelper {
@@ -11,6 +12,9 @@ public class RecyclerItemMoveAndSwipeHelper<ViewHolderType extends SwipeableView
         void onDragged(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, double dX, double dY);
         void onMoved(ViewHolderType viewHolder, int from, int to);
         void onMoveEnded(ViewHolderType viewHolder);
+
+        default void onDragStarted(ViewHolderType viewHolder) {
+        }
     }
 
     private MoveAndSwipeCallback<ViewHolderType> moveAndSwipeListener;
@@ -24,6 +28,16 @@ public class RecyclerItemMoveAndSwipeHelper<ViewHolderType extends SwipeableView
     @Override
     public boolean isLongPressDragEnabled() {
         return true;
+    }
+
+    @Override
+    public void onSelectedChanged(RecyclerView.ViewHolder viewHolder, int actionState) {
+        super.onSelectedChanged(viewHolder, actionState);
+        if (viewHolder != null && actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
+            @SuppressWarnings("unchecked")
+            ViewHolderType viewHolderType = (ViewHolderType) viewHolder;
+            moveAndSwipeListener.onDragStarted(viewHolderType);
+        }
     }
 
     @Override

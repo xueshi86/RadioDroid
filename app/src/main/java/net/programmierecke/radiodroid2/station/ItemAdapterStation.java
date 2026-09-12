@@ -77,6 +77,7 @@ public class ItemAdapterStation
     StationActionsListener stationActionsListener;
     private FilterListener filterListener;
     private boolean supportsStationRemoval = false;
+    protected RecyclerItemMoveAndSwipeHelper<StationViewHolder> moveAndSwipeHelper;
 
     private boolean shouldLoadIcons;
 
@@ -223,9 +224,16 @@ public class ItemAdapterStation
             supportsStationRemoval = true;
             this.snackbarRecyclerView = recyclerView;
 
-            RecyclerItemMoveAndSwipeHelper<StationViewHolder> swipeAndMoveHelper = new RecyclerItemMoveAndSwipeHelper<>(getContext(), ItemTouchHelper.UP | ItemTouchHelper.DOWN, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT, this);
-            new ItemTouchHelper(swipeAndMoveHelper).attachToRecyclerView(recyclerView);
+            moveAndSwipeHelper = new RecyclerItemMoveAndSwipeHelper<>(getContext(), ItemTouchHelper.UP | ItemTouchHelper.DOWN, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT, this);
+            new ItemTouchHelper(moveAndSwipeHelper).attachToRecyclerView(recyclerView);
         }
+    }
+
+    /**
+     * 返回当前正在显示的电台列表（可能是排序副本），供拖拽时固化显示顺序。
+     */
+    public List<DataRadioStation> getDisplayedStations() {
+        return filteredStationsList;
     }
 
     public void updateList(FragmentStarred refreshableList, List<DataRadioStation> stationsList) {
