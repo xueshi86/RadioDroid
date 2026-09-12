@@ -765,4 +765,33 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="error_inc_update_need_full">Aún no hay marca de sincronización. Ejecuta primero una actualización completa de la base de datos.</string>
     <string name="error_inc_update_too_large">Demasiados cambios pendientes para la actualización incremental. Ejecuta primero una actualización completa de la base de datos.</string>
     <string name="error_inc_update_aborted">La actualización incremental se interrumpió de forma anómala. Inténtalo de nuevo o ejecuta una actualización completa de la base de datos.</string>
+    <string name="webdav_backup_restore">Copia de seguridad y restauración</string>
+    <string name="webdav_configure">Configuración de WebDAV</string>
+    <string name="webdav_not_configured">No configurado</string>
+    <string name="webdav_server_url">Dirección del servidor</string>
+    <string name="webdav_username">Usuario</string>
+    <string name="webdav_password">Contraseña</string>
+    <string name="webdav_delete">Eliminar</string>
+    <string name="webdav_save">Guardar</string>
+    <string name="webdav_backup">Copia de seguridad</string>
+    <string name="webdav_restore">Restaurar</string>
+    <string name="webdav_backup_summary">Guardar datos en WebDAV</string>
+    <string name="webdav_restore_summary">Restaurar datos desde WebDAV</string>
+    <string name="webdav_favourites">Emisoras favoritas</string>
+    <string name="webdav_database">Base de datos sin conexión</string>
+    <string name="webdav_both">Ambos</string>
+    <string name="webdav_connectivity_checking">%1$s · Comprobando conexión</string>
+    <string name="webdav_connectivity_ok">%1$s · Conexión correcta</string>
+    <string name="webdav_connectivity_failed">%1$s · Error de conexión</string>
+    <string name="webdav_save_failed">No se pudo guardar la configuración WebDAV</string>
+    <string name="webdav_task_started">Tarea iniciada</string>
+    <string name="webdav_task_running">Tarea en curso…</string>
+    <string name="webdav_http_warning">HTTP transmite credenciales sin cifrar; se recomienda HTTPS</string>
+    <string name="webdav_result_success">Correcto</string>
+    <string name="webdav_result_failed">Error</string>
+    <string name="webdav_result_pending">Pendiente de confirmación</string>
+    <string name="webdav_database_restore_confirm">¿Reemplazar la base de datos local sin conexión por la base de datos descargada?</string>
+    <string name="webdav_restore_success">Base de datos restaurada correctamente</string>
+    <string name="webdav_restore_failed">Error al restaurar la base de datos; se conservó la base de datos original</string>
+
 </resources>

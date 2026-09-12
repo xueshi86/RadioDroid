@@ -339,4 +339,33 @@
     <string name="settings_local_database_status_success">Letzte Aktualisierung: %1$s\nLokale Sender: %2$d\nRemote-Sender: %3$d</string>
     <string name="settings_local_database_status_success_no_remote">Letzte Aktualisierung: %1$s\nLokale Sender: %2$d</string>
     <string name="settings_incremental_update_note">Achtung: Die inkrementelle Aktualisierung synchronisiert nur neue und geänderte Sender – remote gelöschte Sender werden nicht erkannt. Vergleichen Sie nach jedem Update selbst die unten angezeigte lokale und remote Senderanzahl. Die Remote-Anzahl ändert sich minütlich durch die Community, eine Abweichung von einigen Dutzend ist normal (Spiegelserver replizieren ebenfalls mit Minutenverzögerung und weichen gelegentlich leicht vom frisch synchronisierten Stand ab). Bei deutlich größerer Abweichung (z. B. einige Tausend) führen Sie über „Lokale Datenbank aktualisieren“ ein vollständiges Update durch.</string>
+    <string name="webdav_backup_restore">Sichern und Wiederherstellen</string>
+    <string name="webdav_configure">WebDAV-Konfiguration</string>
+    <string name="webdav_not_configured">Nicht konfiguriert</string>
+    <string name="webdav_server_url">Serveradresse</string>
+    <string name="webdav_username">Benutzername</string>
+    <string name="webdav_password">Passwort</string>
+    <string name="webdav_delete">Löschen</string>
+    <string name="webdav_save">Speichern</string>
+    <string name="webdav_backup">Sichern</string>
+    <string name="webdav_restore">Wiederherstellen</string>
+    <string name="webdav_backup_summary">Daten auf WebDAV sichern</string>
+    <string name="webdav_restore_summary">Daten von WebDAV wiederherstellen</string>
+    <string name="webdav_favourites">Favoriten</string>
+    <string name="webdav_database">Offline-Datenbank</string>
+    <string name="webdav_both">Beides</string>
+    <string name="webdav_connectivity_checking">%1$s · Verbindung wird geprüft</string>
+    <string name="webdav_connectivity_ok">%1$s · Verbindung OK</string>
+    <string name="webdav_connectivity_failed">%1$s · Verbindung fehlgeschlagen</string>
+    <string name="webdav_save_failed">WebDAV-Konfiguration konnte nicht gespeichert werden</string>
+    <string name="webdav_task_started">Aufgabe gestartet</string>
+    <string name="webdav_task_running">Aufgabe wird ausgeführt…</string>
+    <string name="webdav_http_warning">HTTP überträgt Zugangsdaten unverschlüsselt; HTTPS wird empfohlen</string>
+    <string name="webdav_result_success">Erfolgreich</string>
+    <string name="webdav_result_failed">Fehlgeschlagen</string>
+    <string name="webdav_result_pending">Wartet auf Bestätigung</string>
+    <string name="webdav_database_restore_confirm">Die lokale Offline-Datenbank durch die heruntergeladene Datenbank ersetzen?</string>
+    <string name="webdav_restore_success">Datenbank erfolgreich wiederhergestellt</string>
+    <string name="webdav_restore_failed">Wiederherstellung der Datenbank fehlgeschlagen; die ursprüngliche Datenbank wurde beibehalten</string>
+
 </resources>

@@ -773,4 +773,33 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="settings_local_database_status_success">Время последнего обновления: %1$s\nЛокальные станции: %2$d\nСтанции на сервере: %3$d</string>
     <string name="settings_local_database_status_success_no_remote">Время последнего обновления: %1$s\nЛокальные станции: %2$d</string>
     <string name="settings_incremental_update_note">Внимание: инкрементальное обновление синхронизирует только добавленные и изменённые станции — удалённые на сервере станции не обнаруживаются. После каждого обновления самостоятельно сравните указанные ниже количества локальных и серверных станций. Серверное количество меняется поминутно из-за правок сообщества — расхождение в несколько десятков нормально (зеркала тоже реплицируются с задержкой в минуты и порой слегка отличаются от свежесинхронизированных данных). При заметной разнице (например, в тысячи) выполните полное обновление через «Обновить локальную базу данных».</string>
+    <string name="webdav_backup_restore">Резервное копирование и восстановление</string>
+    <string name="webdav_configure">Настройка WebDAV</string>
+    <string name="webdav_not_configured">Не настроено</string>
+    <string name="webdav_server_url">Адрес сервера</string>
+    <string name="webdav_username">Имя пользователя</string>
+    <string name="webdav_password">Пароль</string>
+    <string name="webdav_delete">Удалить</string>
+    <string name="webdav_save">Сохранить</string>
+    <string name="webdav_backup">Резервная копия</string>
+    <string name="webdav_restore">Восстановить</string>
+    <string name="webdav_backup_summary">Сохранить данные в WebDAV</string>
+    <string name="webdav_restore_summary">Восстановить данные из WebDAV</string>
+    <string name="webdav_favourites">Избранные станции</string>
+    <string name="webdav_database">Локальная база данных</string>
+    <string name="webdav_both">Оба</string>
+    <string name="webdav_connectivity_checking">%1$s · Проверка соединения</string>
+    <string name="webdav_connectivity_ok">%1$s · Соединение успешно</string>
+    <string name="webdav_connectivity_failed">%1$s · Ошибка соединения</string>
+    <string name="webdav_save_failed">Не удалось сохранить настройки WebDAV</string>
+    <string name="webdav_task_started">Задача запущена</string>
+    <string name="webdav_task_running">Задача выполняется…</string>
+    <string name="webdav_http_warning">HTTP передаёт учётные данные без шифрования; рекомендуется HTTPS</string>
+    <string name="webdav_result_success">Успешно</string>
+    <string name="webdav_result_failed">Не удалось</string>
+    <string name="webdav_result_pending">Ожидает подтверждения</string>
+    <string name="webdav_database_restore_confirm">Заменить локальную базу данных загруженной базой данных?</string>
+    <string name="webdav_restore_success">База данных успешно восстановлена</string>
+    <string name="webdav_restore_failed">Не удалось восстановить базу данных; исходная база данных сохранена</string>
+
 </resources>

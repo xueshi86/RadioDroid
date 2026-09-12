@@ -62,6 +62,27 @@
 
     </PreferenceScreen>
 
+    <PreferenceScreen android:title="@string/webdav_backup_restore"
+        search:ignore="true"
+        android:key="pref_category_webdav_backup_restore">
+
+        <Preference
+            android:key="webdav_configure"
+            android:title="@string/webdav_configure"
+            android:summary="@string/webdav_not_configured" />
+
+        <Preference
+            android:key="webdav_backup"
+            android:title="@string/webdav_backup"
+            android:summary="@string/webdav_backup_summary" />
+
+        <Preference
+            android:key="webdav_restore"
+            android:title="@string/webdav_restore"
+            android:summary="@string/webdav_restore_summary" />
+
+    </PreferenceScreen>
+
     <PreferenceScreen android:title="@string/settings_appearance"
         search:ignore="true"
         android:key="pref_category_ui">

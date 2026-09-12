@@ -30,6 +30,11 @@ import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.EditText;
+import android.text.InputType;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -73,6 +78,13 @@ import net.programmierecke.radiodroid2.service.DatabaseUpdateManager;
 import net.programmierecke.radiodroid2.service.DatabaseUpdateWorker;
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
 import net.programmierecke.radiodroid2.ui.DatabaseUpdateProgressDialog;
+import net.programmierecke.radiodroid2.webdav.WebDavBackupManager;
+import net.programmierecke.radiodroid2.webdav.WebDavBackupType;
+import net.programmierecke.radiodroid2.webdav.WebDavBackupWorker;
+import net.programmierecke.radiodroid2.webdav.WebDavClient;
+import net.programmierecke.radiodroid2.webdav.WebDavException;
+import net.programmierecke.radiodroid2.webdav.WebDavSettings;
+import net.programmierecke.radiodroid2.webdav.WebDavSettingsStore;
 
 import static net.programmierecke.radiodroid2.ActivityMain.FRAGMENT_FROM_BACKSTACK;
 import static net.programmierecke.radiodroid2.service.PlayerService.PLAYER_SERVICE_TIMER_FINISHED;
@@ -92,6 +104,31 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
     private BroadcastReceiver databaseUpdatedReceiver;
     private ActivityResultLauncher<String> bluetoothPermissionLauncher;
     private boolean dialogOpenedFromCheckbox = false;
+    private final Handler webDavHandler = new Handler();
+    private int webDavCheckVersion;
+    private boolean webDavCheckActive;
+    private boolean webDavBlinkGreen;
+    private androidx.lifecycle.LiveData<java.util.List<androidx.work.WorkInfo>> webDavWorkLiveData;
+    private androidx.lifecycle.Observer<java.util.List<androidx.work.WorkInfo>> webDavWorkObserver;
+    private final Runnable webDavBlinkRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!webDavCheckActive || !isAdded()) return;
+            webDavBlinkGreen = !webDavBlinkGreen;
+            Preference preference = findPreference("webdav_configure");
+            if (preference != null) {
+                try {
+                    WebDavSettings settings = new WebDavSettingsStore(requireContext()).load();
+                    if (settings != null) {
+                        preference.setSummary(statusSummary(getString(R.string.webdav_connectivity_checking, settings.getUsername()), webDavBlinkGreen ? Color.GREEN : Color.GRAY));
+                    }
+                } catch (WebDavException ignored) {
+                    return;
+                }
+            }
+            webDavHandler.postDelayed(this, 500);
+        }
+    };
 
     public static FragmentSettings openNewSettingsSubFragment(ActivityMain activity, String key) {
         FragmentSettings f = new FragmentSettings();
@@ -350,6 +387,8 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 findPreference("settings_retry_timeout").setVisible(false);
                 findPreference("settings_retry_delay").setVisible(false);
             }
+        } else if (s.equals("pref_category_webdav_backup_restore")) {
+            setupWebDavPreferences();
         } else if (s.equals("pref_category_mpd")) {
             findPreference("mpd_servers_viewer").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
@@ -925,7 +964,12 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
 
         refreshToolbar();
 
-        if(isToplevel())
+        if (getArguments() != null && "pref_category_webdav_backup_restore".equals(getArguments().getString(PreferenceFragmentCompat.ARG_PREFERENCE_ROOT))) {
+            refreshWebDavSummary();
+            registerWebDavWorkStatus();
+        }
+
+        if (isToplevel())
             refreshToplevelIcons();
 
         if(findPreference("shareapp_package") != null)
@@ -952,6 +996,10 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
 
     @Override
     public void onPause() {
+        ++webDavCheckVersion;
+        webDavCheckActive = false;
+        webDavHandler.removeCallbacks(webDavBlinkRunnable);
+        webDavHandler.removeCallbacksAndMessages(null);
         getPreferenceManager().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
         
         // 注销广播接收器
@@ -992,7 +1040,281 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         }
     }
 
-    private void setupBluetoothPermissionPreference() {
+    private void setupWebDavPreferences() {
+        Preference configure = findPreference("webdav_configure");
+        Preference backup = findPreference("webdav_backup");
+        Preference restore = findPreference("webdav_restore");
+        if (configure == null || backup == null || restore == null) return;
+        refreshWebDavSummary();
+        configure.setOnPreferenceClickListener(preference -> {
+            showWebDavConfigurationDialog();
+            return true;
+        });
+        backup.setOnPreferenceClickListener(preference -> {
+            showWebDavOperationDialog(false);
+            return true;
+        });
+        restore.setOnPreferenceClickListener(preference -> {
+            showWebDavOperationDialog(true);
+            return true;
+        });
+    }
+
+    private void refreshWebDavSummary() {
+        Preference preference = findPreference("webdav_configure");
+        if (preference == null || !isAdded()) return;
+        try {
+            WebDavSettings settings = new WebDavSettingsStore(requireContext()).load();
+            if (settings == null) {
+                preference.setSummary(statusSummary(getString(R.string.webdav_not_configured), Color.GRAY));
+                return;
+            }
+            preference.setSummary(statusSummary(getString(R.string.webdav_connectivity_checking, settings.getUsername()), Color.GRAY));
+            webDavBlinkGreen = false;
+            webDavHandler.removeCallbacks(webDavBlinkRunnable);
+            webDavHandler.postDelayed(webDavBlinkRunnable, 500);
+            startWebDavConnectionCheck(settings);
+        } catch (WebDavException e) {
+            preference.setSummary(statusSummary(getString(R.string.webdav_not_configured), Color.GRAY));
+        }
+    }
+
+    private void startWebDavConnectionCheck(WebDavSettings settings) {
+        final int version = ++webDavCheckVersion;
+        webDavCheckActive = true;
+        new Thread(() -> {
+            boolean success = false;
+            try {
+                new WebDavClient(settings).checkConnection();
+                success = true;
+            } catch (Exception ignored) {
+            }
+            final boolean result = success;
+            webDavHandler.post(() -> {
+                if (!isAdded() || !webDavCheckActive || version != webDavCheckVersion) return;
+                webDavCheckActive = false;
+                webDavHandler.removeCallbacks(webDavBlinkRunnable);
+                Preference preference = findPreference("webdav_configure");
+                if (preference != null) {
+            preference.setSummary(statusSummary(getString(result ? R.string.webdav_connectivity_ok : R.string.webdav_connectivity_failed, settings.getUsername()), result ? Color.GREEN : Color.RED));
+                }
+            });
+        }, "WebDavConnectionCheck").start();
+    }
+
+    private CharSequence statusSummary(String text, int color) {
+        SpannableString summary = new SpannableString("● " + text);
+        summary.setSpan(new ForegroundColorSpan(color), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return summary;
+    }
+    private void registerWebDavWorkStatus() {
+        if (!isAdded()) return;
+        Preference backup = findPreference("webdav_backup");
+        Preference restore = findPreference("webdav_restore");
+        if (backup == null || restore == null) return;
+        if (webDavWorkLiveData != null && webDavWorkObserver != null) webDavWorkLiveData.removeObserver(webDavWorkObserver);
+        webDavWorkLiveData = androidx.work.WorkManager.getInstance(requireContext()).getWorkInfosForUniqueWorkLiveData(WebDavBackupWorker.WORK_NAME);
+        webDavWorkObserver = infos -> {
+            if (!isAdded() || infos == null || infos.isEmpty()) return;
+            androidx.work.WorkInfo info = infos.get(0);
+            if (info.getState() == androidx.work.WorkInfo.State.RUNNING || info.getState() == androidx.work.WorkInfo.State.ENQUEUED) {
+                backup.setSummary(R.string.webdav_task_running);
+                restore.setSummary(R.string.webdav_task_running);
+            } else {
+                backup.setSummary(R.string.webdav_backup_summary);
+                restore.setSummary(R.string.webdav_restore_summary);
+                showWebDavTaskResultIfAny();
+            }
+        };
+        webDavWorkLiveData.observe(getViewLifecycleOwner(), webDavWorkObserver);
+    }
+
+    private void showWebDavTaskResultIfAny() {
+        if (!isActivityUsable()) return;
+        SharedPreferences preferences = requireContext().getSharedPreferences(WebDavBackupWorker.RESULT_PREFS, Context.MODE_PRIVATE);
+        String fav = preferences.getString("fav", null);
+        String db = preferences.getString("db", null);
+        if (fav == null && db == null) {
+            checkPendingWebDavDatabaseRestore();
+            return;
+        }
+        boolean restore = preferences.getBoolean("restore", false);
+        preferences.edit().clear().apply();
+        StringBuilder message = new StringBuilder();
+        if (fav != null) message.append(getString(R.string.webdav_favourites)).append(": ").append(webDavOutcomeText(fav)).append('\n');
+        if (db != null) message.append(getString(R.string.webdav_database)).append(": ").append(webDavOutcomeText(db));
+        boolean pendingConfirm = "pending".equals(db);
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
+                .setTitle(restore ? R.string.webdav_restore : R.string.webdav_backup)
+                .setMessage(message.toString().trim())
+                .setPositiveButton(android.R.string.ok, null)
+                .setOnDismissListener(dialog -> {
+                    if (pendingConfirm) checkPendingWebDavDatabaseRestore();
+                })
+                .show();
+    }
+
+    private String webDavOutcomeText(String status) {
+        if ("success".equals(status)) return getString(R.string.webdav_result_success);
+        if ("pending".equals(status)) return getString(R.string.webdav_result_pending);
+        return getString(R.string.webdav_result_failed);
+    }
+
+    private void checkPendingWebDavDatabaseRestore() {
+        if (!isActivityUsable()) return;
+        SharedPreferences preferences = requireContext().getSharedPreferences("webdav_pending_restore", Context.MODE_PRIVATE);
+        String path = preferences.getString("database", null);
+        if (path == null) return;
+        File file = new File(path);
+        if (!file.isFile()) {
+            preferences.edit().clear().apply();
+            return;
+        }
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
+                .setTitle(R.string.webdav_restore)
+                .setMessage(R.string.webdav_database_restore_confirm)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.webdav_restore, (dialog, which) -> applyWebDavDatabaseRestore(file, preferences))
+                .setOnCancelListener(dialog -> {})
+                .show();
+    }
+
+    private void applyWebDavDatabaseRestore(File importedFile, SharedPreferences pending) {
+        final Context context = requireContext().getApplicationContext();
+        final Activity activity = getActivity();
+        if (activity == null) return;
+        new Thread(() -> {
+            Exception failure = null;
+            try {
+                WebDavBackupManager.validateDatabase(importedFile);
+                File target = context.getDatabasePath("radio_droid_database");
+                File backup = new File(target.getParentFile(), target.getName() + ".webdav-backup");
+                RadioStationRepository repository = RadioStationRepository.getInstance(context);
+                repository.closeDatabase();
+                copyFile(target, backup);
+                deleteDatabaseSidecars(target);
+                copyFile(importedFile, target);
+                WebDavBackupManager.validateDatabase(target);
+                RadioStationRepository.getInstance(context).reinitializeDatabase(context);
+                pending.edit().clear().apply();
+                importedFile.delete();
+                backup.delete();
+            } catch (Exception e) {
+                failure = e;
+                try {
+                    File target = context.getDatabasePath("radio_droid_database");
+                    File backup = new File(target.getParentFile(), target.getName() + ".webdav-backup");
+                    if (backup.isFile()) {
+                        if (target.exists()) target.delete();
+                        backup.renameTo(target);
+                    }
+                    RadioStationRepository.getInstance(context).reinitializeDatabase(context);
+                } catch (Exception ignored) {
+                }
+            }
+            final Exception error = failure;
+            activity.runOnUiThread(() -> {
+                if (isAdded()) {
+                    Toast.makeText(requireContext(), error == null ? R.string.webdav_restore_success : R.string.webdav_restore_failed, Toast.LENGTH_LONG).show();
+                }
+            });
+        }, "WebDavDatabaseRestore").start();
+    }
+    private void showWebDavConfigurationDialog() {
+        if (!isActivityUsable()) return;
+        WebDavSettings existing = null;
+        try {
+            existing = new WebDavSettingsStore(requireContext()).load();
+        } catch (WebDavException ignored) {
+        }
+        LinearLayout layout = new LinearLayout(requireContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int padding = (int) (24 * getResources().getDisplayMetrics().density);
+        layout.setPadding(padding, 0, padding, 0);
+        EditText url = new EditText(requireContext());
+        url.setHint(R.string.webdav_server_url);
+        url.setSingleLine(true);
+        final android.widget.TextView httpWarning = new android.widget.TextView(requireContext());
+        httpWarning.setText(R.string.webdav_http_warning);
+        httpWarning.setTextColor(Color.RED);
+        int warningPadding = (int) (4 * getResources().getDisplayMetrics().density);
+        httpWarning.setPadding(0, warningPadding, 0, 0);
+        httpWarning.setVisibility(android.view.View.GONE);
+        url.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+                String value = s.toString().trim().toLowerCase(java.util.Locale.US);
+                httpWarning.setVisibility(value.startsWith("http://") ? android.view.View.VISIBLE : android.view.View.GONE);
+            }
+        });
+        url.setText(existing == null ? "" : existing.getUrl());
+        EditText username = new EditText(requireContext());
+        username.setHint(R.string.webdav_username);
+        username.setSingleLine(true);
+        username.setText(existing == null ? "" : existing.getUsername());
+        EditText password = new EditText(requireContext());
+        password.setHint(R.string.webdav_password);
+        password.setSingleLine(true);
+        password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        layout.addView(url);
+        layout.addView(httpWarning);
+        layout.addView(username);
+        layout.addView(password);
+        final WebDavSettings savedSettings = existing;
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
+                .setTitle(R.string.webdav_configure)
+                .setView(layout)
+                .setNegativeButton(R.string.webdav_delete, (d, which) -> {
+                    new WebDavSettingsStore(requireContext()).delete();
+                    ++webDavCheckVersion;
+                    webDavCheckActive = false;
+                    webDavHandler.removeCallbacks(webDavBlinkRunnable);
+                    refreshWebDavSummary();
+                })
+                .setPositiveButton(R.string.webdav_save, null)
+                .create();
+        dialog.setOnShowListener(d -> dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            try {
+                WebDavSettingsStore store = new WebDavSettingsStore(requireContext());
+                if (password.getText().length() == 0 && savedSettings != null) store.saveKeepingPassword(url.getText().toString(), username.getText().toString());
+                else store.save(url.getText().toString(), username.getText().toString(), password.getText().toString());
+                dialog.dismiss();
+                refreshWebDavSummary();
+            } catch (Exception e) {
+                Toast.makeText(requireContext(), R.string.webdav_save_failed, Toast.LENGTH_SHORT).show();
+            }
+        }));
+        dialog.show();
+    }
+
+    private void showWebDavOperationDialog(boolean restore) {
+        if (!isActivityUsable()) return;
+        String[] options = {getString(R.string.webdav_favourites), getString(R.string.webdav_database), getString(R.string.webdav_both)};
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
+                .setTitle(restore ? R.string.webdav_restore : R.string.webdav_backup)
+                .setItems(options, (dialog, which) -> {
+                    WebDavSettings settings = null;
+                    try { settings = new WebDavSettingsStore(requireContext()).load(); } catch (WebDavException ignored) {
+                    }
+                    if (settings == null) {
+                        showWebDavConfigurationDialog();
+                        return;
+                    }
+                    WebDavBackupType type = which == 0 ? WebDavBackupType.FAVOURITES : which == 1 ? WebDavBackupType.DATABASE : WebDavBackupType.BOTH;
+                    WebDavBackupWorker.enqueue(requireContext(), type, restore);
+                    Toast.makeText(requireContext(), R.string.webdav_task_started, Toast.LENGTH_SHORT).show();
+                }).show();
+    }
+
+ private void setupBluetoothPermissionPreference() {
         androidx.preference.SwitchPreferenceCompat btPermPref = findPreference("bluetooth_connect_permission");
         if (btPermPref == null) return;
 

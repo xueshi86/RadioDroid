@@ -494,4 +494,35 @@
     <string name="settings_clear_icon_cache_summary">Delete all cached station icons. Icons will be re-downloaded when needed.</string>
     <string name="icon_cache_cleared">Icon cache cleared</string>
     <string name="alarm_fade_invalid_range">Start volume must be below target volume</string>
+    <string name="webdav_backup_restore">Backup and Restore</string>
+    <string name="webdav_configure">WebDAV configuration</string>
+    <string name="webdav_not_configured">Not configured</string>
+    <string name="webdav_server_url">Server address</string>
+    <string name="webdav_username">Username</string>
+    <string name="webdav_password">Password</string>
+    <string name="webdav_delete">Delete</string>
+    <string name="webdav_save">Save</string>
+    <string name="webdav_backup">Backup</string>
+    <string name="webdav_restore">Restore</string>
+    <string name="webdav_backup_summary">Back up data to WebDAV</string>
+    <string name="webdav_restore_summary">Restore data from WebDAV</string>
+    <string name="webdav_favourites">Favourite stations</string>
+    <string name="webdav_database">Offline database</string>
+    <string name="webdav_both">Both</string>
+    <string name="webdav_connectivity_checking">%1$s · Connectivity: checking</string>
+    <string name="webdav_connectivity_ok">%1$s · Connectivity: OK</string>
+    <string name="webdav_connectivity_failed">%1$s · Connectivity: failed</string>
+    <string name="webdav_save_failed">Could not save WebDAV configuration</string>
+    <string name="webdav_task_started">Task started</string>
+    <string name="webdav_task_running">Task in progress…</string>
+    <string name="webdav_http_warning">HTTP transmits credentials unencrypted; HTTPS is recommended</string>
+    <string name="webdav_result_success">Success</string>
+    <string name="webdav_result_failed">Failed</string>
+    <string name="webdav_result_pending">Awaiting confirmation</string>
+
+    <string name="export_database_title">Export Main Database</string>
+    <string name="webdav_database_restore_confirm">Replace the local offline database with the downloaded database?</string>
+    <string name="webdav_restore_success">Database restored successfully</string>
+    <string name="webdav_restore_failed">Database restore failed; the original database was retained</string>
+
 </resources>

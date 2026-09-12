@@ -235,4 +235,33 @@
     <string name="settings_local_database_status_success">Ώρα τελευταίας ενημέρωσης: %1$s\nΤοπικοί σταθμοί: %2$d\nΑπομακρυσμένοι σταθμοί: %3$d</string>
     <string name="settings_local_database_status_success_no_remote">Ώρα τελευταίας ενημέρωσης: %1$s\nΤοπικοί σταθμοί: %2$d</string>
     <string name="settings_incremental_update_note">Προσοχή: Η σταδιακή ενημέρωση συγχρονίζει μόνο τους σταθμούς που προστέθηκαν ή τροποποιήθηκαν εξ αποστάσεως — οι διαγραμμένοι από τον διακομιστή σταθμοί δεν εντοπίζονται. Μετά από κάθε ενημέρωση, συγκρίνετε οι ίδιοι τις παρακάτω μετρήσεις τοπικών και απομακρυσμένων σταθμών. Η απομακρυσμένη μέτρηση αλλάζει ανά λεπτό με τις επεξεργασίες της κοινότητας — μια διαφορά μερικών δεκάδων είναι φυσιολογική (οι κατοπτρικοί διακομιστές αναπαράγονται επίσης με καθυστέρηση λεπτών και καμιά φορά αποκλίνουν ελαφρώς από τα νεοσυγχρονισμένα δεδομένα). Αν η διαφορά είναι μεγάλη (π.χ. χιλιάδες), εκτελέστε πλήρη ενημέρωση μέσω «Ενημέρωση τοπικής βάσης δεδομένων».</string>
+    <string name="webdav_backup_restore">Δημιουργία αντιγράφου και επαναφορά</string>
+    <string name="webdav_configure">Ρυθμίσεις WebDAV</string>
+    <string name="webdav_not_configured">Δεν έχει ρυθμιστεί</string>
+    <string name="webdav_server_url">Διεύθυνση διακομιστή</string>
+    <string name="webdav_username">Όνομα χρήστη</string>
+    <string name="webdav_password">Κωδικός πρόσβασης</string>
+    <string name="webdav_delete">Διαγραφή</string>
+    <string name="webdav_save">Αποθήκευση</string>
+    <string name="webdav_backup">Δημιουργία αντιγράφου</string>
+    <string name="webdav_restore">Επαναφορά</string>
+    <string name="webdav_backup_summary">Αντίγραφο δεδομένων στο WebDAV</string>
+    <string name="webdav_restore_summary">Επαναφορά δεδομένων από WebDAV</string>
+    <string name="webdav_favourites">Αγαπημένοι σταθμοί</string>
+    <string name="webdav_database">Τοπική βάση δεδομένων</string>
+    <string name="webdav_both">Και τα δύο</string>
+    <string name="webdav_connectivity_checking">%1$s · Έλεγχος σύνδεσης</string>
+    <string name="webdav_connectivity_ok">%1$s · Η σύνδεση είναι εντάξει</string>
+    <string name="webdav_connectivity_failed">%1$s · Αποτυχία σύνδεσης</string>
+    <string name="webdav_save_failed">Αδυναμία αποθήκευσης ρυθμίσεων WebDAV</string>
+    <string name="webdav_task_started">Η εργασία ξεκίνησε</string>
+    <string name="webdav_task_running">Η εργασία εκτελείται…</string>
+    <string name="webdav_http_warning">Το HTTP μεταδίδει τα διαπιστευτήρια μη κρυπτογραφημένα· συνιστάται HTTPS</string>
+    <string name="webdav_result_success">Επιτυχία</string>
+    <string name="webdav_result_failed">Αποτυχία</string>
+    <string name="webdav_result_pending">Σε αναμονή επιβεβαίωσης</string>
+    <string name="webdav_database_restore_confirm">Να αντικατασταθεί η τοπική βάση δεδομένων με τη ληφθείσα βάση δεδομένων;</string>
+    <string name="webdav_restore_success">Η βάση δεδομένων επαναφέρθηκε με επιτυχία</string>
+    <string name="webdav_restore_failed">Η επαναφορά της βάσης δεδομένων απέτυχε· διατηρήθηκε η αρχική βάση δεδομένων</string>
+
 </resources>

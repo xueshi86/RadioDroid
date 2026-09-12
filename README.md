@@ -56,6 +56,7 @@
 - 提供**增量更新**：基于 `json/stations/lastchange` 端点仅拉取自上次同步以来变更的电台（每次批量 1000 条，uuid 水位 + REPLACE 主库直写），秒级完成、流量消耗极小；可在设置中手动触发，或开启「自动增量更新」（默认关闭；开启后每次启动应用时，若距最后一次更新超过 24 小时则静默同步，可限制仅 Wi-Fi）
 - 更新前自动检查网络连通性、电量（<5% 拒绝更新，<20% 警告提示）、存储空间（需 ≥50MB 内部空间）
 - 提供**数据库导入/导出**功能，换机或重装时可迁移数据，避免重复下载
+- 提供 **WebDAV 备份和恢复**：设置中新增「备份和恢复」子页，配置 WebDAV 服务器（Basic 认证，密码经 Android Keystore 加密存储，HTTP 地址提示明文风险）后，可将**收藏电台**（M3U）与**离线数据库**（SQLite）单独或同时备份到远端、从远端恢复；配置摘要带连通性状态灯（检测中灰色/绿色交替闪烁，成功绿色，失败红色，未配置灰色）；上传时远端目录不存在会逐级自动创建（MKCOL）；任务进行中在设置页显示，完成后展示收藏/数据库分项结果；数据库恢复前先下载校验（SQLite 文件头、完整性、表结构）并需前台确认，失败自动回滚保留原库
 - **镜像服务器级联容错**：最近成功的 API 服务器会被持久化，下次启动优先复用；请求失败自动级联 DNS 镜像列表与官方静态兜底服务器（de1/de2/fi1/at1），成功即回写；级联使用短超时（5s 连接），持久化服务器超过 7 天自动重新测速
 
 **优点**：
@@ -377,6 +378,7 @@ Core functionality is identical across both variants. The difference is the avai
 - Resumable downloads: interrupted syncs can continue from where they left off
 - Pre-sync checks: network connectivity, battery level (<5% blocks update, <20% warns), storage space (≥50MB internal)
 - Database export/import for migration across devices or after reinstall
+- WebDAV backup and restore: a dedicated Settings → Backup and Restore section (Basic auth, password encrypted via Android Keystore, with a plaintext warning for HTTP addresses) backs up and restores favourites (M3U) and the offline database (SQLite) individually or together; the configuration entry shows a connectivity indicator (gray/green blinking while checking, green on success, red on failure, gray when not configured); missing remote directories are created automatically on upload (MKCOL); tasks show an in-progress state and report per-item results for favourites and the database; database restores are downloaded and validated (SQLite header, integrity, schema) first and require foreground confirmation, with automatic rollback to the original database on failure
 
 **Pros**:
 

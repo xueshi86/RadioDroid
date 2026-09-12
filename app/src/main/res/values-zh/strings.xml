@@ -727,4 +727,34 @@
     <string name="buffer_settings_default_desc">默认 (2.5秒)</string>
     <string name="buffer_settings_custom_desc">自定义 (%1$.1f秒)</string>
 
+    <string name="webdav_backup_restore">备份和恢复</string>
+    <string name="webdav_configure">WebDAV 配置</string>
+    <string name="webdav_not_configured">未配置</string>
+    <string name="webdav_server_url">服务器地址</string>
+    <string name="webdav_username">账号</string>
+    <string name="webdav_password">密码</string>
+    <string name="webdav_delete">删除</string>
+    <string name="webdav_save">保存</string>
+    <string name="webdav_backup">备份</string>
+    <string name="webdav_restore">恢复</string>
+    <string name="webdav_backup_summary">备份数据到 WebDAV</string>
+    <string name="webdav_restore_summary">从 WebDAV 恢复数据</string>
+    <string name="webdav_favourites">收藏电台</string>
+    <string name="webdav_database">离线数据库</string>
+    <string name="webdav_both">两者</string>
+    <string name="webdav_connectivity_checking">%1$s · 连通性：检测中</string>
+    <string name="webdav_connectivity_ok">%1$s · 连通性：正常</string>
+    <string name="webdav_connectivity_failed">%1$s · 连通性：失败</string>
+    <string name="webdav_save_failed">无法保存 WebDAV 配置</string>
+    <string name="webdav_task_started">任务已开始</string>
+    <string name="webdav_task_running">任务进行中…</string>
+    <string name="webdav_http_warning">使用 HTTP 会以明文传输凭据，建议使用 HTTPS</string>
+    <string name="webdav_result_success">成功</string>
+    <string name="webdav_result_failed">失败</string>
+    <string name="webdav_result_pending">等待确认</string>
+
+    <string name="webdav_database_restore_confirm">要用下载的数据库替换本地离线数据库吗？</string>
+    <string name="webdav_restore_success">数据库恢复成功</string>
+    <string name="webdav_restore_failed">数据库恢复失败，已保留原数据库</string>
+
 </resources>
