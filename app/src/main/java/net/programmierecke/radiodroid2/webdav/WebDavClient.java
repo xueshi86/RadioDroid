@@ -31,7 +31,7 @@ public final class WebDavClient {
     public void checkConnection() throws WebDavException {
         Response response = null;
         try {
-            Request request = authenticated(new Request.Builder().url(settings.getUrl()).method("PROPFIND", RequestBody.create(null, new byte[0])).header("Depth", "0")).build();
+            Request request = authenticated(new Request.Builder().url(settings.getBaseUrl()).method("PROPFIND", RequestBody.create(null, new byte[0])).header("Depth", "0")).build();
             response = client.newCall(request).execute();
             requireSuccess(response);
         } catch (IOException e) {
@@ -106,7 +106,7 @@ public final class WebDavClient {
     }
 
     private void ensureDirectory() throws WebDavException {
-        HttpUrl base = HttpUrl.parse(settings.getUrl());
+        HttpUrl base = HttpUrl.parse(settings.getBaseUrl());
         if (base == null) throw new WebDavException(WebDavException.Kind.INVALID_DATA, "Invalid WebDAV URL");
         List<String> segments = base.pathSegments();
         StringBuilder path = new StringBuilder("/");
@@ -139,7 +139,7 @@ public final class WebDavClient {
 
     private String fileUrl(String name) throws WebDavException {
         if (!"favourites.m3u".equals(name) && !"radio_droid_database.db".equals(name)) throw new WebDavException(WebDavException.Kind.INVALID_DATA, "Invalid remote file");
-        return settings.getUrl() + name;
+        return settings.getBaseUrl() + name;
     }
 
     private void requireSuccess(Response response) throws WebDavException {

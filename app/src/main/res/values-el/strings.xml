@@ -239,6 +239,7 @@
     <string name="webdav_configure">Ρυθμίσεις WebDAV</string>
     <string name="webdav_not_configured">Δεν έχει ρυθμιστεί</string>
     <string name="webdav_server_url">Διεύθυνση διακομιστή</string>
+    <string name="webdav_directory">Κατάλογος διακομιστή</string>
     <string name="webdav_username">Όνομα χρήστη</string>
     <string name="webdav_password">Κωδικός πρόσβασης</string>
     <string name="webdav_delete">Διαγραφή</string>

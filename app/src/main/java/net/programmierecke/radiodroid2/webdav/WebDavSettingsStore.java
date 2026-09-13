@@ -21,6 +21,7 @@ import javax.security.auth.x500.X500Principal;
 public final class WebDavSettingsStore {
     private static final String PREFS = "webdav_settings";
     private static final String URL = "url";
+    private static final String DIRECTORY = "directory";
     private static final String USERNAME = "username";
     private static final String PASSWORD = "password";
     private static final String KEY_ALIAS = "radiodroid_webdav_password";
@@ -33,17 +34,26 @@ public final class WebDavSettingsStore {
     }
 
     public synchronized void save(String url, String username, String password) {
+        save(url, "", username, password);
+    }
+
+    public synchronized void save(String url, String directory, String username, String password) {
         WebDavSettings.normalizeUrl(url);
+        WebDavSettings.normalizeDirectory(directory);
         if (username == null || username.trim().isEmpty() || password == null || password.isEmpty()) {
             throw new IllegalArgumentException("Missing credentials");
         }
-        preferences.edit().putString(URL, WebDavSettings.normalizeUrl(url)).putString(USERNAME, username.trim()).putString(PASSWORD, encrypt(password)).apply();
+        preferences.edit().putString(URL, WebDavSettings.normalizeUrl(url)).putString(DIRECTORY, WebDavSettings.normalizeDirectory(directory)).putString(USERNAME, username.trim()).putString(PASSWORD, encrypt(password)).apply();
     }
 
     public synchronized void saveKeepingPassword(String url, String username) throws WebDavException {
+        saveKeepingPassword(url, "", username);
+    }
+
+    public synchronized void saveKeepingPassword(String url, String directory, String username) throws WebDavException {
         WebDavSettings old = load();
         if (old == null) throw new WebDavException(WebDavException.Kind.INVALID_DATA, "Password required");
-        save(url, username, old.getPassword());
+        save(url, directory, username, old.getPassword());
     }
 
     public synchronized void delete() {
@@ -62,7 +72,8 @@ public final class WebDavSettingsStore {
         String encoded = preferences.getString(PASSWORD, null);
         if (url == null || username == null || encoded == null) return null;
         try {
-            return new WebDavSettings(url, username, decrypt(encoded));
+            String directory = preferences.getString(DIRECTORY, "");
+            return new WebDavSettings(url, directory, username, decrypt(encoded));
         } catch (Exception e) {
             throw new WebDavException(WebDavException.Kind.INVALID_DATA, "WebDAV credentials unavailable", e);
         }

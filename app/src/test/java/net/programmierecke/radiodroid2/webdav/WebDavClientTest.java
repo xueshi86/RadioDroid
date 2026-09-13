@@ -133,6 +133,40 @@ public class WebDavClientTest {
     }
 
     @Test
+    public void configuredDirectoryIsUsedForConnectionCheck() throws Exception {
+        WebDavClient directoryClient = new WebDavClient(new WebDavSettings(server.url("/dav/").toString(), "backup", "user", "pass"));
+        server.enqueue(new MockResponse().setResponseCode(207).setBody("<multistatus/>"));
+        directoryClient.checkConnection();
+        RecordedRequest request = server.takeRequest();
+        assertEquals("PROPFIND", request.getMethod());
+        assertEquals("/dav/backup/", request.getPath());
+    }
+
+    @Test
+    public void configuredDirectoryIsUsedForUpload() throws Exception {
+        WebDavClient directoryClient = new WebDavClient(new WebDavSettings(server.url("/dav/").toString(), "backup/sub", "user", "pass"));
+        File file = createTempFile("content");
+        server.enqueue(new MockResponse().setResponseCode(201));
+        directoryClient.upload("favourites.m3u", file);
+        RecordedRequest request = server.takeRequest();
+        assertEquals("PUT", request.getMethod());
+        assertEquals("/dav/backup/sub/favourites.m3u", request.getPath());
+        file.delete();
+    }
+
+    @Test
+    public void configuredDirectoryIsUsedForDownload() throws Exception {
+        WebDavClient directoryClient = new WebDavClient(new WebDavSettings(server.url("/dav/").toString(), "backup", "user", "pass"));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody("hello"));
+        File target = directoryClient.download("favourites.m3u", tempDirectory());
+        assertEquals("hello", readFile(target));
+        RecordedRequest request = server.takeRequest();
+        assertEquals("GET", request.getMethod());
+        assertEquals("/dav/backup/favourites.m3u", request.getPath());
+        target.delete();
+    }
+
+    @Test
     public void downloadWritesFileContent() throws Exception {
         server.enqueue(new MockResponse().setResponseCode(200).setBody("hello"));
         File target = client.download("favourites.m3u", tempDirectory());

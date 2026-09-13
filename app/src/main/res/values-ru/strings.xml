@@ -778,6 +778,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="webdav_configure">Настройка WebDAV</string>
     <string name="webdav_not_configured">Не настроено</string>
     <string name="webdav_server_url">Адрес сервера</string>
+    <string name="webdav_directory">Каталог сервера</string>
     <string name="webdav_username">Имя пользователя</string>
     <string name="webdav_password">Пароль</string>
     <string name="webdav_delete">Удалить</string>

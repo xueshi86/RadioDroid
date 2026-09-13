@@ -732,6 +732,7 @@
     <string name="webdav_configure">WebDAV 配置</string>
     <string name="webdav_not_configured">未配置</string>
     <string name="webdav_server_url">服务器地址</string>
+    <string name="webdav_directory">服务器目录</string>
     <string name="webdav_username">账号</string>
     <string name="webdav_password">密码</string>
     <string name="webdav_delete">删除</string>

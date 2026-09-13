@@ -1257,6 +1257,10 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             }
         });
         url.setText(existing == null ? "" : existing.getUrl());
+        EditText directory = new EditText(requireContext());
+        directory.setHint(R.string.webdav_directory);
+        directory.setSingleLine(true);
+        directory.setText(existing == null ? "" : existing.getDirectory());
         EditText username = new EditText(requireContext());
         username.setHint(R.string.webdav_username);
         username.setSingleLine(true);
@@ -1267,6 +1271,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         layout.addView(url);
         layout.addView(httpWarning);
+        layout.addView(directory);
         layout.addView(username);
         layout.addView(password);
         final WebDavSettings savedSettings = existing;
@@ -1285,8 +1290,8 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         dialog.setOnShowListener(d -> dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             try {
                 WebDavSettingsStore store = new WebDavSettingsStore(requireContext());
-                if (password.getText().length() == 0 && savedSettings != null) store.saveKeepingPassword(url.getText().toString(), username.getText().toString());
-                else store.save(url.getText().toString(), username.getText().toString(), password.getText().toString());
+                if (password.getText().length() == 0 && savedSettings != null) store.saveKeepingPassword(url.getText().toString(), directory.getText().toString(), username.getText().toString());
+                else store.save(url.getText().toString(), directory.getText().toString(), username.getText().toString(), password.getText().toString());
                 dialog.dismiss();
                 refreshWebDavSummary();
             } catch (Exception e) {

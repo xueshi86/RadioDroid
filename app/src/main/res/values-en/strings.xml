@@ -499,6 +499,7 @@
     <string name="webdav_configure">WebDAV configuration</string>
     <string name="webdav_not_configured">Not configured</string>
     <string name="webdav_server_url">Server address</string>
+    <string name="webdav_directory">Server directory</string>
     <string name="webdav_username">Username</string>
     <string name="webdav_password">Password</string>
     <string name="webdav_delete">Delete</string>

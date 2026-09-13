@@ -770,6 +770,7 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="webdav_configure">Configuración de WebDAV</string>
     <string name="webdav_not_configured">No configurado</string>
     <string name="webdav_server_url">Dirección del servidor</string>
+    <string name="webdav_directory">Directorio del servidor</string>
     <string name="webdav_username">Usuario</string>
     <string name="webdav_password">Contraseña</string>
     <string name="webdav_delete">Eliminar</string>

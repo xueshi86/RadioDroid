@@ -2,6 +2,8 @@ package net.programmierecke.radiodroid2.utils;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.view.View;
+import android.view.ViewParent;
 
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
@@ -34,6 +36,11 @@ public class RecyclerItemMoveAndSwipeHelper<ViewHolderType extends SwipeableView
     public void onSelectedChanged(RecyclerView.ViewHolder viewHolder, int actionState) {
         super.onSelectedChanged(viewHolder, actionState);
         if (viewHolder != null && actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
+            RecyclerView recyclerView = findRecyclerView(viewHolder.itemView);
+            if (recyclerView != null) {
+                // 阻止父级 SwipeRefreshLayout 拦截向下拖拽手势（否则触发下拉刷新而非拖拽排序）
+                recyclerView.requestDisallowInterceptTouchEvent(true);
+            }
             @SuppressWarnings("unchecked")
             ViewHolderType viewHolderType = (ViewHolderType) viewHolder;
             moveAndSwipeListener.onDragStarted(viewHolderType);
@@ -61,7 +68,17 @@ public class RecyclerItemMoveAndSwipeHelper<ViewHolderType extends SwipeableView
         @SuppressWarnings("unchecked")
         ViewHolderType viewHolderType = (ViewHolderType) viewHolder;
         super.clearView(recyclerView, viewHolder);
+        // 拖拽/滑动结束，恢复父级容器（SwipeRefreshLayout）对触摸事件的处理
+        recyclerView.requestDisallowInterceptTouchEvent(false);
         moveAndSwipeListener.onMoveEnded(viewHolderType);
+    }
+
+    private static RecyclerView findRecyclerView(View view) {
+        ViewParent parent = view.getParent();
+        while (parent != null && !(parent instanceof RecyclerView)) {
+            parent = parent.getParent();
+        }
+        return (RecyclerView) parent;
     }
 
     @Override

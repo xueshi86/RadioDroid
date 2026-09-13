@@ -89,4 +89,55 @@ public class WebDavSettingsTest {
         } catch (IllegalArgumentException expected) {
         }
     }
+
+    @Test
+    public void normalizesDirectory() {
+        assertEquals("", WebDavSettings.normalizeDirectory(null));
+        assertEquals("", WebDavSettings.normalizeDirectory("  "));
+        assertEquals("backup", WebDavSettings.normalizeDirectory("/backup/"));
+        assertEquals("backup", WebDavSettings.normalizeDirectory("  backup  "));
+        assertEquals("backup/sub", WebDavSettings.normalizeDirectory("//backup///sub//"));
+    }
+
+    @Test
+    public void rejectsInvalidDirectory() {
+        try {
+            WebDavSettings.normalizeDirectory("..");
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException expected) {
+        }
+        try {
+            WebDavSettings.normalizeDirectory("a/../b");
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException expected) {
+        }
+        try {
+            WebDavSettings.normalizeDirectory("a\\b");
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException expected) {
+        }
+        try {
+            WebDavSettings.normalizeDirectory("a\u0007b");
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException expected) {
+        }
+        try {
+            WebDavSettings.normalizeDirectory("a%2e%2eb");
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
+    @Test
+    public void baseUrlAppendsDirectory() {
+        WebDavSettings noDirectory = new WebDavSettings("https://example.com/dav/", "user", "pass");
+        assertEquals("https://example.com/dav/", noDirectory.getBaseUrl());
+
+        WebDavSettings withDirectory = new WebDavSettings("https://example.com/dav/", "backup/sub", "user", "pass");
+        assertEquals("https://example.com/dav/backup/sub/", withDirectory.getBaseUrl());
+        assertEquals("backup/sub", withDirectory.getDirectory());
+
+        WebDavSettings normalizedDirectory = new WebDavSettings("https://example.com/dav/", "/backup/", "user", "pass");
+        assertEquals("https://example.com/dav/backup/", normalizedDirectory.getBaseUrl());
+    }
 }
