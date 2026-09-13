@@ -1136,51 +1136,83 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         String fav = preferences.getString("fav", null);
         String db = preferences.getString("db", null);
         if (fav == null && db == null) {
-            checkPendingWebDavDatabaseRestore();
+            checkPendingWebDavDatabaseRestore(null, false);
             return;
         }
         boolean restore = preferences.getBoolean("restore", false);
         preferences.edit().clear().apply();
+
+        // 数据库恢复需要前台确认：先弹"是否用备份文件替换本地数据库"确认弹窗，
+        // 替换完成后统一呈现收藏/数据库分项结果的恢复结果弹窗（不先弹"等待确认"结果弹窗）。
+        if ("pending".equals(db)) {
+            checkPendingWebDavDatabaseRestore(fav, restore);
+            return;
+        }
+
         StringBuilder message = new StringBuilder();
-        if (fav != null) message.append(getString(R.string.webdav_favourites)).append(": ").append(webDavOutcomeText(fav)).append('\n');
-        if (db != null) message.append(getString(R.string.webdav_database)).append(": ").append(webDavOutcomeText(db));
-        boolean pendingConfirm = "pending".equals(db);
+        if (fav != null) message.append(getString(R.string.webdav_favourites)).append(": ").append(webDavOutcomeText(fav, restore)).append('\n');
+        if (db != null) message.append(getString(R.string.webdav_database)).append(": ").append(webDavOutcomeText(db, restore));
+        showWebDavResultDialog(restore, message.toString().trim());
+    }
+
+    private void showWebDavResultDialog(boolean restore, String message) {
         new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
                 .setTitle(restore ? R.string.webdav_restore : R.string.webdav_backup)
-                .setMessage(message.toString().trim())
+                .setMessage(message)
                 .setPositiveButton(android.R.string.ok, null)
-                .setOnDismissListener(dialog -> {
-                    if (pendingConfirm) checkPendingWebDavDatabaseRestore();
-                })
                 .show();
     }
 
-    private String webDavOutcomeText(String status) {
-        if ("success".equals(status)) return getString(R.string.webdav_result_success);
+    private String webDavOutcomeText(String status, boolean restore) {
+        if ("success".equals(status)) return getString(restore ? R.string.webdav_result_restore_success : R.string.webdav_result_backup_success);
         if ("pending".equals(status)) return getString(R.string.webdav_result_pending);
-        return getString(R.string.webdav_result_failed);
+        // 数据库替换被用户取消（保留待确认状态）
+        if ("canceled".equals(status)) return getString(R.string.webdav_result_canceled);
+        // 数据库替换过程中本地失败，已回滚保留原数据库
+        if ("failed".equals(status)) return getString(R.string.webdav_restore_failed);
+        if ("error_authentication".equals(status)) return getString(R.string.webdav_error_authentication);
+        if ("error_permission".equals(status)) return getString(R.string.webdav_error_permission);
+        if ("error_not_found".equals(status)) return getString(R.string.webdav_error_not_found);
+        if ("error_protocol".equals(status)) return getString(R.string.webdav_error_protocol);
+        if ("error_network".equals(status)) return getString(R.string.webdav_error_network);
+        if ("error_local_database".equals(status)) return getString(R.string.webdav_error_local_database);
+        if ("error_storage".equals(status)) return getString(R.string.webdav_error_storage);
+        if ("error_configuration".equals(status)) return getString(R.string.webdav_error_configuration);
+        if ("error_invalid_data".equals(status)) return getString(R.string.webdav_error_invalid_data);
+        if ("error_empty_favourites".equals(status)) return getString(R.string.webdav_error_empty_favourites);
+        return getString(R.string.webdav_error_unknown);
     }
 
-    private void checkPendingWebDavDatabaseRestore() {
+    private void checkPendingWebDavDatabaseRestore(String favStatus, boolean restore) {
         if (!isActivityUsable()) return;
         SharedPreferences preferences = requireContext().getSharedPreferences("webdav_pending_restore", Context.MODE_PRIVATE);
         String path = preferences.getString("database", null);
-        if (path == null) return;
-        File file = new File(path);
-        if (!file.isFile()) {
-            preferences.edit().clear().apply();
+        File file = path == null ? null : new File(path);
+        if (file == null || !file.isFile()) {
+            if (path != null) preferences.edit().clear().apply();
+            // 无待确认的数据库：若本次还有收藏分项结果，直接呈现其结果弹窗
+            if (favStatus != null) showWebDavResultDialog(restore, getString(R.string.webdav_favourites) + ": " + webDavOutcomeText(favStatus, restore));
             return;
         }
         new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
                 .setTitle(R.string.webdav_restore)
                 .setMessage(R.string.webdav_database_restore_confirm)
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.webdav_restore, (dialog, which) -> applyWebDavDatabaseRestore(file, preferences))
-                .setOnCancelListener(dialog -> {})
+                .setNegativeButton(android.R.string.cancel, (dialog, which) -> showPendingWebDavCanceledResult(favStatus, restore))
+                .setPositiveButton(R.string.webdav_restore, (dialog, which) -> applyWebDavDatabaseRestore(file, preferences, favStatus, restore))
+                .setOnCancelListener(dialog -> showPendingWebDavCanceledResult(favStatus, restore))
                 .show();
     }
 
-    private void applyWebDavDatabaseRestore(File importedFile, SharedPreferences pending) {
+    // 用户取消数据库替换：保留待确认状态以便稍后重新确认，并如实反馈"已取消"结果
+    private void showPendingWebDavCanceledResult(String favStatus, boolean restore) {
+        if (!isActivityUsable()) return;
+        StringBuilder message = new StringBuilder();
+        if (favStatus != null) message.append(getString(R.string.webdav_favourites)).append(": ").append(webDavOutcomeText(favStatus, restore)).append('\n');
+        message.append(getString(R.string.webdav_database)).append(": ").append(webDavOutcomeText("canceled", restore));
+        showWebDavResultDialog(restore, message.toString().trim());
+    }
+
+    private void applyWebDavDatabaseRestore(File importedFile, SharedPreferences pending, String favStatus, boolean restore) {
         final Context context = requireContext().getApplicationContext();
         final Activity activity = getActivity();
         if (activity == null) return;
@@ -1215,12 +1247,40 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             }
             final Exception error = failure;
             activity.runOnUiThread(() -> {
-                if (isAdded()) {
-                    Toast.makeText(requireContext(), error == null ? R.string.webdav_restore_success : R.string.webdav_restore_failed, Toast.LENGTH_LONG).show();
+                if (!isAdded()) return;
+                // 恢复结果分项：成功 / 恢复错误（校验、数据类异常）/ 恢复失败（本地替换失败已回滚保留原库）
+                String dbOutcome;
+                if (error == null) {
+                    dbOutcome = "success";
+                } else if (error instanceof WebDavException) {
+                    dbOutcome = webDavErrorCode(error);
+                } else {
+                    dbOutcome = "failed";
                 }
+                StringBuilder message = new StringBuilder();
+                if (favStatus != null) message.append(getString(R.string.webdav_favourites)).append(": ").append(webDavOutcomeText(favStatus, restore)).append('\n');
+                message.append(getString(R.string.webdav_database)).append(": ").append(webDavOutcomeText(dbOutcome, restore));
+                showWebDavResultDialog(restore, message.toString().trim());
             });
         }, "WebDavDatabaseRestore").start();
     }
+    private String webDavErrorCode(Exception error) {
+        if (error instanceof WebDavException) {
+            switch (((WebDavException) error).getKind()) {
+                case AUTHENTICATION: return "error_authentication";
+                case PERMISSION: return "error_permission";
+                case NOT_FOUND: return "error_not_found";
+                case PROTOCOL: return "error_protocol";
+                case NETWORK: return "error_network";
+                case LOCAL_DATABASE: return "error_local_database";
+                case STORAGE: return "error_storage";
+                case CONFIGURATION: return "error_configuration";
+                default: return "error_invalid_data";
+            }
+        }
+        return "error_unknown";
+    }
+
     private void showWebDavConfigurationDialog() {
         if (!isActivityUsable()) return;
         WebDavSettings existing = null;

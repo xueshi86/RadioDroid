@@ -1,7 +1,7 @@
 package net.programmierecke.radiodroid2.webdav;
 
 public class WebDavException extends Exception {
-    public enum Kind { AUTHENTICATION, PERMISSION, NOT_FOUND, PROTOCOL, NETWORK, INVALID_DATA }
+    public enum Kind { AUTHENTICATION, PERMISSION, NOT_FOUND, PROTOCOL, NETWORK, INVALID_DATA, EMPTY_FILE, LOCAL_DATABASE, STORAGE, CONFIGURATION }
     private final Kind kind;
 
     public WebDavException(Kind kind, String message) {

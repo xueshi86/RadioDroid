@@ -780,7 +780,7 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="webdav_backup_summary">Guardar datos en WebDAV</string>
     <string name="webdav_restore_summary">Restaurar datos desde WebDAV</string>
     <string name="webdav_favourites">Emisoras favoritas</string>
-    <string name="webdav_database">Base de datos sin conexión</string>
+    <string name="webdav_database">Base de datos local</string>
     <string name="webdav_both">Ambos</string>
     <string name="webdav_connectivity_checking">%1$s · Comprobando conexión</string>
     <string name="webdav_connectivity_ok">%1$s · Conexión correcta</string>
@@ -789,11 +789,23 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="webdav_task_started">Tarea iniciada</string>
     <string name="webdav_task_running">Tarea en curso…</string>
     <string name="webdav_http_warning">HTTP transmite credenciales sin cifrar; se recomienda HTTPS</string>
-    <string name="webdav_result_success">Correcto</string>
+    <string name="webdav_result_backup_success">Copia de seguridad realizada correctamente</string>
+    <string name="webdav_result_restore_success">Restauración realizada correctamente</string>
     <string name="webdav_result_failed">Error</string>
     <string name="webdav_result_pending">Pendiente de confirmación</string>
-    <string name="webdav_database_restore_confirm">¿Reemplazar la base de datos local sin conexión por la base de datos descargada?</string>
-    <string name="webdav_restore_success">Base de datos restaurada correctamente</string>
+    <string name="webdav_result_canceled">Cancelado</string>
     <string name="webdav_restore_failed">Error al restaurar la base de datos; se conservó la base de datos original</string>
+    <string name="webdav_database_restore_confirm">¿Reemplazar la base de datos local por la base de datos descargada?</string>
+    <string name="webdav_error_authentication">Error de autenticación</string>
+    <string name="webdav_error_permission">Permiso denegado</string>
+    <string name="webdav_error_not_found">Recurso no encontrado</string>
+    <string name="webdav_error_protocol">Error de protocolo</string>
+    <string name="webdav_error_network">Error de red</string>
+    <string name="webdav_error_local_database">Error de la base de datos local</string>
+    <string name="webdav_error_storage">Error de almacenamiento</string>
+    <string name="webdav_error_configuration">Configuración de WebDAV no válida</string>
+    <string name="webdav_error_invalid_data">Datos no válidos</string>
+    <string name="webdav_error_empty_favourites">El archivo de favoritos en el servidor está vacío</string>
+    <string name="webdav_error_unknown">Error desconocido</string>
 
 </resources>

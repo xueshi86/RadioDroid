@@ -8,6 +8,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -328,12 +330,23 @@ public class StationSaveManager extends Observable {
     }
 
     /**
-     * 通知所有观察者和监听器
+     * 通知所有观察者和监听器。
+     * Java Observable 只有在 setChanged() 之后调用 notifyObservers() 才会真正通知，
+     * 此前从未调用 setChanged()，导致收藏/历史数据变化后 UI 观察者收不到刷新通知。
+     * 同时保证在后台线程（如 WebDAV 恢复 Worker）触发时，观察者回调统一切回主线程执行，
+     * 避免在非 UI 线程操作 RecyclerView。
      */
-    private void notifyAllListeners() {
-        // 通知传统的Observer
+    public void notifyAllListeners() {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            dispatchNotifyAllListeners();
+        } else {
+            new Handler(Looper.getMainLooper()).post(this::dispatchNotifyAllListeners);
+        }
+    }
+
+    private void dispatchNotifyAllListeners() {
+        setChanged();
         notifyObservers();
-        // 通知新的StationUpdateListener
         for (StationUpdateListener listener : updateListeners) {
             listener.onStationListUpdated();
         }

@@ -258,11 +258,23 @@
     <string name="webdav_task_started">Η εργασία ξεκίνησε</string>
     <string name="webdav_task_running">Η εργασία εκτελείται…</string>
     <string name="webdav_http_warning">Το HTTP μεταδίδει τα διαπιστευτήρια μη κρυπτογραφημένα· συνιστάται HTTPS</string>
-    <string name="webdav_result_success">Επιτυχία</string>
+    <string name="webdav_result_backup_success">Δημιουργία αντιγράφου επιτυχής</string>
+    <string name="webdav_result_restore_success">Επαναφορά επιτυχής</string>
     <string name="webdav_result_failed">Αποτυχία</string>
     <string name="webdav_result_pending">Σε αναμονή επιβεβαίωσης</string>
-    <string name="webdav_database_restore_confirm">Να αντικατασταθεί η τοπική βάση δεδομένων με τη ληφθείσα βάση δεδομένων;</string>
-    <string name="webdav_restore_success">Η βάση δεδομένων επαναφέρθηκε με επιτυχία</string>
+    <string name="webdav_result_canceled">Ακυρώθηκε</string>
     <string name="webdav_restore_failed">Η επαναφορά της βάσης δεδομένων απέτυχε· διατηρήθηκε η αρχική βάση δεδομένων</string>
+    <string name="webdav_database_restore_confirm">Να αντικατασταθεί η τοπική βάση δεδομένων με τη ληφθείσα βάση δεδομένων?</string>
+    <string name="webdav_error_authentication">Αποτυχία ελέγχου ταυτότητας</string>
+    <string name="webdav_error_permission">Δεν επιτρέπεται η πρόσβαση</string>
+    <string name="webdav_error_not_found">Ο πόρος δεν βρέθηκε</string>
+    <string name="webdav_error_protocol">Σφάλμα πρωτοκόλλου</string>
+    <string name="webdav_error_network">Σφάλμα δικτύου</string>
+    <string name="webdav_error_local_database">Σφάλμα τοπικής βάσης δεδομένων</string>
+    <string name="webdav_error_storage">Σφάλμα αποθήκευσης</string>
+    <string name="webdav_error_configuration">Μη έγκυρες ρυθμίσεις WebDAV</string>
+    <string name="webdav_error_invalid_data">Μη έγκυρα δεδομένα</string>
+    <string name="webdav_error_empty_favourites">Το αρχείο αγαπημένων στον διακομιστή είναι κενό</string>
+    <string name="webdav_error_unknown">Άγνωστο σφάλμα</string>
 
 </resources>

@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -21,7 +20,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
 import net.programmierecke.radiodroid2.station.ItemAdapterStation;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
 import net.programmierecke.radiodroid2.station.ItemAdapterIconOnlyStation;
@@ -46,7 +44,6 @@ public class FragmentStarred extends Fragment implements IAdapterRefreshable, Ob
     static final int SORT_RECENT = 4;
 
     private RecyclerView rvStations;
-    private SwipeRefreshLayout swipeRefreshLayout;
     private FloatingActionButton fabScrollToTop;
 
     private FavouriteManager favouriteManager;
@@ -173,11 +170,6 @@ public class FragmentStarred extends Fragment implements IAdapterRefreshable, Ob
         currentSortMode = prefs.getInt(PREF_SORT_MODE, SORT_NONE);
         sortAscending = prefs.getBoolean(PREF_SORT_ASCENDING, true);
 
-        swipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.swiperefresh);
-        if (swipeRefreshLayout != null) {
-            swipeRefreshLayout.setOnRefreshListener(() -> RefreshDownloadList());
-        }
-
         return view;
     }
 
@@ -268,20 +260,25 @@ public class FragmentStarred extends Fragment implements IAdapterRefreshable, Ob
         }
     }
 
-    void RefreshDownloadList(){
-        RefreshListGui();
-        if (swipeRefreshLayout != null) {
-            swipeRefreshLayout.setRefreshing(false);
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (rvStations != null) {
+            RefreshListGui();
         }
     }
 
     @Override
     public void onDestroyView() {
+        if (rvStations != null) {
+            rvStations.setAdapter(null);
+        }
         super.onDestroyView();
-        rvStations.setAdapter(null);
         if (favouriteManager != null) {
             favouriteManager.deleteObserver(this);
         }
+        rvStations = null;
+        fabScrollToTop = null;
     }
 
     @Override

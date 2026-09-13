@@ -439,7 +439,7 @@
     <string name="webdav_backup_summary">Sauvegarder les données sur WebDAV</string>
     <string name="webdav_restore_summary">Restaurer les données depuis WebDAV</string>
     <string name="webdav_favourites">Stations favorites</string>
-    <string name="webdav_database">Base de données hors ligne</string>
+    <string name="webdav_database">Base de données locale</string>
     <string name="webdav_both">Les deux</string>
     <string name="webdav_connectivity_checking">%1$s · Vérification de la connexion</string>
     <string name="webdav_connectivity_ok">%1$s · Connexion réussie</string>
@@ -448,11 +448,23 @@
     <string name="webdav_task_started">Tâche démarrée</string>
     <string name="webdav_task_running">Tâche en cours…</string>
     <string name="webdav_http_warning">HTTP transmet les identifiants en clair ; HTTPS est recommandé</string>
-    <string name="webdav_result_success">Réussi</string>
+    <string name="webdav_result_backup_success">Sauvegarde réussie</string>
+    <string name="webdav_result_restore_success">Restauration réussie</string>
     <string name="webdav_result_failed">Échec</string>
     <string name="webdav_result_pending">En attente de confirmation</string>
-    <string name="webdav_database_restore_confirm">Remplacer la base de données hors ligne locale par la base de données téléchargée ?</string>
-    <string name="webdav_restore_success">Base de données restaurée avec succès</string>
+    <string name="webdav_result_canceled">Annulé</string>
     <string name="webdav_restore_failed">Échec de la restauration de la base de données ; la base de données d’origine a été conservée</string>
+    <string name="webdav_database_restore_confirm">Remplacer la base de données locale par la base de données téléchargée ?</string>
+    <string name="webdav_error_authentication">Échec de l’authentification</string>
+    <string name="webdav_error_permission">Permission refusée</string>
+    <string name="webdav_error_not_found">Ressource introuvable</string>
+    <string name="webdav_error_protocol">Erreur de protocole</string>
+    <string name="webdav_error_network">Erreur réseau</string>
+    <string name="webdav_error_local_database">Erreur de la base de données locale</string>
+    <string name="webdav_error_storage">Erreur de stockage</string>
+    <string name="webdav_error_configuration">Configuration WebDAV invalide</string>
+    <string name="webdav_error_invalid_data">Données invalides</string>
+    <string name="webdav_error_empty_favourites">Le fichier des favoris sur le serveur est vide</string>
+    <string name="webdav_error_unknown">Erreur inconnue</string>
 
 </resources>

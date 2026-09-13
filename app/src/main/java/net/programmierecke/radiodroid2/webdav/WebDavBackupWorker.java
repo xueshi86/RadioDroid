@@ -2,6 +2,7 @@ package net.programmierecke.radiodroid2.webdav;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.work.Constraints;
@@ -14,6 +15,7 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 public final class WebDavBackupWorker extends Worker {
+    private static final String TAG = "WebDavBackupWorker";
     public static final String KEY_TYPE = "type";
     public static final String KEY_MODE = "mode";
     public static final String WORK_NAME = "webdav_backup_restore";
@@ -21,7 +23,9 @@ public final class WebDavBackupWorker extends Worker {
     private static final int MAX_ATTEMPTS = 6;
     private static final String STATUS_SUCCESS = "success";
     private static final String STATUS_PENDING = "pending";
-    private static final String STATUS_FAILED = "failed";
+    private static final String ERROR_PREFIX = "error_";
+    private static final String ERROR_CONFIGURATION = "error_configuration";
+    private static final String ERROR_UNKNOWN = "error_unknown";
 
     public WebDavBackupWorker(@NonNull Context context, @NonNull WorkerParameters parameters) { super(context, parameters); }
 
@@ -36,12 +40,17 @@ public final class WebDavBackupWorker extends Worker {
     @Override
     public Result doWork() {
         WebDavSettings settings;
+        String configurationError = null;
         try {
             settings = new WebDavSettingsStore(getApplicationContext()).load();
         } catch (WebDavException e) {
             settings = null;
+            configurationError = errorCode(e);
         }
-        if (settings == null) return Result.failure();
+        if (settings == null) {
+            persistResult(null, configurationError == null ? ERROR_CONFIGURATION : configurationError, getInputData().getBoolean(KEY_MODE, false));
+            return Result.failure();
+        }
 
         WebDavBackupManager manager = new WebDavBackupManager(getApplicationContext(), settings);
         WebDavBackupType type = WebDavBackupType.fromName(getInputData().getString(KEY_TYPE));
@@ -58,7 +67,8 @@ public final class WebDavBackupWorker extends Worker {
                 if (restore) manager.restoreFavourites(); else manager.backupFavourites();
                 favStatus = STATUS_SUCCESS;
             } catch (Exception e) {
-                favStatus = STATUS_FAILED;
+                Log.e(TAG, "Favourites operation failed: restore=" + restore, e);
+                favStatus = errorCode(e);
                 retryable = retryable || isNetworkError(e);
             }
         }
@@ -73,15 +83,38 @@ public final class WebDavBackupWorker extends Worker {
                     dbStatus = STATUS_SUCCESS;
                 }
             } catch (Exception e) {
-                dbStatus = STATUS_FAILED;
+                Log.e(TAG, "Database operation failed: restore=" + restore, e);
+                dbStatus = errorCode(e);
                 retryable = retryable || isNetworkError(e);
             }
         }
 
         if (retryable && getRunAttemptCount() < MAX_ATTEMPTS) return Result.retry();
         persistResult(favStatus, dbStatus, restore);
-        if (STATUS_FAILED.equals(favStatus) || STATUS_FAILED.equals(dbStatus)) return Result.failure();
+        if (isError(favStatus) || isError(dbStatus)) return Result.failure();
         return Result.success();
+    }
+
+    private String errorCode(Exception e) {
+        if (e instanceof WebDavException) {
+            switch (((WebDavException) e).getKind()) {
+                case AUTHENTICATION: return "error_authentication";
+                case PERMISSION: return "error_permission";
+                case NOT_FOUND: return "error_not_found";
+                case PROTOCOL: return "error_protocol";
+                case NETWORK: return "error_network";
+                case LOCAL_DATABASE: return "error_local_database";
+                case STORAGE: return "error_storage";
+                case CONFIGURATION: return ERROR_CONFIGURATION;
+                case EMPTY_FILE: return "error_empty_favourites";
+                default: return "error_invalid_data";
+            }
+        }
+        return ERROR_UNKNOWN;
+    }
+
+    private boolean isError(String status) {
+        return status != null && status.startsWith(ERROR_PREFIX);
     }
 
     private boolean isNetworkError(Exception e) {

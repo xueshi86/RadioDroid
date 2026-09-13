@@ -8,6 +8,8 @@ import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import android.util.Log;
+
 import okhttp3.Credentials;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
@@ -17,6 +19,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public final class WebDavClient {
+    private static final String TAG = "WebDavClient";
     private static final MediaType OCTET_STREAM = MediaType.parse("application/octet-stream");
     private static final long MAX_DOWNLOAD_BYTES = 64L * 1024L * 1024L;
     private final WebDavSettings settings;
@@ -46,11 +49,14 @@ public final class WebDavClient {
         Response response = null;
         try {
             response = executePut(name, file);
+            Log.d(TAG, "upload PUT " + fileUrl(name) + " first attempt code=" + response.code());
             if (response.code() == 409) {
                 response.close();
                 response = null;
+                Log.d(TAG, "upload: 409 received, ensuring directory: " + settings.getBaseUrl());
                 ensureDirectory();
                 response = executePut(name, file);
+                Log.d(TAG, "upload PUT after ensureDirectory code=" + response.code());
             }
             requireSuccess(response);
         } catch (IOException e) {
@@ -145,6 +151,7 @@ public final class WebDavClient {
     private void requireSuccess(Response response) throws WebDavException {
         int code = response.code();
         if (code >= 200 && code < 300) return;
+        Log.e(TAG, "requireSuccess failed code=" + code + " url=" + response.request().url());
         if (code == 401) throw new WebDavException(WebDavException.Kind.AUTHENTICATION, "WebDAV authentication failed");
         if (code == 403) throw new WebDavException(WebDavException.Kind.PERMISSION, "WebDAV permission denied");
         if (code == 404 || code == 409) throw new WebDavException(WebDavException.Kind.NOT_FOUND, "WebDAV location not found");
@@ -154,6 +161,7 @@ public final class WebDavClient {
     }
 
     private WebDavException network(IOException e) {
+        Log.e(TAG, "network failure: " + e, e);
         return new WebDavException(WebDavException.Kind.NETWORK, e instanceof SocketTimeoutException ? "WebDAV request timed out" : "WebDAV network request failed", e);
     }
 }

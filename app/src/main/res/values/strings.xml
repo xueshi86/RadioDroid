@@ -195,7 +195,7 @@
     <string name="webdav_backup_summary">Back up data to WebDAV</string>
     <string name="webdav_restore_summary">Restore data from WebDAV</string>
     <string name="webdav_favourites">Favourite stations</string>
-    <string name="webdav_database">Offline database</string>
+    <string name="webdav_database">Local database</string>
     <string name="webdav_both">Both</string>
     <string name="webdav_connectivity_checking">%1$s · Connectivity: checking</string>
     <string name="webdav_connectivity_ok">%1$s · Connectivity: OK</string>
@@ -204,11 +204,11 @@
     <string name="webdav_task_started">Task started</string>
     <string name="webdav_task_running">Task in progress…</string>
     <string name="webdav_http_warning">HTTP transmits credentials unencrypted; HTTPS is recommended</string>
-    <string name="webdav_result_success">Success</string>
+    <string name="webdav_result_backup_success">Backup successful</string>
+    <string name="webdav_result_restore_success">Restore successful</string>
     <string name="webdav_result_failed">Failed</string>
     <string name="webdav_result_pending">Awaiting confirmation</string>
-    <string name="webdav_database_restore_confirm">Replace the local offline database with the downloaded database?</string>
-    <string name="webdav_restore_success">Database restored successfully</string>
+    <string name="webdav_result_canceled">Canceled</string>
     <string name="webdav_restore_failed">Database restore failed; the original database was retained</string>
 
 
@@ -791,5 +791,17 @@ The app will automatically restart to load the new database.</string>
     <string name="player_current_play_time">Current: %1$s</string>
     <string name="player_network_usage">Data: %1$s</string>
     <string name="player_buffer_time">Buffered: %1$s</string>
+    <string name="webdav_database_restore_confirm">Replace the local database with the downloaded database?</string>
+    <string name="webdav_error_authentication">Authentication failed</string>
+    <string name="webdav_error_permission">Permission denied</string>
+    <string name="webdav_error_not_found">Resource not found</string>
+    <string name="webdav_error_protocol">Protocol error</string>
+    <string name="webdav_error_network">Network error</string>
+    <string name="webdav_error_local_database">Local database error</string>
+    <string name="webdav_error_storage">Storage error</string>
+    <string name="webdav_error_configuration">Invalid WebDAV configuration</string>
+    <string name="webdav_error_invalid_data">Invalid data</string>
+    <string name="webdav_error_empty_favourites">The favourites file on the server is empty</string>
+    <string name="webdav_error_unknown">Unknown error</string>
 
 </resources>

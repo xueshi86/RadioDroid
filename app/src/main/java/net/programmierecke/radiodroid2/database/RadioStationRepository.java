@@ -38,6 +38,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import okhttp3.OkHttpClient;
@@ -47,9 +49,10 @@ public class RadioStationRepository {
     
     private RadioStationDao radioStationDao;
     private RadioStationDao tempRadioStationDao; // 临时数据库的DAO
+    private RadioDroidDatabase tempDatabase;
     private UpdateTimestampDao updateTimestampDao;
     private Context context;
-    private Executor executor = Executors.newSingleThreadExecutor();
+    private ExecutorService executor = Executors.newSingleThreadExecutor();
     
     // 静态锁对象，确保同步方法不会被多个线程同时调用
     private static final Object sSyncLock = new Object();
@@ -72,7 +75,7 @@ public class RadioStationRepository {
     private RadioStationRepository(RadioStationDao radioStationDao, Context context) {
         this.radioStationDao = radioStationDao;
         // 创建临时数据库的实例
-        RadioDroidDatabase tempDatabase = Room.databaseBuilder(context.getApplicationContext(),
+        tempDatabase = Room.databaseBuilder(context.getApplicationContext(),
                 RadioDroidDatabase.class, "radio_droid_database_temp")
                 .addMigrations(RadioDroidDatabase.MIGRATION_3_4, RadioDroidDatabase.MIGRATION_4_5, RadioDroidDatabase.MIGRATION_5_6, RadioDroidDatabase.MIGRATION_5_14, RadioDroidDatabase.MIGRATION_6_14)
                 .fallbackToDestructiveMigration()
@@ -1522,17 +1525,19 @@ public class RadioStationRepository {
     // 关闭数据库连接
     public void closeDatabase() {
         try {
-            // 清理临时数据库文件
+            Future<?> pending = executor.submit(() -> { });
+            pending.get(30, TimeUnit.SECONDS);
+            if (tempDatabase != null) {
+                tempDatabase.close();
+                tempDatabase = null;
+            }
             cleanupTempDatabaseFiles(context);
-            
-            // 直接关闭RadioDroidDatabase的静态实例，避免创建新实例
             RadioDroidDatabase.closeInstance();
-            
-            // 重置Repository实例
             INSTANCE = null;
             Log.d(TAG, "Database connection closed successfully");
         } catch (Exception e) {
             Log.e(TAG, "Error closing database connection", e);
+            throw new IllegalStateException("Database connection could not be closed", e);
         }
     }
     
@@ -1598,7 +1603,7 @@ public class RadioStationRepository {
             this.radioStationDao = newDb.radioStationDao();
             this.updateTimestampDao = newDb.updateTimestampDao();
             
-            RadioDroidDatabase tempDatabase = Room.databaseBuilder(context.getApplicationContext(),
+            tempDatabase = Room.databaseBuilder(context.getApplicationContext(),
                     RadioDroidDatabase.class, "radio_droid_database_temp")
                     .addMigrations(RadioDroidDatabase.MIGRATION_3_4, RadioDroidDatabase.MIGRATION_4_5, RadioDroidDatabase.MIGRATION_5_6, RadioDroidDatabase.MIGRATION_5_14, RadioDroidDatabase.MIGRATION_6_14)
                     .fallbackToDestructiveMigration()

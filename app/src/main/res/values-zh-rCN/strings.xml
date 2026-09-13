@@ -587,4 +587,19 @@
     <string name="player_current_play_time">当前时长: %1$s</string>
     <string name="player_network_usage">流量: %1$s</string>
     <string name="player_buffer_time">缓冲时长: %1$s</string>
+    <string name="webdav_result_backup_success">备份成功</string>
+    <string name="webdav_result_restore_success">恢复成功</string>
+    <string name="webdav_result_canceled">已取消</string>
+    <string name="webdav_database_restore_confirm">要用下载的数据库替换本地数据库吗？</string>
+    <string name="webdav_error_authentication">认证失败</string>
+    <string name="webdav_error_permission">权限被拒绝</string>
+    <string name="webdav_error_not_found">资源未找到</string>
+    <string name="webdav_error_protocol">协议错误</string>
+    <string name="webdav_error_network">网络错误</string>
+    <string name="webdav_error_local_database">本地数据库错误</string>
+    <string name="webdav_error_storage">存储错误</string>
+    <string name="webdav_error_configuration">WebDAV 配置无效</string>
+    <string name="webdav_error_invalid_data">数据无效</string>
+    <string name="webdav_error_empty_favourites">服务器上的收藏文件为空</string>
+    <string name="webdav_error_unknown">未知错误</string>
 </resources>

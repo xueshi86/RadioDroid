@@ -797,11 +797,23 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="webdav_task_started">Задача запущена</string>
     <string name="webdav_task_running">Задача выполняется…</string>
     <string name="webdav_http_warning">HTTP передаёт учётные данные без шифрования; рекомендуется HTTPS</string>
-    <string name="webdav_result_success">Успешно</string>
+    <string name="webdav_result_backup_success">Резервная копия успешно создана</string>
+    <string name="webdav_result_restore_success">Восстановление выполнено успешно</string>
     <string name="webdav_result_failed">Не удалось</string>
     <string name="webdav_result_pending">Ожидает подтверждения</string>
-    <string name="webdav_database_restore_confirm">Заменить локальную базу данных загруженной базой данных?</string>
-    <string name="webdav_restore_success">База данных успешно восстановлена</string>
+    <string name="webdav_result_canceled">Отменено</string>
     <string name="webdav_restore_failed">Не удалось восстановить базу данных; исходная база данных сохранена</string>
+    <string name="webdav_database_restore_confirm">Заменить локальную базу данных загруженной базой данных?</string>
+    <string name="webdav_error_authentication">Ошибка аутентификации</string>
+    <string name="webdav_error_permission">Доступ запрещён</string>
+    <string name="webdav_error_not_found">Ресурс не найден</string>
+    <string name="webdav_error_protocol">Ошибка протокола</string>
+    <string name="webdav_error_network">Ошибка сети</string>
+    <string name="webdav_error_local_database">Ошибка локальной базы данных</string>
+    <string name="webdav_error_storage">Ошибка хранилища</string>
+    <string name="webdav_error_configuration">Недействительная конфигурация WebDAV</string>
+    <string name="webdav_error_invalid_data">Недействительные данные</string>
+    <string name="webdav_error_empty_favourites">Файл избранного на сервере пуст</string>
+    <string name="webdav_error_unknown">Неизвестная ошибка</string>
 
 </resources>
