@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **修复**：数据库备份在真机上始终失败并提示「本地数据库不可用」— 排查定位两个根因并修复：① `PRAGMA wal_checkpoint(TRUNCATE)` 返回结果集，原先用 `execSQL` 执行会抛 `SQLiteException`（Queries can be performed using query or rawQuery methods only），改用 `rawQuery` 执行并消费游标；② 备份前完整性校验（`PRAGMA integrity_check`）以只读模式打开临时库时，FTS4 虚表校验倒排索引需要写入临时校验页，报 `attempt to write a readonly database`，改用 `OPEN_READWRITE` 打开临时文件校验。修复后数据库备份/恢复全流程（备份、收藏备份/恢复、数据库恢复）验证通过
 - **修复**：恢复本地数据库时弹窗顺序不对 — 此前工作完成后先弹「分项结果弹窗」（数据库显示「等待确认」），关闭后才弹「是否替换本地数据库」确认弹窗，再以 Toast 提示恢复成功；现改为需要前台确认时**先**弹「是否用备份文件替换本地数据库」确认弹窗，确认完成替换后**再**弹出分项结果弹窗（不再先弹「等待确认」结果弹窗、不再用 Toast 报告结果）
 - **变更**：数据库替换确认后的分项结果如实反馈四种情形 — 用户点「确定」且替换成功显示「恢复成功」；替换过程中校验/数据类异常显示具体「恢复错误」；本地替换失败已回滚显示「恢复失败，已保留原数据库」（`webdav_restore_failed`）；用户点「取消」或返回时显示「已取消」（新增 `webdav_result_canceled` 文案，保留待确认状态以便稍后重新确认）。覆盖 8 种语言
+- **变更**：WebDAV 数据库恢复的确认弹窗按钮由「恢复」改为「替换」（新增 `webdav_database_replace`），确认文案由「要用下载的数据库替换本地数据库吗？」改为「要用 WebDAV 服务器保存的数据库替换本地数据库吗？」（`webdav_database_restore_confirm`），更准确表述数据来源；并同步 zh-rCN / 英文两个附加语言文件保持一致
+- **新增**：WebDAV 数据库恢复在后台替换数据库期间用 Toast 提示「数据库替换中，请稍等…」（新增 `webdav_database_restoring`），避免用户等待结果弹窗时误以为无响应
 - **变更**：WebDAV 备份/恢复完成后的分项结果成功文案按操作区分 — 备份显示「备份成功」、恢复显示「恢复成功」，替换原先统一的「成功」文案（`webdav_result_success` 拆分为 `webdav_result_backup_success`/`webdav_result_restore_success`）；同步全 8 种语言并与全文一致
 - **多语言**：全部新增界面、状态与提示文案支持中文、英文、俄语、西班牙语、德语、法语、意大利语、希腊语 8 种语言
 

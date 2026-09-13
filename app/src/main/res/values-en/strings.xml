@@ -526,7 +526,9 @@
 
     <string name="export_database_title">Export Main Database</string>
     <string name="webdav_restore_failed">Database restore failed; the original database was retained</string>
-    <string name="webdav_database_restore_confirm">Replace the local database with the downloaded database?</string>
+    <string name="webdav_database_restore_confirm">Replace the local database with the database stored on the WebDAV server?</string>
+    <string name="webdav_database_replace">Replace</string>
+    <string name="webdav_database_restoring">Replacing database, please wait…</string>
     <string name="webdav_error_authentication">Authentication failed</string>
     <string name="webdav_error_permission">Permission denied</string>
     <string name="webdav_error_not_found">Resource not found</string>

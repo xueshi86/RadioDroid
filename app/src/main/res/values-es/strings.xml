@@ -797,7 +797,9 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="webdav_result_pending">Pendiente de confirmación</string>
     <string name="webdav_result_canceled">Cancelado</string>
     <string name="webdav_restore_failed">Error al restaurar la base de datos; se conservó la base de datos original</string>
-    <string name="webdav_database_restore_confirm">¿Reemplazar la base de datos local por la base de datos descargada?</string>
+    <string name="webdav_database_restore_confirm">¿Reemplazar la base de datos local por la base de datos guardada en el servidor WebDAV?</string>
+    <string name="webdav_database_replace">Reemplazar</string>
+    <string name="webdav_database_restoring">Reemplazando la base de datos, espere por favor…</string>
     <string name="webdav_error_authentication">Error de autenticación</string>
     <string name="webdav_error_permission">Permiso denegado</string>
     <string name="webdav_error_not_found">Recurso no encontrado</string>

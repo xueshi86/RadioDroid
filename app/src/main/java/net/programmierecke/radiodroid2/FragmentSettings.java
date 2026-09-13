@@ -1198,7 +1198,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 .setTitle(R.string.webdav_restore)
                 .setMessage(R.string.webdav_database_restore_confirm)
                 .setNegativeButton(android.R.string.cancel, (dialog, which) -> showPendingWebDavCanceledResult(favStatus, restore))
-                .setPositiveButton(R.string.webdav_restore, (dialog, which) -> applyWebDavDatabaseRestore(file, preferences, favStatus, restore))
+                .setPositiveButton(R.string.webdav_database_replace, (dialog, which) -> applyWebDavDatabaseRestore(file, preferences, favStatus, restore))
                 .setOnCancelListener(dialog -> showPendingWebDavCanceledResult(favStatus, restore))
                 .show();
     }
@@ -1216,6 +1216,8 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         final Context context = requireContext().getApplicationContext();
         final Activity activity = getActivity();
         if (activity == null) return;
+        // 替换在后台线程进行，先提示“恢复中/替换中”，避免用户等待时以为无响应
+        android.widget.Toast.makeText(context, R.string.webdav_database_restoring, android.widget.Toast.LENGTH_LONG).show();
         new Thread(() -> {
             Exception failure = null;
             try {

@@ -266,7 +266,9 @@
     <string name="webdav_result_pending">Σε αναμονή επιβεβαίωσης</string>
     <string name="webdav_result_canceled">Ακυρώθηκε</string>
     <string name="webdav_restore_failed">Η επαναφορά της βάσης δεδομένων απέτυχε· διατηρήθηκε η αρχική βάση δεδομένων</string>
-    <string name="webdav_database_restore_confirm">Να αντικατασταθεί η τοπική βάση δεδομένων με τη ληφθείσα βάση δεδομένων?</string>
+    <string name="webdav_database_restore_confirm">Να αντικατασταθεί η τοπική βάση δεδομένων με τη βάση δεδομένων που είναι αποθηκευμένη στον διακομιστή WebDAV?</string>
+    <string name="webdav_database_replace">Αντικατάσταση</string>
+    <string name="webdav_database_restoring">Γίνεται αντικατάσταση της βάσης δεδομένων, περιμένετε…</string>
     <string name="webdav_error_authentication">Αποτυχία ελέγχου ταυτότητας</string>
     <string name="webdav_error_permission">Δεν επιτρέπεται η πρόσβαση</string>
     <string name="webdav_error_not_found">Ο πόρος δεν βρέθηκε</string>

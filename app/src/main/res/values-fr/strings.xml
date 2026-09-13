@@ -456,7 +456,9 @@
     <string name="webdav_result_pending">En attente de confirmation</string>
     <string name="webdav_result_canceled">Annulé</string>
     <string name="webdav_restore_failed">Échec de la restauration de la base de données ; la base de données d’origine a été conservée</string>
-    <string name="webdav_database_restore_confirm">Remplacer la base de données locale par la base de données téléchargée ?</string>
+    <string name="webdav_database_restore_confirm">Remplacer la base de données locale par la base de données stockée sur le serveur WebDAV ?</string>
+    <string name="webdav_database_replace">Remplacer</string>
+    <string name="webdav_database_restoring">Remplacement de la base de données en cours, veuillez patienter…</string>
     <string name="webdav_error_authentication">Échec de l’authentification</string>
     <string name="webdav_error_permission">Permission refusée</string>
     <string name="webdav_error_not_found">Ressource introuvable</string>

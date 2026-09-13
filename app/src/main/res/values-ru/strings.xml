@@ -805,7 +805,9 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="webdav_result_pending">Ожидает подтверждения</string>
     <string name="webdav_result_canceled">Отменено</string>
     <string name="webdav_restore_failed">Не удалось восстановить базу данных; исходная база данных сохранена</string>
-    <string name="webdav_database_restore_confirm">Заменить локальную базу данных загруженной базой данных?</string>
+    <string name="webdav_database_restore_confirm">Заменить локальную базу данных базой данных, сохраненной на сервере WebDAV?</string>
+    <string name="webdav_database_replace">Заменить</string>
+    <string name="webdav_database_restoring">Идет замена базы данных, подождите…</string>
     <string name="webdav_error_authentication">Ошибка аутентификации</string>
     <string name="webdav_error_permission">Доступ запрещён</string>
     <string name="webdav_error_not_found">Ресурс не найден</string>

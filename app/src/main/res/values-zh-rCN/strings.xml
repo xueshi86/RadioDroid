@@ -590,7 +590,9 @@
     <string name="webdav_result_backup_success">备份成功</string>
     <string name="webdav_result_restore_success">恢复成功</string>
     <string name="webdav_result_canceled">已取消</string>
-    <string name="webdav_database_restore_confirm">要用下载的数据库替换本地数据库吗？</string>
+    <string name="webdav_database_restore_confirm">要用 WebDAV 服务器保存的数据库替换本地数据库吗？</string>
+    <string name="webdav_database_replace">替换</string>
+    <string name="webdav_database_restoring">数据库替换中，请稍等…</string>
     <string name="webdav_error_authentication">认证失败</string>
     <string name="webdav_error_permission">权限被拒绝</string>
     <string name="webdav_error_not_found">资源未找到</string>

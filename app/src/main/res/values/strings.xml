@@ -793,7 +793,9 @@ The app will automatically restart to load the new database.</string>
     <string name="player_current_play_time">Current: %1$s</string>
     <string name="player_network_usage">Data: %1$s</string>
     <string name="player_buffer_time">Buffered: %1$s</string>
-    <string name="webdav_database_restore_confirm">Replace the local database with the downloaded database?</string>
+    <string name="webdav_database_restore_confirm">Replace the local database with the database stored on the WebDAV server?</string>
+    <string name="webdav_database_replace">Replace</string>
+    <string name="webdav_database_restoring">Replacing database, please wait…</string>
     <string name="webdav_error_authentication">Authentication failed</string>
     <string name="webdav_error_permission">Permission denied</string>
     <string name="webdav_error_not_found">Resource not found</string>

@@ -370,7 +370,9 @@
     <string name="webdav_result_pending">Wartet auf Bestätigung</string>
     <string name="webdav_result_canceled">Abgebrochen</string>
     <string name="webdav_restore_failed">Wiederherstellung der Datenbank fehlgeschlagen; die ursprüngliche Datenbank wurde beibehalten</string>
-    <string name="webdav_database_restore_confirm">Die lokale Datenbank durch die heruntergeladene Datenbank ersetzen?</string>
+    <string name="webdav_database_restore_confirm">Die lokale Datenbank durch die auf dem WebDAV-Server gespeicherte Datenbank ersetzen?</string>
+    <string name="webdav_database_replace">Ersetzen</string>
+    <string name="webdav_database_restoring">Datenbank wird ersetzt, bitte warten…</string>
     <string name="webdav_error_authentication">Authentifizierung fehlgeschlagen</string>
     <string name="webdav_error_permission">Zugriff verweigert</string>
     <string name="webdav_error_not_found">Ressource nicht gefunden</string>

@@ -452,7 +452,9 @@
     <string name="webdav_result_pending">In attesa di conferma</string>
     <string name="webdav_result_canceled">Annullato</string>
     <string name="webdav_restore_failed">Ripristino del database non riuscito; il database originale è stato mantenuto</string>
-    <string name="webdav_database_restore_confirm">Sostituire il database locale con il database scaricato?</string>
+    <string name="webdav_database_restore_confirm">Sostituire il database locale con il database salvato sul server WebDAV?</string>
+    <string name="webdav_database_replace">Sostituisci</string>
+    <string name="webdav_database_restoring">Sostituzione del database in corso, attendere…</string>
     <string name="webdav_error_authentication">Autenticazione non riuscita</string>
     <string name="webdav_error_permission">Permesso negato</string>
     <string name="webdav_error_not_found">Risorsa non trovata</string>
