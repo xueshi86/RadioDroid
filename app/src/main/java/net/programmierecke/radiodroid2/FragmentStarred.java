@@ -161,7 +161,9 @@ public class FragmentStarred extends Fragment implements IAdapterRefreshable, Ob
         favouriteManager = radioDroidApp.getFavouriteManager();
         favouriteManager.addObserver(this);
 
-        View view = inflater.inflate(R.layout.fragment_stations, container, false);
+        // 收藏夹为本地数据，使用无 SwipeRefreshLayout 容器的专用布局，
+        // 避免下拉刷新容器拦截长按向下拖拽手势
+        View view = inflater.inflate(R.layout.fragment_stations_starred, container, false);
         rvStations = (RecyclerView) view.findViewById(R.id.recyclerViewStations);
         fabScrollToTop = view.findViewById(R.id.fabScrollToTop);
         rvStations.setAdapter(null);

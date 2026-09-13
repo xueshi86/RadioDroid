@@ -46,7 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - **排序模式覆盖拖拽**：按名称/热度/投票/最近排序时，列表展示的是排序副本，拖拽只移动了底层数据，松手后刷新即被重新排序覆盖，视觉与数据「双双弹回」；且排序对话框缺少「无排序」出口，一旦选择排序便永远无法回到手动顺序。现任意排序状态下长按拖拽均可用：拖拽发生时自动将当前显示顺序固化为底层收藏数据并切换为「自定义顺序」，拖拽即时生效、结果持久保留，其余电台保持原排序相对顺序；排序对话框新增「自定义顺序（Custom Order）」选项用于主动切回手动顺序，「自定义顺序」不显示升降序箭头、重复点击不切换方向
   - **仅图标收藏夹模式长按冲突**：网格模式下长按会同时触发上下文菜单（PopupMenu）与拖拽，菜单接管触摸事件导致拖拽立即终止；现拖拽开始时抑制长按菜单并在拖拽结束后恢复，两种交互不再互相打断
   - **拖拽中数据与视图同步**：排序状态下固化显示顺序时改用引用赋值（非副本），使拖拽途中的每次移动同步作用于适配器显示列表；此前副本方案在长距离拖拽触发列表滚动时，滚动回拖过的区域会出现短暂顺序错位，松手全量刷新后才纠正；向上与向下拖拽共用同一回调路径（`onMove` 不区分方向，`Collections.rotate` 对两方向数学对称），修复后两方向拖拽全程显示一致
-  - **下拉刷新与向下拖拽手势冲突**：收藏夹列表被 `SwipeRefreshLayout` 包裹，长按电台后向下拖动时，刷新容器先拦截手势触发列表刷新，拖拽被取消。现拖拽开始（`ACTION_STATE_DRAG`）时对 RecyclerView 调用 `requestDisallowInterceptTouchEvent(true)` 阻止父级拦截，拖拽/滑动结束（`clearView`）时恢复，长按下拉正常执行拖拽排序
+  - **下拉刷新与向下拖拽手势冲突（修复方案二次更正）**：收藏夹列表原被 `SwipeRefreshLayout` 包裹，长按电台后向下拖动时刷新容器先拦截手势触发列表刷新、拖拽被取消（向上拖拽正常）；此前尝试在拖拽开始时对 RecyclerView 调用 `requestDisallowInterceptTouchEvent(true)` 阻止父级拦截，但经源码验证该方案错误：`RecyclerView.requestDisallowInterceptTouchEvent(true)` 会遍历自身 `OnItemTouchListener` 并回调 `ItemTouchHelper.onRequestDisallowInterceptTouchEvent(true)`，而 ItemTouchHelper 收到该回调会立即执行 `select(null, ACTION_STATE_IDLE)` **取消当前拖拽**，导致拖拽刚开始即被自身取消，上拉、下拉全部失效。现改为从根上移除冲突源：收藏夹为本地数据无需下拉刷新，改用无 `SwipeRefreshLayout` 容器的专用布局 `fragment_stations_starred.xml`（仅含 RecyclerView 与回顶按钮），并移除上述两处 `requestDisallowInterceptTouchEvent` 调用，长按后上拉、下拉拖拽排序均恢复正常
   - **测试**：新增「排序状态下拖拽自动固化自定义顺序」仪器测试用例，校验排序生效、拖拽后列表与数据源顺序一致、其余电台保持排序相对顺序、排序模式自动切换为自定义顺序、自定义顺序下继续拖拽正常；同一用例覆盖排序状态向下拖拽、自定义顺序向下拖拽（0→2）与向上拖拽（2→0 跨两项），两方向行为一致
 
 **录音错误提示多语言适配**
