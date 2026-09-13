@@ -1831,7 +1831,9 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 RadioStationRepository repository = RadioStationRepository.getInstance(context);
                 repository.closeDatabase();
                 databaseClosed = true;
-                validateDatabaseFile(mainDatabaseFile);
+                // 将 WAL 数据合并回主库文件，确保导出的 .db 完整且自包含
+                checkpointDatabase(mainDatabaseFile);
+                validateDatabaseFile(mainDatabaseFile, true);
 
                 try (java.io.InputStream inputStream = new java.io.FileInputStream(mainDatabaseFile);
                      java.io.OutputStream outputStream = context.getContentResolver().openOutputStream(uri)) {
@@ -2008,14 +2010,17 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
     
     private static final long MAX_DATABASE_IMPORT_SIZE = 512L * 1024L * 1024L;
 
-    private void validateDatabaseFile(File databaseFile) throws IOException {
+    // exportMode=true 时用于导出流程（源数据库），使用导出专用提示；否则用于导入流程（备份/导入文件）。
+    private void validateDatabaseFile(File databaseFile, boolean exportMode) throws IOException {
+        // 根据导入/导出流程选择对应的错误文案，避免导出时报出“导入…”的误导信息
+        String invalidMsg = getString(exportMode ? R.string.export_database_corrupted : R.string.import_failed_invalid);
+        String emptyMsg = getString(exportMode ? R.string.export_database_empty : R.string.import_failed_empty);
+        String corruptedMsg = getString(exportMode ? R.string.export_database_corrupted : R.string.error_database_corrupted);
         if (databaseFile == null || !databaseFile.isFile()) {
-            throw new IOException(getString(R.string.import_failed_invalid));
+            throw new IOException(invalidMsg);
         }
         if (databaseFile.length() <= 0 || databaseFile.length() > MAX_DATABASE_IMPORT_SIZE) {
-            throw new IOException(databaseFile.length() <= 0
-                    ? getString(R.string.import_failed_empty)
-                    : getString(R.string.import_failed_invalid));
+            throw new IOException(databaseFile.length() <= 0 ? emptyMsg : invalidMsg);
         }
         try (FileInputStream inputStream = new FileInputStream(databaseFile)) {
             byte[] header = new byte[16];
@@ -2024,18 +2029,21 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     'S', 'Q', 'L', 'i', 't', 'e', ' ', 'f', 'o', 'r', 'm', 'a', 't', ' ', '3', 0
             };
             if (read != expected.length || !java.util.Arrays.equals(header, expected)) {
-                throw new IOException(getString(R.string.import_failed_invalid));
+                throw new IOException(invalidMsg);
             }
         }
 
         SQLiteDatabase database = null;
         Cursor cursor = null;
         try {
+            // 数据库含 FTS4 虚表，PRAGMA integrity_check 校验 FTS 倒排索引时会写入临时校验页，
+            // 用 OPEN_READONLY 会报 "attempt to write a readonly database"（详见 WebDavBackupManager），
+            // 因此导出/导入校验均使用 OPEN_READWRITE。
             database = SQLiteDatabase.openDatabase(
-                    databaseFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
+                    databaseFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READWRITE);
             cursor = database.rawQuery("PRAGMA integrity_check", null);
             if (!cursor.moveToFirst() || !"ok".equalsIgnoreCase(cursor.getString(0))) {
-                throw new IOException(getString(R.string.error_database_corrupted));
+                throw new IOException(corruptedMsg);
             }
             cursor.close();
             cursor = database.rawQuery(
@@ -2043,14 +2051,33 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     new String[] {"radio_stations", "song_history", "update_timestamp", "radio_stations_fts"});
             int tableCount = cursor.getCount();
             if (tableCount < 3) {
-                throw new IOException(getString(R.string.import_failed_invalid));
+                throw new IOException(invalidMsg);
             }
         } catch (SQLiteException e) {
-            throw new IOException(getString(R.string.error_database_corrupted), e);
+            throw new IOException(corruptedMsg, e);
         } finally {
             if (cursor != null) {
                 cursor.close();
             }
+            if (database != null) {
+                database.close();
+            }
+        }
+    }
+
+    // 将 WAL 日志合并回主库文件（wal_checkpoint TRUNCATE），确保导出的 .db 文件包含全部已提交数据。
+    private void checkpointDatabase(File databaseFile) {
+        SQLiteDatabase database = null;
+        try {
+            database = SQLiteDatabase.openDatabase(
+                    databaseFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READWRITE);
+            // wal_checkpoint 返回结果集，必须用 rawQuery 执行并消费游标
+            try (Cursor checkpointCursor = database.rawQuery("PRAGMA wal_checkpoint(TRUNCATE)", null)) {
+                checkpointCursor.moveToFirst();
+            }
+        } catch (SQLiteException e) {
+            Log.e(TAG, "checkpointDatabase: wal_checkpoint failed", e);
+        } finally {
             if (database != null) {
                 database.close();
             }
@@ -2085,7 +2112,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             throw new IOException(getString(R.string.error_cannot_delete_old_db));
         }
         copyFile(importedFile, replacementFile);
-        validateDatabaseFile(replacementFile);
+        validateDatabaseFile(replacementFile, false);
         if (backupFile.exists() && !backupFile.delete()) {
             throw new IOException(getString(R.string.error_cannot_delete_old_db));
         }
@@ -2103,7 +2130,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             throw new IOException(getString(R.string.error_database_corrupted));
         }
         try {
-            validateDatabaseFile(mainDatabaseFile);
+            validateDatabaseFile(mainDatabaseFile, false);
         } catch (IOException e) {
             mainDatabaseFile.delete();
             if (backupFile.exists()) {
@@ -2165,7 +2192,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 if (totalCopied == 0) {
                     throw new IOException(getString(R.string.import_failed_empty));
                 }
-                validateDatabaseFile(tempImportFile);
+                validateDatabaseFile(tempImportFile, false);
 
                 RadioStationRepository repository = RadioStationRepository.getInstance(context);
                 repository.closeDatabase();

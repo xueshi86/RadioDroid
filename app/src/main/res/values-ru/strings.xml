@@ -206,6 +206,8 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="error_cannot_delete_old_db">Не удается удалить старую базу данных</string>
     <string name="error_target_file_not_exist">Целевой файл не существует, копирование не удалось</string>
     <string name="error_database_corrupted">Импортированная база данных не может быть доступна, файл может быть поврежден</string>
+    <string name="export_database_corrupted">Основная база данных не может быть доступна, файл может быть поврежден</string>
+    <string name="export_database_empty">Файл основной базы данных пуст, экспорт невозможен</string>
     <string name="database_status_updated">Статус базы данных обновлен: %1$s</string>
     <string name="database_status_update_failed">Не удалось обновить статус базы данных: %1$s</string>
     <string name="database_status_from_fields">Статус базы данных обновлен из полей базы данных: %1$s</string>

@@ -33,6 +33,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **修复**：收藏夹保存失败或导入监听器异常时的状态不一致，避免误提示导入成功
 - **修复**：非法、空、损坏或非 SQLite 数据库文件导入时的错误处理；导入前检查文件大小、SQLite 文件头、完整性和必要数据表
 - **修复**：数据库导入替换失败可能导致主数据库被删除或截断的问题；改为临时文件验证、备份、替换和失败恢复，保留原数据库
+- **修复**：导出主数据库时报「导出失败 / 导入的数据库无法正常访问，可能文件已损坏」— 根因为 Room 使用 WAL 模式，校验时 `SQLiteDatabase.openDatabase(OPEN_READONLY)` 后执行 `PRAGMA integrity_check`，FTS4 虚表校验需写入临时页，只读打开报「attempt to write a readonly database」被误判为损坏；现改用它为先 `PRAGMA wal_checkpoint(TRUNCATE)` 将 WAL 数据合并回主库文件（保证导出的 `.db` 完整自包含），校验改用 `OPEN_READWRITE`（同 WebDAV 备份恢复逻辑）
+- **修复**：导出主数据库失败时的错误文案误用「导入…」措辞 — `validateDatabaseFile` 校验源库与导入文件共用，现按流程区分：导出用新增 `export_database_corrupted`（「主数据库无法正常访问，可能文件已损坏」）与 `export_database_empty`（「主数据库文件为空，无法导出」），导入仍用原有「导入…」文案；新增文案覆盖 8 种语言（中文/英语/俄语/西班牙语/德语/法语/意大利语/希腊语）
 - **修复**：数据库导入导出过程中 WAL、SHM、journal 旁文件处理不完整，以及后台任务与界面生命周期变化导致的异常
 - **修复**：更新任务取消时未持有锁仍释放锁并清理共享数据的问题
 - **优化**：修复 Android 低版本 API、VectorDrawableCompat、RTL 属性和 MediaRouter RestrictedApi 相关 Lint 错误

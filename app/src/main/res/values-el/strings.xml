@@ -38,6 +38,8 @@
     <string name="action_station_copy_stream_url">Αντιγραφή της Διεύθυνσης Url της Ροής</string>
     <string name="error_station_load">Αδυναμία σύνδεσης στο σταθμό</string>
     <string name="error_list_update">Αδυναμία σύνδεσης στον εξυπηρετητή πλοήγησης ραδιοφωνικών σταθμών</string>
+    <string name="export_database_corrupted">Δεν είναι δυνατή η πρόσβαση στην κύρια βάση δεδομένων, το αρχείο μπορεί να έχει υποστεί βλάβη</string>
+    <string name="export_database_empty">Το αρχείο της κύριας βάσης δεδομένων είναι κενό και δεν μπορεί να εξαχθεί</string>
 
     <string name="share_action">Μοίρασμα του σταθμού με...</string>
 

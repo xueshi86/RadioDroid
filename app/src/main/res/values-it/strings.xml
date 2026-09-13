@@ -385,6 +385,8 @@
     <string name="db_status_never_updated">Il database non è ancora stato aggiornato</string>
     <string name="db_status_error">Impossibile ottenere lo stato: %1$s</string>
     <string name="export_type_file">File</string>
+    <string name="export_database_corrupted">Impossibile accedere correttamente al database principale, il file potrebbe essere danneggiato</string>
+    <string name="export_database_empty">Il file del database principale è vuoto e non può essere esportato</string>
     <string name="recording_delete_title">Elimina registrazione</string>
     <string name="recording_delete_confirm">Sei sicuro di voler eliminare \"%s\"?</string>
     <string name="recording_deleted">Registrazione eliminata</string>

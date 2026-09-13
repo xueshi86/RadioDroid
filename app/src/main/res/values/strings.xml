@@ -653,6 +653,8 @@ The app will automatically restart to load the new database.</string>
     <string name="error_cannot_delete_old_db">Cannot delete old database file</string>
     <string name="error_target_file_not_exist">Target file does not exist, copy failed</string>
     <string name="error_database_corrupted">The imported database cannot be accessed properly, the file may be corrupted</string>
+    <string name="export_database_corrupted">The main database cannot be accessed properly, the file may be corrupted</string>
+    <string name="export_database_empty">The main database file is empty and cannot be exported</string>
     
     <string name="progress_preparing_update">Preparing update...</string>
     <string name="progress_resuming_update">Resuming update...</string>

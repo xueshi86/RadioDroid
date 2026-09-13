@@ -552,6 +552,8 @@
     <string name="error_cannot_delete_old_db">无法删除旧数据库文件</string>
     <string name="error_target_file_not_exist">目标文件不存在，复制失败</string>
     <string name="error_database_corrupted">导入的数据库无法正常访问，可能文件已损坏</string>
+    <string name="export_database_corrupted">主数据库无法正常访问，可能文件已损坏</string>
+    <string name="export_database_empty">主数据库文件为空，无法导出</string>
     <string name="database_status_updated">数据库状态已更新：%1$s</string>
     <string name="database_status_update_failed">数据库状态更新失败：%1$s</string>
     <string name="database_status_from_fields">数据库状态已从数据库字段更新：%1$s</string>
