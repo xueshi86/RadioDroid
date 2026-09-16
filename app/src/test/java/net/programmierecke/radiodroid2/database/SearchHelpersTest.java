@@ -1,6 +1,8 @@
 package net.programmierecke.radiodroid2.database;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -89,5 +91,24 @@ class SearchHelpersTest {
     @Test
     void sanitizeFtsQuery_plainPhraseKept() {
         assertEquals("classical music", RadioStationRepository.sanitizeFtsQuery("classical music"));
+    }
+
+    @Test
+    void canUseFts_supportedLanguageQueriesUseSafeStrategy() {
+        assertFalse(RadioStationRepository.canUseFts("山西"));
+        assertTrue(RadioStationRepository.canUseFts("London radio"));
+        assertFalse(RadioStationRepository.canUseFts("Москва"));
+        assertFalse(RadioStationRepository.canUseFts("España"));
+        assertFalse(RadioStationRepository.canUseFts("München"));
+        assertFalse(RadioStationRepository.canUseFts("français"));
+        assertFalse(RadioStationRepository.canUseFts("città"));
+        assertFalse(RadioStationRepository.canUseFts("Αθήνα"));
+    }
+
+    @Test
+    void canUseFts_nullEmptyAndPunctuationUseLike() {
+        assertFalse(RadioStationRepository.canUseFts(null));
+        assertFalse(RadioStationRepository.canUseFts(""));
+        assertFalse(RadioStationRepository.canUseFts("100% radio"));
     }
 }

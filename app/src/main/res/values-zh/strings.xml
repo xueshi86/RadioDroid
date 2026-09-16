@@ -8,13 +8,13 @@
     <string name="detail_shortcut_requested">正在请求添加快捷方式到主屏幕</string>
     <string name="error_creating_shortcut">创建快捷方式失败</string>
     <string name="detail_language">语言</string>
-    <string name="detail_weblink">网站链接</string>
+    <string name="detail_weblink">网络链接</string>
     <string name="detail_visit_website">@string/action_station_visit_website</string>
     <string name="detail_play">播放</string>
     <string name="detail_pause">暂停</string>
     <string name="detail_stop">停止</string>
     <string name="detail_share">分享</string>
-    <string name="detail_play_in_radiodroid">在RadioDroid中播放</string>
+    <string name="detail_play_in_radiodroid">使用睿卓播放</string>
 
     <string name="action_links">链接</string>
     <string name="action_homepage">主页</string>
@@ -22,10 +22,10 @@
     <string name="action_alarm">闹钟</string>
 
     <string name="action_station_visit_website">访问网站</string>
-    <string name="action_station_copy_stream_url">复制流地址</string>
+    <string name="action_station_copy_stream_url">复制流媒体地址</string>
     <string name="action_station_share">分享</string>
 
-    <string name="action_local">本地</string>
+    <string name="action_local">本地电台</string>
     <string name="action_skip_to_next">下一首</string>
     <string name="action_pause">暂停</string>
     <string name="action_skip_to_previous">上一首</string>
@@ -39,9 +39,9 @@
     <string name="action_delete_stream_history">清除曲目历史</string>
     <string name="action_ok">确定</string>
     <string name="action_cancel">取消</string>
-    <string name="action_top_click">热门点击</string>
+    <string name="action_top_click">访问排行</string>
     <string name="action_toggle_view">切换视图</string>
-    <string name="action_top_vote">热门投票</string>
+    <string name="action_top_vote">投票排行</string>
     <string name="action_changed_lately">最近更新</string>
     <string name="action_currently_playing">正在播放</string>
     <string name="action_tags">标签</string>
@@ -162,8 +162,8 @@
     <string name="startup_show_player">显示播放器</string>
 
     <string name="settings_load_icons">显示电台图标</string>
-    <string name="settings_load_icons_on">图标将被下载</string>
-    <string name="settings_load_icons_off">图标不会被下载</string>
+    <string name="settings_load_icons_on">下载并显示电台图标</string>
+    <string name="settings_load_icons_off">不下载图标，节省存储空间</string>
 
     <string name="settings_auto_favorite">自动收藏</string>
     <string name="settings_auto_favorite_on">播放时自动将电台添加到收藏</string>
@@ -184,10 +184,10 @@
     <string name="settings_alarm">闹钟</string>
     <string name="settings_alarm_external">启用外部应用</string>
     <string name="settings_alarm_external_desc_on">使用默认外部应用打开闹钟</string>
-    <string name="settings_alarm_external_desc_off">使用RadioDroid打开闹钟</string>
+    <string name="settings_alarm_external_desc_off">使用睿卓打开闹钟</string>
     <string name="settings_alarm_audio_player">音频播放器</string>
     <string name="settings_sleep_timer">睡眠定时器</string>
-    <string name="settings_sleep_timer_desc">%1$s分钟后停止当前播放</string>
+    <string name="settings_sleep_timer_desc">%1$s 分钟后停止当前播放</string>
     <string name="settings_sleep_timer_desc_not_set">点击设置睡眠定时器</string>
     <string name="alarm_edit_title">编辑闹钟</string>
     <string name="alarm_fade_in">音量渐增（最低 1%）</string>
@@ -213,7 +213,7 @@
     <string name="settings_auto_off_sleep_timer_desc">%1$s分钟后停止播放</string>
     <string name="settings_play_external">启用外部播放器</string>
     <string name="settings_play_external_desc_on">使用外部播放器播放电台</string>
-    <string name="settings_play_external_desc_off">使用RadioDroid播放电台</string>
+    <string name="settings_play_external_desc_off">使用睿卓播放电台</string>
     <string name="settings_equalizer">均衡器</string>
     <string name="settings_enable_volume_mapping">音量映射增强</string>
     <string name="settings_enable_volume_mapping_summary_on">开启：根据系统音量自动优化低/高音量，听感更均匀</string>
@@ -242,7 +242,7 @@
     <string name="settings_pause_on_bluetooth_disconnect">蓝牙断开时暂停</string>
     <string name="settings_pause_on_bluetooth_disconnect_summary">蓝牙音频设备断开连接时自动暂停播放</string>
     <string name="settings_close_on_bluetooth_disconnect">蓝牙断开时关闭应用</string>
-    <string name="settings_close_on_bluetooth_disconnect_summary">蓝牙音频设备断开连接时自动关闭应用</string>
+    <string name="settings_close_on_bluetooth_disconnect_summary">蓝牙音频设备断开连接时自动关闭应用（需开启"蓝牙断开时暂停"）</string>
 
     <string name="settings_auto_resume_do_not_resume">不恢复</string>
 
@@ -277,10 +277,10 @@
     <string name="settings_record_name_formatting_2" translatable="false">${station}_${date}_${time}</string>
     <string name="settings_record_name_formatting_3" translatable="false">${index}_${station}_${date}</string>
 
-    <string name="settings_record_name_formatting_default_display">电台_艺术家_曲目_日期_时间</string>
-    <string name="settings_record_name_formatting_1_display">电台_艺术家_曲目</string>
-    <string name="settings_record_name_formatting_2_display">电台_日期_时间</string>
-    <string name="settings_record_name_formatting_3_display">序号_电台_日期</string>
+    <string name="settings_record_name_formatting_default_display">电台_艺术家_曲目_\u200b日期_\u200b时间</string>
+    <string name="settings_record_name_formatting_1_display">电台_艺术家_\u200b曲目</string>
+    <string name="settings_record_name_formatting_2_display">电台_日期_\u200b时间</string>
+    <string name="settings_record_name_formatting_3_display">索引号_电台_\u200b日期</string>
 
     <string name="notify_pre_play">正在连接</string>
     <string name="notify_play">正在播放</string>
@@ -408,7 +408,7 @@
 
     <string name="media_route_menu_title">GoogleCast</string>
     <string name="app_id">5A97BAE4</string>
-    <string name="app_name">RadioDroid</string>
+    <string name="app_name">睿卓收音机</string>
 
     <string name="settings_mpd">音乐播放器守护进程</string>
     <string name="settings_mpd_port">MPD端口</string>
@@ -428,12 +428,12 @@
     <string name="settings_lastfm_api_key">Last.fm API密钥</string>
     <string name="settings_lastfm_api_key_desc">输入API密钥以在全屏播放器中启用专辑封面</string>
     <string name="settings_disable_battery_optimization">电池优化</string>
-    <string name="settings_ignore_battery_optimization_summary_on">电池优化被忽略，RadioDroid应该总是能够在焦点丢失后重新获得焦点。</string>
-    <string name="settings_ignore_battery_optimization_summary_off">电池优化已激活，如果RadioDroid在后台，将无法在焦点丢失后重新获得焦点。</string>
+    <string name="settings_ignore_battery_optimization_summary_on">电池优化被忽略，睿卓会始终在失去焦点后重获焦点。</string>
+    <string name="settings_ignore_battery_optimization_summary_off">电池优化被激活，睿卓将无法在后台失去焦点后重获焦点。</string>
     <string name="key_ignore_battery_optimization">ignore_battery_optimization</string>
     <string name="settings_other">其他</string>
     <string name="settings_statistics">统计</string>
-    <string name="settings_about">关于RadioDroid</string>
+    <string name="settings_about">关于睿卓 (RadioDroid)</string>
 
     <string name="description_btn_skip_to_next">跳到下一首</string>
     <string name="description_btn_skip_to_previous">跳到上一首</string>
@@ -441,25 +441,25 @@
     <string name="description_btn_setup_alarm">设置闹钟</string>
 
     <string-array name="weekdays">
-        <item>日</item>
-        <item>一</item>
-        <item>二</item>
-        <item>三</item>
-        <item>四</item>
-        <item>五</item>
-        <item>六</item>
+        <item>星期日</item>
+        <item>星期一</item>
+        <item>星期二</item>
+        <item>星期三</item>
+        <item>星期四</item>
+        <item>星期五</item>
+        <item>星期六</item>
     </string-array>
 
-    <string name="notify_stream_url_copied">流地址已成功复制</string>
+    <string name="notify_stream_url_copied">流媒体地址复制成功</string>
     <string name="notify_track_info_copied">曲目信息已成功复制</string>
 
     <string-array name="actions_station_link">
         <item>访问网站</item>
-        <item>复制流地址</item>
+        <item>复制流媒体地址</item>
     </string-array>
 
-    <string name="alert_metered_connection_title">检测到计费连接</string>
-    <string name="alert_metered_connection_message">计费连接可能会产生额外费用，点击“确定”继续。</string>
+    <string name="alert_metered_connection_title">检测到计量连接</string>
+    <string name="alert_metered_connection_message">计量连接可能会产生额外费用，按\'确认\'继续。</string>
     <string name="nav_item_statistics">统计</string>
     <string name="nav_item_about">关于</string>
     <string name="refresh">刷新</string>
@@ -570,7 +570,7 @@
     <string name="progress_writing_main_db">正在写入主数据库...</string>
     <string name="progress_switching_db">正在切换到新数据库...</string>
     <string name="update_completed">更新完成，共同步 %d 个电台，已切换到新数据</string>
-    <string name="update_confirm_replace_message">新数据 (%1$d 个) 比现有数据 (%2$d 个) 少，是否替换？</string>
+    <string name="update_confirm_replace_message">新数据(%1$d个)比现有数据(%2$d个)少，是否替换？</string>
     <string name="update_completed_keep_existing">更新完成，但用户选择继续使用现有数据</string>
     <string name="update_failed">更新失败</string>
     <string name="update_failed_toast">数据库更新失败，请检查网络连接后重试。</string>
@@ -702,8 +702,8 @@
     <string name="buffer_strategy_apply_to_all">应用于所有电台</string>
 
     <!-- Player full screen labels -->
-    <string name="player_total_play_time">总时长: %1$s</string>
-    <string name="player_current_play_time">当前时长: %1$s</string>
+    <string name="player_total_play_time">累计收听: %1$s</string>
+    <string name="player_session_play_time">本次收听: %1$s</string>
     <string name="player_network_usage">流量: %1$s</string>
     <string name="player_buffer_time">缓冲时长: %1$s</string>
 
@@ -774,4 +774,24 @@
     <string name="webdav_error_empty_favourites">服务器上的收藏文件为空</string>
     <string name="webdav_error_unknown">未知错误</string>
 
+
+    <string name="settings_incremental_update">增量更新</string>
+    <string name="settings_incremental_update_desc">仅拉取上次同步以来变更的电台（快速、省流量）</string>
+    <string name="settings_auto_incremental_update">自动增量更新</string>
+    <string name="settings_auto_incremental_update_on">启动应用时，若距最后一次更新超过 24 小时，自动同步变更</string>
+    <string name="settings_auto_incremental_update_off">不自动更新；点击上方“增量更新”手动同步</string>
+    <string name="settings_auto_incremental_wifi_only">仅 Wi-Fi 下自动增量</string>
+    <string name="settings_auto_incremental_wifi_only_on">仅在 Wi-Fi 下自动同步</string>
+    <string name="settings_auto_incremental_wifi_only_off">允许移动数据下自动同步</string>
+    <string name="settings_report_click_counts">上报播放点击</string>
+    <string name="settings_report_click_counts_on">将播放行为上报到 radio-browser 社区（保持点击热度排名新鲜）</string>
+    <string name="settings_report_click_counts_off">不上报播放，本地点击计数仍正常工作</string>
+    <string name="update_completed_incremental">增量更新完成</string>
+    <string name="progress_incremental_update">增量更新：正在同步变更</string>
+    <string name="error_inc_update_need_full">尚无同步水位，请先执行一次全量数据库更新</string>
+    <string name="error_inc_update_too_large">待同步的变更过多，增量更新无法完成，请执行一次全量数据库更新</string>
+    <string name="error_inc_update_aborted">增量更新异常中止，请重试；若反复失败请执行一次全量数据库更新</string>
+    <string name="recording_start_failed">无法开始录音，请检查存储访问权限后重试。</string>
+    <string name="recording_write_failed">由于无法写入录音文件，录音已停止。</string>
+    <string name="recording_not_available">当前音频流不支持录音</string>
 </resources>

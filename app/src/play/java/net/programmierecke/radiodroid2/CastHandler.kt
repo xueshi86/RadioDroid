@@ -33,7 +33,7 @@ private sealed class CastState {
 }
 
 private object CastUnavailable : CastState() {
-    private const val TAG = "CastHandler.CastUnavailable"
+    private const val TAG = "CastUnavailable"
     override fun setActivity(activity: CastAwareActivity?) {
     }
 

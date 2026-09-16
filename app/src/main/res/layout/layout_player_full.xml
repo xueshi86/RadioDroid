@@ -128,7 +128,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/textViewTotalPlayTime"
                 app:layout_constraintTop_toBottomOf="@+id/space"
-                tools:text="Current: 3:44" />
+                tools:text="Session: 3:44" />
 
             <TextView
                 android:id="@+id/textViewTotalPlayTime"

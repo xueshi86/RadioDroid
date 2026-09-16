@@ -297,10 +297,10 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
                     if (!isEmpty) {
                         // 数据库有数据，继续加载
                         if (getActivity() != null) {
-                            // 获取系统国家和语言
-                            java.util.Locale locale = java.util.Locale.getDefault();
-                            String systemCountry = locale.getCountry();
-                            String systemLanguage = locale.getLanguage();
+                            // 国家获取含 SIM/网络回退（Locale 无国家时仍能定位"本地"）；
+                            // 语言保持系统 ISO 码，由降级链内转换为 RadioBrowser 语言全名
+                            String systemCountry = Utils.getSystemCountryCode(getActivity());
+                            String systemLanguage = java.util.Locale.getDefault().getLanguage();
                             
                             // 确保在主线程上加载数据
                             getActivity().runOnUiThread(() -> {
@@ -336,7 +336,15 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
 
     private void loadStationsBySystemCountry(String systemCountry, String systemLanguage) {
         Log.d(TAG, "Loading stations for system country(" + systemCountry + ")");
-        
+
+        // Locale/SIM/网络均无国家代码时跳过国家查询，直接走语言降级，
+        // 避免 WHERE countrycode = '' 恒空导致的静默降级
+        if (systemCountry == null || systemCountry.isEmpty()) {
+            Log.d(TAG, "No system country available, fallback to language");
+            loadStationsBySystemLanguage(systemLanguage);
+            return;
+        }
+
         // 先尝试加载系统国家的电台
         if (getActivity() != null) {
             getActivity().runOnUiThread(() -> {
@@ -377,15 +385,21 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
     }
     
     private void loadStationsBySystemLanguage(String systemLanguage) {
-        // 处理中文语言代码的特殊情况
-        final String languageCode = "zh".equals(systemLanguage) ? "chinese" : systemLanguage;
-        
+        // 系统语言 ISO 码转 RadioBrowser 语言全名（"english"/"chinese"…，库内 language 为此类英文全名）
+        final String languageCode = Utils.getRadioBrowserLanguageName(systemLanguage);
+
         Log.d(TAG, "Loading stations for system language(" + languageCode + ")");
-        
-        // 获取系统国家代码
-        final String systemCountry = java.util.Locale.getDefault().getCountry();
+
+        // 获取系统国家代码（含 SIM/网络回退）
+        final String systemCountry = Utils.getSystemCountryCode(getActivity() != null ? getActivity() : getContext());
         Log.d(TAG, "System country code: " + systemCountry);
-        
+
+        // 国家代码缺失时跳过"语言+国家"，直接仅按语言加载
+        if (systemCountry == null || systemCountry.isEmpty()) {
+            loadStationsByLanguageOnly(languageCode);
+            return;
+        }
+
         // 先尝试加载系统语言和国家的电台
         if (getActivity() != null) {
             getActivity().runOnUiThread(() -> {
@@ -742,9 +756,8 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
             }
         }
 
-        java.util.Locale locale = java.util.Locale.getDefault();
-        String systemCountry = locale.getCountry();
-        String systemLanguage = locale.getLanguage();
+        String systemCountry = Utils.getSystemCountryCode(getContext());
+        String systemLanguage = java.util.Locale.getDefault().getLanguage();
 
         if (getActivity() != null) {
             getActivity().runOnUiThread(() -> {

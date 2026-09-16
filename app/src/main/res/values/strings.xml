@@ -790,7 +790,7 @@ The app will automatically restart to load the new database.</string>
 
     <!-- Player full screen labels -->
     <string name="player_total_play_time">Total: %1$s</string>
-    <string name="player_current_play_time">Current: %1$s</string>
+    <string name="player_session_play_time">Session: %1$s</string>
     <string name="player_network_usage">Data: %1$s</string>
     <string name="player_buffer_time">Buffered: %1$s</string>
     <string name="webdav_database_restore_confirm">Replace the local database with the database stored on the WebDAV server?</string>

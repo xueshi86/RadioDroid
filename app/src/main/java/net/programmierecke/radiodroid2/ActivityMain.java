@@ -1270,15 +1270,14 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         RadioDroidDatabase.getDatabase(this).getQueryExecutor().execute(() -> {
             RadioStationRepository repo = RadioStationRepository.getInstance(this);
             RadioStation fallback = null;
-            java.util.Locale locale = java.util.Locale.getDefault();
-            String systemCountry = locale.getCountry();
-            String systemLanguage = locale.getLanguage();
+            String systemCountry = Utils.getSystemCountryCode(this);
+            String systemLanguage = java.util.Locale.getDefault().getLanguage();
+            String languageCode = Utils.getRadioBrowserLanguageName(systemLanguage);
 
             if (systemCountry != null && !systemCountry.isEmpty()) {
                 fallback = StationFirstPlayablePicker.firstPlayableOf(repo.getStationsByCountryCodeAllSync(systemCountry));
             }
             if (fallback == null && systemLanguage != null && !systemLanguage.isEmpty()) {
-                String languageCode = "zh".equals(systemLanguage) ? "chinese" : systemLanguage;
                 fallback = StationFirstPlayablePicker.firstPlayableOf(repo.getStationsByLanguageAllSync(languageCode));
             }
             if (fallback == null) {

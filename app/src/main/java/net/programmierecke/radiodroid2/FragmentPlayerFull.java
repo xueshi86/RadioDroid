@@ -992,7 +992,7 @@ public class FragmentPlayerFull extends Fragment {
                 long deltaSeconds = startTime > 0 ? ((now - startTime) / 1000) : 0;
                 deltaSeconds = Math.max(deltaSeconds, 0);
                 fragmentPlayerFull.textViewCurrentPlayTime.setText(
-                        fragmentPlayerFull.getString(R.string.player_current_play_time, DateUtils.formatElapsedTime(deltaSeconds)));
+                        fragmentPlayerFull.getString(R.string.player_session_play_time, DateUtils.formatElapsedTime(deltaSeconds)));
 
                 long totalPlayTime = PlayerServiceUtil.getTotalPlayTime();
                 fragmentPlayerFull.textViewTotalPlayTime.setText(

@@ -30,10 +30,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -53,6 +55,19 @@ public class RadioStationRepository {
     private UpdateTimestampDao updateTimestampDao;
     private Context context;
     private ExecutorService executor = Executors.newSingleThreadExecutor();
+    
+    /**
+     * 搜索结果 LRU 缓存（容量 32，按访问序淘汰）。
+     * 同一查询重复请求时复用同一个 LiveData：Room 生成的 LiveData 自带结果缓存，
+     * 仅在对应数据表失效（数据更新）时才重查数据库，从而避免逐键输入或重复请求时反复全表扫描。
+     */
+    private final Map<String, LiveData<List<RadioStation>>> searchResultCache = Collections.synchronizedMap(
+            new LinkedHashMap<String, LiveData<List<RadioStation>>>(32, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, LiveData<List<RadioStation>>> eldest) {
+                    return size() > 32;
+                }
+            });
     
     // 静态锁对象，确保同步方法不会被多个线程同时调用
     private static final Object sSyncLock = new Object();
@@ -1298,54 +1313,88 @@ public class RadioStationRepository {
         return cleaned;
     }
 
+    static boolean canUseFts(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return false;
+        }
+        for (int i = 0; i < query.length(); i++) {
+            char character = query.charAt(i);
+            if (character > 0x7F || !(Character.isLetterOrDigit(character) || Character.isWhitespace(character))) {
+                return false;
+            }
+        }
+        return true;
+    }
+    /**
+     * 取或建搜索结果缓存项：同一键（搜索方法 + 原始查询）返回同一个 LiveData 实例。
+     */
+    private LiveData<List<RadioStation>> cachedSearch(String key, Supplier<LiveData<List<RadioStation>>> loader) {
+        LiveData<List<RadioStation>> cached = searchResultCache.get(key);
+        if (cached == null) {
+            cached = loader.get();
+            searchResultCache.put(key, cached);
+        }
+        return cached;
+    }
+
     // 搜索电台（关键词做 LIKE 通配符转义，配合 DAO 的 ESCAPE '\' 防止 %/_ 被当作通配符）
     public LiveData<List<RadioStation>> searchStations(String query) {
-        return radioStationDao.searchStations(escapeLike(query));
+        String key = "searchStations|" + query;
+        return cachedSearch(key, () -> radioStationDao.searchStations(escapeLike(query)));
     }
 
     // 使用FTS快速搜索电台（净化 FTS 特殊字符后传参）
     public LiveData<List<RadioStation>> searchStationsFast(String query) {
-        return radioStationDao.searchStationsFast(sanitizeFtsQuery(query));
+        String key = "searchStationsFast|" + query;
+        return cachedSearch(key, () -> canUseFts(query) ? radioStationDao.searchStationsFast(sanitizeFtsQuery(query)) : radioStationDao.searchStations(escapeLike(query)));
     }
     
     // 使用FTS按名称快速搜索电台
     public LiveData<List<RadioStation>> searchStationsByNameFast(String query) {
-        return radioStationDao.searchStationsByNameFast(sanitizeFtsQuery(query));
+        String key = "searchStationsByNameFast|" + query;
+        return cachedSearch(key, () -> canUseFts(query) ? radioStationDao.searchStationsByNameFast(sanitizeFtsQuery(query)) : radioStationDao.searchStationsByName(escapeLike(query)));
     }
     
     // 使用FTS按标签快速搜索电台
     public LiveData<List<RadioStation>> searchStationsByTagsFast(String query) {
-        return radioStationDao.searchStationsByTagsFast(sanitizeFtsQuery(query));
+        String key = "searchStationsByTagsFast|" + query;
+        return cachedSearch(key, () -> canUseFts(query) ? radioStationDao.searchStationsByTagsFast(sanitizeFtsQuery(query)) : radioStationDao.searchStationsByTags(escapeLike(query)));
     }
     
     // 使用FTS按国家快速搜索电台
     public LiveData<List<RadioStation>> searchStationsByCountryFast(String query) {
-        return radioStationDao.searchStationsByCountryFast(sanitizeFtsQuery(query));
+        String key = "searchStationsByCountryFast|" + query;
+        return cachedSearch(key, () -> canUseFts(query) ? radioStationDao.searchStationsByCountryFast(sanitizeFtsQuery(query)) : radioStationDao.searchStationsByCountry(escapeLike(query)));
     }
     
     // 使用FTS按语言快速搜索电台
     public LiveData<List<RadioStation>> searchStationsByLanguageFast(String query) {
-        return radioStationDao.searchStationsByLanguageFast(sanitizeFtsQuery(query));
+        String key = "searchStationsByLanguageFast|" + query;
+        return cachedSearch(key, () -> canUseFts(query) ? radioStationDao.searchStationsByLanguageFast(sanitizeFtsQuery(query)) : radioStationDao.searchStationsByLanguage(escapeLike(query)));
     }
     
     // 按名称搜索电台
     public LiveData<List<RadioStation>> searchStationsByName(String query) {
-        return radioStationDao.searchStationsByName(escapeLike(query));
+        String key = "searchStationsByName|" + query;
+        return cachedSearch(key, () -> radioStationDao.searchStationsByName(escapeLike(query)));
     }
     
     // 按标签搜索电台
     public LiveData<List<RadioStation>> searchStationsByTags(String query) {
-        return radioStationDao.searchStationsByTags(query);
+        String key = "searchStationsByTags|" + query;
+        return cachedSearch(key, () -> radioStationDao.searchStationsByTags(escapeLike(query)));
     }
     
     // 按国家搜索电台
     public LiveData<List<RadioStation>> searchStationsByCountry(String query) {
-        return radioStationDao.searchStationsByCountry(query);
+        String key = "searchStationsByCountry|" + query;
+        return cachedSearch(key, () -> radioStationDao.searchStationsByCountry(escapeLike(query)));
     }
     
     // 按语言搜索电台
     public LiveData<List<RadioStation>> searchStationsByLanguage(String query) {
-        return radioStationDao.searchStationsByLanguage(query);
+        String key = "searchStationsByLanguage|" + query;
+        return cachedSearch(key, () -> radioStationDao.searchStationsByLanguage(escapeLike(query)));
     }
     
     // 按国家代码获取电台
@@ -1398,7 +1447,8 @@ public class RadioStationRepository {
      * @return 符合条件的电台列表
      */
     public LiveData<List<RadioStation>> searchStationsByMultiCriteria(String country, String language, String tag, String keyword) {
-        return radioStationDao.searchStationsByMultiCriteria(country, language, tag, escapeLike(keyword));
+        String key = "multiCriteria|" + country + "|" + language + "|" + tag + "|" + keyword;
+        return cachedSearch(key, () -> radioStationDao.searchStationsByMultiCriteria(country, language, tag, escapeLike(keyword)));
     }
     
     // 获取数据库更新时间戳

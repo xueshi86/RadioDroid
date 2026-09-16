@@ -19,6 +19,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
@@ -519,6 +520,146 @@ public class Utils {
 
     public static String sanitizeName(String str) {
         return str.replaceAll("\\W+", "_").replaceAll("^_+", "").replaceAll("_+$", "");
+    }
+
+    // ISO 639-1 码 → RadioBrowser language 字段的英文全名（含 Android 旧码 iw/in/ji）
+    private static final Map<String, String> ISO_LANGUAGE_TO_RADIOBROWSER_NAME;
+    static {
+        Map<String, String> m = new HashMap<>();
+        m.put("en", "english");
+        m.put("zh", "chinese");
+        m.put("de", "german");
+        m.put("fr", "french");
+        m.put("es", "spanish");
+        m.put("it", "italian");
+        m.put("pt", "portuguese");
+        m.put("ru", "russian");
+        m.put("ja", "japanese");
+        m.put("ko", "korean");
+        m.put("hi", "hindi");
+        m.put("ar", "arabic");
+        m.put("nl", "dutch");
+        m.put("pl", "polish");
+        m.put("tr", "turkish");
+        m.put("sv", "swedish");
+        m.put("no", "norwegian");
+        m.put("nb", "norwegian");
+        m.put("nn", "norwegian");
+        m.put("da", "danish");
+        m.put("fi", "finnish");
+        m.put("el", "greek");
+        m.put("cs", "czech");
+        m.put("sk", "slovak");
+        m.put("hu", "hungarian");
+        m.put("ro", "romanian");
+        m.put("bg", "bulgarian");
+        m.put("uk", "ukrainian");
+        m.put("be", "belarusian");
+        m.put("sr", "serbian");
+        m.put("hr", "croatian");
+        m.put("bs", "bosnian");
+        m.put("sl", "slovenian");
+        m.put("mk", "macedonian");
+        m.put("sq", "albanian");
+        m.put("et", "estonian");
+        m.put("lv", "latvian");
+        m.put("lt", "lithuanian");
+        m.put("th", "thai");
+        m.put("vi", "vietnamese");
+        m.put("id", "indonesian");
+        m.put("in", "indonesian");
+        m.put("ms", "malay");
+        m.put("tl", "tagalog");
+        m.put("he", "hebrew");
+        m.put("iw", "hebrew");
+        m.put("ji", "yiddish");
+        m.put("yi", "yiddish");
+        m.put("fa", "persian");
+        m.put("ur", "urdu");
+        m.put("bn", "bengali");
+        m.put("ta", "tamil");
+        m.put("te", "telugu");
+        m.put("ml", "malayalam");
+        m.put("kn", "kannada");
+        m.put("mr", "marathi");
+        m.put("gu", "gujarati");
+        m.put("pa", "punjabi");
+        m.put("si", "sinhala");
+        m.put("ne", "nepali");
+        m.put("my", "burmese");
+        m.put("km", "khmer");
+        m.put("lo", "lao");
+        m.put("ka", "georgian");
+        m.put("hy", "armenian");
+        m.put("az", "azerbaijani");
+        m.put("kk", "kazakh");
+        m.put("uz", "uzbek");
+        m.put("ky", "kyrgyz");
+        m.put("tg", "tajik");
+        m.put("tk", "turkmen");
+        m.put("mn", "mongolian");
+        m.put("sw", "swahili");
+        m.put("am", "amharic");
+        m.put("so", "somali");
+        m.put("ha", "hausa");
+        m.put("yo", "yoruba");
+        m.put("ig", "igbo");
+        m.put("zu", "zulu");
+        m.put("xh", "xhosa");
+        m.put("af", "afrikaans");
+        m.put("eu", "basque");
+        m.put("ca", "catalan");
+        m.put("gl", "galician");
+        m.put("is", "icelandic");
+        m.put("ga", "irish");
+        m.put("gd", "scottish gaelic");
+        m.put("cy", "welsh");
+        m.put("fy", "frisian");
+        m.put("lb", "luxembourgish");
+        m.put("mt", "maltese");
+        ISO_LANGUAGE_TO_RADIOBROWSER_NAME = m;
+    }
+
+    /**
+     * 系统语言 ISO 码转 RadioBrowser 的语言全名（库内 language 存 "english,german" 这类
+     * 逗号分隔英文全名，ISO 码直接 = 匹配恒为空）。未映射的码原样返回，保持旧行为。
+     */
+    public static String getRadioBrowserLanguageName(String isoLanguageCode) {
+        if (isoLanguageCode == null || isoLanguageCode.isEmpty()) {
+            return isoLanguageCode;
+        }
+        String name = ISO_LANGUAGE_TO_RADIOBROWSER_NAME.get(isoLanguageCode.toLowerCase(Locale.ROOT));
+        return name != null ? name : isoLanguageCode;
+    }
+
+    private static boolean isValidCountryCode(String code) {
+        return code != null && code.trim().matches("[A-Za-z]{2}");
+    }
+
+    /**
+     * 获取用户所在国家代码（ISO 3166-1 alpha-2，大写）。
+     * Locale 未设置国家时（getCountry() 返回空串）依次回退到 SIM 卡国家、网络注册国家，
+     * 均不可用时返回空串（调用方应跳过国家匹配，走语言兜底链）。
+     */
+    public static String getSystemCountryCode(@Nullable Context context) {
+        String country = Locale.getDefault().getCountry();
+        if (isValidCountryCode(country)) {
+            return country.toUpperCase(Locale.ROOT);
+        }
+        if (context != null) {
+            TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+            if (tm != null) {
+                country = tm.getSimCountryIso();
+                if (isValidCountryCode(country)) {
+                    return country.trim().toUpperCase(Locale.ROOT);
+                }
+                country = tm.getNetworkCountryIso();
+                if (isValidCountryCode(country)) {
+                    return country.trim().toUpperCase(Locale.ROOT);
+                }
+            }
+        }
+        return "";
     }
 
     public static boolean hasWifiConnection(Context context) {

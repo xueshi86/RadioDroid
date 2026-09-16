@@ -3,7 +3,40 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-> 以下为 fork 后本项目发布历史（原维护于 README 的 Changelog 章节，2026-08-26 整合迁入，README 现仅保留入口链接）。
+> 以下为 fork 后本项目发布的版本历史（原维护于 README 的 Changelog 章节，2026-08-26 整合迁入，README 现仅保留入口链接）。
+
+## v1.08
+
+*2026-09-16*
+
+**电台搜索与多语言兼容**
+
+- **修复**：综合搜索、分页搜索和多条件搜索加入 `state` 地域字段，解决搜索中文名或相关电台时漏检的问题
+- **修复**：非 ASCII 查询改用转义后的 `LIKE` 子串搜索，避免 Android SQLite FTS4 对中文、西里尔字母、希腊字母及带重音拉丁字母分词不可靠导致无结果；纯 ASCII 字母、数字和空格查询继续使用 FTS，保留前缀检索性能
+- **优化**：ASCII 综合快速搜索合并 FTS 结果与 `state LIKE` 结果，兼顾快速检索和地域字段召回；使用 `UNION` 避免旧版 SQLite 中 FTS `MATCH` 与普通字段条件混用的兼容问题
+- **优化**：为搜索查询增加 LRU 结果缓存（容量 32，按访问序淘汰），同一查询复用同一 LiveData，数据库更新时由 Room 自动失效，避免逐键输入或重复请求时反复扫描数据库；确认逐键搜索入口（多条件搜索、搜索对话框）已具备输入防抖
+- **优化**：国家、语言搜索改为前缀优先、包含兜底的排序方式，与名称搜索的加权排序保持一致
+- **健壮性**：对 `LIKE` 查询中的 `%`、`_` 和反斜杠进行转义，防止用户输入被误解为 SQL 通配符
+- **测试**：增加中文、英语、俄语、西班牙语、德语、法语、意大利语和希腊语代表性查询的搜索策略测试，并覆盖 FTS 清洗与 `LIKE` 转义
+
+**简体中文资源整合**
+
+- **变更**：合并 `values-zh` 与 `values-zh-rCN` 的简体中文资源，保留双方独有及较新的翻译、品牌文案、数组和格式转义，取消简体中文资源双轨
+
+**构建与兼容性**
+
+- **修复**：缩短 Chromecast 不可用状态的日志标签，解决 Play Debug 的 4 条 `LongLogTag` Lint 错误，兼容 Android 7.1 及以下的日志标签长度限制
+
+**本地电台智能显示（修复随缘多国混合）**
+
+- **修复**：本地分类的国家匹配增加**回退链**——优先取系统 `Locale` 国家代码，未设置国家（返回空串）时依次回退到 **SIM 卡国家**、**运营商网络注册国家**（`getSimCountryIso`/`getNetworkCountryIso`，无需权限），并新增两字母国名校验；国家代码确实缺失时跳过 `WHERE countrycode = ''` 的空查询、直接走语言降级，避免「Locale 无国家 → 国家查询恒空 → 静默降级到全球电台」导致的随机多国混合
+- **修复**：系统语言降级改为**先映射再匹配**——将系统语言 ISO 码（如 `en`/`zh`）转换为 radio-browser 的 `language` 英文全名（`english`/`chinese`…，新增约 90 个 ISO 639-1 映射，含 Android 旧码 `iw`/`in`/`ji`），并按逗号分词做包含匹配（`LIKE` 命中 `english`/`german,english` 等任一写法），替代原「ISO 码 = 英文全名」精确等值查询；此前 `en` = `english,german` 恒不匹配导致语言降级失效而跳至全球电台
+- **修复**：闹钟「无播放历史自动选台」的兜底链路（按国家→按语言→全部）改用与本地列表页一致的 `getSystemCountryCode`/`getRadioBrowserLanguageName` 与逗号分词 `LIKE` 查询，保证各入口选台口径一致
+- **健壮性**：SQL 语言查询由精确等值改为分词包含匹配，其模式与 tags 既有分词查询保持一致，同时支持单语言 `english` 与多语言 `english,german` 两种库内格式
+
+**版本更新**
+
+- 版本号升级至 v1.08 (versionCode 117)
 
 ## v1.07
 

@@ -734,7 +734,7 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
 
     <!-- Player full screen labels -->
     <string name="player_total_play_time">Total: %1$s</string>
-    <string name="player_current_play_time">Actual: %1$s</string>
+    <string name="player_session_play_time">Sesión: %1$s</string>
     <string name="player_network_usage">Datos: %1$s</string>
     <string name="player_buffer_time">En búfer: %1$s</string>
 
