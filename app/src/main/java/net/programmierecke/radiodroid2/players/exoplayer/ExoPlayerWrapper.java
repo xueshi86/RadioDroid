@@ -307,7 +307,8 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
     @Override
     public long getBufferedMs() {
         if (player != null) {
-            return (int) (player.getBufferedPosition() - player.getCurrentPosition());
+            long bufferedMs = player.getBufferedPosition() - player.getCurrentPosition();
+            return Math.max(0, bufferedMs);
         }
 
         return 0;

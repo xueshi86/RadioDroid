@@ -206,7 +206,7 @@
     <string name="notify_station_removed_from_list">1 Supprimée</string>
     <string name="action_station_removed_from_list_undo">ANNULER</string>
 
-    <string name="alert_install_lyrics_app">QuickLyric n\'est pas installé sur votre appareil. Voulez-vous ouvrir sa page de téléchargement ?</string>
+
 
     <string name="alert_delete_history">Voulez-vous vraiment supprimer votre historique ?</string>
     <string name="alert_delete_favorites">Voulez-vous vraiment supprimer tous vos favoris ?</string>
@@ -252,6 +252,7 @@
 
     <string name="tab_player_art">Pochette d\'album</string>
     <string name="tab_player_info">Info</string>
+    <string name="tab_player_current_history">Titres de la station</string>
     <string name="tab_player_history">Historique</string>
     <string name="tab_player_recordings">Enregistrements</string>
 
@@ -296,6 +297,25 @@
     <string name="settings_other">Autre</string>
     <string name="settings_statistics">Statistiques</string>
     <string name="settings_about">À propos RadioDroid</string>
+    <string name="settings_check_update">Rechercher des mises à jour</string>
+    <string name="settings_auto_check_update">Rechercher les mises à jour automatiquement</string>
+    <string name="settings_auto_check_update_on">Au démarrage de l\'app, rechercher automatiquement les nouvelles versions (au plus une fois par jour)</string>
+    <string name="settings_auto_check_update_off">Pas de recherche automatique de mises à jour</string>
+    <string name="settings_auto_check_wifi_only">Wi-Fi uniquement</string>
+    <string name="settings_auto_check_wifi_only_on">Rechercher les mises à jour uniquement en Wi-Fi</string>
+    <string name="settings_auto_check_wifi_only_off">Rechercher les mises à jour sur toute connexion</string>
+    <string name="update_check_failed">Échec de la recherche de mises à jour</string>
+    <string name="update_check_no_update">Vous avez déjà la dernière version (%1$s)</string>
+    <string name="update_found_title">Nouvelle version %1$s disponible</string>
+    <string name="update_found_message">La version %1$s (%2$s) est disponible. Télécharger et installer ?</string>
+    <string name="update_download">Télécharger</string>
+    <string name="update_downloading">Téléchargement de la mise à jour…</string>
+    <string name="update_download_complete">Téléchargement terminé. Toucher pour installer</string>
+    <string name="update_download_failed">Échec du téléchargement de la mise à jour</string>
+    <string name="update_open_installer_failed">Impossible d\'ouvrir l\'installateur. Installez le fichier APK manuellement</string>
+    <string name="update_release_notes">Notes de version</string>
+    <string name="notification_channel_app_update_name">Mises à jour de l\'app</string>
+    <string name="notification_channel_app_update_description">Notifications concernant les nouvelles versions et les téléchargements de mises à jour</string>
 
     <string name="description_btn_skip_to_next">Passer au suivant</string>
     <string name="description_btn_skip_to_previous">Passer au précédent</string>
@@ -431,7 +451,7 @@
     <string name="webdav_configure">Configuration WebDAV</string>
     <string name="webdav_not_configured">Non configuré</string>
     <string name="webdav_server_url">Adresse du serveur</string>
-    <string name="webdav_directory">Répertoire du serveur</string>
+    <string name="webdav_directory">Répertoire du serveur (facultatif ; créé automatiquement s’il est absent)</string>
     <string name="webdav_username">Nom d’utilisateur</string>
     <string name="webdav_password">Mot de passe</string>
     <string name="webdav_delete">Supprimer</string>
@@ -446,6 +466,7 @@
     <string name="webdav_connectivity_checking">%1$s · Vérification de la connexion</string>
     <string name="webdav_connectivity_ok">%1$s · Connexion réussie</string>
     <string name="webdav_connectivity_failed">%1$s · Échec de la connexion</string>
+    <string name="webdav_connectivity_failed_reason">%1$s · Échec de la connexion : %2$s</string>
     <string name="webdav_save_failed">Impossible d’enregistrer la configuration WebDAV</string>
     <string name="webdav_task_started">Tâche démarrée</string>
     <string name="webdav_task_running">Tâche en cours…</string>
@@ -456,12 +477,20 @@
     <string name="webdav_result_pending">En attente de confirmation</string>
     <string name="webdav_result_canceled">Annulé</string>
     <string name="webdav_restore_failed">Échec de la restauration de la base de données ; la base de données d’origine a été conservée</string>
+    <string name="webdav_restore_favourites_confirm">La restauration des favorites utilisera le fichier de favorites stocké sur le serveur.
+
+• Remplacer : la liste locale correspondra exactement au serveur ; les stations présentes uniquement en local seront supprimées.
+• Fusionner : conserve toutes les stations locales et ajoute celles présentes uniquement sur le serveur.
+
+Une copie de vos favorites actuelles est enregistrée sur cet appareil avant l’opération.</string>
+    <string name="webdav_restore_overwrite">Remplacer</string>
+    <string name="webdav_restore_merge">Fusionner</string>
     <string name="webdav_database_restore_confirm">Remplacer la base de données locale par la base de données stockée sur le serveur WebDAV ?</string>
     <string name="webdav_database_replace">Remplacer</string>
     <string name="webdav_database_restoring">Remplacement de la base de données en cours, veuillez patienter…</string>
     <string name="webdav_error_authentication">Échec de l’authentification</string>
     <string name="webdav_error_permission">Permission refusée</string>
-    <string name="webdav_error_not_found">Ressource introuvable</string>
+    <string name="webdav_error_not_found">Répertoire ou fichier introuvable sur le serveur ; effectuez d’abord une sauvegarde</string>
     <string name="webdav_error_protocol">Erreur de protocole</string>
     <string name="webdav_error_network">Erreur réseau</string>
     <string name="webdav_error_local_database">Erreur de la base de données locale</string>
@@ -471,4 +500,20 @@
     <string name="webdav_error_empty_favourites">Le fichier des favoris sur le serveur est vide</string>
     <string name="webdav_error_unknown">Erreur inconnue</string>
 
+    <string name="lyrics_not_found">Aucune paroles trouvées pour ce morceau</string>
+    <string name="lyrics_instrumental">Piste instrumentale (sans paroles)</string>
+    <string name="lyrics_source_format">Source : %1$s</string>
+    <string name="lyrics_source_netease">NetEase Cloud Music</string>
+    <string name="lyrics_no_external_app">Aucune application de paroles compatible n\'est installée</string>
+    <string name="pref_lyrics_category">Paroles</string>
+    <string name="pref_lyrics_header_summary">Les sources intégrées sont interrogées dans l\'ordre : LRCLIB → LrcAPI → NetEase Cloud Music (optionnel) ; la première qui trouve les paroles gagne. Vous préférez votre propre serveur ? Saisissez son URL complète ci-dessous (ex. https://hote:port/chemin) — laissez vide pour le serveur public par défaut. Avec « Application externe de paroles », la recherche est confiée à une app compatible (protocole QuickLyric) et les options ci-dessous sont désactivées.</string>
+    <string name="pref_lyrics_source_mode">Source des paroles</string>
+    <string name="pref_lyrics_source_mode_internal">Sources intégrées</string>
+    <string name="pref_lyrics_source_mode_external">Application externe de paroles</string>
+    <string name="pref_lyrics_lrclib_instance">URL de l\'instance LRCLIB</string>
+    <string name="pref_lyrics_lrclib_instance_summary">URL complète, ex. https://hote:port/chemin. Laissez vide pour utiliser le lrclib.net officiel</string>
+    <string name="pref_lyrics_lrcapi_instance">URL de l\'instance LrcAPI</string>
+    <string name="pref_lyrics_lrcapi_instance_summary">URL complète, ex. https://hote:port/chemin. Laissez vide pour utiliser l\'api.lrc.cx public</string>
+    <string name="pref_lyrics_netease">NetEase Cloud Music (expérimental)</string>
+    <string name="pref_lyrics_netease_summary">API publique non officielle, utilisée comme source de repli après LRCLIB et LrcAPI. Activée par défaut.</string>
 </resources>

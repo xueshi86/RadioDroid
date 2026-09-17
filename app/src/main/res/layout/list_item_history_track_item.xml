@@ -30,7 +30,7 @@
         android:ellipsize="marquee"
         android:singleLine="true"
         app:layout_constraintBottom_toTopOf="@+id/textViewTrackArtist"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/textViewPlayTime"
         app:layout_constraintStart_toEndOf="@id/imageViewStationIcon"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="spread" />
@@ -42,12 +42,25 @@
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginBottom="4dp"
         android:ellipsize="marquee"
         android:singleLine="true"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/textViewPlayTime"
         app:layout_constraintStart_toEndOf="@id/imageViewStationIcon"
         app:layout_constraintTop_toBottomOf="@id/textViewTrackName" />
+
+    <TextView
+        android:id="@+id/textViewPlayTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:gravity="end|center_vertical"
+        android:maxLines="2"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

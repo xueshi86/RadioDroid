@@ -37,9 +37,9 @@ public class WebDavClientTest {
     }
 
     @Test
-    public void checkConnectionUsesPropfind() throws Exception {
+    public void ensureConnectionUsesPropfind() throws Exception {
         server.enqueue(new MockResponse().setResponseCode(207).setBody("<multistatus/>"));
-        client.checkConnection();
+        client.ensureConnection();
         RecordedRequest request = server.takeRequest();
         assertEquals("PROPFIND", request.getMethod());
         assertEquals("/dav/", request.getPath());
@@ -48,45 +48,129 @@ public class WebDavClientTest {
     }
 
     @Test
-    public void checkConnectionSucceedsWithPlainOk() throws Exception {
+    public void ensureConnectionSucceedsWithPlainOk() throws Exception {
         server.enqueue(new MockResponse().setResponseCode(200));
-        client.checkConnection();
+        client.ensureConnection();
     }
 
     @Test
-    public void checkConnectionReportsAuthenticationFailure() throws Exception {
+    public void ensureConnectionReportsAuthenticationFailure() throws Exception {
         server.enqueue(new MockResponse().setResponseCode(401));
-        expect(WebDavException.Kind.AUTHENTICATION, client::checkConnection);
+        expect(WebDavException.Kind.AUTHENTICATION, client::ensureConnection);
     }
 
     @Test
-    public void checkConnectionReportsPermissionFailure() throws Exception {
+    public void ensureConnectionReportsPermissionFailure() throws Exception {
         server.enqueue(new MockResponse().setResponseCode(403));
-        expect(WebDavException.Kind.PERMISSION, client::checkConnection);
+        expect(WebDavException.Kind.PERMISSION, client::ensureConnection);
     }
 
     @Test
-    public void checkConnectionReportsMissingLocation() throws Exception {
-        server.enqueue(new MockResponse().setResponseCode(404));
-        expect(WebDavException.Kind.NOT_FOUND, client::checkConnection);
+    public void ensureConnectionCreatesMissingDirectoryAndRetries() throws Exception {
+        final AtomicInteger propfinds = new AtomicInteger();
+        server.setDispatcher(new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                if ("PROPFIND".equals(request.getMethod())) {
+                    if (propfinds.getAndIncrement() == 0) return new MockResponse().setResponseCode(404);
+                    return new MockResponse().setResponseCode(207).setBody("<multistatus/>");
+                }
+                if ("MKCOL".equals(request.getMethod())) return new MockResponse().setResponseCode(201);
+                return new MockResponse().setResponseCode(200);
+            }
+        });
+        client.ensureConnection();
+
+        RecordedRequest firstPropfind = server.takeRequest();
+        assertEquals("PROPFIND", firstPropfind.getMethod());
+        assertEquals("/dav/", firstPropfind.getPath());
+        RecordedRequest mkcol = server.takeRequest();
+        assertEquals("MKCOL", mkcol.getMethod());
+        assertEquals("/dav/", mkcol.getPath());
+        RecordedRequest retryPropfind = server.takeRequest();
+        assertEquals("PROPFIND", retryPropfind.getMethod());
+        assertEquals("/dav/", retryPropfind.getPath());
     }
 
     @Test
-    public void checkConnectionReportsUnsupportedMethod() throws Exception {
+    public void ensureConnectionReportsUnsupportedMethod() throws Exception {
         server.enqueue(new MockResponse().setResponseCode(405));
-        expect(WebDavException.Kind.PROTOCOL, client::checkConnection);
+        expect(WebDavException.Kind.PROTOCOL, client::ensureConnection);
     }
 
     @Test
-    public void checkConnectionReportsConflictAsMissingLocation() throws Exception {
-        server.enqueue(new MockResponse().setResponseCode(409));
-        expect(WebDavException.Kind.NOT_FOUND, client::checkConnection);
+    public void ensureConnectionCreatesNestedDirectoriesOnConflict() throws Exception {
+        WebDavClient directoryClient = new WebDavClient(new WebDavSettings(server.url("/dav/").toString(), "backup/sub", "user", "pass"));
+        final AtomicInteger propfinds = new AtomicInteger();
+        server.setDispatcher(new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                if ("PROPFIND".equals(request.getMethod())) {
+                    if (propfinds.getAndIncrement() == 0) return new MockResponse().setResponseCode(409);
+                    return new MockResponse().setResponseCode(207).setBody("<multistatus/>");
+                }
+                if ("MKCOL".equals(request.getMethod())) return new MockResponse().setResponseCode(405);
+                return new MockResponse().setResponseCode(200);
+            }
+        });
+        directoryClient.ensureConnection();
+
+        RecordedRequest firstPropfind = server.takeRequest();
+        assertEquals("PROPFIND", firstPropfind.getMethod());
+        assertEquals("/dav/backup/sub/", firstPropfind.getPath());
+        RecordedRequest mkcolRoot = server.takeRequest();
+        assertEquals("MKCOL", mkcolRoot.getMethod());
+        assertEquals("/dav/", mkcolRoot.getPath());
+        RecordedRequest mkcolBackup = server.takeRequest();
+        assertEquals("MKCOL", mkcolBackup.getMethod());
+        assertEquals("/dav/backup/", mkcolBackup.getPath());
+        RecordedRequest mkcolSub = server.takeRequest();
+        assertEquals("MKCOL", mkcolSub.getMethod());
+        assertEquals("/dav/backup/sub/", mkcolSub.getPath());
+        RecordedRequest retryPropfind = server.takeRequest();
+        assertEquals("PROPFIND", retryPropfind.getMethod());
+        assertEquals("/dav/backup/sub/", retryPropfind.getPath());
     }
 
     @Test
-    public void checkConnectionRejectsRedirect() throws Exception {
+    public void ensureConnectionStillFailsWhenLocationMissingAfterCreation() throws Exception {
+        final AtomicInteger propfinds = new AtomicInteger();
+        server.setDispatcher(new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                if ("PROPFIND".equals(request.getMethod())) {
+                    propfinds.incrementAndGet();
+                    return new MockResponse().setResponseCode(404);
+                }
+                if ("MKCOL".equals(request.getMethod())) return new MockResponse().setResponseCode(201);
+                return new MockResponse().setResponseCode(200);
+            }
+        });
+        expect(WebDavException.Kind.NOT_FOUND, client::ensureConnection);
+        assertEquals(2, propfinds.get());
+    }
+
+    @Test
+    public void ensureConnectionReportsAuthenticationFailureDuringDirectoryCreation() throws Exception {
+        final AtomicInteger propfinds = new AtomicInteger();
+        server.setDispatcher(new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                if ("PROPFIND".equals(request.getMethod())) {
+                    if (propfinds.getAndIncrement() == 0) return new MockResponse().setResponseCode(404);
+                    return new MockResponse().setResponseCode(207).setBody("<multistatus/>");
+                }
+                if ("MKCOL".equals(request.getMethod())) return new MockResponse().setResponseCode(401);
+                return new MockResponse().setResponseCode(200);
+            }
+        });
+        expect(WebDavException.Kind.AUTHENTICATION, client::ensureConnection);
+    }
+
+    @Test
+    public void ensureConnectionRejectsRedirect() throws Exception {
         server.enqueue(new MockResponse().setResponseCode(302).setHeader("Location", "https://elsewhere.example.com/"));
-        expect(WebDavException.Kind.PROTOCOL, client::checkConnection);
+        expect(WebDavException.Kind.PROTOCOL, client::ensureConnection);
     }
 
     @Test
@@ -136,7 +220,7 @@ public class WebDavClientTest {
     public void configuredDirectoryIsUsedForConnectionCheck() throws Exception {
         WebDavClient directoryClient = new WebDavClient(new WebDavSettings(server.url("/dav/").toString(), "backup", "user", "pass"));
         server.enqueue(new MockResponse().setResponseCode(207).setBody("<multistatus/>"));
-        directoryClient.checkConnection();
+        directoryClient.ensureConnection();
         RecordedRequest request = server.takeRequest();
         assertEquals("PROPFIND", request.getMethod());
         assertEquals("/dav/backup/", request.getPath());

@@ -18,6 +18,9 @@ public final class WebDavBackupWorker extends Worker {
     private static final String TAG = "WebDavBackupWorker";
     public static final String KEY_TYPE = "type";
     public static final String KEY_MODE = "mode";
+    public static final String KEY_FAV_MODE = "fav_mode";
+    public static final String MODE_OVERWRITE = "overwrite";
+    public static final String MODE_MERGE = "merge";
     public static final String WORK_NAME = "webdav_backup_restore";
     public static final String RESULT_PREFS = "webdav_last_result";
     private static final int MAX_ATTEMPTS = 6;
@@ -29,8 +32,8 @@ public final class WebDavBackupWorker extends Worker {
 
     public WebDavBackupWorker(@NonNull Context context, @NonNull WorkerParameters parameters) { super(context, parameters); }
 
-    public static void enqueue(Context context, WebDavBackupType type, boolean restore) {
-        Data input = new Data.Builder().putString(KEY_TYPE, type.name()).putBoolean(KEY_MODE, restore).build();
+    public static void enqueue(Context context, WebDavBackupType type, boolean restore, String favMode) {
+        Data input = new Data.Builder().putString(KEY_TYPE, type.name()).putBoolean(KEY_MODE, restore).putString(KEY_FAV_MODE, favMode).build();
         Constraints constraints = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
         OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(WebDavBackupWorker.class).setInputData(input).setConstraints(constraints).build();
         WorkManager.getInstance(context.getApplicationContext()).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.KEEP, request);
@@ -64,7 +67,8 @@ public final class WebDavBackupWorker extends Worker {
 
         if (favRequested) {
             try {
-                if (restore) manager.restoreFavourites(); else manager.backupFavourites();
+                if (restore) manager.restoreFavourites(MODE_MERGE.equals(getInputData().getString(KEY_FAV_MODE)));
+                else manager.backupFavourites();
                 favStatus = STATUS_SUCCESS;
             } catch (Exception e) {
                 Log.e(TAG, "Favourites operation failed: restore=" + restore, e);

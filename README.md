@@ -155,6 +155,20 @@
 
 **Ogg Vorbis / Opus 流元数据支持**（新增）：大量使用 Ogg/Opus 编码的电台（欧洲小众台、播客流）曲目信息此前无法显示，现已接入 ExoPlayer 元数据链路的 `VorbisComment` 解析（TITLE/ARTIST），曲目名、艺术家、通知与曲目历史均可正常展示；相同曲目自动去重，避免通知/历史高频刷新。
 
+**播放页标签页**（新增）：播放页新增「本台曲目」与「曲目历史」两个标签页——「本台曲目」顶部实时显示当前播放内容（电台图标、曲目名、艺术家），下方列出当前电台的历史曲目；「曲目历史」显示所有电台的全部曲目历史。正在播放的曲目随播放持续写入曲目历史，两个标签页均可查看；顶部正在播放内容可点击，弹出曲目详情面板（含查看歌词、复制曲目信息）。
+
+#### 内置歌词（新增）
+
+曲目详情的「查看歌词」不再依赖 QuickLyric（其已从 Google Play 与 F-Droid 双渠道下架），改为应用内置歌词面板，支持加载中 / 歌词内容 / 无结果三态显示并标注来源；纯音乐显示「纯音乐（无歌词）」，同步歌词（LRC）自动剥离时间戳后按纯文本展示。
+
+**歌词来源降级链**（内置来源，依次尝试直至命中）：
+
+1. **LRCLIB**（开源公开歌词 API）：精确匹配（artist+track+duration）→ artist+track 搜索 → 通用关键词搜索，按同步歌词优先、时长接近度、曲名匹配度综合打分选优；支持自定义实例地址（默认 lrclib.net）
+2. **LrcAPI**（[HisAtri/LrcApi](https://github.com/HisAtri/LrcApi) 聚合接口，公共实例 api.lrc.cx）：按 title/artist 查询，直接返回 LRC 文本；支持自建实例地址
+3. **网易云**（非官方公开接口，默认开启）：搜索 + 歌词接口均带 Referer，提升中文曲目命中率；可在设置中手动关闭
+
+歌词结果按「艺术家+曲目」缓存到本地 Room 数据库（30 天过期），减少重复网络请求。设置「播放 → 歌词」中可切换来源模式（内置来源 / 外部歌词应用）与各来源实例地址，页面顶部附有降级顺序与实例配置说明；选择「外部歌词应用」后由兼容应用（QuickLyric 协议）接管查询，内置来源的实例地址与网易云开关自动禁用。
+
 #### 电台图标
 
 应用采用智能多级缓存策略加载电台图标，确保两个核心体验：**尽快显示图标，尽量显示主图标**。
@@ -342,6 +356,7 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 - **国家图标**：电台列表显示所属国家的国旗图标
 - **Android TV 支持**：检测 TV 设备自动启用频道管理
 - **网络类型指示器**：播放时显示当前使用的 Wi-Fi 或移动数据图标，直观了解网络类型
+- **检查更新**：设置中提供「检查更新」入口与可选的「自动检查更新」开关（应用启动时静默检查，每天最多一次，可限定仅 Wi-Fi）。通过 GitHub Releases API 获取最新版本，与当前版本比对后弹出提示，可一键下载新版本 APK；下载带进度通知，完成后通过系统安装器安装，无需静默安装权限
 
 ---
 
@@ -471,6 +486,20 @@ Floating action button appears when list is scrolled down. Tapping smoothly scro
 #### Track History
 
 Original RadioDroid already had track history. This version optimizes the parsing logic for stream ICY metadata (track name and artist), improving matching and display accuracy. Also fetches supplementary metadata via LastFM API.
+
+**Player page tabs** (new): The player page now has a "Current Station History" tab and a "Track History" tab — the former shows the currently playing content at the top (station icon, track, artist) with the filtered history of the current station below; the latter shows the full track history of all stations. The currently playing track is continuously written to the history, visible in both tabs; the top "now playing" header is tappable and opens a track details panel (with lyrics and copy info actions).
+
+#### Built-in Lyrics (new)
+
+"View lyrics" in track details no longer depends on QuickLyric (delisted from both Google Play and F-Droid). The app now ships a built-in lyrics panel with loading / content / no-result states and source attribution; instrumental tracks show a dedicated message, and synced lyrics (LRC) are displayed as plain text with timestamps stripped.
+
+**Lyrics source fallback chain** (built-in sources, tried in order until a hit):
+
+1. **LRCLIB** (open lyrics API): exact match (artist+track+duration) → artist+track search → generic keyword search, scored by synced availability, duration closeness and title similarity; custom instance URL supported (default lrclib.net)
+2. **LrcAPI** ([HisAtri/LrcApi](https://github.com/HisAtri/LrcApi) aggregator, public instance api.lrc.cx): title/artist query returning raw LRC text; self-hosted instance URL supported
+3. **NetEase Cloud Music** (unofficial public API, enabled by default): improves hit rate for Chinese tracks; can be disabled in settings
+
+Lyrics are cached in the local Room database keyed by artist+track (30-day expiry) to reduce repeated network requests. The settings "Playback → Lyrics" section lets you switch source mode (built-in / external lyrics app) and configure instance URLs, with a header note explaining the fallback order and instance configuration; in "external lyrics app" mode lookups are handled by a compatible app (QuickLyric intent protocol) and the built-in source options (instance URLs, NetEase toggle) are disabled automatically.
 
 #### Station Icons
 
@@ -646,6 +675,7 @@ Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elemen
 - **Country Flags**: Flag icons per station in list view
 - **Android TV**: Auto-detect TV devices, channel management
 - **Network Type Indicator**: Shows Wi-Fi or mobile data icon during playback for at-a-glance network awareness
+- **Update Check**: A "Check for update" entry in Settings plus an optional "Check for update automatically" toggle (checked silently at app start, at most once per day, optionally Wi-Fi only). The latest version is fetched from the GitHub Releases API and compared to the current one, showing a prompt; the new APK can be downloaded with one tap, with a progress notification, and installed through the system installer on completion — no silent-install permission required
 
 ---
 

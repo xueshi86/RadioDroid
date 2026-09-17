@@ -393,7 +393,8 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
     }
 
     public long getBufferedSeconds() {
-        return currentPlayer.getBufferedMs() / 1000;
+        long bufferedMs = currentPlayer.getBufferedMs();
+        return Math.max(0, bufferedMs) / 1000;
     }
 
     public boolean isLocal() {

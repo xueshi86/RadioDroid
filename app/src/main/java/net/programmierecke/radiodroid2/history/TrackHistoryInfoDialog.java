@@ -5,9 +5,9 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.format.DateUtils;
 import android.util.TypedValue;
@@ -19,16 +19,18 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.squareup.picasso.Picasso;
 
 import net.programmierecke.radiodroid2.R;
 import net.programmierecke.radiodroid2.Utils;
+import net.programmierecke.radiodroid2.lyrics.LyricsRepository;
+import net.programmierecke.radiodroid2.lyrics.LyricsSheetDialog;
 
 import java.text.DateFormat;
 import java.util.Objects;
@@ -37,10 +39,9 @@ public class TrackHistoryInfoDialog extends BottomSheetDialogFragment {
 
     public static final String FRAGMENT_TAG = "tracks_history_info_dialog_fragment";
 
-    // QuickLyric 及其兼容分支在 Manifest 中注册的歌词查询协议
+    // QuickLyric 及其兼容分支在 Manifest 中注册的歌词查询协议，
+    // 任何兼容 fork 均可响应；仅当用户在设置中选择“外部歌词应用”时使用
     private static final String ACTION_GET_LYRICS = "com.geecko.QuickLyric.getLyrics";
-    // 原版已从 Google Play 下架，官方仍在维护的分发渠道是 F-Droid 页面
-    private static final String QUICKLYRIC_DOWNLOAD_URL = "https://f-droid.org/packages/com.geecko.QuickLyric/";
 
     private final TrackHistoryEntry historyEntry;
 
@@ -101,29 +102,29 @@ public class TrackHistoryInfoDialog extends BottomSheetDialogFragment {
         }
 
         btnLyrics.setOnClickListener(v -> {
-            if (hasLyricsAppHandler()) {
-                // 传递原始数据给歌词应用
-                try {
-                    getContext().startActivity(new Intent(ACTION_GET_LYRICS)
-                            .putExtra("TAGS", new String[]{historyEntry.artist, historyEntry.track}));
-                } catch (ActivityNotFoundException ignored) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+            String mode = prefs.getString(LyricsRepository.PREF_LYRICS_SOURCE_MODE, LyricsRepository.LYRICS_SOURCE_MODE_INTERNAL);
+
+            if (LyricsRepository.LYRICS_SOURCE_MODE_EXTERNAL.equals(mode)) {
+                if (hasLyricsAppHandler()) {
+                    // 传递原始数据给歌词应用
+                    try {
+                        getContext().startActivity(new Intent(ACTION_GET_LYRICS)
+                                .putExtra("TAGS", new String[]{historyEntry.artist, historyEntry.track}));
+                    } catch (ActivityNotFoundException ignored) {
+                    }
+                } else {
+                    Toast.makeText(getContext(), R.string.lyrics_no_external_app, Toast.LENGTH_LONG).show();
                 }
-            } else {
-                new AlertDialog.Builder(getContext())
-                        .setMessage(this.getString(R.string.alert_install_lyrics_app))
-                        .setCancelable(true)
-                        .setPositiveButton(this.getString(R.string.yes), (dialog, id) -> {
-                            try {
-                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(QUICKLYRIC_DOWNLOAD_URL));
-                                getContext().startActivity(browserIntent);
-                            } catch (ActivityNotFoundException ex) {
-                                Toast toast = Toast.makeText(getContext(), R.string.notify_open_link_failure, Toast.LENGTH_LONG);
-                                toast.show();
-                            }
-                        })
-                        .setNegativeButton(this.getString(R.string.no), null)
-                        .show();
+                return;
             }
+
+            Integer durationSeconds = null;
+            if (historyEntry.endTime.after(historyEntry.startTime)) {
+                durationSeconds = (int) ((historyEntry.endTime.getTime() - historyEntry.startTime.getTime()) / 1000);
+            }
+            LyricsSheetDialog.newInstance(historyEntry.artist, historyEntry.track, durationSeconds)
+                    .show(getParentFragmentManager(), LyricsSheetDialog.FRAGMENT_TAG);
         });
 
         btnCopyInfo.setOnClickListener(v -> {

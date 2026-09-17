@@ -25,6 +25,7 @@ public final class WebDavBackupManager {
     private static final String TAG = "WebDavBackupManager";
     public static final String FAVOURITES_FILE = "favourites.m3u";
     public static final String DATABASE_FILE = "radio_droid_database.db";
+    public static final String LOCAL_FAVOURITES_SNAPSHOT = "favourites_local_backup.m3u";
     private static final String PENDING_PREFS = "webdav_pending_restore";
     private final Context context;
     private final WebDavClient client;
@@ -46,7 +47,7 @@ public final class WebDavBackupManager {
         } finally { file.delete(); }
     }
 
-    public void restoreFavourites() throws Exception {
+    public void restoreFavourites(boolean merge) throws Exception {
         File file = client.download(FAVOURITES_FILE, temporaryDirectory());
         try {
             FavouriteManager favourites = ((RadioDroidApp) context).getFavouriteManager();
@@ -60,10 +61,25 @@ public final class WebDavBackupManager {
                 // 否则会造成"恢复成功但列表为空"的误导。明确报错，本地数据保持不变。
                 throw new WebDavException(WebDavException.Kind.EMPTY_FILE, "Remote favourites file is empty");
             }
-            if (!favourites.addMultiple(stations)) {
+            // 覆盖/合并前把当前收藏导出到本地缓存，给用户留一份可回滚的副本
+            snapshotFavouritesLocally(favourites);
+            boolean applied = merge ? favourites.mergeMultiple(stations) : favourites.addMultiple(stations);
+            if (!applied) {
                 throw new WebDavException(WebDavException.Kind.INVALID_DATA, "Favourite restore failed");
             }
         } finally { file.delete(); }
+    }
+
+    private void snapshotFavouritesLocally(FavouriteManager favourites) {
+        try {
+            File snapshot = new File(temporaryDirectory(), LOCAL_FAVOURITES_SNAPSHOT);
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(snapshot), Charset.forName("UTF-8")));
+            try { favourites.SaveM3UWriter(writer); }
+            finally { writer.close(); }
+            Log.d(TAG, "snapshotFavouritesLocally: saved " + snapshot.getAbsolutePath());
+        } catch (Exception e) {
+            Log.w(TAG, "Local favourites snapshot failed, continuing restore", e);
+        }
     }
 
     public void backupDatabase() throws Exception {

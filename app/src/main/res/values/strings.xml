@@ -185,7 +185,7 @@
     <string name="webdav_configure">WebDAV configuration</string>
     <string name="webdav_not_configured">Not configured</string>
     <string name="webdav_server_url">Server address</string>
-    <string name="webdav_directory">Server directory</string>
+    <string name="webdav_directory">Server directory (optional; created automatically if missing)</string>
     <string name="webdav_username">Username</string>
     <string name="webdav_password">Password</string>
     <string name="webdav_delete">Delete</string>
@@ -200,6 +200,7 @@
     <string name="webdav_connectivity_checking">%1$s · Connectivity: checking</string>
     <string name="webdav_connectivity_ok">%1$s · Connectivity: OK</string>
     <string name="webdav_connectivity_failed">%1$s · Connectivity: failed</string>
+    <string name="webdav_connectivity_failed_reason">%1$s · Connectivity failed: %2$s</string>
     <string name="webdav_save_failed">Could not save WebDAV configuration</string>
     <string name="webdav_task_started">Task started</string>
     <string name="webdav_task_running">Task in progress…</string>
@@ -448,7 +449,23 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="notify_station_removed_from_list">1 Removed</string>
     <string name="action_station_removed_from_list_undo">UNDO</string>
 
-    <string name="alert_install_lyrics_app">QuickLyric is not installed on your device. Would you like to open its download page?</string>
+    <string name="lyrics_not_found">No lyrics found for this track</string>
+    <string name="lyrics_instrumental">Instrumental track (no lyrics)</string>
+    <string name="lyrics_source_format">Source: %1$s</string>
+    <string name="lyrics_source_netease">NetEase Cloud Music</string>
+    <string name="lyrics_no_external_app">No compatible lyrics app is installed</string>
+
+    <string name="pref_lyrics_category">Lyrics</string>
+    <string name="pref_lyrics_header_summary">Built-in sources are tried in order: LRCLIB → LrcAPI → NetEase Cloud Music (optional); the first source that returns lyrics wins. Prefer your own server? Fill in its full URL below (e.g. https://host:port/path) — leave empty to use the public default. With “External lyrics app” selected, lookups are handled by a compatible app (QuickLyric protocol) and the options below are disabled.</string>
+    <string name="pref_lyrics_source_mode">Lyrics source</string>
+    <string name="pref_lyrics_source_mode_internal">Built-in sources</string>
+    <string name="pref_lyrics_source_mode_external">External lyrics app</string>
+    <string name="pref_lyrics_lrclib_instance">LRCLIB instance URL</string>
+    <string name="pref_lyrics_lrclib_instance_summary">Full URL, e.g. https://host:port/path. Leave empty to use the official lrclib.net</string>
+    <string name="pref_lyrics_lrcapi_instance">LrcAPI instance URL</string>
+    <string name="pref_lyrics_lrcapi_instance_summary">Full URL, e.g. https://host:port/path. Leave empty to use the public api.lrc.cx</string>
+    <string name="pref_lyrics_netease">NetEase Cloud Music (experimental)</string>
+    <string name="pref_lyrics_netease_summary">Unofficial public API, used as a fallback after LRCLIB and LrcAPI. Enabled by default.</string>
 
     <string name="alert_delete_history">Do you really want to delete the history?</string>
     <string name="alert_delete_favorites">Do you really want to delete all favorites?</string>
@@ -538,6 +555,7 @@ This will overwrite the current main database, please ensure you have backed up 
 
     <string name="tab_player_art">Album art</string>
     <string name="tab_player_info">Info</string>
+    <string name="tab_player_current_history">Station tracks</string>
     <string name="tab_player_history">Track history</string>
     <string name="tab_player_recordings">Recordings</string>
 
@@ -586,7 +604,29 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="key_ignore_battery_optimization">ignore_battery_optimization</string>
     <string name="settings_other">Other</string>
     <string name="settings_statistics">Statistics</string>
+    <string name="statistics_total_stations">Total stations (incl. broken)</string>
+    <string name="statistics_working_stations">Working stations</string>
+    <string name="statistics_broken_stations">Broken stations</string>
     <string name="settings_about">About RadioDroid</string>
+    <string name="settings_check_update">Check for update</string>
+    <string name="settings_auto_check_update">Check for update automatically</string>
+    <string name="settings_auto_check_update_on">At app start, automatically check for new versions (at most once per day)</string>
+    <string name="settings_auto_check_update_off">No automatic update checks</string>
+    <string name="settings_auto_check_wifi_only">Check only on Wi-Fi</string>
+    <string name="settings_auto_check_wifi_only_on">Only check for updates on Wi-Fi</string>
+    <string name="settings_auto_check_wifi_only_off">Check for updates on any connection</string>
+    <string name="update_check_failed">Failed to check for updates</string>
+    <string name="update_check_no_update">You already have the latest version (%1$s)</string>
+    <string name="update_found_title">New version %1$s available</string>
+    <string name="update_found_message">Version %1$s (%2$s) is available. Download and install?</string>
+    <string name="update_download">Download</string>
+    <string name="update_downloading">Downloading update…</string>
+    <string name="update_download_complete">Download complete. Tap to install</string>
+    <string name="update_download_failed">Update download failed</string>
+    <string name="update_open_installer_failed">Cannot open the installer. Please install the APK manually</string>
+    <string name="update_release_notes">Release notes</string>
+    <string name="notification_channel_app_update_name">App updates</string>
+    <string name="notification_channel_app_update_description">Notifications about new app versions and update downloads</string>
 
     <string name="description_btn_skip_to_next">Skip to next</string>
     <string name="description_btn_skip_to_previous">Skip to previous</string>
@@ -793,12 +833,20 @@ The app will automatically restart to load the new database.</string>
     <string name="player_session_play_time">Session: %1$s</string>
     <string name="player_network_usage">Data: %1$s</string>
     <string name="player_buffer_time">Buffered: %1$s</string>
+    <string name="webdav_restore_favourites_confirm">Restoring favourites will use the favourites file stored on the server.
+
+• Overwrite: the local list will match the server exactly; stations that only exist locally will be removed.
+• Merge: keep all local stations and add stations that only exist on the server.
+
+A copy of your current favourites is saved on this device before the operation.</string>
+    <string name="webdav_restore_overwrite">Overwrite</string>
+    <string name="webdav_restore_merge">Merge</string>
     <string name="webdav_database_restore_confirm">Replace the local database with the database stored on the WebDAV server?</string>
     <string name="webdav_database_replace">Replace</string>
     <string name="webdav_database_restoring">Replacing database, please wait…</string>
     <string name="webdav_error_authentication">Authentication failed</string>
     <string name="webdav_error_permission">Permission denied</string>
-    <string name="webdav_error_not_found">Resource not found</string>
+    <string name="webdav_error_not_found">Server directory or file not found; run a backup first</string>
     <string name="webdav_error_protocol">Protocol error</string>
     <string name="webdav_error_network">Network error</string>
     <string name="webdav_error_local_database">Local database error</string>

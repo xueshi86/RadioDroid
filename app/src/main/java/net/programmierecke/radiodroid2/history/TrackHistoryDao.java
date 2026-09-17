@@ -27,6 +27,9 @@ public interface TrackHistoryDao {
     @Query("SELECT * FROM track_history ORDER BY uid DESC")
     DataSource.Factory<Integer, TrackHistoryEntry> getAllHistoryPositional();
 
+    @Query("SELECT * FROM track_history WHERE station_uuid = :stationUuid ORDER BY uid DESC")
+    DataSource.Factory<Integer, TrackHistoryEntry> getStationHistoryPositional(String stationUuid);
+
     @Query("SELECT * FROM track_history ORDER BY uid DESC LIMIT 1")
     TrackHistoryEntry getLastInsertedHistoryItem();
 

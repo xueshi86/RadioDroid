@@ -130,6 +130,10 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name="net.programmierecke.radiodroid2.updater.UpdateReceiver"
+            android:exported="false" />
+
         <meta-data
             android:name="com.google.android.gms.car.application"
             android:resource="@xml/automotive_app_desc" />

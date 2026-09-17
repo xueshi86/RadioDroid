@@ -154,6 +154,49 @@ public class StationSaveManager extends Observable {
         }
     }
 
+    // 合并导入：本地列表保持不变，仅追加本地没有的电台（按 UUID 去重）；与 addMultiple 的整体替换语义不同
+    public boolean mergeMultiple(List<DataRadioStation> stations) {
+        if (stations == null) {
+            Log.w("SAVE", "mergeMultiple called with null list, keeping existing data");
+            return false;
+        }
+
+        ArrayList<DataRadioStation> mergedStations = new ArrayList<>(listStations);
+        boolean changed = false;
+        for (DataRadioStation station : stations) {
+            if (station == null || station.StationUuid == null || station.StationUuid.isEmpty()) {
+                Log.w("SAVE", "Skipping merged station with missing UUID");
+                continue;
+            }
+            if (containsStationWithUuid(mergedStations, station.StationUuid)) {
+                continue;
+            }
+            station.queue = this;
+            mergedStations.add(station);
+            changed = true;
+        }
+
+        if (!changed) {
+            return true;
+        }
+
+        List<DataRadioStation> previousStations = listStations;
+        listStations = mergedStations;
+        try {
+            if (!Save()) {
+                listStations = previousStations;
+                Log.e("SAVE", "Unable to persist merged stations");
+                return false;
+            }
+            notifyAllListeners();
+            return true;
+        } catch (RuntimeException e) {
+            listStations = previousStations;
+            Log.e("SAVE", "Unable to merge stations", e);
+            return false;
+        }
+    }
+
     private boolean containsStationWithUuid(List<DataRadioStation> stations, String stationUuid) {
         for (DataRadioStation station : stations) {
             if (stationUuid.equals(station.StationUuid)) {

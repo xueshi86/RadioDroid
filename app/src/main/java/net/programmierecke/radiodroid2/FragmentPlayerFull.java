@@ -43,6 +43,7 @@ import com.squareup.picasso.Picasso;
 
 import net.programmierecke.radiodroid2.history.TrackHistoryAdapter;
 import net.programmierecke.radiodroid2.history.TrackHistoryEntry;
+import net.programmierecke.radiodroid2.history.TrackHistoryInfoDialog;
 import net.programmierecke.radiodroid2.history.TrackHistoryRepository;
 import net.programmierecke.radiodroid2.history.TrackHistoryViewModel;
 import net.programmierecke.radiodroid2.recording.Recordable;
@@ -66,8 +67,9 @@ import net.programmierecke.radiodroid2.views.RecyclerAwareNestedScrollView;
 import net.programmierecke.radiodroid2.views.TagsView;
 
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
@@ -108,6 +110,8 @@ public class FragmentPlayerFull extends Fragment {
 
     private TrackHistoryRepository trackHistoryRepository;
     private TrackHistoryAdapter trackHistoryAdapter;
+    private TrackHistoryAdapter stationHistoryAdapter;
+    private String lastStationUuid;
 
     private RecordingsAdapter recordingsAdapter;
 
@@ -158,6 +162,16 @@ public class FragmentPlayerFull extends Fragment {
                 final LinearLayoutManager lm = (LinearLayoutManager) historyAndRecordsPagerAdapter.recyclerViewSongHistory.getLayoutManager();
                 if (lm.findFirstVisibleItemPosition() < 2) {
                     historyAndRecordsPagerAdapter.recyclerViewSongHistory.scrollToPosition(0);
+                }
+            }
+        });
+
+        stationHistoryAdapter = new TrackHistoryAdapter(requireActivity());
+        stationHistoryAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                final LinearLayoutManager lm = (LinearLayoutManager) historyAndRecordsPagerAdapter.recyclerViewCurrentStationHistory.getLayoutManager();
+                if (lm != null && lm.findFirstVisibleItemPosition() < 2) {
+                    historyAndRecordsPagerAdapter.recyclerViewCurrentStationHistory.scrollToPosition(0);
                 }
             }
         });
@@ -263,12 +277,25 @@ public class FragmentPlayerFull extends Fragment {
         pagerHistoryAndRecordings = view.findViewById(R.id.pagerHistoryAndRecordings);
         historyAndRecordsPagerAdapter = new HistoryAndRecordsPagerAdapter(requireContext(), pagerHistoryAndRecordings);
         pagerHistoryAndRecordings.setAdapter(historyAndRecordsPagerAdapter);
+        pagerHistoryAndRecordings.setCurrentItem(0, false);
+
+        // "本台曲目"顶部的正在播放头也可点击，与历史列表条目一致弹出曲目详情（含歌词入口）
+        historyAndRecordsPagerAdapter.layoutCurrentPlaying.setOnClickListener(v -> showCurrentTrackInfoDialog());
 
         btnPlay = view.findViewById(R.id.buttonPlay);
         btnPrev = view.findViewById(R.id.buttonPrev);
         btnNext = view.findViewById(R.id.buttonNext);
         btnRecord = view.findViewById(R.id.buttonRecord);
         btnFavourite = view.findViewById(R.id.buttonFavorite);
+
+        historyAndRecordsPagerAdapter.recyclerViewCurrentStationHistory.setAdapter(stationHistoryAdapter);
+
+        LinearLayoutManager llmCurrentStationHistory = new LinearLayoutManager(getContext());
+        llmCurrentStationHistory.setOrientation(RecyclerView.VERTICAL);
+        historyAndRecordsPagerAdapter.recyclerViewCurrentStationHistory.setLayoutManager(llmCurrentStationHistory);
+
+        DividerItemDecoration dividerItemDecorationCurrent = new DividerItemDecoration(historyAndRecordsPagerAdapter.recyclerViewCurrentStationHistory.getContext(), llmCurrentStationHistory.getOrientation());
+        historyAndRecordsPagerAdapter.recyclerViewCurrentStationHistory.addItemDecoration(dividerItemDecorationCurrent);
 
         historyAndRecordsPagerAdapter.recyclerViewSongHistory.setAdapter(trackHistoryAdapter);
 
@@ -280,6 +307,12 @@ public class FragmentPlayerFull extends Fragment {
         historyAndRecordsPagerAdapter.recyclerViewSongHistory.addItemDecoration(dividerItemDecoration);
 
         trackHistoryViewModel = ViewModelProviders.of(this).get(TrackHistoryViewModel.class);
+        trackHistoryViewModel.getStationHistoryPaged().observe(getViewLifecycleOwner(), new Observer<PagedList<TrackHistoryEntry>>() {
+            @Override
+            public void onChanged(@Nullable PagedList<TrackHistoryEntry> songHistoryEntries) {
+                stationHistoryAdapter.submitList(songHistoryEntries);
+            }
+        });
         trackHistoryViewModel.getAllHistoryPaged().observe(getViewLifecycleOwner(), new Observer<PagedList<TrackHistoryEntry>>() {
             @Override
             public void onChanged(@Nullable PagedList<TrackHistoryEntry> songHistoryEntries) {
@@ -376,7 +409,7 @@ public class FragmentPlayerFull extends Fragment {
 
                 updateRunningRecording();
 
-                pagerHistoryAndRecordings.setCurrentItem(1, true);
+                pagerHistoryAndRecordings.setCurrentItem(2, true);
             } else {
                 Toast.makeText(getActivity(), getResources().getString(R.string.error_record_not_playing), Toast.LENGTH_SHORT).show();
             }
@@ -477,6 +510,7 @@ public class FragmentPlayerFull extends Fragment {
 
     public void resetScroll() {
         scrollViewContent.scrollTo(0, 0);
+        historyAndRecordsPagerAdapter.recyclerViewCurrentStationHistory.scrollToPosition(0);
         historyAndRecordsPagerAdapter.recyclerViewSongHistory.scrollToPosition(0);
         historyAndRecordsPagerAdapter.recyclerViewRecordings.scrollToPosition(0);
     }
@@ -501,6 +535,15 @@ public class FragmentPlayerFull extends Fragment {
 
     private void fullUpdate() {
         DataRadioStation station = Utils.getCurrentOrLastStation(requireContext());
+
+        if (station != null) {
+            if (!station.StationUuid.equals(lastStationUuid)) {
+                lastStationUuid = station.StationUuid;
+                trackHistoryViewModel.setStationUuid(station.StationUuid);
+            }
+        }
+
+        updateCurrentPlayingHeader();
 
         if (station != null) {
             final ShoutcastInfo shoutcastInfo = PlayerServiceUtil.getShoutcastInfo();
@@ -601,6 +644,84 @@ public class FragmentPlayerFull extends Fragment {
         timedUpdateTask.run();
 
         initialized = true;
+    }
+
+    private void updateCurrentPlayingHeader() {
+        if (historyAndRecordsPagerAdapter == null || historyAndRecordsPagerAdapter.textViewCurrentTrack == null) {
+            return;
+        }
+
+        DataRadioStation station = PlayerServiceUtil.getCurrentStation();
+        if (station == null) {
+            station = Utils.getCurrentOrLastStation(requireContext());
+        }
+
+        final StreamLiveInfo liveInfo = PlayerServiceUtil.getMetadataLive();
+        String trackDisplay = liveInfo.getTrack();
+        String artistDisplay = liveInfo.getArtist();
+
+        if ("Unknown Track".equals(trackDisplay) || "未知".equals(trackDisplay)) {
+            trackDisplay = getString(R.string.unknown_track);
+        }
+        if ("Unknown Artist".equals(artistDisplay) || "未知".equals(artistDisplay)) {
+            artistDisplay = getString(R.string.unknown_artist);
+        }
+
+        if (liveInfo.hasArtistAndTrack()) {
+            historyAndRecordsPagerAdapter.textViewCurrentTrack.setText(trackDisplay);
+            historyAndRecordsPagerAdapter.textViewCurrentArtist.setText(artistDisplay);
+        } else {
+            String streamTitle = liveInfo.getTitle();
+            if (!TextUtils.isEmpty(streamTitle)) {
+                historyAndRecordsPagerAdapter.textViewCurrentTrack.setText(streamTitle);
+                historyAndRecordsPagerAdapter.textViewCurrentArtist.setText(station != null ? station.Name : "");
+            } else {
+                historyAndRecordsPagerAdapter.textViewCurrentTrack.setText(station != null ? station.Name : getString(R.string.unknown_track));
+                historyAndRecordsPagerAdapter.textViewCurrentArtist.setText("");
+            }
+        }
+
+        if (station != null) {
+            loadStationIconWithFallback(historyAndRecordsPagerAdapter.imageViewCurrentPlayingIcon, station.IconUrl, station.HomePageUrl, station.StationUuid, station.Name);
+        }
+    }
+
+    private void showCurrentTrackInfoDialog() {
+        DataRadioStation station = PlayerServiceUtil.getCurrentStation();
+        if (station == null) {
+            station = Utils.getCurrentOrLastStation(requireContext());
+        }
+        if (station == null) {
+            return;
+        }
+
+        final StreamLiveInfo liveInfo = PlayerServiceUtil.getMetadataLive();
+        String artist = liveInfo.getArtist();
+        String track = liveInfo.getTrack();
+        String title = liveInfo.getTitle();
+
+        // 与头部显示一致的兜底：元数据缺解析结果时，以原始标题作为曲目名
+        if ("Unknown Track".equals(track) || track.isEmpty()) {
+            if (TextUtils.isEmpty(title)) {
+                return;
+            }
+            track = title;
+        }
+        if ("Unknown Artist".equals(artist) || artist.isEmpty()) {
+            artist = "";
+        }
+
+        TrackHistoryEntry entry = new TrackHistoryEntry();
+        entry.stationUuid = station.StationUuid;
+        entry.stationIconUrl = station.IconUrl;
+        entry.artist = artist;
+        entry.track = track;
+        entry.title = title;
+        entry.startTime = new Date();
+        // endTime 早于 startTime 表示曲目仍在播放，与曲目历史的"正在播放"语义一致
+        entry.endTime = new Date(0);
+
+        new TrackHistoryInfoDialog(entry).show(requireActivity().getSupportFragmentManager(), TrackHistoryInfoDialog.FRAGMENT_TAG);
     }
 
     private void updateConnectionTypeIcon() {
@@ -915,30 +1036,48 @@ public class FragmentPlayerFull extends Fragment {
     }
 
     private class HistoryAndRecordsPagerAdapter extends PagerAdapter {
+        private ViewGroup layoutCurrentStationHistory;
         private ViewGroup layoutSongHistory;
         private ViewGroup layoutRecordings;
 
+        ViewGroup layoutCurrentPlaying;
+
         private String[] titles;
 
+        RecyclerView recyclerViewCurrentStationHistory;
         RecyclerView recyclerViewSongHistory;
         RecyclerView recyclerViewRecordings;
+
+        ImageView imageViewCurrentPlayingIcon;
+        TextView textViewCurrentTrack;
+        TextView textViewCurrentArtist;
 
         HistoryAndRecordsPagerAdapter(@NonNull Context context, @NonNull ViewGroup parent) {
             LayoutInflater inflater = LayoutInflater.from(context);
 
+            layoutCurrentStationHistory = (ViewGroup) inflater.inflate(R.layout.page_player_current_history, parent, false);
             layoutSongHistory = (ViewGroup) inflater.inflate(R.layout.page_player_history, parent, false);
             layoutRecordings = (ViewGroup) inflater.inflate(R.layout.page_player_recordings, parent, false);
 
-            titles = new String[]{getResources().getString(R.string.tab_player_history), getResources().getString(R.string.tab_player_recordings)};
+            titles = new String[]{getResources().getString(R.string.tab_player_current_history), getResources().getString(R.string.tab_player_history), getResources().getString(R.string.tab_player_recordings)};
 
+            recyclerViewCurrentStationHistory = layoutCurrentStationHistory.findViewById(R.id.recyclerViewCurrentStationHistory);
             recyclerViewSongHistory = layoutSongHistory.findViewById(R.id.recyclerViewSongHistory);
             recyclerViewRecordings = layoutRecordings.findViewById(R.id.recyclerViewRecordings);
+
+            layoutCurrentPlaying = layoutCurrentStationHistory.findViewById(R.id.layoutCurrentPlaying);
+            imageViewCurrentPlayingIcon = layoutCurrentStationHistory.findViewById(R.id.imageViewCurrentPlayingIcon);
+            textViewCurrentTrack = layoutCurrentStationHistory.findViewById(R.id.textViewCurrentTrack);
+            textViewCurrentArtist = layoutCurrentStationHistory.findViewById(R.id.textViewCurrentArtist);
         }
 
         @NonNull
         @Override
         public Object instantiateItem(@NonNull ViewGroup collection, int position) {
             if (position == 0) {
+                collection.addView(layoutCurrentStationHistory);
+                return layoutCurrentStationHistory;
+            } else if (position == 1) {
                 collection.addView(layoutSongHistory);
                 return layoutSongHistory;
             } else {
@@ -954,7 +1093,7 @@ public class FragmentPlayerFull extends Fragment {
 
         @Override
         public int getCount() {
-            return 2;
+            return 3;
         }
 
         @Override

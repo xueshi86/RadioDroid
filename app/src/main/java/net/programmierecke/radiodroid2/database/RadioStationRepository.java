@@ -42,6 +42,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import okhttp3.OkHttpClient;
@@ -519,44 +520,83 @@ public class RadioStationRepository {
             Log.d(TAG, "已保存服务器统计信息到SharedPreferences: stations_total=" + totalStations);
         }
 
-        
+        // 获取国家代码列表。目录快照 json/stations 的默认排序会把中文及非拉丁命名
+        // 电台（中国、日本、韩国、俄罗斯、希腊等）排挤出前 totalStations 行，导致本地
+        // 数据库结构性缺失这些电台。改用按国家代码遍历 json/stations/search，可完整
+        // 拉取每个国家的全部电台（实测 search?countrycode=CN 返回 2,325 个含"山西"）。
+        final List<String> countryCodes = new ArrayList<>();
+        {
+            String countriesResult = Utils.downloadFeedFromServer(httpClient, radioDroidApp, fastestServer.server,
+                    "json/countries", fastestServer.useHttps, true, null);
+            if (countriesResult != null) {
+                try {
+                    org.json.JSONArray countries = new org.json.JSONArray(countriesResult);
+                    // json/countries 中同一国家可能出现大小写不同的条目（如 "US" 与 "us"），
+                    // toUpperCase 后会导致同一国家被重复下载、下载计数虚高，需去重
+                    java.util.Set<String> seen = new java.util.HashSet<>();
+                    for (int i = 0; i < countries.length(); i++) {
+                        org.json.JSONObject c = countries.getJSONObject(i);
+                        if (c.has("iso_3166_1")) {
+                            String code = c.getString("iso_3166_1");
+                            if (code != null && !code.isEmpty() && !"null".equalsIgnoreCase(code)) {
+                                code = code.toUpperCase();
+                                if (seen.add(code)) {
+                                    countryCodes.add(code);
+                                }
+                            }
+                        }
+                    }
+                    Log.d(TAG, "从 json/countries 解析得到 " + countryCodes.size() + " 个国家代码");
+                } catch (Exception e) {
+                    Log.e(TAG, "解析国家列表失败", e);
+                }
+            }
+            if (countryCodes.isEmpty()) {
+                Log.w(TAG, "未能获取国家列表，回退到默认可用的国家代码");
+                Collections.addAll(countryCodes,
+                        "CN", "TW", "HK", "MO", "JP", "KR", "US", "GB", "DE", "FR", "RU",
+                        "GR", "AE", "SA", "IN", "BR", "CA", "AU", "IT", "ES", "NL", "PL",
+                        "TR", "UA", "TH", "VN", "MY", "SG", "PH", "ID", "MX", "AR", "CL",
+                        "NZ", "ZA", "EG", "IL", "SE", "NO", "FI", "DK", "BE", "AT", "CH",
+                        "IE", "PT", "CZ", "HU", "RO", "BG", "HR", "RS", "SK", "SI", "LT",
+                        "LV", "EE", "BY", "KZ", "UZ", "BD", "PK", "IR", "IQ", "JO", "LB",
+                        "OM", "QA", "KW", "BH", "MN", "NP", "LK", "MM", "KH", "LA", "BN",
+                        "GE", "AM", "AZ", "TM", "KG", "TJ", "AF", "YE", "SO", "ET", "KE",
+                        "NG", "GH", "CI", "SN", "MA", "DZ", "TN", "LY", "SD", "AO", "MZ",
+                        "ZM", "ZW", "MW", "UG", "TZ", "RW", "CD", "CM", "GT", "HN", "SV",
+                        "PA", "CR", "NI", "PY", "UY", "EC", "PE", "VE", "CO", "CY",
+                        "MT", "IS", "LU", "MC", "LI", "AD", "SM", "VA", "GI", "BB", "JM",
+                        "TT", "BS", "GY", "SR", "AW", "CW", "GL", "FO", "AX", "IM",
+                        "JE", "GG", "FK", "KY", "BM", "TC", "VG", "AI", "MS", "SH", "PN",
+                        "NR", "WS", "FJ", "PG", "SB", "VU", "NC", "PF", "CK", "TV",
+                        "KI", "MH", "FM", "PW", "TO", "NU", "WF", "AS", "GU", "MP", "UM"
+                );
+                Collections.sort(countryCodes);
+            }
+            // 补充无国家代码的电台（实测 countrycode= 空值返回 1,267 个电台，
+            // 如不下载会永久丢失）
+            if (!countryCodes.contains("")) {
+                countryCodes.add("");
+            }
+        }
+
         // 获取主数据库中的电台数量
         int mainDatabaseCount = radioStationDao.getCount();
         Log.d(TAG, "主数据库中的电台数量: " + mainDatabaseCount);
         
         callback.onProgress(context.getString(R.string.progress_starting_temp_db_update), 0, totalStations);
         
-        // 只有在非恢复模式下才清空临时数据库
-        if (!resumeMode) {
-            // 清空临时数据库
-            tempRadioStationDao.deleteAll();
-            Log.d(TAG, "已清空临时数据库");
-        } else {
-            // 恢复模式下，检查临时数据库中已有的数据
-            int existingTempCount = tempRadioStationDao.getCount();
-            Log.d(TAG, "恢复模式：临时数据库中已有 " + existingTempCount + " 个电台");
-            if (existingTempCount > 0) {
-                callback.onProgress(context.getString(R.string.progress_resuming_download), existingTempCount, totalStations);
-            }
+        // 清空临时数据库（按国家全量下载无法断点续传，统一从空库开始，保证最终数据完整无重复）
+        tempRadioStationDao.deleteAll();
+        Log.d(TAG, "已清空临时数据库");
+        if (resumeMode) {
+            callback.onProgress(context.getString(R.string.progress_resuming_download), 0, totalStations);
         }
             
-            // 使用分页获取所有电台数据，增加每页数量到100，减少请求次数
-            final int pageSize = 100; // 每页100个电台，增加数量减少请求次数
-            int totalPages = (int) Math.ceil((double) totalStations / pageSize);
+            // 按国家代码下载所有电台数据。每个国家用 search 端点 limit=100000 一次拉全，
+            // 覆盖目录快照遗漏的中文及非拉丁命名电台（中国、日本、韩国、俄罗斯、希腊等）。
+            final List<RadioStation> commonStations = java.util.Collections.synchronizedList(new ArrayList<>());
             int totalDownloaded = 0;
-            int batchSize = 20; // 增加批量处理大小，减少数据库插入次数
-            
-            // 在恢复模式下，检查临时数据库中已有的电台数量，并从相应的页面开始下载
-            int startPage = 0;
-            if (resumeMode) {
-                int existingTempCount = tempRadioStationDao.getCount();
-                if (existingTempCount > 0) {
-                    // 计算应该从哪一页开始下载
-                    startPage = existingTempCount / pageSize;
-                    totalDownloaded = existingTempCount;
-                    Log.d(TAG, "恢复模式：从第 " + (startPage + 1) + " 页开始下载，已有 " + totalDownloaded + " 个电台");
-                }
-            }
             
             // 获取SharedPreferences，用于获取服务器响应时间
             SharedPreferences sharedPref = context.getSharedPreferences("NetworkCheckResults", Context.MODE_PRIVATE);
@@ -623,39 +663,33 @@ public class RadioStationRepository {
             // 计算基础线程数
             int baseThreadCount = availableProcessors * networkFactor;
             
-            // 根据总页数调整线程数，避免创建过多不必要的线程
-            int pageCount = totalPages - startPage;
-            int pageFactor = Math.min(pageCount, 8); // 最多不超过8个线程用于分页下载
+            // 根据总国家数调整线程数，避免创建过多不必要的线程
+            int countryCount = countryCodes.size();
+            int pageFactor = Math.min(countryCount, 8); // 最多不超过8个线程用于下载
             
             // 设置合理的上下限（2-10），考虑API限制
             // API限制：避免对服务器造成过大压力，最多使用10个线程
             int optimalThreadCount = Math.max(2, Math.min(10, Math.min(baseThreadCount, pageFactor)));
             
-            Log.d(TAG, "设备CPU核心数: " + availableProcessors + ", 最快服务器响应时间: " + fastestServerResponseTime + "ms, 总页数: " + pageCount + ", 最优线程数: " + optimalThreadCount);
+            Log.d(TAG, "设备CPU核心数: " + availableProcessors + ", 最快服务器响应时间: " + fastestServerResponseTime + "ms, 国家数: " + countryCount + ", 最优线程数: " + optimalThreadCount);
             
             // 创建线程池，自动调整线程数量
             ExecutorService downloadExecutor = Executors.newFixedThreadPool(optimalThreadCount);
             
-            // 用于线程安全的数据收集
-            List<List<RadioStation>> downloadedStationsPerPage = new ArrayList<>();
-            for (int i = 0; i < totalPages - startPage; i++) {
-                downloadedStationsPerPage.add(new ArrayList<>());
-            }
-            
             // 用于线程安全的进度更新
-            final AtomicInteger processedPages = new AtomicInteger(0);
+            final AtomicInteger processedCountries = new AtomicInteger(0);
             final AtomicInteger totalDownloadedAtomic = new AtomicInteger(totalDownloaded);
+            // 下载失败标记：补充重试后仍失败的国家即中止整个更新，禁止用残缺数据替换主库
+            final AtomicBoolean downloadFailed = new AtomicBoolean(false);
+            // 首次下载失败的国家代码，后续统一补充重试
+            final List<String> failedCountries = java.util.Collections.synchronizedList(new ArrayList<>());
             
-            // 创建下载任务列表
+            // 创建下载任务列表（每个国家一个任务）
             List<Callable<Void>> downloadTasks = new ArrayList<>();
             
-            for (int page = startPage; page < totalPages; page++) {
-                final int currentPage = page;
-                final int pageIndex = page - startPage;
-                
+            for (final String countryCode : countryCodes) {
                 downloadTasks.add(() -> {
-                    int skip = currentPage * pageSize;
-                    String urlWithParams = "json/stations?limit=" + pageSize + "&offset=" + skip;
+                    String urlWithParams = "json/stations/search?hidebroken=false&countrycode=" + countryCode + "&limit=100000&offset=0";
 
                     
                     String resultString = null;
@@ -671,7 +705,7 @@ public class RadioStationRepository {
                     
                     while (retryCount < maxRetries && resultString == null && serverSwitchCount < maxServerSwitches) {
                         if (retryCount > 0) {
-                        Log.w(TAG, "第 " + (currentPage + 1) + " 页第 " + retryCount + " 次重试");
+                        Log.w(TAG, "国家 " + countryCode + " 第 " + retryCount + " 次重试");
                         try {
                             // 动态调整重试间隔，根据服务器响应时间
                             // 响应时间越长，重试间隔越大，反之亦然
@@ -738,22 +772,23 @@ public class RadioStationRepository {
                                 radioStations.add(radioStation);
                             }
                             
-                            downloadedStationsPerPage.set(pageIndex, radioStations);
+                            commonStations.addAll(radioStations);
                             int pageDownloadedCount = radioStations.size();
                             int currentTotal = totalDownloadedAtomic.addAndGet(pageDownloadedCount);
                             
-                            Log.d(TAG, "线程 " + Thread.currentThread().getId() + " 已下载第 " + (currentPage + 1) + " 页，共 " + pageDownloadedCount + " 个电台，累计下载 " + currentTotal + "/" + totalStations + " 个电台");
+                            Log.d(TAG, "线程 " + Thread.currentThread().getId() + " 已下载国家 " + countryCode + "，共 " + pageDownloadedCount + " 个电台，累计下载 " + currentTotal + "/" + totalStations + " 个电台");
                             
                             // 更新进度
-                            int processed = processedPages.incrementAndGet();
+                            int processed = processedCountries.incrementAndGet();
                             callback.onProgress(context.getString(R.string.progress_downloading_stations), currentTotal, totalStations);
                         } else {
-                            Log.w(TAG, "线程 " + Thread.currentThread().getId() + " 第 " + (currentPage + 1) + " 页数据为空");
-                            processedPages.incrementAndGet();
+                            Log.w(TAG, "线程 " + Thread.currentThread().getId() + " 国家 " + countryCode + " 数据为空");
+                            processedCountries.incrementAndGet();
                         }
                     } else {
-                        Log.e(TAG, "线程 " + Thread.currentThread().getId() + " 第 " + (currentPage + 1) + " 页下载失败，已重试 " + maxRetries + " 次，跳过该页");
-                        processedPages.incrementAndGet();
+                        Log.e(TAG, "线程 " + Thread.currentThread().getId() + " 国家 " + countryCode + " 下载失败，已重试 " + maxRetries + " 次，加入补充重试队列");
+                        failedCountries.add(countryCode);
+                        processedCountries.incrementAndGet();
                     }
                     
                     return null;
@@ -774,12 +809,57 @@ public class RadioStationRepository {
             
             // 关闭线程池
             downloadExecutor.shutdown();
-            
-            // 收集所有下载的数据
-            List<RadioStation> allDownloadedStations = new ArrayList<>();
-            for (List<RadioStation> pageStations : downloadedStationsPerPage) {
-                allDownloadedStations.addAll(pageStations);
+
+            // 补充重试首次下载失败的国家（串行、使用最快服务器，避免再次高并发触发限流）。
+            // 全部国家成功后才允许替换主库；仍有失败的国家则中止更新并保留现有数据库，
+            // 绝不以残缺数据替换主库导致电台永久丢失。
+            if (!failedCountries.isEmpty()) {
+                Log.w(TAG, "存在 " + failedCountries.size() + " 个国家首次下载失败，开始补充重试");
+                for (String failedCountry : failedCountries) {
+                    boolean countryOk = false;
+                    for (int attempt = 0; attempt < 3 && !countryOk; attempt++) {
+                        if (attempt > 0) {
+                            try {
+                                Thread.sleep(1500L * attempt);
+                            } catch (InterruptedException ie) {
+                                Thread.currentThread().interrupt();
+                                break;
+                            }
+                        }
+                        String retryUrl = "json/stations/search?hidebroken=false&countrycode=" + failedCountry + "&limit=100000&offset=0";
+                        String resultString = Utils.downloadFeedFromServer(httpClient, radioDroidApp,
+                                fastestServer.server, retryUrl, fastestServer.useHttps, true, null);
+                        if (resultString != null) {
+                            List<DataRadioStation> dataStations = DataRadioStation.DecodeJson(resultString);
+                            if (dataStations != null && !dataStations.isEmpty()) {
+                                List<RadioStation> radioStations = new ArrayList<>();
+                                for (DataRadioStation dataStation : dataStations) {
+                                    radioStations.add(RadioStation.fromDataRadioStation(dataStation));
+                                }
+                                commonStations.addAll(radioStations);
+                                totalDownloadedAtomic.addAndGet(radioStations.size());
+                                countryOk = true;
+                            }
+                        }
+                    }
+                    if (!countryOk) {
+                        Log.e(TAG, "国家 " + failedCountry + " 补充重试仍失败，标记本次更新失败");
+                        downloadFailed.set(true);
+                    }
+                }
             }
+
+            // 任一国家下载失败：中止更新并保留现有数据库。
+            // 绝不能以残缺数据替换主库，否则该国家电台永久丢失且增量更新无法补回。
+            if (downloadFailed.get()) {
+                Log.e(TAG, "存在国家下载失败，中止本次数据库更新，保留现有数据库");
+                tempRadioStationDao.deleteAll();
+                Log.d(TAG, "已清空临时数据库");
+                throw new RuntimeException(context.getString(R.string.error_sync_failed));
+            }
+
+            // 收集所有下载的数据
+            List<RadioStation> allDownloadedStations = new ArrayList<>(commonStations);
             
             // 更新总下载数
             totalDownloaded = totalDownloadedAtomic.get();

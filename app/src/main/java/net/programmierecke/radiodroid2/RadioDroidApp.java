@@ -17,6 +17,7 @@ import com.squareup.picasso.Picasso;
 import net.programmierecke.radiodroid2.alarm.RadioAlarmManager;
 import net.programmierecke.radiodroid2.database.RadioStationRepository;
 import net.programmierecke.radiodroid2.history.TrackHistoryRepository;
+import net.programmierecke.radiodroid2.lyrics.LyricsRepository;
 import net.programmierecke.radiodroid2.players.mpd.MPDClient;
 import net.programmierecke.radiodroid2.service.ConnectivityChecker;
 import net.programmierecke.radiodroid2.service.DatabaseUpdateManager;
@@ -25,6 +26,9 @@ import net.programmierecke.radiodroid2.service.StationIconCache;
 import net.programmierecke.radiodroid2.station.live.metadata.TrackMetadataSearcher;
 import net.programmierecke.radiodroid2.proxy.ProxySettings;
 import net.programmierecke.radiodroid2.recording.RecordingsManager;
+import net.programmierecke.radiodroid2.updater.UpdateChecker;
+import net.programmierecke.radiodroid2.updater.UpdateDownloader;
+import net.programmierecke.radiodroid2.updater.UpdateInfo;
 import net.programmierecke.radiodroid2.utils.TvChannelManager;
 
 import java.io.File;
@@ -48,6 +52,8 @@ public class RadioDroidApp extends MultiDexApplication {
     private TvChannelManager tvChannelManager;
 
     private TrackHistoryRepository trackHistoryRepository;
+
+    private LyricsRepository lyricsRepository;
 
     private MPDClient mpdClient;
 
@@ -114,6 +120,8 @@ public class RadioDroidApp extends MultiDexApplication {
 
         trackHistoryRepository = new TrackHistoryRepository(this);
 
+        lyricsRepository = new LyricsRepository(this);
+
         // 清理过期的半永久图标缓存
         StationIconCache.getInstance(this).cleanExpiredSemiPermanentCache();
 
@@ -126,6 +134,7 @@ public class RadioDroidApp extends MultiDexApplication {
         recordingsManager.updateRecordingsList();
 
         maybeAutoIncrementalUpdate();
+        maybeAutoCheckUpdate();
     }
 
     /**
@@ -170,6 +179,43 @@ public class RadioDroidApp extends MultiDexApplication {
         }
     }
 
+    /**
+     * 启动自动检查更新：距上次检查超过 24h 且满足网络条件时静默查询 GitHub Releases。
+     * 发现新版本仅发通知提示，由用户点击后开始下载。
+     */
+    private void maybeAutoCheckUpdate() {
+        try {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            if (!prefs.getBoolean("auto_check_update", false)) {
+                return;
+            }
+            if (prefs.getBoolean("auto_check_wifi_only", false)) {
+                if (ConnectivityChecker.getCurrentConnectionType(this) != ConnectivityChecker.ConnectionType.NOT_METERED) {
+                    return;
+                }
+            }
+            long lastCheck = prefs.getLong("auto_check_update_last_time", 0);
+            long elapsed = System.currentTimeMillis() - lastCheck;
+            if (lastCheck > 0 && elapsed < 24L * 60 * 60 * 1000) {
+                return; // 24h 内已检查
+            }
+            new Thread(() -> {
+                try {
+                    UpdateInfo info = UpdateChecker.check(this);
+                    if (info != null && info.hasUpdate) {
+                        UpdateDownloader.showUpdateAvailableNotification(this, info);
+                        Log.d("RadioDroidApp", "Auto update check: new version " + info.latestVersion);
+                    }
+                    prefs.edit().putLong("auto_check_update_last_time", System.currentTimeMillis()).apply();
+                } catch (Exception e) {
+                    Log.w("RadioDroidApp", "Auto update check skipped: " + e.getMessage());
+                }
+            }, "AutoCheckUpdate").start();
+        } catch (Exception e) {
+            Log.w("RadioDroidApp", "Auto update check skipped: " + e.getMessage());
+        }
+    }
+
     public void setTestsInterceptor(Interceptor testsInterceptor) {
         this.testsInterceptor = testsInterceptor;
     }
@@ -206,6 +252,10 @@ public class RadioDroidApp extends MultiDexApplication {
 
     public TrackHistoryRepository getTrackHistoryRepository() {
         return trackHistoryRepository;
+    }
+
+    public LyricsRepository getLyricsRepository() {
+        return lyricsRepository;
     }
 
     public MPDClient getMpdClient() {

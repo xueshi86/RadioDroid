@@ -31,17 +31,30 @@ public final class WebDavClient {
         client = new OkHttpClient.Builder().connectTimeout(20, TimeUnit.SECONDS).readTimeout(60, TimeUnit.SECONDS).writeTimeout(60, TimeUnit.SECONDS).followRedirects(false).build();
     }
 
-    public void checkConnection() throws WebDavException {
+    // 确保服务器可达、凭据正确且目标目录可用：目录不存在（404/409）时逐段 MKCOL 自动创建后重新校验
+    public void ensureConnection() throws WebDavException {
         Response response = null;
         try {
-            Request request = authenticated(new Request.Builder().url(settings.getBaseUrl()).method("PROPFIND", RequestBody.create(null, new byte[0])).header("Depth", "0")).build();
-            response = client.newCall(request).execute();
+            response = propfind();
+            int code = response.code();
+            if (code == 404 || code == 409) {
+                response.close();
+                response = null;
+                Log.d(TAG, "ensureConnection: location missing (code=" + code + "), creating directory: " + settings.getBaseUrl());
+                ensureDirectory();
+                response = propfind();
+            }
             requireSuccess(response);
         } catch (IOException e) {
             throw network(e);
         } finally {
             if (response != null) response.close();
         }
+    }
+
+    private Response propfind() throws IOException {
+        Request request = authenticated(new Request.Builder().url(settings.getBaseUrl()).method("PROPFIND", RequestBody.create(null, new byte[0])).header("Depth", "0")).build();
+        return client.newCall(request).execute();
     }
 
     public void upload(String name, File file) throws WebDavException {

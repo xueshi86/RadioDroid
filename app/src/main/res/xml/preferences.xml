@@ -367,6 +367,44 @@
             android:title="@string/settings_sleep_timer" />
     </PreferenceScreen>
 
+    <PreferenceScreen android:title="@string/pref_lyrics_category"
+        search:ignore="true"
+        android:key="pref_category_lyrics">
+
+        <!-- 页面说明：介绍降级顺序、自建实例配置方式与外部模式行为 -->
+        <Preference
+            android:key="pref_lyrics_header"
+            android:selectable="false"
+            search:ignore="true"
+            android:summary="@string/pref_lyrics_header_summary" />
+
+        <ListPreference
+            android:defaultValue="internal"
+            android:entries="@array/lyrics_source_mode_entries"
+            android:entryValues="@array/lyrics_source_mode_values"
+            android:key="lyrics_source_mode"
+            android:title="@string/pref_lyrics_source_mode"
+            search:summary=""
+            android:summary="%s"/>
+
+        <EditTextPreference
+            android:key="lyrics_lrclib_base_url"
+            android:title="@string/pref_lyrics_lrclib_instance"
+            android:summary="@string/pref_lyrics_lrclib_instance_summary" />
+
+        <EditTextPreference
+            android:key="lyrics_lrcapi_base_url"
+            android:title="@string/pref_lyrics_lrcapi_instance"
+            android:summary="@string/pref_lyrics_lrcapi_instance_summary" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="lyrics_netease_enabled"
+            android:title="@string/pref_lyrics_netease"
+            android:summary="@string/pref_lyrics_netease_summary" />
+
+    </PreferenceScreen>
+
     <PreferenceScreen android:title="@string/settings_alarm"
         search:ignore="true"
         android:key="pref_category_alarm">
@@ -473,6 +511,24 @@
         <Preference
             android:key="show_about"
             android:title="@string/settings_about" />
+
+        <Preference
+            android:key="check_app_update"
+            android:title="@string/settings_check_update" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="auto_check_update"
+            android:summaryOff="@string/settings_auto_check_update_off"
+            android:summaryOn="@string/settings_auto_check_update_on"
+            android:title="@string/settings_auto_check_update" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="auto_check_wifi_only"
+            android:summaryOff="@string/settings_auto_check_wifi_only_off"
+            android:summaryOn="@string/settings_auto_check_wifi_only_on"
+            android:title="@string/settings_auto_check_wifi_only" />
 
     </PreferenceScreen>
 </PreferenceScreen>

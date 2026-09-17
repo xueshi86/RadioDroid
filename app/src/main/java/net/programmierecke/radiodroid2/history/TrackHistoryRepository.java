@@ -31,6 +31,7 @@ public class TrackHistoryRepository {
     private final TrackHistoryDao dao;
     private final Executor queryExecutor;
     private final LiveData<PagedList<TrackHistoryEntry>> allHistoryPaged;
+    private final PagedList.Config pagedConfig;
 
     // For performance reasons we don't want to enforce history limit on every insert
     private final static int TRUNCATE_FREQUENCY = 20;
@@ -42,17 +43,26 @@ public class TrackHistoryRepository {
         dao = db.songHistoryDao();
         queryExecutor = db.getQueryExecutor();
 
+        pagedConfig = new PagedList.Config.Builder()
+                .setPageSize(HISTORY_PAGE_SIZE)
+                .setEnablePlaceholders(true)
+                .build();
+
         allHistoryPaged = new LivePagedListBuilder<>(
                 dao.getAllHistoryPositional(),
-                new PagedList.Config.Builder()
-                        .setPageSize(HISTORY_PAGE_SIZE)
-                        .setEnablePlaceholders(true)
-                        .build())
+                pagedConfig)
                 .build();
     }
 
     public LiveData<PagedList<TrackHistoryEntry>> getAllHistoryPaged() {
         return allHistoryPaged;
+    }
+
+    public LiveData<PagedList<TrackHistoryEntry>> getStationHistoryPaged(String stationUuid) {
+        return new LivePagedListBuilder<>(
+                dao.getStationHistoryPositional(stationUuid),
+                pagedConfig)
+                .build();
     }
 
     public void insert(final TrackHistoryEntry historyEntry) {

@@ -48,6 +48,7 @@
     <string name="nav_item_history">Ιστορικό</string>
     <string name="nav_item_settings">Ρυθμίσεις</string>
     <string name="nav_item_alarm">Ξυπνητήρι</string>
+    <string name="tab_player_current_history">Τραγούδια του σταθμού</string>
     <string name="tab_player_recordings">Ηχογραφήσεις</string>
 
     <string name="about_text">Αυτή η εφαρμογή χρησιμοποιεί τον ελεύθερο κατάλογο ραδιοφωνικών σταθμών, στο...\n
@@ -214,6 +215,25 @@
     <string name="settings_other">Άλλα</string>
     <string name="settings_statistics">Στατιστικά</string>
     <string name="settings_about">Σχετικά με το ΡάδιοΔροειδές</string>
+    <string name="settings_check_update">Έλεγχος για ενημερώσεις</string>
+    <string name="settings_auto_check_update">Αυτόματος έλεγχος για ενημερώσεις</string>
+    <string name="settings_auto_check_update_on">Κατά την εκκίνηση της εφαρμογής, αναζήτηση νέων εκδόσεων (το πολύ μία φορά την ημέρα)</string>
+    <string name="settings_auto_check_update_off">Χωρίς αυτόματο έλεγχο ενημερώσεων</string>
+    <string name="settings_auto_check_wifi_only">Μόνο σε Wi-Fi</string>
+    <string name="settings_auto_check_wifi_only_on">Έλεγχος ενημερώσεων μόνο σε Wi-Fi</string>
+    <string name="settings_auto_check_wifi_only_off">Έλεγχος ενημερώσεων σε οποιαδήποτε σύνδεση</string>
+    <string name="update_check_failed">Αποτυχία ελέγχου για ενημερώσεις</string>
+    <string name="update_check_no_update">Έχετε ήδη την τελευταία έκδοση (%1$s)</string>
+    <string name="update_found_title">Διαθέσιμη νέα έκδοση %1$s</string>
+    <string name="update_found_message">Η έκδοση %1$s (%2$s) είναι διαθέσιμη. Λήψη και εγκατάσταση;</string>
+    <string name="update_download">Λήψη</string>
+    <string name="update_downloading">Γίνεται λήψη της ενημέρωσης…</string>
+    <string name="update_download_complete">Η λήψη ολοκληρώθηκε. Πατήστε για εγκατάσταση</string>
+    <string name="update_download_failed">Η λήψη της ενημέρωσης απέτυχε</string>
+    <string name="update_open_installer_failed">Δεν είναι δυνατό το άνοιγμα του εγκαταστάτη. Εγκαταστήστε το APK χειροκίνητα</string>
+    <string name="update_release_notes">Σημειώσεις έκδοσης</string>
+    <string name="notification_channel_app_update_name">Ενημερώσεις εφαρμογής</string>
+    <string name="notification_channel_app_update_description">Ειδοποιήσεις για νέες εκδόσεις και λήψεις ενημερώσεων</string>
 
     <string-array name="weekdays">
         <item>Κ</item>
@@ -241,7 +261,7 @@
     <string name="webdav_configure">Ρυθμίσεις WebDAV</string>
     <string name="webdav_not_configured">Δεν έχει ρυθμιστεί</string>
     <string name="webdav_server_url">Διεύθυνση διακομιστή</string>
-    <string name="webdav_directory">Κατάλογος διακομιστή</string>
+    <string name="webdav_directory">Κατάλογος διακομιστή (προαιρετικός· δημιουργείται αυτόματα αν λείπει)</string>
     <string name="webdav_username">Όνομα χρήστη</string>
     <string name="webdav_password">Κωδικός πρόσβασης</string>
     <string name="webdav_delete">Διαγραφή</string>
@@ -256,6 +276,7 @@
     <string name="webdav_connectivity_checking">%1$s · Έλεγχος σύνδεσης</string>
     <string name="webdav_connectivity_ok">%1$s · Η σύνδεση είναι εντάξει</string>
     <string name="webdav_connectivity_failed">%1$s · Αποτυχία σύνδεσης</string>
+    <string name="webdav_connectivity_failed_reason">%1$s · Αποτυχία σύνδεσης: %2$s</string>
     <string name="webdav_save_failed">Αδυναμία αποθήκευσης ρυθμίσεων WebDAV</string>
     <string name="webdav_task_started">Η εργασία ξεκίνησε</string>
     <string name="webdav_task_running">Η εργασία εκτελείται…</string>
@@ -266,12 +287,20 @@
     <string name="webdav_result_pending">Σε αναμονή επιβεβαίωσης</string>
     <string name="webdav_result_canceled">Ακυρώθηκε</string>
     <string name="webdav_restore_failed">Η επαναφορά της βάσης δεδομένων απέτυχε· διατηρήθηκε η αρχική βάση δεδομένων</string>
+    <string name="webdav_restore_favourites_confirm">Η επαναφορά των αγαπημένων θα χρησιμοποιήσει το αρχείο αγαπημένων που είναι αποθηκευμένο στον διακομιστή.
+
+• Αντικατάσταση: η τοπική λίστα θα αντιστοιχεί ακριβώς στον διακομιστή· οι σταθμοί που υπάρχουν μόνο τοπικά θα διαγραφούν.
+• Συγχώνευση: διατηρεί όλους τους τοπικούς σταθμούς και προσθέτει εκείνους που υπάρχουν μόνο στον διακομιστή.
+
+Πριν από τη λειτουργία αποθηκεύεται αντίγραφο των τρεχόντων αγαπημένων σε αυτή τη συσκευή.</string>
+    <string name="webdav_restore_overwrite">Αντικατάσταση</string>
+    <string name="webdav_restore_merge">Συγχώνευση</string>
     <string name="webdav_database_restore_confirm">Να αντικατασταθεί η τοπική βάση δεδομένων με τη βάση δεδομένων που είναι αποθηκευμένη στον διακομιστή WebDAV?</string>
     <string name="webdav_database_replace">Αντικατάσταση</string>
     <string name="webdav_database_restoring">Γίνεται αντικατάσταση της βάσης δεδομένων, περιμένετε…</string>
     <string name="webdav_error_authentication">Αποτυχία ελέγχου ταυτότητας</string>
     <string name="webdav_error_permission">Δεν επιτρέπεται η πρόσβαση</string>
-    <string name="webdav_error_not_found">Ο πόρος δεν βρέθηκε</string>
+    <string name="webdav_error_not_found">Ο κατάλογος ή το αρχείο δεν βρέθηκαν στον διακομιστή· εκτελέστε πρώτα δημιουργία αντιγράφου ασφαλείας</string>
     <string name="webdav_error_protocol">Σφάλμα πρωτοκόλλου</string>
     <string name="webdav_error_network">Σφάλμα δικτύου</string>
     <string name="webdav_error_local_database">Σφάλμα τοπικής βάσης δεδομένων</string>
@@ -281,4 +310,20 @@
     <string name="webdav_error_empty_favourites">Το αρχείο αγαπημένων στον διακομιστή είναι κενό</string>
     <string name="webdav_error_unknown">Άγνωστο σφάλμα</string>
 
+    <string name="lyrics_not_found">Δεν βρέθηκαν στίχοι για αυτό το κομμάτι</string>
+    <string name="lyrics_instrumental">Ορχηστρικό κομμάτι (χωρίς στίχους)</string>
+    <string name="lyrics_source_format">Πηγή: %1$s</string>
+    <string name="lyrics_source_netease">NetEase Cloud Music</string>
+    <string name="lyrics_no_external_app">Δεν υπάρχει εγκατεστημένη συμβατή εφαρμογή στίχων</string>
+    <string name="pref_lyrics_category">Στίχοι</string>
+    <string name="pref_lyrics_header_summary">Οι ενσωματωμένες πηγές δοκιμάζονται με τη σειρά: LRCLIB → LrcAPI → NetEase Cloud Music (προαιρετικό); κερδίζει η πρώτη που θα βρει στίχους. Έχετε δικό σας διακομιστή; Συμπληρώστε την πλήρη διεύθυνσή του παρακάτω (π.χ. https://host:port/διαδρομή) — κενό για τον προεπιλεγμένο δημόσιο διακομιστή. Με επιλεγμένη την «Εξωτερική εφαρμογή στίχων», η αναζήτηση γίνεται από συμβατή εφαρμογή (πρωτόκολλο QuickLyric) και οι παρακάτω επιλογές απενεργοποιούνται.</string>
+    <string name="pref_lyrics_source_mode">Πηγή στίχων</string>
+    <string name="pref_lyrics_source_mode_internal">Ενσωματωμένες πηγές</string>
+    <string name="pref_lyrics_source_mode_external">Εξωτερική εφαρμογή στίχων</string>
+    <string name="pref_lyrics_lrclib_instance">URL διακομιστή LRCLIB</string>
+    <string name="pref_lyrics_lrclib_instance_summary">Πλήρης διεύθυνση, π.χ. https://host:port/διαδρομή. Αφήστε το κενό για χρήση του επίσημου lrclib.net</string>
+    <string name="pref_lyrics_lrcapi_instance">URL διακομιστή LrcAPI</string>
+    <string name="pref_lyrics_lrcapi_instance_summary">Πλήρης διεύθυνση, π.χ. https://host:port/διαδρομή. Αφήστε το κενό για χρήση του δημόσιου api.lrc.cx</string>
+    <string name="pref_lyrics_netease">NetEase Cloud Music (πειραματικό)</string>
+    <string name="pref_lyrics_netease_summary">Ανεπίσημο δημόσιο API, χρησιμοποιείται ως εναλλακτική πηγή μετά το LRCLIB και το LrcAPI. Ενεργό από προεπιλογή.</string>
 </resources>

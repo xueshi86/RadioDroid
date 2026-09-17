@@ -52,6 +52,8 @@ public class FragmentMultiSearch extends FragmentBase {
     private MaterialButton spinnerLanguage;
     private MaterialButton spinnerTag;
     private MaterialButton btnResetFilters;
+    // 首次打开搜索界面是否已加载"全部电台"列表（旧版行为：打开即显示全部，输入后筛选）
+    private boolean hasLoadedInitialList = false;
     private MaterialButton btnToggleFilters;
     private MaterialButton btnExpandFilters;
     private ScrollView scrollViewFilters;
@@ -202,6 +204,11 @@ public class FragmentMultiSearch extends FragmentBase {
         // 重新加载筛选选项，确保下拉选择框内容不丢失
         if (countriesList.size() <= 1 || languagesList.size() <= 1 || tagsList.size() <= 1) {
             loadFilterOptions();
+        }
+        // 首次打开搜索界面即显示本地数据库全部电台（与旧版"打开即显示全部、输入关键词或选择条件后筛选"行为一致）
+        if (!hasLoadedInitialList) {
+            hasLoadedInitialList = true;
+            performMultiSearch();
         }
     }
 

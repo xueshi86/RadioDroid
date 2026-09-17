@@ -377,7 +377,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="notify_station_removed_from_list">1 Удалено</string>
     <string name="action_station_removed_from_list_undo">ОТМЕНИТЬ</string>
 
-    <string name="alert_install_lyrics_app">QuickLyric не установлен на вашем устройстве. Хотите получить его из Google Play Store?</string>
+
 
     <string name="alert_delete_history">Вы действительно хотите удалить историю?</string>
     <string name="alert_delete_favorites">Вы действительно хотите удалить все избранное?</string>
@@ -457,6 +457,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
 
     <string name="tab_player_art">Обложка альбома</string>
     <string name="tab_player_info">Информация</string>
+    <string name="tab_player_current_history">Треки станции</string>
     <string name="tab_player_history">История треков</string>
     <string name="tab_player_recordings">Записи</string>
 
@@ -505,6 +506,25 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="settings_other">Другое</string>
     <string name="settings_statistics">Статистика</string>
     <string name="settings_about">О RadioDroid</string>
+    <string name="settings_check_update">Проверить обновления</string>
+    <string name="settings_auto_check_update">Проверять обновления автоматически</string>
+    <string name="settings_auto_check_update_on">При запуске приложения автоматически проверять новые версии (не чаще раза в день)</string>
+    <string name="settings_auto_check_update_off">Без автоматической проверки обновлений</string>
+    <string name="settings_auto_check_wifi_only">Только по Wi-Fi</string>
+    <string name="settings_auto_check_wifi_only_on">Проверять обновления только по Wi-Fi</string>
+    <string name="settings_auto_check_wifi_only_off">Проверять обновления в любой сети</string>
+    <string name="update_check_failed">Не удалось проверить обновления</string>
+    <string name="update_check_no_update">У вас уже последняя версия (%1$s)</string>
+    <string name="update_found_title">Доступна новая версия %1$s</string>
+    <string name="update_found_message">Доступна версия %1$s (%2$s). Скачать и установить?</string>
+    <string name="update_download">Скачать</string>
+    <string name="update_downloading">Загрузка обновления…</string>
+    <string name="update_download_complete">Загрузка завершена. Нажмите, чтобы установить</string>
+    <string name="update_download_failed">Не удалось загрузить обновление</string>
+    <string name="update_open_installer_failed">Не удалось открыть установщик. Установите APK вручную</string>
+    <string name="update_release_notes">Примечания к выпуску</string>
+    <string name="notification_channel_app_update_name">Обновления приложения</string>
+    <string name="notification_channel_app_update_description">Уведомления о новых версиях и загрузке обновлений</string>
 
     <string name="description_btn_skip_to_next">Перейти к следующему</string>
     <string name="description_btn_skip_to_previous">Перейти к предыдущему</string>
@@ -780,7 +800,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="webdav_configure">Настройка WebDAV</string>
     <string name="webdav_not_configured">Не настроено</string>
     <string name="webdav_server_url">Адрес сервера</string>
-    <string name="webdav_directory">Каталог сервера</string>
+    <string name="webdav_directory">Каталог сервера (необязательно; создаётся автоматически, если отсутствует)</string>
     <string name="webdav_username">Имя пользователя</string>
     <string name="webdav_password">Пароль</string>
     <string name="webdav_delete">Удалить</string>
@@ -795,6 +815,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="webdav_connectivity_checking">%1$s · Проверка соединения</string>
     <string name="webdav_connectivity_ok">%1$s · Соединение успешно</string>
     <string name="webdav_connectivity_failed">%1$s · Ошибка соединения</string>
+    <string name="webdav_connectivity_failed_reason">%1$s · Ошибка соединения: %2$s</string>
     <string name="webdav_save_failed">Не удалось сохранить настройки WebDAV</string>
     <string name="webdav_task_started">Задача запущена</string>
     <string name="webdav_task_running">Задача выполняется…</string>
@@ -805,12 +826,20 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="webdav_result_pending">Ожидает подтверждения</string>
     <string name="webdav_result_canceled">Отменено</string>
     <string name="webdav_restore_failed">Не удалось восстановить базу данных; исходная база данных сохранена</string>
+    <string name="webdav_restore_favourites_confirm">Восстановление избранного выполнит замену на файл избранного, сохраненный на сервере.
+
+• Заменить: локальный список будет полностью соответствовать серверу; станции, существующие только локально, будут удалены.
+• Объединить: сохраняет все локальные станции и добавляет станции, существующие только на сервере.
+
+Перед операцией копия текущего избранного сохраняется на этом устройстве.</string>
+    <string name="webdav_restore_overwrite">Заменить</string>
+    <string name="webdav_restore_merge">Объединить</string>
     <string name="webdav_database_restore_confirm">Заменить локальную базу данных базой данных, сохраненной на сервере WebDAV?</string>
     <string name="webdav_database_replace">Заменить</string>
     <string name="webdav_database_restoring">Идет замена базы данных, подождите…</string>
     <string name="webdav_error_authentication">Ошибка аутентификации</string>
     <string name="webdav_error_permission">Доступ запрещён</string>
-    <string name="webdav_error_not_found">Ресурс не найден</string>
+    <string name="webdav_error_not_found">Каталог или файл не найдены на сервере; сначала выполните резервное копирование</string>
     <string name="webdav_error_protocol">Ошибка протокола</string>
     <string name="webdav_error_network">Ошибка сети</string>
     <string name="webdav_error_local_database">Ошибка локальной базы данных</string>
@@ -820,4 +849,20 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="webdav_error_empty_favourites">Файл избранного на сервере пуст</string>
     <string name="webdav_error_unknown">Неизвестная ошибка</string>
 
+    <string name="lyrics_not_found">Для этого трека текст песни не найден</string>
+    <string name="lyrics_instrumental">Инструментальный трек (без слов)</string>
+    <string name="lyrics_source_format">Источник: %1$s</string>
+    <string name="lyrics_source_netease">NetEase Cloud Music</string>
+    <string name="lyrics_no_external_app">Совместимое приложение с текстами песен не установлено</string>
+    <string name="pref_lyrics_category">Текст песни</string>
+    <string name="pref_lyrics_header_summary">Встроенные источники опрашиваются по порядку: LRCLIB → LrcAPI → NetEase Cloud Music (необязательно); побеждает первый источник, нашедший текст. Свой сервер? Введите его полный адрес ниже (например, https://host:port/path) — пустое поле означает стандартный публичный сервер. В режиме «Внешнее приложение с текстами» запрос выполняет совместимое приложение (протокол QuickLyric), а параметры ниже отключаются.</string>
+    <string name="pref_lyrics_source_mode">Источник текстов песен</string>
+    <string name="pref_lyrics_source_mode_internal">Встроенные источники</string>
+    <string name="pref_lyrics_source_mode_external">Внешнее приложение с текстами</string>
+    <string name="pref_lyrics_lrclib_instance">URL экземпляра LRCLIB</string>
+    <string name="pref_lyrics_lrclib_instance_summary">Полный адрес, например https://host:port/path. Оставьте пустым, чтобы использовать официальный lrclib.net</string>
+    <string name="pref_lyrics_lrcapi_instance">Адрес экземпляра LrcAPI</string>
+    <string name="pref_lyrics_lrcapi_instance_summary">Полный адрес, например https://host:port/path. Оставьте пустым, чтобы использовать публичный api.lrc.cx</string>
+    <string name="pref_lyrics_netease">NetEase Cloud Music (экспериментально)</string>
+    <string name="pref_lyrics_netease_summary">Неофициальный публичный API, используется как резервный источник после LRCLIB и LrcAPI. По умолчанию включено.</string>
 </resources>

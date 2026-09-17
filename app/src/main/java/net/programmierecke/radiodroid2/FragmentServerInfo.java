@@ -1,8 +1,5 @@
 package net.programmierecke.radiodroid2;
 
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -56,68 +53,53 @@ public class FragmentServerInfo extends Fragment implements IFragmentRefreshable
             return;
         }
 
-        // 首先尝试从SharedPreferences获取服务器统计信息
-        SharedPreferences sharedPref = getContext().getSharedPreferences("ServerStatistics", Context.MODE_PRIVATE);
-        int serverTotal = sharedPref.getInt("stations_total", -1);
-        int serverWorking = sharedPref.getInt("stations_working", -1);
-        int serverBroken = sharedPref.getInt("stations_broken", -1);
-        long lastUpdated = sharedPref.getLong("last_updated", 0);
-        
-        // 检查服务器统计信息是否有效（最近24小时内更新）
-        boolean hasValidServerStats = serverTotal > 0 && serverWorking > 0 && serverBroken > 0 && 
-                (System.currentTimeMillis() - lastUpdated) < 24 * 60 * 60 * 1000;
-        
-        if (hasValidServerStats) {
-            // 使用服务器统计信息
-            Log.d(TAG, "Using server statistics: " + serverTotal + " total stations, " + serverWorking + " working, " + serverBroken + " broken");
-            updateStatisticsUI(serverTotal, serverWorking, serverBroken);
-        } else {
-            // 在后台线程获取本地数据库统计信息
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        // 获取所有统计数据
-                        final int totalCount = repository.getStationCountSync();
-                        final int workingCount = repository.getWorkingStationCountSync();
-                        final int brokenCount = repository.getBrokenStationCountSync();
+        // 统计页面统一显示本地数据库的三个口径数字：全部（含损坏）、未损坏、损坏。
+        // 线上 /json/stats 不返回 stations_working 字段，无法提供一致的三数字，
+        // 故不使用 ServerStatistics，直接读取本地库（本地库为全量镜像，三数字即实际状态）。
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // 获取所有统计数据
+                    final int totalCount = repository.getStationCountSync();
+                    final int workingCount = repository.getWorkingStationCountSync();
+                    final int brokenCount = repository.getBrokenStationCountSync();
 
-                        // 在主线程更新UI
-                        if (getActivity() != null) {
-                            getActivity().runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    updateStatisticsUI(totalCount, workingCount, brokenCount);
-                                }
-                            });
-                        }
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error loading statistics", e);
+                    // 在主线程更新UI
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                updateStatisticsUI(totalCount, workingCount, brokenCount);
+                            }
+                        });
                     }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error loading statistics", e);
                 }
-            }).start();
-        }
+            }
+        }).start();
     }
     
     private void updateStatisticsUI(int totalCount, int workingCount, int brokenCount) {
         // 创建统计数据
         ArrayList<DataStatistics> statistics = new ArrayList<>();
         
-        // 总电台数
+        // 全部电台数（含损坏）
         DataStatistics totalStations = new DataStatistics();
-        totalStations.Name = "stations_total";
+        totalStations.Name = getString(R.string.statistics_total_stations);
         totalStations.Value = String.valueOf(totalCount);
         statistics.add(totalStations);
             
-        // 工作正常的电台数
+        // 未损坏电台数
         DataStatistics workingStations = new DataStatistics();
-        workingStations.Name = "stations_working";
+        workingStations.Name = getString(R.string.statistics_working_stations);
         workingStations.Value = String.valueOf(workingCount);
         statistics.add(workingStations);
             
-        // 损坏的电台数
+        // 损坏电台数
         DataStatistics brokenStations = new DataStatistics();
-        brokenStations.Name = "stations_broken";
+        brokenStations.Name = getString(R.string.statistics_broken_stations);
         brokenStations.Value = String.valueOf(brokenCount);
         statistics.add(brokenStations);
             

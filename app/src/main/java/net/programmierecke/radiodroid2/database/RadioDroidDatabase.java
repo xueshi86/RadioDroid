@@ -13,6 +13,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import net.programmierecke.radiodroid2.history.TrackHistoryDao;
 import net.programmierecke.radiodroid2.history.TrackHistoryEntry;
+import net.programmierecke.radiodroid2.lyrics.LyricsCacheDao;
+import net.programmierecke.radiodroid2.lyrics.LyricsCacheEntry;
 import net.programmierecke.radiodroid2.database.RadioStation;
 import net.programmierecke.radiodroid2.database.RadioStationDao;
 
@@ -22,14 +24,16 @@ import java.util.concurrent.Executors;
 
 import static net.programmierecke.radiodroid2.history.TrackHistoryEntry.MAX_UNKNOWN_TRACK_DURATION;
 
-@Database(entities = {TrackHistoryEntry.class, RadioStation.class, UpdateTimestamp.class, RadioStationFts.class}, version = 14)
+@Database(entities = {TrackHistoryEntry.class, RadioStation.class, UpdateTimestamp.class, RadioStationFts.class, LyricsCacheEntry.class}, version = 15)
 @TypeConverters({Converters.class})
 public abstract class RadioDroidDatabase extends RoomDatabase {
     public abstract TrackHistoryDao songHistoryDao();
-    
+
     public abstract RadioStationDao radioStationDao();
-    
+
     public abstract UpdateTimestampDao updateTimestampDao();
+
+    public abstract LyricsCacheDao lyricsCacheDao();
 
     private static volatile RadioDroidDatabase INSTANCE;
 
@@ -96,6 +100,18 @@ public abstract class RadioDroidDatabase extends RoomDatabase {
         }
     };
 
+    // Migration from version 14 to version 15 - Add lyrics cache table
+    static final Migration MIGRATION_14_15 = new Migration(14, 15) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL(
+                "CREATE TABLE IF NOT EXISTS `lyrics_cache` (`cache_key` TEXT NOT NULL, `artist` TEXT NOT NULL, `track` TEXT NOT NULL, " +
+                "`album_name` TEXT, `plain_lyrics` TEXT, `synced_lyrics` TEXT, `instrumental` INTEGER NOT NULL, " +
+                "`source_id` TEXT NOT NULL, `fetched_at` INTEGER NOT NULL, PRIMARY KEY(`cache_key`))"
+            );
+        }
+    };
+
     public static RadioDroidDatabase getDatabase(final Context context) {
         if (INSTANCE == null) {
             synchronized (RadioDroidDatabase.class) {
@@ -103,7 +119,7 @@ public abstract class RadioDroidDatabase extends RoomDatabase {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                             RadioDroidDatabase.class, "radio_droid_database")
                             .addCallback(CALLBACK)
-                            .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_5_14, MIGRATION_6_14)
+                            .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_5_14, MIGRATION_6_14, MIGRATION_14_15)
                             .fallbackToDestructiveMigration()
                             .build();
                 }
@@ -156,7 +172,7 @@ public abstract class RadioDroidDatabase extends RoomDatabase {
             INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                     RadioDroidDatabase.class, "radio_droid_database")
                     .addCallback(CALLBACK)
-                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_5_14, MIGRATION_6_14)
+                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_5_14, MIGRATION_6_14, MIGRATION_14_15)
                     .fallbackToDestructiveMigration()
                     .build();
             

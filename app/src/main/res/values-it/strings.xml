@@ -205,7 +205,7 @@
     <string name="notify_station_removed_from_list">1 cancellata</string>
     <string name="action_station_removed_from_list_undo">DISFA</string>
 
-    <string name="alert_install_lyrics_app">QuickLyric non è installato sul dispositivo. Vuoi scaricarlo dal Google Play Store?</string>
+
 
     <string name="alert_delete_history">Vuoi davvero cancellare la cronologia?</string>
     <string name="alert_delete_favorites">Vuoi davvero cancellare i preferiti?</string>
@@ -251,6 +251,7 @@
 
     <string name="tab_player_art">Copertina</string>
     <string name="tab_player_info">Info</string>
+    <string name="tab_player_current_history">Brani della stazione</string>
     <string name="tab_player_history">Cronologia</string>
     <string name="tab_player_recordings">Registrazioni</string>
 
@@ -292,6 +293,25 @@
     <string name="settings_other">Altro</string>
     <string name="settings_statistics">Statistiche</string>
     <string name="settings_about">Circa RadioDroid</string>
+    <string name="settings_check_update">Controlla aggiornamenti</string>
+    <string name="settings_auto_check_update">Controlla aggiornamenti automaticamente</string>
+    <string name="settings_auto_check_update_on">All\'avvio dell\'app, controlla automaticamente le nuove versioni (al massimo una volta al giorno)</string>
+    <string name="settings_auto_check_update_off">Nessun controllo automatico degli aggiornamenti</string>
+    <string name="settings_auto_check_wifi_only">Solo Wi-Fi</string>
+    <string name="settings_auto_check_wifi_only_on">Controlla gli aggiornamenti solo in Wi-Fi</string>
+    <string name="settings_auto_check_wifi_only_off">Controlla gli aggiornamenti su qualsiasi connessione</string>
+    <string name="update_check_failed">Impossibile controllare gli aggiornamenti</string>
+    <string name="update_check_no_update">Hai già l\'ultima versione (%1$s)</string>
+    <string name="update_found_title">Nuova versione %1$s disponibile</string>
+    <string name="update_found_message">È disponibile la versione %1$s (%2$s). Scaricare e installare?</string>
+    <string name="update_download">Scarica</string>
+    <string name="update_downloading">Download dell\'aggiornamento…</string>
+    <string name="update_download_complete">Download completato. Tocca per installare</string>
+    <string name="update_download_failed">Download dell\'aggiornamento non riuscito</string>
+    <string name="update_open_installer_failed">Impossibile aprire il programma di installazione. Installa il file APK manualmente</string>
+    <string name="update_release_notes">Note di versione</string>
+    <string name="notification_channel_app_update_name">Aggiornamenti app</string>
+    <string name="notification_channel_app_update_description">Notifiche su nuove versioni e download di aggiornamenti</string>
 
     <string name="description_btn_skip_to_next">Salta al seguente</string>
     <string name="description_btn_skip_to_previous">Salta al precedente</string>
@@ -427,7 +447,7 @@
     <string name="webdav_configure">Configurazione WebDAV</string>
     <string name="webdav_not_configured">Non configurato</string>
     <string name="webdav_server_url">Indirizzo del server</string>
-    <string name="webdav_directory">Directory del server</string>
+    <string name="webdav_directory">Directory del server (opzionale; creata automaticamente se mancante)</string>
     <string name="webdav_username">Nome utente</string>
     <string name="webdav_password">Password</string>
     <string name="webdav_delete">Elimina</string>
@@ -442,6 +462,7 @@
     <string name="webdav_connectivity_checking">%1$s · Verifica connessione</string>
     <string name="webdav_connectivity_ok">%1$s · Connessione riuscita</string>
     <string name="webdav_connectivity_failed">%1$s · Connessione fallita</string>
+    <string name="webdav_connectivity_failed_reason">%1$s · Connessione fallita: %2$s</string>
     <string name="webdav_save_failed">Impossibile salvare la configurazione WebDAV</string>
     <string name="webdav_task_started">Attività avviata</string>
     <string name="webdav_task_running">Attività in corso…</string>
@@ -452,12 +473,20 @@
     <string name="webdav_result_pending">In attesa di conferma</string>
     <string name="webdav_result_canceled">Annullato</string>
     <string name="webdav_restore_failed">Ripristino del database non riuscito; il database originale è stato mantenuto</string>
+    <string name="webdav_restore_favourites_confirm">Il ripristino dei preferiti utilizzerà il file dei preferiti salvato sul server.
+
+• Sostituisci: l’elenco locale corrisponderà esattamente al server; le stazioni esistenti solo in locale verranno rimosse.
+• Unisci: mantiene tutte le stazioni locali e aggiunge le stazioni presenti solo sul server.
+
+Prima dell’operazione verrà salvata una copia dei preferiti attuali su questo dispositivo.</string>
+    <string name="webdav_restore_overwrite">Sostituisci</string>
+    <string name="webdav_restore_merge">Unisci</string>
     <string name="webdav_database_restore_confirm">Sostituire il database locale con il database salvato sul server WebDAV?</string>
     <string name="webdav_database_replace">Sostituisci</string>
     <string name="webdav_database_restoring">Sostituzione del database in corso, attendere…</string>
     <string name="webdav_error_authentication">Autenticazione non riuscita</string>
     <string name="webdav_error_permission">Permesso negato</string>
-    <string name="webdav_error_not_found">Risorsa non trovata</string>
+    <string name="webdav_error_not_found">Directory o file non presenti sul server; eseguire prima un backup</string>
     <string name="webdav_error_protocol">Errore di protocollo</string>
     <string name="webdav_error_network">Errore di rete</string>
     <string name="webdav_error_local_database">Errore del database locale</string>
@@ -467,4 +496,20 @@
     <string name="webdav_error_empty_favourites">Il file dei preferiti sul server è vuoto</string>
     <string name="webdav_error_unknown">Errore sconosciuto</string>
 
+    <string name="lyrics_not_found">Nessun testo trovato per questo brano</string>
+    <string name="lyrics_instrumental">Traccia strumentale (senza testo)</string>
+    <string name="lyrics_source_format">Fonte: %1$s</string>
+    <string name="lyrics_source_netease">NetEase Cloud Music</string>
+    <string name="lyrics_no_external_app">Nessuna app di testi compatibile installata</string>
+    <string name="pref_lyrics_category">Testi</string>
+    <string name="pref_lyrics_header_summary">Le fonti integrate vengono interrogate in ordine: LRCLIB → LrcAPI → NetEase Cloud Music (opzionale); vince la prima che trova il testo. Preferisci un tuo server? Inserisci l\'URL completo qui sotto (es. https://host:port/percorso) — vuoto per usare quello pubblico predefinito. Con «App esterna di testi» selezionata, la ricerca è affidata a un\'app compatibile (protocollo QuickLyric) e le opzioni qui sotto vengono disattivate.</string>
+    <string name="pref_lyrics_source_mode">Fonte dei testi</string>
+    <string name="pref_lyrics_source_mode_internal">Fonti integrate</string>
+    <string name="pref_lyrics_source_mode_external">App esterna di testi</string>
+    <string name="pref_lyrics_lrclib_instance">URL dell\'istanza LRCLIB</string>
+    <string name="pref_lyrics_lrclib_instance_summary">URL completo, es. https://host:port/percorso. Lascia vuoto per usare l\'istanza ufficiale lrclib.net</string>
+    <string name="pref_lyrics_lrcapi_instance">URL istanza LrcAPI</string>
+    <string name="pref_lyrics_lrcapi_instance_summary">URL completo, es. https://host:port/percorso. Lascia vuoto per usare l\'api.lrc.cx pubblico</string>
+    <string name="pref_lyrics_netease">NetEase Cloud Music (sperimentale)</string>
+    <string name="pref_lyrics_netease_summary">API pubblica non ufficiale, usata come fonte alternativa dopo LRCLIB e LrcAPI. Attivata per impostazione predefinita.</string>
 </resources>

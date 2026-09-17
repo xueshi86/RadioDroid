@@ -24,6 +24,7 @@ import net.programmierecke.radiodroid2.database.RadioStation;
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
 import net.programmierecke.radiodroid2.ui.StationPlaceholderUtils;
 
+import java.text.DateFormat;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,6 +35,7 @@ public class TrackHistoryAdapter extends PagedListAdapter<TrackHistoryEntry, Tra
         final ImageView imageViewStationIcon;
         final TextView textViewTrackName;
         final TextView textViewTrackArtist;
+        final TextView textViewPlayTime;
 
         private TrackHistoryItemViewHolder(View itemView) {
             super(itemView);
@@ -43,8 +45,12 @@ public class TrackHistoryAdapter extends PagedListAdapter<TrackHistoryEntry, Tra
             imageViewStationIcon = itemView.findViewById(R.id.imageViewStationIcon);
             textViewTrackName = itemView.findViewById(R.id.textViewTrackName);
             textViewTrackArtist = itemView.findViewById(R.id.textViewTrackArtist);
+            textViewPlayTime = itemView.findViewById(R.id.textViewPlayTime);
         }
     }
+
+    private static final DateFormat DATE_FORMAT = DateFormat.getDateInstance(DateFormat.SHORT);
+    private static final DateFormat TIME_FORMAT = DateFormat.getTimeInstance(DateFormat.SHORT);
 
     private Context context;
     private FragmentActivity activity;
@@ -106,6 +112,15 @@ public class TrackHistoryAdapter extends PagedListAdapter<TrackHistoryEntry, Tra
 
         holder.textViewTrackName.setSelected(true);
         holder.textViewTrackArtist.setSelected(true);
+
+        String dateStr = DATE_FORMAT.format(historyEntry.startTime);
+        String timeStr = TIME_FORMAT.format(historyEntry.startTime);
+        String combined = dateStr + " " + timeStr;
+        if (combined.length() > 10) {
+            holder.textViewPlayTime.setText(dateStr + "\n" + timeStr);
+        } else {
+            holder.textViewPlayTime.setText(combined);
+        }
 
         holder.rootview.setOnClickListener(view -> showTrackInfoDialog(historyEntry));
     }

@@ -74,10 +74,14 @@ import java.util.Map;
 import net.programmierecke.radiodroid2.interfaces.IApplicationSelected;
 import net.programmierecke.radiodroid2.proxy.ProxySettingsDialog;
 import net.programmierecke.radiodroid2.database.RadioStationRepository;
+import net.programmierecke.radiodroid2.lyrics.LyricsRepository;
 import net.programmierecke.radiodroid2.service.DatabaseUpdateManager;
 import net.programmierecke.radiodroid2.service.DatabaseUpdateWorker;
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
 import net.programmierecke.radiodroid2.ui.DatabaseUpdateProgressDialog;
+import net.programmierecke.radiodroid2.updater.UpdateChecker;
+import net.programmierecke.radiodroid2.updater.UpdateDownloader;
+import net.programmierecke.radiodroid2.updater.UpdateInfo;
 import net.programmierecke.radiodroid2.webdav.WebDavBackupManager;
 import net.programmierecke.radiodroid2.webdav.WebDavBackupType;
 import net.programmierecke.radiodroid2.webdav.WebDavBackupWorker;
@@ -221,6 +225,29 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         return true;
     }
 
+    private void setupLyricsSourceMode() {
+        Preference sourceModePref = findPreference("lyrics_source_mode");
+        final Preference lrclibPref = findPreference("lyrics_lrclib_base_url");
+        final Preference lrcapiPref = findPreference("lyrics_lrcapi_base_url");
+        final Preference neteasePref = findPreference("lyrics_netease_enabled");
+        if (sourceModePref == null || lrclibPref == null || lrcapiPref == null || neteasePref == null) {
+            return;
+        }
+
+        Preference.OnPreferenceChangeListener listener = (preference, newValue) -> {
+            boolean external = LyricsRepository.LYRICS_SOURCE_MODE_EXTERNAL.equals(String.valueOf(newValue));
+            // 外部歌词应用模式下，内置来源的实例地址与网易云开关不再生效，禁用以免用户误配
+            lrclibPref.setEnabled(!external);
+            lrcapiPref.setEnabled(!external);
+            neteasePref.setEnabled(!external);
+            return true;
+        };
+        sourceModePref.setOnPreferenceChangeListener(listener);
+        // 进入页面时按当前已保存的值同步一次禁用状态
+        listener.onPreferenceChange(sourceModePref,
+                getPreferenceManager().getSharedPreferences().getString(LyricsRepository.PREF_LYRICS_SOURCE_MODE, LyricsRepository.LYRICS_SOURCE_MODE_INTERNAL));
+    }
+
     private boolean isToplevel() {
         return getPreferenceScreen() == null || getPreferenceScreen().getKey().equals("pref_toplevel");
     }
@@ -231,6 +258,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         findPreference("pref_category_startup").setIcon(Utils.IconicsIcon(getContext(), GoogleMaterial.Icon.gmd_flight_takeoff));
         findPreference("pref_category_interaction").setIcon(Utils.IconicsIcon(getContext(), CommunityMaterial.Icon.cmd_gesture_tap));
         findPreference("pref_category_player").setIcon(Utils.IconicsIcon(getContext(), CommunityMaterial.Icon2.cmd_play));
+        findPreference("pref_category_lyrics").setIcon(Utils.IconicsIcon(getContext(), CommunityMaterial.Icon2.cmd_music));
         findPreference("pref_category_alarm").setIcon(Utils.IconicsIcon(getContext(), CommunityMaterial.Icon.cmd_clock_outline));
         findPreference("pref_category_connectivity").setIcon(Utils.IconicsIcon(getContext(), GoogleMaterial.Icon.gmd_import_export));
         findPreference("pref_category_recordings").setIcon(Utils.IconicsIcon(getContext(), CommunityMaterial.Icon2.cmd_record_rec));
@@ -354,6 +382,8 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     return true;
                 }
             });
+        } else if (s.equals("pref_category_lyrics")) {
+            setupLyricsSourceMode();
         } else if (s.equals("pref_category_interaction")) {
             Preference clearIconCachePref = findPreference("clear_icon_cache");
             if (clearIconCachePref != null) {
@@ -538,6 +568,14 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     return false;
                 }
             });
+
+            findPreference("check_app_update").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    checkForAppUpdate();
+                    return true;
+                }
+            });
         }
 
         Preference batPref = getPreferenceScreen().findPreference(getString(R.string.key_ignore_battery_optimization));
@@ -554,6 +592,66 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 batPref.getParent().removePreference(batPref);
             }
         }
+    }
+
+    private void checkForAppUpdate() {
+        new Thread(() -> {
+            final UpdateInfo info = UpdateChecker.check(requireContext());
+            if (!isAdded()) {
+                return;
+            }
+            requireActivity().runOnUiThread(() -> {
+                if (!isAdded()) {
+                    return;
+                }
+                if (info == null) {
+                    showUpdateDialog(getString(R.string.update_check_failed), null, null);
+                } else if (!info.hasUpdate) {
+                    showUpdateDialog(getString(R.string.update_check_no_update, BuildConfig.VERSION_NAME), null, null);
+                } else {
+                    showUpdateDialog(getString(R.string.update_found_title, info.latestVersion), buildUpdateMessage(info), info);
+                }
+            });
+        }, "CheckForUpdate").start();
+    }
+
+    private String buildUpdateMessage(UpdateInfo info) {
+        String message = getString(R.string.update_found_message, info.latestVersion, formatFileSize(info.apkSize));
+        if (info.releaseNotes != null && !info.releaseNotes.trim().isEmpty()) {
+            String notes = info.releaseNotes.trim();
+            if (notes.length() > 500) {
+                notes = notes.substring(0, 500) + "…";
+            }
+            message += "\n\n" + getString(R.string.update_release_notes) + ":\n" + notes;
+        }
+        return message;
+    }
+
+    private String formatFileSize(long bytes) {
+        if (bytes <= 0) {
+            return "—";
+        }
+        if (bytes < 1024) {
+            return bytes + " B";
+        }
+        if (bytes < 1024 * 1024) {
+            return String.format(Locale.US, "%.1f KB", bytes / 1024.0);
+        }
+        return String.format(Locale.US, "%.1f MB", bytes / (1024.0 * 1024.0));
+    }
+
+    private void showUpdateDialog(String title, String message, UpdateInfo info) {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()));
+        builder.setTitle(title);
+        if (message != null) {
+            builder.setMessage(message);
+        }
+        if (info != null) {
+            builder.setPositiveButton(R.string.update_download, (dialog, which) ->
+                    UpdateDownloader.startDownload(requireContext(), info));
+        }
+        builder.setNegativeButton(android.R.string.cancel, null);
+        builder.show();
     }
 
     // Method to show network connection results
@@ -1085,22 +1183,53 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         webDavCheckActive = true;
         new Thread(() -> {
             boolean success = false;
+            String failureReason = null;
             try {
-                new WebDavClient(settings).checkConnection();
+                new WebDavClient(settings).ensureConnection();
                 success = true;
+            } catch (WebDavException e) {
+                failureReason = webDavErrorText(e.getKind());
             } catch (Exception ignored) {
             }
             final boolean result = success;
+            final String reason = failureReason;
             webDavHandler.post(() -> {
                 if (!isAdded() || !webDavCheckActive || version != webDavCheckVersion) return;
                 webDavCheckActive = false;
                 webDavHandler.removeCallbacks(webDavBlinkRunnable);
                 Preference preference = findPreference("webdav_configure");
                 if (preference != null) {
-            preference.setSummary(statusSummary(getString(result ? R.string.webdav_connectivity_ok : R.string.webdav_connectivity_failed, settings.getUsername()), result ? Color.GREEN : Color.RED));
+                    String text;
+                    int color;
+                    if (result) {
+                        text = getString(R.string.webdav_connectivity_ok, settings.getUsername());
+                        color = Color.GREEN;
+                    } else if (reason != null) {
+                        text = getString(R.string.webdav_connectivity_failed_reason, settings.getUsername(), reason);
+                        color = Color.RED;
+                    } else {
+                        text = getString(R.string.webdav_connectivity_failed, settings.getUsername());
+                        color = Color.RED;
+                    }
+                    preference.setSummary(statusSummary(text, color));
                 }
             });
         }, "WebDavConnectionCheck").start();
+    }
+
+    private String webDavErrorText(WebDavException.Kind kind) {
+        switch (kind) {
+            case AUTHENTICATION: return getString(R.string.webdav_error_authentication);
+            case PERMISSION: return getString(R.string.webdav_error_permission);
+            case NOT_FOUND: return getString(R.string.webdav_error_not_found);
+            case PROTOCOL: return getString(R.string.webdav_error_protocol);
+            case NETWORK: return getString(R.string.webdav_error_network);
+            case LOCAL_DATABASE: return getString(R.string.webdav_error_local_database);
+            case STORAGE: return getString(R.string.webdav_error_storage);
+            case CONFIGURATION: return getString(R.string.webdav_error_configuration);
+            case EMPTY_FILE: return getString(R.string.webdav_error_empty_favourites);
+            default: return getString(R.string.webdav_error_invalid_data);
+        }
     }
 
     private CharSequence statusSummary(String text, int color) {
@@ -1377,9 +1506,29 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                         return;
                     }
                     WebDavBackupType type = which == 0 ? WebDavBackupType.FAVOURITES : which == 1 ? WebDavBackupType.DATABASE : WebDavBackupType.BOTH;
-                    WebDavBackupWorker.enqueue(requireContext(), type, restore);
+                    if (restore && type != WebDavBackupType.DATABASE) {
+                        // 收藏恢复默认覆盖本地列表，必须先让用户选择覆盖/合并
+                        showWebDavFavouritesRestoreDialog(type);
+                        return;
+                    }
+                    WebDavBackupWorker.enqueue(requireContext(), type, restore, WebDavBackupWorker.MODE_OVERWRITE);
                     Toast.makeText(requireContext(), R.string.webdav_task_started, Toast.LENGTH_SHORT).show();
                 }).show();
+    }
+
+    private void showWebDavFavouritesRestoreDialog(WebDavBackupType type) {
+        if (!isActivityUsable()) return;
+        String[] options = {getString(R.string.webdav_restore_overwrite), getString(R.string.webdav_restore_merge)};
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
+                .setTitle(R.string.webdav_restore)
+                .setMessage(R.string.webdav_restore_favourites_confirm)
+                .setItems(options, (dialog, which) -> {
+                    String favMode = which == 0 ? WebDavBackupWorker.MODE_OVERWRITE : WebDavBackupWorker.MODE_MERGE;
+                    WebDavBackupWorker.enqueue(requireContext(), type, true, favMode);
+                    Toast.makeText(requireContext(), R.string.webdav_task_started, Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
  private void setupBluetoothPermissionPreference() {
@@ -1487,8 +1636,8 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                             repository.updateDatabaseTimestamp(timestamp);
                         }
                         
-                        // 从数据库获取电台数量
-                        int stationCount = repository.getStationCountSync();
+                        // 从数据库获取电台数量（统一未损坏口径，与远程数量直接可比）
+                        int stationCount = repository.getWorkingStationCountSync();
                         
                         return new DatabaseStatusInfo(timestamp, stationCount);
                     }
@@ -1554,8 +1703,8 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     // 从数据库获取更新时间戳
                     long timestamp = repository.getDatabaseUpdateTime();
                     
-                    // 从数据库获取电台数量
-                    int stationCount = repository.getStationCountSync();
+                    // 从数据库获取电台数量（统一未损坏口径，与远程数量直接可比）
+                    int stationCount = repository.getWorkingStationCountSync();
                     
                     return new DatabaseStatusInfo(timestamp, stationCount);
                 }
