@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 *2026-09-17*
 
-**电台搜索与多语言兼容**
+**电台搜索与多语言兼容（Issue #44）**
 
 - **修复**：综合搜索、分页搜索和多条件搜索加入 `state` 地域字段，解决搜索中文名或相关电台时漏检的问题
 - **修复**：非 ASCII 查询改用转义后的 `LIKE` 子串搜索，避免 Android SQLite FTS4 对中文、西里尔字母、希腊字母及带重音拉丁字母分词不可靠导致无结果；纯 ASCII 字母、数字和空格查询继续使用 FTS，保留前缀检索性能
@@ -27,7 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **修复**：缩短 Chromecast 不可用状态的日志标签，解决 Play Debug 的 4 条 `LongLogTag` Lint 错误，兼容 Android 7.1 及以下的日志标签长度限制
 
-**本地电台智能显示（修复随缘多国混合）**
+**本地电台智能显示（修复随缘多国混合）（Issue #42）**
 
 - **修复**：本地分类的国家匹配增加**回退链**——优先取系统 `Locale` 国家代码，未设置国家（返回空串）时依次回退到 **SIM 卡国家**、**运营商网络注册国家**（`getSimCountryIso`/`getNetworkCountryIso`，无需权限），并新增两字母国名校验；国家代码确实缺失时跳过 `WHERE countrycode = ''` 的空查询、直接走语言降级，避免「Locale 无国家 → 国家查询恒空 → 静默降级到全球电台」导致的随机多国混合
 - **修复**：系统语言降级改为**先映射再匹配**——将系统语言 ISO 码（如 `en`/`zh`）转换为 radio-browser 的 `language` 英文全名（`english`/`chinese`…，新增约 90 个 ISO 639-1 映射，含 Android 旧码 `iw`/`in`/`ji`），并按逗号分词做包含匹配（`LIKE` 命中 `english`/`german,english` 等任一写法），替代原「ISO 码 = 英文全名」精确等值查询；此前 `en` = `english,german` 恒不匹配导致语言降级失效而跳至全球电台
@@ -36,7 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **优化**：搜索界面打开时默认显示本地数据库全部电台，恢复旧版"打开即显示全部、输入关键词或选择国家/语言/标签后在其基础上筛选"的行为，不再默认空白
 
-**数据库更新与中文电台恢复**
+**数据库更新与中文电台恢复（Issue #44）**
 
 - **修复**：远程服务器目录列表端点 `/json/stations` 已结构性丢失非拉丁（中文等）命名电台——下载代码自 v1.04 起未变（v1.04→v1.05 仅改播放器/均衡器相关文件），但同样代码 8 月可下到约 2,281 个中国电台、9 月仅剩 351 个，列表端点任意分页均搜不到「湖南」等中文台，而 search 端点可返回 2,325 个中国电台；全量更新改为**按国家分批下载**——先拉取 `/json/countries` 国家列表，对每国调用 `/json/stations/search?countrycode=X&limit=100000` 一次拉全，并补充无国家代码的电台，恢复中文电台的完整下载与本地搜索
 - **健壮性**：沿用「失败不静默跳过」策略——下载失败的国家串行补充重试（每国 3 次），仍有失败则中止更新并保留现有数据库，杜绝用残缺数据替换主库；resume 模式统一先清空临时库再全量下载，避免重复插入
@@ -44,7 +44,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **变更**：本地数据库状态页「本地电台数量」统一为**未损坏电台口径**（原本地为全部含损坏、远程为未损坏，两数无法直接比对），现与「远程电台数量」可直接对照；损坏电台数量移至统计页查看
 - **变更**：统计页改为显示三个本地化数字——全部电台数（含损坏）、未损坏电台数、损坏电台数（原直接显示 `stations_total`/`stations_working`/`stations_broken` 英文键名），并直接读取本地数据库统计
 
-**应用更新检查（新增）**
+**应用更新检查（新增）（Issue #43）**
 
 - **新增**：设置「其他」中新增「检查更新」入口，通过 GitHub Releases API 获取最新版本并与当前版本比对，发现新版本时弹窗显示版本号、大小与更新说明，可一键下载；下载过程显示进度通知，完成后通过系统安装器安装，全程无需静默安装权限
 - **新增**：设置中新增「自动检查更新」开关（默认关闭）——应用启动时静默检查，每天最多一次，发现新版本仅发通知提示，点击后开始下载；另提供「仅在 Wi-Fi 下检查」开关，避免移动网络流量消耗
@@ -52,7 +52,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **兼容性**：下载 APK 存放于应用缓存目录经 FileProvider 分享（新增 `cache-path`），复用已有 OkHttp/Gson/通知渠道等依赖，无新增依赖与权限
 - **测试**：新增 `UpdateCheckerVersionTest`（版本比较，含 `v` 前缀、三段版本、`1.10 > 1.9` 数值比较）、`UpdateCheckerAssetTest`（按 flavor 匹配 APK asset）
 
-**播放页本台曲目标签（新增）**
+**播放页本台曲目标签（新增）（Issue #41）**
 
 - **新增**：播放页（大播放器）新增「本台曲目」标签页并置于「曲目历史」之前，默认显示该标签——顶部为当前播放内容（电台图标、曲目名、艺术家，随播放元数据实时更新），下方为当前电台过滤的曲目历史列表（数据库按 `station_uuid` 过滤，支持分页；切换电台时自动刷新，新增条目时列表自动滚回顶部）；原「曲目历史」标签内容不变，仍显示所有电台的全部曲目历史
 - **变更**：顶部正在播放内容新增点击事件，点击弹出与历史列表条目一致的曲目详情面板（含查看歌词、复制曲目信息）；正在播放曲目随播放持续写入曲目历史，两个标签页（本台曲目 / 曲目历史）均能查看并弹出歌词
@@ -63,7 +63,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **修复**：收听电台时缓冲时长出现「00:-30」等异常负数时间——ExoPlayer 模式下缓冲时长按「缓冲位置 − 播放位置」计算，缓冲位置落后于播放位置（网络波动、缓冲下落后播放继续）时产生负值，`DateUtils.formatElapsedTime` 对负数输出异常；现对缓冲毫秒数进行负值钳制（底层 `getBufferedMs` 与 `getBufferedSeconds` 双层保护），缓冲显示最低为「0:00」
 
-**内置歌词获取与展示（新增）**
+**收听时长标签调整（Issue #40）**
+
+- **变更**：播放页收听时长标签「Current/Total」更名为「Session/Total」——网络电台为连续音频流、不具备可靠的逐曲进度，原「Current」标签（本次连续收听时长，开始播放/恢复/缓冲结束/切台时重新累计）易被误解为当前歌曲时长，产生「一直累加、与 Total 相同」的困惑；现「Session」（mm:ss）表示本次连续收听时长、「Total」（hh:mm:ss）表示自播放器完全停止以来的累计收听时长，标签文案本地化中文、英文、西班牙语、俄语
+
+**内置歌词获取与展示（新增）（Issue #33、Issue #45）**
 
 - **新增**：曲目历史详情的「查看歌词」不再依赖 QuickLyric（其已从 Google Play 与 F-Droid 双渠道下架，v1.05 修复中的下载页已成死链）——默认改为应用内置歌词面板（BottomSheet），提供加载中 / 歌词内容 / 无结果三态显示并标注来源；纯音乐曲目显示「纯音乐（无歌词）」；同步歌词（LRC）自动剥离元数据标签与时间戳后按纯文本展示
 - **新增**：歌词来源默认接入 **LRCLIB**（开源公开歌词 API）——精确匹配（artist+track+duration）失败时依次降级到 artist+track 搜索与通用关键词搜索，并按同步歌词优先、时长接近度、曲名匹配度综合打分选优；设置中支持自定义 LRCLIB 实例地址（留空使用官方 lrclib.net）
@@ -77,7 +81,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **变更**：清理 11 个语言文件中已失效的 `alert_install_lyrics_app` 死键；新增歌词界面与设置文案适配应用支持的中文、英文、俄语、西班牙语、德语、法语、意大利语、希腊语 8 种语言
 - **实现**：新增 `lyrics` 包（`LyricsResult` / `LyricsProvider` / `LrclibProvider` / `LrcApiProvider` / `NetEaseProvider` / `LyricsRepository` / `LyricsSheetDialog`），内置来源降级链为 **LRCLIB → LrcAPI → 网易云**，任一来源失败自动尝试下一来源；复用应用级 OkHttp 客户端与 Gson，无新增第三方依赖与权限
 
-**WebDAV 备份与恢复改进**
+**WebDAV 备份与恢复改进（Issue #36）**
 
 - **改进**：「服务器目录」确认为选填项并支持自动创建 —— 连通性检测由单纯 PROPFIND 升级为 `ensureConnection`：检测遇 404/409（目录不存在）时自动逐级 MKCOL 创建目录后重试，不再误报「资源未找到」；仅当自动创建并重试后仍不可达时才报错
 - **改进**：连通性检测失败显示具体原因 —— 按认证失败/权限不足/目录或文件不存在/协议错误/网络错误等分类提示（新增 `webdav_connectivity_failed_reason`），替代笼统的「连接失败」，便于区分是配置错误还是服务器端问题

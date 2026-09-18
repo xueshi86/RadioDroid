@@ -348,6 +348,7 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 
 - **收藏电台**：支持添加/移除收藏，长按拖拽排序（任意排序状态下可用，拖拽后自动切换为自定义顺序），滑动删除，撤销操作（Snackbar），M3U 导入/导出
 - **历史记录**：播放过的电台列表，支持 M3U 导出，一键清除
+- **内置歌词**：曲目详情「查看歌词」打开内置歌词面板，来源按 LRCLIB → LrcAPI → 网易云音乐依次降级尝试，支持自定义/自建实例地址与本地缓存；详见「内置歌词」章节
 - **睡眠定时器**：SeekBar 设置分钟数，终点自动停止播放，保存默认值
 - **闹钟**：支持设置指定时间自动播放指定电台。闹钟默认仅生效一次，如需每天重复请在闹钟编辑界面开启「重复」开关
 - **录音功能**：录制当前播放的电台流为音频文件
@@ -667,6 +668,7 @@ Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elemen
 
 - **Favorites**: Add/remove with undo snackbar, long-press drag to reorder (works in any sort mode; dragging switches to Custom Order), swipe-to-delete, M3U import/export
 - **History**: Played station list with M3U export, one-tap clear
+- **Built-in Lyrics**: "View lyrics" opens a built-in lyrics panel; sources are tried in fallback order LRCLIB → LrcAPI → NetEase Cloud Music, with custom/self-hosted instance URLs and local caching supported — see the "Built-in Lyrics" section for details
 - **Sleep Timer**: SeekBar dialog, auto-stops playback, saves default
 - **Alarm**: Schedule a station to play at a specified time. Alarms are one-time by default; enable the "repeat" toggle in the alarm editor for daily recurrence
 - **Recording**: Record live radio streams to audio files
