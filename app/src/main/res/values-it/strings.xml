@@ -49,6 +49,8 @@
     <string name="action_edit">Modifica</string>
     <string name="action_lyrics">Testo</string>
     <string name="action_copy_info">Copia info</string>
+    <string name="unknown_artist">Artista sconosciuto</string>
+    <string name="unknown_track">Titolo sconosciuto</string>
     <string name="error_station_load">Impossibile connettersi alla stazione</string>
     <string name="error_list_update">Impossibile connettersi al server di scoperta delle radio</string>
 
@@ -512,4 +514,16 @@ Prima dell’operazione verrà salvata una copia dei preferiti attuali su questo
     <string name="pref_lyrics_lrcapi_instance_summary">URL completo, es. https://host:port/percorso. Lascia vuoto per usare l\'api.lrc.cx pubblico</string>
     <string name="pref_lyrics_netease">NetEase Cloud Music (sperimentale)</string>
     <string name="pref_lyrics_netease_summary">API pubblica non ufficiale, usata come fonte alternativa dopo LRCLIB e LrcAPI. Attivata per impostazione predefinita.</string>
-</resources>
+    <string name="progress_importing_database">Importazione della base dati principale, attendere...</string>
+    <string name="import_success_title">Importazione riuscita</string>
+    <string name="import_success_message">La base dati principale è stata importata con successo, contenente %d stazioni.
+
+L\'app si riavvierà automaticamente per caricare la nuova base dati.</string>
+    <string name="import_failed_title">Importazione fallita</string>
+    <string name="import_failed_message">Errore durante l\'importazione della base dati principale: %s</string>
+    <string name="import_failed_empty">Il file della base dati importato è vuoto o la copia è fallita</string>
+    <string name="import_failed_invalid">Seleziona un file di base dati valido</string>
+    <string name="error_cannot_delete_old_db">Impossibile eliminare il vecchio file della base dati</string>
+    <string name="error_target_file_not_exist">Il file di destinazione non esiste, la copia è fallita</string>
+    <string name="error_database_corrupted">La base dati importata non può essere letta correttamente, il file potrebbe essere danneggiato</string>
+    </resources>

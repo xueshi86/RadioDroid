@@ -63,6 +63,8 @@ public class TrackHistoryInfoDialog extends BottomSheetDialogFragment {
         View view = inflater.inflate(R.layout.dialog_track_history_details, container, false);
 
         AppCompatImageView imageViewTrackArt = view.findViewById(R.id.imageViewTrackArt);
+        TextView textViewTrackName = view.findViewById(R.id.textViewTrackName);
+        TextView textViewTrackArtist = view.findViewById(R.id.textViewTrackArtist);
         TextView textViewDate = view.findViewById(R.id.textViewDate);
         TextView textViewDuration = view.findViewById(R.id.textViewDuration);
         AppCompatButton btnLyrics = view.findViewById(R.id.btnViewLyrics);
@@ -100,6 +102,14 @@ public class TrackHistoryInfoDialog extends BottomSheetDialogFragment {
         } else {
             trackName = historyEntry.track;
         }
+
+        textViewTrackName.setText(trackName);
+        textViewTrackName.setSelected(true);
+        textViewTrackName.setVisibility(trackName.isEmpty() ? View.GONE : View.VISIBLE);
+
+        textViewTrackArtist.setText(artistName);
+        textViewTrackArtist.setSelected(true);
+        textViewTrackArtist.setVisibility(artistName.isEmpty() ? View.GONE : View.VISIBLE);
 
         btnLyrics.setOnClickListener(v -> {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());

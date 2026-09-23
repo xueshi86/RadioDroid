@@ -36,7 +36,7 @@ public final class WebDavBackupWorker extends Worker {
         Data input = new Data.Builder().putString(KEY_TYPE, type.name()).putBoolean(KEY_MODE, restore).putString(KEY_FAV_MODE, favMode).build();
         Constraints constraints = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
         OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(WebDavBackupWorker.class).setInputData(input).setConstraints(constraints).build();
-        WorkManager.getInstance(context.getApplicationContext()).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.KEEP, request);
+        WorkManager.getInstance(context.getApplicationContext()).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.REPLACE, request);
     }
 
     @NonNull

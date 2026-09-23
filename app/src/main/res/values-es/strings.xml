@@ -98,8 +98,8 @@
     <string name="theme_auto">Automático</string>
     <string name="settings_circular_icons">Usar iconos circulares</string>
     <string name="settings_compact_style">Modo compacto</string>
-    <string name="settings_compact_style_desc_off">Adoptar icono grande con los detalles de la estación</string>
-    <string name="settings_compact_style_desc_on">Adoptar icono pequeño sin los detalles de la estación</string>
+    <string name="settings_compact_style_desc_off">Mostrar iconos grandes con los detalles de la estación</string>
+    <string name="settings_compact_style_desc_on">Mostrar iconos pequeños sin los detalles de la estación</string>
     <string name="settings_bottom_navigation">Navegación en parte inferior</string>
     <string name="settings_toolbar_buttons_category">Botones de la barra de herramientas</string>
     <string name="settings_toolbar_show_search">Buscar</string>

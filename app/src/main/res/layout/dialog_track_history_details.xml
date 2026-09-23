@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:paddingBottom="8dp"
     app:layout_behavior="android.support.design.widget.BottomSheetBehavior">
 
     <androidx.appcompat.widget.AppCompatImageView
@@ -18,53 +18,65 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!--    <TextView-->
-    <!--        android:id="@+id/textViewDateHeader"-->
-    <!--        android:layout_width="wrap_content"-->
-    <!--        android:layout_height="wrap_content"-->
-    <!--        android:layout_marginStart="8dp"-->
-    <!--        android:layout_marginLeft="8dp"-->
-    <!--        android:text="When"-->
-    <!--        app:layout_constraintEnd_toEndOf="parent"-->
-    <!--        app:layout_constraintHorizontal_bias="0.0"-->
-    <!--        app:layout_constraintStart_toEndOf="@id/imageViewTrackArt"-->
-    <!--        app:layout_constraintTop_toTopOf="parent" />-->
+    <TextView
+        android:id="@+id/textViewTrackName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginLeft="12dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:ellipsize="marquee"
+        android:singleLine="true"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/imageViewTrackArt"
+        app:layout_constraintTop_toTopOf="@id/imageViewTrackArt"
+        tools:text="Song name" />
+
+    <TextView
+        android:id="@+id/textViewTrackArtist"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginLeft="12dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:ellipsize="marquee"
+        android:singleLine="true"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/imageViewTrackArt"
+        app:layout_constraintTop_toBottomOf="@id/textViewTrackName"
+        tools:text="Artist" />
 
     <TextView
         android:id="@+id/textViewDate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        android:layout_marginStart="12dp"
+        android:layout_marginLeft="12dp"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toTopOf="@id/textViewDuration"
         app:layout_constraintStart_toEndOf="@id/imageViewTrackArt"
-        app:layout_constraintTop_toTopOf="parent"
         tools:text="01.10.2019 11:11" />
-
-    <!--    <TextView-->
-    <!--        android:id="@+id/textViewDurationHeader"-->
-    <!--        android:layout_width="wrap_content"-->
-    <!--        android:layout_height="wrap_content"-->
-    <!--        android:layout_marginStart="8dp"-->
-    <!--        android:layout_marginLeft="8dp"-->
-    <!--        android:layout_marginTop="16dp"-->
-    <!--        android:text="Duration"-->
-    <!--        app:layout_constraintEnd_toEndOf="parent"-->
-    <!--        app:layout_constraintHorizontal_bias="0.0"-->
-    <!--        app:layout_constraintStart_toEndOf="@id/imageViewTrackArt"-->
-    <!--        app:layout_constraintTop_toBottomOf="@id/textViewDate" />-->
 
     <TextView
         android:id="@+id/textViewDuration"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        android:layout_marginStart="12dp"
+        android:layout_marginLeft="12dp"
+        android:layout_marginTop="2dp"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@id/imageViewTrackArt"
         app:layout_constraintStart_toEndOf="@id/imageViewTrackArt"
-        app:layout_constraintTop_toBottomOf="@+id/textViewDate"
         tools:text="03:30" />
 
     <com.google.android.material.button.MaterialButton
@@ -91,6 +103,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="100"
         app:layout_constraintTop_toBottomOf="@id/imageViewTrackArt" />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

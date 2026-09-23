@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.PreferenceManager;
 
+import net.programmierecke.radiodroid2.R;
 import net.programmierecke.radiodroid2.RadioDroidApp;
 import net.programmierecke.radiodroid2.database.RadioDroidDatabase;
 
@@ -39,6 +40,8 @@ public class LyricsRepository {
     public static final String PREF_LYRICS_NETEASE_ENABLED = "lyrics_netease_enabled";
 
     private static final long CACHE_TTL_MS = 30L * 24 * 60 * 60 * 1000;
+    /** 缓存键版本：匹配策略收紧后，旧键下可能存有张冠李戴的歌词，通过版本前缀使其失效。 */
+    private static final String CACHE_KEY_VERSION = "v2|";
 
     private final Context context;
     private final Executor executor = Executors.newSingleThreadExecutor(runnable -> new Thread(runnable, "LyricsFetch"));
@@ -50,8 +53,14 @@ public class LyricsRepository {
 
     public void fetchLyrics(@Nullable String artist, @NonNull String track,
                             @Nullable Integer durationSeconds, @NonNull Callback callback) {
-        final String rawArtist = artist == null ? "" : artist.trim();
-        final String rawTrack = track.trim();
+        final String[] resolved = resolveMetadata(artist, track);
+        if (resolved == null) {
+            // 电台未提供可用的"歌手 + 曲目"元信息：不做任何搜索，直接显示无歌词
+            postNotFound(callback);
+            return;
+        }
+        final String rawArtist = resolved[0];
+        final String rawTrack = resolved[1];
 
         executor.execute(() -> {
             LyricsResult cached = getFromCache(rawArtist, rawTrack);
@@ -73,7 +82,12 @@ public class LyricsRepository {
     @Nullable
     private LyricsResult fetchFromProviders(@NonNull String artist, @NonNull String track, @Nullable Integer durationSeconds) {
         List<String[]> queries = buildQueries(artist, track);
+        if (queries.isEmpty()) {
+            return null;
+        }
         for (LyricsProvider provider : buildProviders()) {
+            // 各来源内部均已按"精确匹配"校验（歌手与曲目必须一致），
+            // 非精准结果会被来源自身丢弃，因此此处不再做模糊兜底。
             for (String[] query : queries) {
                 try {
                     LyricsResult result = provider.fetch(query[0], query[1], durationSeconds);
@@ -89,6 +103,46 @@ public class LyricsRepository {
     }
 
     /**
+     * 解析并校验元信息：占位值（Unknown Artist / 未知 / - 等）视为缺失；
+     * 若歌手缺失而曲目形如 "Artist - Title"，则尝试从中拆分补全。
+     * 无法得到"歌手 + 曲目"这一对可用元信息时返回 null，调用方据此直接显示无歌词、不做任何搜索。
+     */
+    @Nullable
+    private String[] resolveMetadata(@Nullable String artist, @NonNull String track) {
+        String resolvedArtist = isPlaceholder(artist) ? "" : artist.trim();
+        String resolvedTrack = track.trim();
+        if (isPlaceholder(resolvedTrack)) {
+            return null;
+        }
+        if (resolvedArtist.isEmpty()) {
+            int idx = resolvedTrack.indexOf(" - ");
+            if (idx > 0) {
+                String left = resolvedTrack.substring(0, idx).trim();
+                String right = resolvedTrack.substring(idx + 3).trim();
+                if (!isPlaceholder(left) && !isPlaceholder(right)) {
+                    resolvedArtist = left;
+                    resolvedTrack = right;
+                }
+            }
+        }
+        if (isPlaceholder(resolvedArtist) || isPlaceholder(resolvedTrack)) {
+            return null;
+        }
+        return new String[]{resolvedArtist, resolvedTrack};
+    }
+
+    /** 元信息是否为缺失/未知占位值（同时比对本地化的 Unknown 文案）。 */
+    private boolean isPlaceholder(@Nullable String value) {
+        if (LyricsMatcher.isUnknown(value)) {
+            return true;
+        }
+        String trimmed = value.trim();
+        return trimmed.equalsIgnoreCase(context.getString(R.string.unknown))
+                || trimmed.equalsIgnoreCase(context.getString(R.string.unknown_artist))
+                || trimmed.equalsIgnoreCase(context.getString(R.string.unknown_track));
+    }
+
+    /**
      * 电台元数据常有 "Track [Station]" "(Live)" 等污染，或 artist 与 track 同值，
      * 依次生成多个归一化查询组合提升命中率。
      */
@@ -98,7 +152,8 @@ public class LyricsRepository {
         String cleanedTrack = removeBrackets(track);
         String cleanedArtist = removeBrackets(artist);
 
-        if (!cleanedArtist.isEmpty() && !cleanedArtist.equalsIgnoreCase(cleanedTrack)) {
+        if (!isPlaceholder(cleanedArtist) && !isPlaceholder(cleanedTrack)
+                && !cleanedArtist.equalsIgnoreCase(cleanedTrack)) {
             queries.add(new String[]{cleanedArtist, cleanedTrack});
         }
 
@@ -113,12 +168,14 @@ public class LyricsRepository {
             }
         }
         String[] splitQuery = new String[]{splitArtist, splitTrack};
-        for (String[] q : queries) {
-            if (q[0].equalsIgnoreCase(splitQuery[0]) && q[1].equalsIgnoreCase(splitQuery[1])) {
-                return queries;
+        if (!isPlaceholder(splitArtist) && !isPlaceholder(splitTrack)) {
+            for (String[] q : queries) {
+                if (q[0].equalsIgnoreCase(splitQuery[0]) && q[1].equalsIgnoreCase(splitQuery[1])) {
+                    return queries;
+                }
             }
+            queries.add(splitQuery);
         }
-        queries.add(splitQuery);
         return queries;
     }
 
@@ -179,7 +236,7 @@ public class LyricsRepository {
 
     @NonNull
     private String cacheKey(@NonNull String artist, @NonNull String track) {
-        return artist.trim().toLowerCase() + "|" + track.trim().toLowerCase();
+        return CACHE_KEY_VERSION + artist.trim().toLowerCase() + "|" + track.trim().toLowerCase();
     }
 
     private void postFound(@NonNull Callback callback, @NonNull LyricsResult result) {

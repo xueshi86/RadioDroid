@@ -16,6 +16,9 @@ import okhttp3.Response;
  * LrcAPI (https://github.com/HisAtri/LrcApi，公共实例 https://api.lrc.cx) 聚合歌词接口，
  * 作为 LRCLIB 与网易云之间的中间降级层。GET /lyrics?title=&artist= 直接返回纯文本 LRC，
  * 未命中返回 404；自建实例可在设置中配置 base URL。
+ *
+ * 该来源会按歌名模糊命中"同名但不同歌手"的歌曲，因此返回结果必须通过 [ar:] 署名核验：
+ * 缺少 [ar:] 或署名与请求歌手不一致的歌词一律丢弃，宁可无歌词也不显示错误歌词。
  */
 public class LrcApiProvider implements LyricsProvider {
 
@@ -60,7 +63,7 @@ public class LrcApiProvider implements LyricsProvider {
                 throw new IOException("LrcAPI failed: HTTP " + response.code());
             }
             String body = response.body().string();
-            if (body.trim().isEmpty()) {
+            if (body.trim().isEmpty() || !verify(body, artist, track)) {
                 return null;
             }
             return toResult(body, artist, track);
@@ -88,6 +91,19 @@ public class LrcApiProvider implements LyricsProvider {
             builder.addQueryParameter("artist", artist);
         }
         return builder.build();
+    }
+
+    /**
+     * 核验返回的 LRC 是否确实属于请求的歌曲：
+     * 必须带 [ar:] 署名且与请求歌手一致（这是区分同名不同歌手的关键），[ti:] 存在时也必须一致。
+     */
+    private boolean verify(@NonNull String body, @NonNull String artist, @NonNull String track) {
+        String taggedArtist = LyricsMatcher.extractArtistTag(body);
+        if (taggedArtist == null || !LyricsMatcher.artistMatches(artist, taggedArtist)) {
+            return false;
+        }
+        String taggedTitle = LyricsMatcher.extractTitleTag(body);
+        return taggedTitle == null || LyricsMatcher.titleMatches(track, taggedTitle);
     }
 
     @NonNull

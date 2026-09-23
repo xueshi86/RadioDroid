@@ -1066,6 +1066,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         if (getArguments() != null && "pref_category_webdav_backup_restore".equals(getArguments().getString(PreferenceFragmentCompat.ARG_PREFERENCE_ROOT))) {
             refreshWebDavSummary();
             registerWebDavWorkStatus();
+            showWebDavTaskResultIfAny();
         }
 
         if (isToplevel())
@@ -1246,8 +1247,15 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         webDavWorkLiveData = androidx.work.WorkManager.getInstance(requireContext()).getWorkInfosForUniqueWorkLiveData(WebDavBackupWorker.WORK_NAME);
         webDavWorkObserver = infos -> {
             if (!isAdded() || infos == null || infos.isEmpty()) return;
-            androidx.work.WorkInfo info = infos.get(0);
-            if (info.getState() == androidx.work.WorkInfo.State.RUNNING || info.getState() == androidx.work.WorkInfo.State.ENQUEUED) {
+            boolean active = false;
+            for (androidx.work.WorkInfo info : infos) {
+                androidx.work.WorkInfo.State state = info.getState();
+                if (state == androidx.work.WorkInfo.State.RUNNING || state == androidx.work.WorkInfo.State.ENQUEUED) {
+                    active = true;
+                    break;
+                }
+            }
+            if (active) {
                 backup.setSummary(R.string.webdav_task_running);
                 restore.setSummary(R.string.webdav_task_running);
             } else {
@@ -2204,6 +2212,14 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             if (tableCount < 3) {
                 throw new IOException(invalidMsg);
             }
+            cursor.close();
+            // radio_stations 必须非空，否则导入后会出现"成功但零电台"的假成功，
+            // 拦截 schema 被自动清空或工具导出的空表，避免静默导入一个空数据库。
+            cursor = database.rawQuery("SELECT EXISTS(SELECT 1 FROM radio_stations LIMIT 1)", null);
+            boolean hasStations = cursor.moveToFirst() && cursor.getInt(0) > 0;
+            if (!hasStations) {
+                throw new IOException(emptyMsg);
+            }
         } catch (SQLiteException e) {
             throw new IOException(corruptedMsg, e);
         } finally {
@@ -2354,8 +2370,9 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 repository.reinitializeDatabase(context);
                 repository.ensureUpdateTimestampTable();
                 int stationCount = repository.getStationCountSync();
-                if (stationCount < 0) {
-                    throw new IOException(getString(R.string.error_database_corrupted));
+                // 替换后若电台数为 0：数据库被自动迁移清空或不含数据，明确报错而非"成功但零电台"假成功
+                if (stationCount <= 0) {
+                    throw new IOException(getString(R.string.import_failed_empty));
                 }
 
                 Log.d(TAG, "数据库导入成功，电台数量: " + stationCount);

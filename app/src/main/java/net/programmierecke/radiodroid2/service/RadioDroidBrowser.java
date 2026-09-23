@@ -265,7 +265,21 @@ public class RadioDroidBrowser {
 
     @Nullable
     public DataRadioStation getStationById(@NonNull String stationId) {
-        return stationIdToStation.get(stationId);
+        DataRadioStation station = stationIdToStation.get(stationId);
+        if (station != null) {
+            return station;
+        }
+
+        // 对外控制打通：外部控制器可能直接凭 mediaId（StationUuid）播放，未先浏览加载 children，
+        // 兜底从收藏/历史按 uuid 精确查询，保证任意 mediaId 都能命中文持本地播放。
+        if (radioDroidApp != null) {
+            station = radioDroidApp.getFavouriteManager().getById(stationId);
+            if (station == null) {
+                station = radioDroidApp.getHistoryManager().getById(stationId);
+            }
+        }
+
+        return station;
     }
 
     private List<MediaBrowserCompat.MediaItem> createBrowsableMediaItemsForRoot(Resources resources) {

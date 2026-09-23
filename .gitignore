@@ -92,6 +92,9 @@ de_missing_values.tsv
 RadioDroid_Favorites_*.m3u
 radio_droid_database_*.db
 
+# Release database staging folder (local-only, not tracked / not pushed)
+/DB/
+
 # Handover notes (local-only, not tracked / not pushed)
 /HANDOVER*.md
 

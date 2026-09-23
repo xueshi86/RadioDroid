@@ -614,6 +614,9 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
         mediaSession = new MediaSessionCompat(getBaseContext(), getBaseContext().getPackageName());
         mediaSession.setCallback(mediaSessionCallback);
+        // 对外控制打通：声明处理媒体键与传输控制，确保外部控制器/车机蓝牙/助手可路由到此会话
+        mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
+                | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
 
         Intent startActivityIntent = new Intent(itsContext.getApplicationContext(), ActivityMain.class);
         mediaSession.setSessionActivity(PendingIntent.getActivity(itsContext.getApplicationContext(), 0, startActivityIntent, PendingIntent.FLAG_UPDATE_CURRENT | pendingIntentFlag));
@@ -920,7 +923,11 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         stopAlarmVolumeOverride();
 
         releaseAudioFocus();
-        disableMediaSession();
+        // 对外控制打通：只要还有可续播的已选电台，就保持 MediaSession 激活，
+        // 使外部控制器（车机蓝牙/MediaBrowser/助手）能触发“续播”；完全无电台才停用。
+        if (currentStation == null) {
+            disableMediaSession();
+        }
         radioPlayer.stop();
         releaseWakeLockAndWifiLock();
         clearTimer();
@@ -2075,7 +2082,10 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                         eqAndFadeInitialized = false;
 
                         if (state != PlayState.PrePlaying) {
-                            disableMediaSession();
+                            // 对外控制打通：有可续播电台（暂停/出错时）也保持会话激活，便于外部续播
+                            if (currentStation == null) {
+                                disableMediaSession();
+                            }
                         }
 
                         // 效果会话广播去抖：仅在会话真正终结（Idle）时发 CLOSE。

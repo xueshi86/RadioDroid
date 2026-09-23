@@ -19,6 +19,8 @@ import okhttp3.Response;
  * 网易云音乐实验性歌词来源（非官方公开接口，中文曲库覆盖好）。
  * 默认不启用，须由用户在设置中显式开启后才会进入回退链。
  * 流程：/api/search/get/web 搜索歌曲 id → /api/song/lyric 拉取 LRC。
+ *
+ * 搜索结果仅接受曲目名与歌手名均精确一致的候选，避免命中同名但不同歌手的歌曲。
  */
 public class NetEaseProvider implements LyricsProvider {
 
@@ -109,7 +111,7 @@ public class NetEaseProvider implements LyricsProvider {
                 || response.result == null || response.result.songs == null) {
             return null;
         }
-        return pickBestSong(response.result.songs, artist, track, durationSeconds);
+        return pickExactSong(response.result.songs, artist, track, durationSeconds);
     }
 
     @Nullable
@@ -154,8 +156,8 @@ public class NetEaseProvider implements LyricsProvider {
     }
 
     @Nullable
-    private SearchResponse.Song pickBestSong(@Nullable List<SearchResponse.Song> songs, @NonNull String artist,
-                                             @NonNull String track, @Nullable Integer durationSeconds) {
+    private SearchResponse.Song pickExactSong(@Nullable List<SearchResponse.Song> songs, @NonNull String artist,
+                                              @NonNull String track, @Nullable Integer durationSeconds) {
         if (songs == null) {
             return null;
         }
@@ -165,18 +167,11 @@ public class NetEaseProvider implements LyricsProvider {
             if (song == null || song.id == null) {
                 continue;
             }
+            // 曲目与歌手必须同时精确一致，否则视为"同名不同曲/不同歌手"并丢弃
+            if (!LyricsMatcher.titleMatches(track, song.name) || !hasMatchingArtist(song, artist)) {
+                continue;
+            }
             long score = 0;
-            if (song.name != null && song.name.toLowerCase().contains(track.toLowerCase())) {
-                score += 20;
-            }
-            if (!artist.trim().isEmpty() && song.artists != null) {
-                for (SearchResponse.Artist a : song.artists) {
-                    if (a != null && a.name != null && a.name.toLowerCase().contains(artist.toLowerCase())) {
-                        score += 50;
-                        break;
-                    }
-                }
-            }
             if (durationSeconds != null && song.duration != null) {
                 long diff = Math.abs(song.duration / 1000 - durationSeconds);
                 score += Math.max(0, 30 - diff);
@@ -187,5 +182,18 @@ public class NetEaseProvider implements LyricsProvider {
             }
         }
         return best;
+    }
+
+    /** 候选中是否存在与请求歌手精确一致的演唱者。 */
+    private boolean hasMatchingArtist(@NonNull SearchResponse.Song song, @NonNull String artist) {
+        if (song.artists == null) {
+            return false;
+        }
+        for (SearchResponse.Artist a : song.artists) {
+            if (a != null && LyricsMatcher.artistMatches(artist, a.name)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

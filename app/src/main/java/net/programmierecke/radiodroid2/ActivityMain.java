@@ -746,9 +746,11 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             menuItemSave.setTitle(R.string.nav_item_save_playlist);
 
             if (sharedPref.getBoolean("toolbar_show_toggle_view", true)) {
+                // 切换视图图标不再依赖 load_icons：仅在"图标模式"下显示列表视图切换，
+                // 其余情况（含未启用图标加载）一律显示网格视图切换，避免图标从工具条消失。
                 if (sharedPref.getBoolean("icons_only_favorites_style", false)) {
                     menuItemListView.setVisible(true);
-                } else if (sharedPref.getBoolean("load_icons", false)) {
+                } else {
                     menuItemIconsView.setVisible(true);
                 }
             }

@@ -47,6 +47,8 @@
     <string name="action_edit">Edit</string>
     <string name="action_lyrics">Lyrics</string>
     <string name="action_copy_info">Copy Info</string>
+    <string name="unknown_artist">Unknown Artist</string>
+    <string name="unknown_track">Unknown Track</string>
     <string name="error_station_load">Could not connect to station</string>
     <string name="error_list_update">Could not connect to radio browser server</string>
 
@@ -586,4 +588,18 @@ A copy of your current favourites is saved on this device before the operation.<
     <string name="pref_lyrics_lrcapi_instance_summary">Full URL, e.g. https://host:port/path. Leave empty to use the public api.lrc.cx</string>
     <string name="pref_lyrics_netease">NetEase Cloud Music (experimental)</string>
     <string name="pref_lyrics_netease_summary">Unofficial public API, used as a fallback after LRCLIB and LrcAPI. Enabled by default.</string>
+    <string name="progress_importing_database">Importing main database, please wait...</string>
+    <string name="import_success_title">Import Successful</string>
+    <string name="import_success_message">Main database has been successfully imported, containing %d stations.
+
+The app will automatically restart to load the new database.</string>
+    <string name="import_failed_title">Import Failed</string>
+    <string name="import_failed_message">Error importing main database: %s</string>
+    <string name="import_failed_empty">The imported database file is empty or copy failed</string>
+    <string name="import_failed_invalid">Please select a valid database file</string>
+    <string name="error_cannot_delete_old_db">Cannot delete old database file</string>
+    <string name="error_target_file_not_exist">Target file does not exist, copy failed</string>
+    <string name="error_database_corrupted">The imported database cannot be accessed properly, the file may be corrupted</string>
+    <string name="export_database_corrupted">The main database cannot be accessed properly, the file may be corrupted</string>
+    <string name="export_database_empty">The main database file is empty and cannot be exported</string>
 </resources>

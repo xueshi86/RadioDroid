@@ -19,13 +19,13 @@
         android:id="@+id/action_icons_view"
         android:title="@string/action_toggle_view"
         android:icon="@drawable/ic_view_icons_24dp"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="always" />
 
     <item
         android:id="@+id/action_list_view"
         android:title="@string/action_toggle_view"
         android:icon="@drawable/ic_view_list_24dp"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="always" />
 
     <item
         android:id="@+id/action_mpd"

@@ -18,8 +18,8 @@ import okhttp3.Response;
 
 /**
  * LRCLIB (https://lrclib.net) 开放歌词 API，无需鉴权。
- * 先 GET /api/get 精确匹配（artist+track+duration），404 后降级 /api/search 模糊搜索，
- * 最后用 q= 通用搜索兜底。base URL 可配置为自建实例/镜像。
+ * 先 GET /api/get 精确匹配（artist+track+duration），未命中再 GET /api/search，
+ * 但仅接受曲目与歌手均精确一致的候选，不做任何模糊兜底。base URL 可配置为自建实例/镜像。
  */
 public class LrclibProvider implements LyricsProvider {
 
@@ -58,17 +58,19 @@ public class LrclibProvider implements LyricsProvider {
     @Override
     public LyricsResult fetch(@NonNull String artist, @NonNull String track, @Nullable Integer durationSeconds) throws IOException {
         LrcLyrics direct = requestSingle(apiGetUrl(artist, track, durationSeconds));
-        if (direct != null && hasContent(direct)) {
+        if (direct != null && hasContent(direct) && matches(direct, artist, track)) {
             return toResult(direct, artist, track);
         }
 
         List<LrcLyrics> candidates = requestList(apiSearchUrl(artist, track));
-        if (candidates == null || candidates.isEmpty()) {
-            candidates = requestList(apiSearchUrl(null, artist + " " + track));
-        }
-
-        LrcLyrics best = pickBest(candidates, track, durationSeconds);
+        LrcLyrics best = pickExact(candidates, artist, track, durationSeconds);
         return best == null ? null : toResult(best, artist, track);
+    }
+
+    /** 候选是否与请求的歌手、曲目均精确一致。 */
+    private boolean matches(@NonNull LrcLyrics lyrics, @NonNull String artist, @NonNull String track) {
+        return LyricsMatcher.artistMatches(artist, lyrics.artistName)
+                && LyricsMatcher.titleMatches(track, lyrics.trackName);
     }
 
     @Nullable
@@ -174,15 +176,16 @@ public class LrclibProvider implements LyricsProvider {
     }
 
     @Nullable
-    private LrcLyrics pickBest(@Nullable List<LrcLyrics> candidates, @NonNull String track, @Nullable Integer durationSeconds) {
+    private LrcLyrics pickExact(@Nullable List<LrcLyrics> candidates, @NonNull String artist,
+                               @NonNull String track, @Nullable Integer durationSeconds) {
         if (candidates == null) {
             return null;
         }
         LrcLyrics best = null;
         long bestScore = Long.MIN_VALUE;
         for (LrcLyrics candidate : candidates) {
-            if (candidate == null || !hasContent(candidate)) {
-                continue;
+            if (candidate == null || !hasContent(candidate) || !matches(candidate, artist, track)) {
+                continue; // 非精确匹配一律丢弃
             }
             long score = 0;
             if (!isEmpty(candidate.syncedLyrics)) {
@@ -191,9 +194,6 @@ public class LrclibProvider implements LyricsProvider {
             if (durationSeconds != null && candidate.duration != null) {
                 long diff = Math.abs(candidate.duration - durationSeconds);
                 score += Math.max(0, 50 - diff);
-            }
-            if (candidate.trackName != null && candidate.trackName.toLowerCase().contains(track.toLowerCase())) {
-                score += 20;
             }
             if (best == null || score > bestScore) {
                 bestScore = score;

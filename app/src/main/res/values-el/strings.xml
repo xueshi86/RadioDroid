@@ -51,6 +51,11 @@
     <string name="tab_player_current_history">Τραγούδια του σταθμού</string>
     <string name="tab_player_recordings">Ηχογραφήσεις</string>
 
+    <string name="action_lyrics">Στίχοι</string>
+    <string name="action_copy_info">Αντιγραφή πληροφοριών</string>
+    <string name="unknown_artist">Άγνωστος καλλιτέχνης</string>
+    <string name="unknown_track">Άγνωστο κομμάτι</string>
+
     <string name="about_text">Αυτή η εφαρμογή χρησιμοποιεί τον ελεύθερο κατάλογο ραδιοφωνικών σταθμών, στο...\n
   https://www.radio-browser.info\n
   Ο καθένας μπορεί να προσθέσει σταθμούς σε αυτόν, ή να επεξεργαστεί υπάρχοντες σταθμούς.\n
@@ -326,4 +331,16 @@
     <string name="pref_lyrics_lrcapi_instance_summary">Πλήρης διεύθυνση, π.χ. https://host:port/διαδρομή. Αφήστε το κενό για χρήση του δημόσιου api.lrc.cx</string>
     <string name="pref_lyrics_netease">NetEase Cloud Music (πειραματικό)</string>
     <string name="pref_lyrics_netease_summary">Ανεπίσημο δημόσιο API, χρησιμοποιείται ως εναλλακτική πηγή μετά το LRCLIB και το LrcAPI. Ενεργό από προεπιλογή.</string>
-</resources>
+    <string name="progress_importing_database">Εισαγωγή κύριας βάσης δεδομένων, περιμένετε...</string>
+    <string name="import_success_title">Η εισαγωγή ήταν επιτυχής</string>
+    <string name="import_success_message">Η κύρια βάση δεδομένων εισήχθη με επιτυχία, με %d σταθμούς.
+
+Η εφαρμογή θα επανεκκινήσει αυτόματα για να φορτώσει τη νέα βάση δεδομένων.</string>
+    <string name="import_failed_title">Η εισαγωγή απέτυχε</string>
+    <string name="import_failed_message">Σφάλμα κατά την εισαγωγή της κύριας βάσης δεδομένων: %s</string>
+    <string name="import_failed_empty">Το εισαγόμενο αρχείο βάσης δεδομένων είναι κενό ή η αντιγραφή απέτυχε</string>
+    <string name="import_failed_invalid">Επιλέξτε ένα έγκυρο αρχείο βάσης δεδομένων</string>
+    <string name="error_cannot_delete_old_db">Δεν είναι δυνατή η διαγραφή του παλιού αρχείου βάσης δεδομένων</string>
+    <string name="error_target_file_not_exist">Το αρχείο προορισμού δεν υπάρχει, η αντιγραφή απέτυχε</string>
+    <string name="error_database_corrupted">Η εισαγόμενη βάση δεδομένων δεν μπορεί να διαβαστεί σωστά, το αρχείο μπορεί να είναι κατεστραμμένο</string>
+    </resources>

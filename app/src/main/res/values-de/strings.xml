@@ -40,6 +40,11 @@
     <string name="tab_player_current_history">Sender-Titel</string>
     <string name="tab_player_recordings">Aufnahmen</string>
 
+    <string name="action_lyrics">Songtext</string>
+    <string name="action_copy_info">Info kopieren</string>
+    <string name="unknown_artist">Unbekannter Künstler</string>
+    <string name="unknown_track">Unbekannter Titel</string>
+
     <string name="about_text">Diese App basiert auf dem freien Internetradio-Stationsverzeichnis https://www.radio-browser.info .\n\nDas Stationsverzeichnis funktioniert nach dem Wiki-Prinzip: jeder, auch Du, kann mithelfen, es aktuell zu halten.\n\nKontakt:\nsegler_alex@web.de\n\nSourcecode und Bugtracker:\nhttps://github.com/segler-alex/RadioDroid/issues\n\nIch freue mich immer über Mails mit Verbesserungsvorschlägen. Falls Du sonst irgendwie helfen willst: es gibt immer Bugs zu fixen :). Wenn Du Dein grafisches Talent einbringen möchtest, wäre ich besonders dankbar, speziell für schönere Icons, Hintergründe oder auch ein insgesamt besseres Design.\n\nDiese App wurde mit der GPLv3 https://www.gnu.org/licenses/gpl-3.0.html lizenziert.</string>
     <string name="detail_star">Als Favorit setzen</string>
     <string name="detail_unstar">Als Favorit löschen</string>
@@ -430,4 +435,16 @@ Vor dem Vorgang wird eine Kopie Ihrer aktuellen Favoriten auf diesem Gerät gesp
     <string name="pref_lyrics_lrcapi_instance_summary">Vollständige URL, z. B. https://host:port/pfad. Leer lassen, um das öffentliche api.lrc.cx zu verwenden</string>
     <string name="pref_lyrics_netease">NetEase Cloud Music (experimentell)</string>
     <string name="pref_lyrics_netease_summary">Inoffizielle öffentliche API, wird als Fallback nach LRCLIB und LrcAPI verwendet. Standardmäßig aktiviert.</string>
-</resources>
+    <string name="progress_importing_database">Hauptdatenbank wird importiert, bitte warten...</string>
+    <string name="import_success_title">Import erfolgreich</string>
+    <string name="import_success_message">Die Hauptdatenbank wurde erfolgreich mit %d Sendern importiert.
+
+Die App wird automatisch neu gestartet, um die neue Datenbank zu laden.</string>
+    <string name="import_failed_title">Import fehlgeschlagen</string>
+    <string name="import_failed_message">Fehler beim Importieren der Hauptdatenbank: %s</string>
+    <string name="import_failed_empty">Die importierte Datenbankdatei ist leer oder die Kopie ist fehlgeschlagen</string>
+    <string name="import_failed_invalid">Bitte wählen Sie eine gültige Datenbankdatei</string>
+    <string name="error_cannot_delete_old_db">Alte Datenbankdatei kann nicht gelöscht werden</string>
+    <string name="error_target_file_not_exist">Zieldatei existiert nicht, Kopieren fehlgeschlagen</string>
+    <string name="error_database_corrupted">Die importierte Datenbank kann nicht richtig gelesen werden, die Datei ist möglicherweise beschädigt</string>
+    </resources>
