@@ -489,6 +489,7 @@ Une copie de vos favorites actuelles est enregistrée sur cet appareil avant l�
     <string name="webdav_restore_merge">Fusionner</string>
     <string name="webdav_database_restore_confirm">Remplacer la base de données locale par la base de données stockée sur le serveur WebDAV ?</string>
     <string name="webdav_database_replace">Remplacer</string>
+    <string name="webdav_pending_database_restore_confirm">Une restauration de la base de données d\'une session précédente est en attente. Remplacer la base de données locale par celle enregistrée sur le serveur ? Choisissez Remplacer pour continuer, ou Annuler pour la conserver et reprendre plus tard.</string>
     <string name="webdav_database_restoring">Remplacement de la base de données en cours, veuillez patienter…</string>
     <string name="webdav_error_authentication">Échec de l’authentification</string>
     <string name="webdav_error_permission">Permission refusée</string>

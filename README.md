@@ -357,7 +357,7 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 - **国家图标**：电台列表显示所属国家的国旗图标
 - **Android TV 支持**：检测 TV 设备自动启用频道管理
 - **网络类型指示器**：播放时显示当前使用的 Wi-Fi 或移动数据图标，直观了解网络类型
-- **外部控制**：支持经标准 MediaSession / MediaBrowser 对外控制（Tasker「媒体控制」、`cmd media_session dispatch`、车机蓝牙、语音助手等），停止后仍可外部「续播」
+- **外部控制**：支持经标准 MediaSession / MediaBrowser 对外控制（Tasker「媒体控制」、`cmd media_session dispatch`、车机蓝牙、语音助手等），停止后仍可外部「续播」；支持按名称（精确优先）或 mediaId 播放指定电台
 - **检查更新**：设置中提供「检查更新」入口与可选的「自动检查更新」开关（应用启动时静默检查，每天最多一次，可限定仅 Wi-Fi）。通过 GitHub Releases API 获取最新版本，与当前版本比对后弹出提示，可一键下载新版本 APK；下载带进度通知，完成后通过系统安装器安装，无需静默安装权限
 
 ---

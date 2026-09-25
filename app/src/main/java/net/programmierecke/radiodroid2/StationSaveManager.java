@@ -307,12 +307,25 @@ public class StationSaveManager extends Observable {
     public @Nullable
     DataRadioStation getBestNameMatch(String query) {
         DataRadioStation bestStation = null;
-        query = query.toUpperCase();
+
+        if (query == null || query.trim().isEmpty()) {
+            return null;
+        }
+
+        // 精确匹配优先（忽略大小写、去除首尾空白），命中即返回，避免近似匹配选错电台
+        final String upperQuery = query.trim().toUpperCase();
+        for (DataRadioStation station : listStations) {
+            if (station.Name != null && station.Name.trim().toUpperCase().equals(upperQuery)) {
+                return station;
+            }
+        }
+
+        // 未命中精确匹配，退回余弦相似度模糊匹配
         double smallesDistance = Double.MAX_VALUE;
 
         Cosine distMeasure = new Cosine(); // must be in the loop for some measures (e.g. Sift4)
         for (DataRadioStation station : listStations) {
-            double distance = distMeasure.distance(station.Name.toUpperCase(), query);
+            double distance = distMeasure.distance(station.Name.toUpperCase(), upperQuery);
             if (distance < smallesDistance) {
                 bestStation = station;
                 smallesDistance = distance;

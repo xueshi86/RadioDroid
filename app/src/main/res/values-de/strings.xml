@@ -406,6 +406,7 @@ Vor dem Vorgang wird eine Kopie Ihrer aktuellen Favoriten auf diesem Gerät gesp
     <string name="webdav_restore_merge">Zusammenführen</string>
     <string name="webdav_database_restore_confirm">Die lokale Datenbank durch die auf dem WebDAV-Server gespeicherte Datenbank ersetzen?</string>
     <string name="webdav_database_replace">Ersetzen</string>
+    <string name="webdav_pending_database_restore_confirm">Eine Datenbankwiederherstellung aus einer früheren Sitzung ist noch offen. Die lokale Datenbank durch die auf dem Server gespeicherte ersetzen? Wähle Ersetzen zum Fortfahren oder Abbrechen, um den Zustand zu behalten und später fortzusetzen.</string>
     <string name="webdav_database_restoring">Datenbank wird ersetzt, bitte warten…</string>
     <string name="webdav_error_authentication">Authentifizierung fehlgeschlagen</string>
     <string name="webdav_error_permission">Zugriff verweigert</string>

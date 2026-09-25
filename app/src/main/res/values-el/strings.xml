@@ -302,6 +302,7 @@
     <string name="webdav_restore_merge">Συγχώνευση</string>
     <string name="webdav_database_restore_confirm">Να αντικατασταθεί η τοπική βάση δεδομένων με τη βάση δεδομένων που είναι αποθηκευμένη στον διακομιστή WebDAV?</string>
     <string name="webdav_database_replace">Αντικατάσταση</string>
+    <string name="webdav_pending_database_restore_confirm">Υπάρχει μια εκκρεμής επαναφορά βάσης δεδομένων από προηγούμενη συνεδρία. Να αντικατασταθεί η τοπική βάση δεδομένων με αυτήν που είναι αποθηκευμένη στον διακομιστή; Επιλέξτε Αντικατάσταση για να συνεχίσετε ή Άκυρο για να διατηρήσετε την κατάσταση και να συνεχίσετε αργότερα.</string>
     <string name="webdav_database_restoring">Γίνεται αντικατάσταση της βάσης δεδομένων, περιμένετε…</string>
     <string name="webdav_error_authentication">Αποτυχία ελέγχου ταυτότητας</string>
     <string name="webdav_error_permission">Δεν επιτρέπεται η πρόσβαση</string>

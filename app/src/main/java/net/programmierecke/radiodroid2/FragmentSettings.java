@@ -1272,10 +1272,9 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         SharedPreferences preferences = requireContext().getSharedPreferences(WebDavBackupWorker.RESULT_PREFS, Context.MODE_PRIVATE);
         String fav = preferences.getString("fav", null);
         String db = preferences.getString("db", null);
-        if (fav == null && db == null) {
-            checkPendingWebDavDatabaseRestore(null, false);
-            return;
-        }
+        // 不再自动检查待确认的数据库恢复：该状态只在用户主动进入"恢复"流程时提示，
+        // 避免备份操作或打开本页面时弹出与当前操作无关的数据库替换确认弹窗
+        if (fav == null && db == null) return;
         boolean restore = preferences.getBoolean("restore", false);
         preferences.edit().clear().apply();
 
@@ -1502,6 +1501,8 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
 
     private void showWebDavOperationDialog(boolean restore) {
         if (!isActivityUsable()) return;
+        // 仅当用户主动进入恢复流程时，才提示上次未完成的数据库替换
+        if (restore && showPendingWebDavDatabaseRestoreIfAny()) return;
         String[] options = {getString(R.string.webdav_favourites), getString(R.string.webdav_database), getString(R.string.webdav_both)};
         new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
                 .setTitle(restore ? R.string.webdav_restore : R.string.webdav_backup)
@@ -1524,19 +1525,41 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 }).show();
     }
 
+    // 检查是否有上次未确认的数据库恢复：存在时提示"继续替换 / 取消"并返回 true。
+    // 用户点取消或返回键时保留该状态，下次进入恢复流程仍可继续。
+    private boolean showPendingWebDavDatabaseRestoreIfAny() {
+        SharedPreferences preferences = requireContext().getSharedPreferences("webdav_pending_restore", Context.MODE_PRIVATE);
+        String path = preferences.getString("database", null);
+        File file = path == null ? null : new File(path);
+        if (file == null || !file.isFile()) {
+            if (path != null) preferences.edit().clear().apply();
+            return false;
+        }
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
+                .setTitle(R.string.webdav_restore)
+                .setMessage(R.string.webdav_pending_database_restore_confirm)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.webdav_database_replace, (dialog, which) -> applyWebDavDatabaseRestore(file, preferences, null, true))
+                .show();
+        return true;
+    }
+
     private void showWebDavFavouritesRestoreDialog(WebDavBackupType type) {
         if (!isActivityUsable()) return;
-        String[] options = {getString(R.string.webdav_restore_overwrite), getString(R.string.webdav_restore_merge)};
+        // 注意：AlertDialog 同时设置 message 与 setItems 时，AlertController 只渲染 message，
+        // 列表项不会被加入布局（用户只看到说明和一个"取消"按钮，无法选择恢复方式），因此这里改用三个按钮。
         new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
                 .setTitle(R.string.webdav_restore)
                 .setMessage(R.string.webdav_restore_favourites_confirm)
-                .setItems(options, (dialog, which) -> {
-                    String favMode = which == 0 ? WebDavBackupWorker.MODE_OVERWRITE : WebDavBackupWorker.MODE_MERGE;
-                    WebDavBackupWorker.enqueue(requireContext(), type, true, favMode);
-                    Toast.makeText(requireContext(), R.string.webdav_task_started, Toast.LENGTH_SHORT).show();
-                })
+                .setNeutralButton(R.string.webdav_restore_overwrite, (dialog, which) -> startWebDavFavouritesRestore(type, WebDavBackupWorker.MODE_OVERWRITE))
+                .setPositiveButton(R.string.webdav_restore_merge, (dialog, which) -> startWebDavFavouritesRestore(type, WebDavBackupWorker.MODE_MERGE))
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
+    }
+
+    private void startWebDavFavouritesRestore(WebDavBackupType type, String favMode) {
+        WebDavBackupWorker.enqueue(requireContext(), type, true, favMode);
+        Toast.makeText(requireContext(), R.string.webdav_task_started, Toast.LENGTH_SHORT).show();
     }
 
  private void setupBluetoothPermissionPreference() {

@@ -836,6 +836,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="webdav_restore_merge">Объединить</string>
     <string name="webdav_database_restore_confirm">Заменить локальную базу данных базой данных, сохраненной на сервере WebDAV?</string>
     <string name="webdav_database_replace">Заменить</string>
+    <string name="webdav_pending_database_restore_confirm">Обнаружено незавершённое восстановление базы данных из прошлого сеанса. Заменить локальную базу данных сохранённой на сервере? Выберите Заменить для продолжения или Отмена, чтобы сохранить состояние и продолжить позже.</string>
     <string name="webdav_database_restoring">Идет замена базы данных, подождите…</string>
     <string name="webdav_error_authentication">Ошибка аутентификации</string>
     <string name="webdav_error_permission">Доступ запрещён</string>

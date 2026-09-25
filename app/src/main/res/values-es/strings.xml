@@ -828,6 +828,7 @@ Antes de la operación se guarda una copia de sus emisoras favoritas actuales en
     <string name="webdav_restore_merge">Combinar</string>
     <string name="webdav_database_restore_confirm">¿Reemplazar la base de datos local por la base de datos guardada en el servidor WebDAV?</string>
     <string name="webdav_database_replace">Reemplazar</string>
+    <string name="webdav_pending_database_restore_confirm">Hay una restauración de la base de datos pendiente de una sesión anterior. ¿Reemplazar la base de datos local por la guardada en el servidor? Elige Reemplazar para continuar o Cancelar para conservarla y seguir más tarde.</string>
     <string name="webdav_database_restoring">Reemplazando la base de datos, espere por favor…</string>
     <string name="webdav_error_authentication">Error de autenticación</string>
     <string name="webdav_error_permission">Permiso denegado</string>
