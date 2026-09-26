@@ -34,6 +34,11 @@
     <attr name="presetWindowBackground" format="reference" />
     <attr name="presetSurfaceBackground" format="reference" />
 
+    <!-- 电台可用性状态底色（UI 美化）：「当前不可用」与「已在服务器删除」的列表卡片底色。
+         亮色主题取浅底（配深色文字），暗色主题取深底（配浅色文字），保证卡片内文字始终可读。 -->
+    <attr name="colorStationUnavailable" format="reference" />
+    <attr name="colorStationDeleted" format="reference" />
+
     <!-- 颜色角色（UI 美化）：页面里一律引用这些角色，不再出现硬编码色值。
          窗口色 < 卡片色 < 弹层色，形成由暗到亮（暗色主题下由深到浅）的三层表面层次。 -->
     <!-- 卡片 / 面板表面：列表卡片、底部导航、标签栏 -->

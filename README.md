@@ -324,7 +324,7 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 
 #### 配色方案
 
-在设置中提供 8 套预设配色：经典蓝（默认）、湖光青、森林绿、紫罗兰、玫瑰粉、日落橙、石墨灰、纯黑。每套配色同时为亮色主题和暗色主题准备了一组色值，色相一致、明暗分别调优，保证两种主题下都清晰美观；配色会统一作用于顶栏、状态栏、播放条、按钮、选中文字、滑块、标签下划线与「正在播放」高亮方框。其中纯黑配色在暗色主题下会进一步把窗口与内容面切换为纯黑系，适合 OLED 屏幕省电显示。
+在设置中提供 8 套预设配色：经典蓝（默认）、湖光青、森林绿、紫罗兰、玫瑰粉、日落橙、石墨灰、纯黑。每套配色同时为亮色主题和暗色主题准备了一组色值，色相一致、明暗分别调优，保证两种主题下都清晰美观；配色会统一作用于顶栏、状态栏、播放条、按钮、选中文字、滑块、标签下划线与「正在播放」高亮方框。其中纯黑配色在暗色主题下会进一步把窗口与内容面切换为纯黑系，适合 OLED 屏幕省电显示。选择页为每套配色提供实时色卡缩略图（顶栏主色块 + 强调色点 + 选中标记），切换配色或旋转屏幕后状态栏与导航栏也会同步刷新。
 
 #### 界面美化
 
@@ -332,6 +332,7 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 
 - **设计令牌**：全项目间距、圆角、字号统一到一套设计令牌（4dp 间距基准、7 级字号），消除同类控件尺寸与留白参差的问题
 - **颜色归位**：原散落在布局里的硬编码颜色统一收敛为主题属性，随亮暗主题与 8 套预设配色联动，不再出现换配色后部分元素不变色
+- **状态标记**：失效（当前不可用）与已被服务器删除的电台底色由硬编码纯黄 / 纯红改为主题属性，亮色主题用浅底 + 深色文字、暗色主题用深底 + 浅色文字，电台名在任何主题下都清晰可读
 - **主外壳**：标签栏改为浅色底 + 强调色选中态与加粗圆角下划线（原先选中/未选中文字色都被写死为白色，选中态几乎不可辨）；抽屉与底部导航文字色改为跟随配色；内容区与卡片分层，窗口留出层次感
 - **列表**：电台列表项改为卡片（12dp 圆角、无阴影、留白分隔，替代原直角实线分隔线），补齐图标模式的点击反馈，统一行高与图标尺寸，建立标题/副标题/标签三级文字层级
 - **播放器**：迷你播放条与全屏播放器统一封面圆角与柔和阴影，控制按钮改为圆形并保证 48dp 触摸目标，信息层级重排
@@ -340,6 +341,7 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 - **动效**：列表卡片按下有轻微抬升与微缩反馈，迷你播放条与全屏播放器切换补 150ms 淡入淡出；过渡统一控制在 200ms 以内，并尊重系统「关闭动画」设置
 - **状态反馈**：列表空态与错误态改为居中的矢量图标 + 主文案 + 操作按钮，搜索类列表补居中加载态，加载态与空态互斥，避免结果返回前误闪
 - **空态覆盖**：录音、曲目历史、闹钟等列表统一空态样式（居中矢量图标 + 提示文案）；全屏播放器内分页的空态按剩余可视高度居中，不再被裁切
+- **曲目列表**：全屏播放器内的「本台曲目 / 曲目历史 / 录音」三个列表补齐 1dp 行间分割线，条目不再粘连
 - **表单统一**：WebDAV 服务器配置弹窗改用 Material `TextInputLayout` 外描边表单（浮动标签、密码可见性切换），与设置页其它表单外观一致
 
 #### 均衡器
@@ -687,7 +689,7 @@ Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elemen
 
 #### Color Schemes
 
-Settings offer 8 preset color schemes: Classic Blue (default), Lake Teal, Forest Green, Violet, Rose, Sunset Orange, Graphite, and Pure Black. Each scheme defines a separate set of colors for the light and dark themes — same hue, individually tuned brightness — so they stay clear and attractive in both. A scheme applies consistently to the toolbar, status bar, player bar, buttons, selected text, sliders, tab underline, and the "now playing" highlight box. Pure Black additionally switches the window and content surfaces to true-black tones in dark mode, ideal for power-saving on OLED screens.
+Settings offer 8 preset color schemes: Classic Blue (default), Lake Teal, Forest Green, Violet, Rose, Sunset Orange, Graphite, and Pure Black. Each scheme defines a separate set of colors for the light and dark themes — same hue, individually tuned brightness — so they stay clear and attractive in both. A scheme applies consistently to the toolbar, status bar, player bar, buttons, selected text, sliders, tab underline, and the "now playing" highlight box. Pure Black additionally switches the window and content surfaces to true-black tones in dark mode, ideal for power-saving on OLED screens. The picker shows a live color swatch for every scheme (toolbar color block + accent dot + selection mark), and the status and navigation bars refresh as soon as you switch schemes or rotate the screen.
 
 #### UI Polish
 
@@ -695,6 +697,7 @@ A full visual pass over the original interface, leaving page structure, navigati
 
 - **Design tokens**: project-wide spacing, corner radii and type scale unified into one token set (4dp spacing base, 7-step type scale)
 - **Color roles**: hardcoded colors scattered across layouts consolidated into theme attributes, so every element follows the light/dark theme and the 8 preset color schemes
+- **Status markers**: the background of unavailable and server-deleted stations moved from hardcoded pure yellow/red to theme attributes — light tints with dark text in the light theme, dark tints with light text in the dark theme, so station names stay readable in either theme
 - **App shell**: the tab bar now uses a surface background with an accent-colored selected state and a thicker rounded underline (previously both selected and unselected text colors were hardcoded white, making the selection nearly invisible); drawer and bottom navigation text colors follow the scheme; content and cards are layered for depth
 - **Lists**: station rows are now cards (12dp radius, no shadow, whitespace instead of straight divider lines), with click feedback in icon mode, consistent row heights and icon sizes, and a three-level text hierarchy
 - **Player**: mini player and full-screen player share rounded artwork with a soft shadow and circular control buttons meeting the 48dp touch target
@@ -703,6 +706,7 @@ A full visual pass over the original interface, leaving page structure, navigati
 - **Motion**: a subtle press lift/scale on list cards and a 150ms crossfade when switching between the mini player and the full-screen player; all transitions stay under 200ms and respect the system "animations off" setting
 - **State feedback**: empty and error states now show a centered vector icon with primary text and an action button; search lists gained a centered loading state that is mutually exclusive with the empty state to avoid flashing
 - **Empty-state coverage**: recordings, song history and alarms share one empty-state style (centered vector icon + caption); empty states inside the full-screen player's pager are centered within the remaining visible height instead of being clipped
+- **Track lists**: the "current station tracks / song history / recordings" lists in the full-screen player gained 1dp row dividers so entries no longer run together
 - **Unified forms**: the WebDAV server configuration dialog now uses Material `TextInputLayout` outlined fields (floating label, password visibility toggle), matching the other settings forms
 
 #### ️ Other Features

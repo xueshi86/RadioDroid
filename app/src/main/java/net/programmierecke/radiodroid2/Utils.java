@@ -11,6 +11,7 @@ import android.content.pm.ShortcutInfo;
 import android.graphics.drawable.Icon;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -500,8 +501,12 @@ public class Utils {
 
     /** 当前预设 + 当前亮/暗主题所对应的配色覆盖样式 */
     public static int getThemePresetOverlayResId(final Context context) {
-        boolean dark = getThemeResId(context) == R.style.MyMaterialTheme_Dark;
-        switch (getThemePreset(context)) {
+        return getThemePresetOverlayResId(getThemePreset(context), isDarkTheme(context));
+    }
+
+    /** 指定预设 + 指定亮/暗主题所对应的配色覆盖样式（供色卡预览等场景按值查询） */
+    public static int getThemePresetOverlayResId(final String preset, boolean dark) {
+        switch (preset == null ? THEME_PRESET_DEFAULT : preset) {
             case "lake_teal":
                 return dark ? R.style.ThemePreset_LakeTeal_Dark : R.style.ThemePreset_LakeTeal;
             case "forest_green":
@@ -523,11 +528,49 @@ public class Utils {
     }
 
     /**
+     * 读取某套预设「主色 / 强调色」的实际色值，用于设置页色卡缩略图。
+     * 直接解析 ThemePreset 覆盖样式，因此与主题真正生效的颜色始终一致，
+     * 无需在 Java 里再维护一份色值表。
+     * <p>
+     * 注意不能直接写成 {@code context.getTheme().obtainStyledAttributes(styleResId, attrs)}：
+     * 该重载会把「当前主题里已生效的值」当作基准，未被目标样式覆盖到的属性会拿到当前预设的颜色
+     * （实测 8 套预设的强调色点会全部变成当前预设的强调色）。因此这里新建一个干净的 Theme，
+     * 只叠加目标预设的覆盖样式，让两个属性都从该样式解析，结果与切换后的真实主题一致。
+     */
+    public static int[] getThemePresetColors(final Context context, final String preset, boolean dark) {
+        Resources.Theme theme = context.getResources().newTheme();
+        theme.applyStyle(getThemePresetOverlayResId(preset, dark), true);
+        TypedArray ta = theme.obtainStyledAttributes(
+                new int[]{R.attr.presetPrimaryColor, R.attr.presetAccentColor});
+        try {
+            return new int[]{ta.getColor(0, 0), ta.getColor(1, 0)};
+        } finally {
+            ta.recycle();
+        }
+    }
+
+    /**
      * 在 setTheme() 之后、setContentView() 之前调用，把配色预设叠加到当前主题。
      * 对话框 / 底部弹窗主题会继承 Activity 主题，故无需单独调用。
      */
     public static void applyThemePreset(final Context context) {
         context.getTheme().applyStyle(getThemePresetOverlayResId(context), true);
+    }
+
+    /**
+     * 把当前预设的主色同步到系统栏（状态栏 / 导航栏）。
+     * <p>
+     * 系统栏颜色仅在主题里声明（android:statusBarColor=?attr/presetPrimaryColor）时，
+     * Activity 重建（应用内切换预设、旋转屏幕）会复用已存在的窗口装饰，
+     * 系统栏会回落成基础主题色，因此需要在 onCreate 里显式同步一次。
+     */
+    public static void applyThemePresetToSystemBars(final Activity activity) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return;
+        }
+        int presetPrimaryColor = getThemeColor(activity, R.attr.presetPrimaryColor);
+        activity.getWindow().setStatusBarColor(presetPrimaryColor);
+        activity.getWindow().setNavigationBarColor(presetPrimaryColor);
     }
 
     /** 解析当前主题中某个属性的颜色值（例如 ?attr/presetAccentColor） */

@@ -15,6 +15,8 @@
         <item name="presetWindowBackground">@color/windowBackground</item>
         <item name="presetSurfaceBackground">@color/colorSurfaceElevated</item>
         <item name="colorSeparator">@color/colorSeparator</item>
+        <item name="colorStationUnavailable">@color/colorStationUnavailable</item>
+        <item name="colorStationDeleted">@color/colorStationDeleted</item>
         <!-- 颜色角色（UI 美化）：布局与样式只引用这些角色，不再写死色值 -->
         <item name="colorSurfaceCard">@color/colorSurfaceCard</item>
         <item name="colorSurfaceElevated">@color/colorSurfaceElevated</item>
@@ -48,6 +50,8 @@
         <item name="presetWindowBackground">@color/windowBackgroundDark</item>
         <item name="presetSurfaceBackground">@color/colorSurfaceElevatedDark</item>
         <item name="colorSeparator">@color/colorSeparatorDark</item>
+        <item name="colorStationUnavailable">@color/colorStationUnavailableDark</item>
+        <item name="colorStationDeleted">@color/colorStationDeletedDark</item>
         <!-- 颜色角色（UI 美化）：布局与样式只引用这些角色，不再写死色值 -->
         <item name="colorSurfaceCard">@color/colorSurfaceCardDark</item>
         <item name="colorSurfaceElevated">@color/colorSurfaceElevatedDark</item>

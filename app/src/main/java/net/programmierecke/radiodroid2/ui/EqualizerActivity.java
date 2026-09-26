@@ -155,6 +155,8 @@ public class EqualizerActivity extends AppCompatActivity {
         Utils.applyThemePreset(this);
 
         setContentView(R.layout.activity_equalizer);
+        // 系统栏颜色显式同步一次：Activity 重建时窗口装饰可能被复用，仅靠主题声明会回落成基础主题色
+        Utils.applyThemePresetToSystemBars(this);
 
         // Read station-specific extras
         stationUuid = getIntent().getStringExtra(EXTRA_STATION_UUID);

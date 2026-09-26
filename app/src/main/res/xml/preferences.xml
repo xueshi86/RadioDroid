@@ -105,7 +105,7 @@
             search:summary=""
             android:summary="%s"/>
 
-        <ListPreference
+        <net.programmierecke.radiodroid2.ui.ThemePresetPreference
             android:defaultValue="classic_blue"
             android:entries="@array/theme_preset_entries"
             android:entryValues="@array/theme_preset_values"

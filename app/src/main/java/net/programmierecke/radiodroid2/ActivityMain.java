@@ -207,6 +207,8 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         // 预设配色：在 setTheme 之后、setContentView 之前叠加，保证窗口底色/顶栏/播放条等一次到位
         Utils.applyThemePreset(this);
         setContentView(R.layout.layout_main);
+        // 系统栏颜色显式同步一次：Activity 重建时窗口装饰可能被复用，仅靠主题声明会回落成基础主题色
+        Utils.applyThemePresetToSystemBars(this);
 
         Log.d(TAG, "FilesDir: "+getFilesDir().getAbsolutePath());
         Log.d(TAG, "CacheDir: "+getCacheDir().getAbsolutePath());

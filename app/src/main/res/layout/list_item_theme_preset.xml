@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 配色方案选项行（Issue #50）：左侧「顶栏主色块 + 强调色点」色卡缩略图，右侧预设名称与选中标记。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center_vertical"
+    android:minHeight="@dimen/touch_target_min"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/space_lg"
+    android:paddingEnd="@dimen/space_lg"
+    android:paddingLeft="@dimen/space_lg"
+    android:paddingRight="@dimen/space_lg">
+
+    <FrameLayout
+        android:layout_width="48dp"
+        android:layout_height="26dp">
+
+        <View
+            android:id="@+id/viewSwatchPrimary"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <View
+            android:id="@+id/viewSwatchAccent"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="5dp"
+            android:layout_marginBottom="5dp"
+            android:layout_marginRight="5dp" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/textViewThemePresetName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/space_md"
+        android:layout_marginLeft="@dimen/space_md"
+        android:layout_weight="1"
+        android:textAppearance="@style/TextAppearance.RadioDroid.Title" />
+
+    <RadioButton
+        android:id="@+id/radioThemePresetSelected"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="false"
+        android:focusable="false" />
+
+</LinearLayout>

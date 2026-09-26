@@ -7,7 +7,6 @@
     android:clickable="true"
     android:orientation="vertical"
     android:paddingTop="@dimen/space_sm"
-    android:paddingBottom="@dimen/space_sm"
     android:focusable="true">
 
     <TextView
@@ -27,5 +26,12 @@
         android:layout_marginEnd="@dimen/space_lg"
         android:maxLines="1"
         android:textAppearance="@style/TextAppearance.RadioDroid.Caption" />
+
+    <!-- 行间分割线（UI 美化）：浅色主题下录音条目不再粘连 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/divider_thickness"
+        android:layout_marginTop="@dimen/space_sm"
+        android:background="?attr/colorSeparator" />
 
 </LinearLayout>

@@ -296,22 +296,23 @@ public class ItemAdapterStation
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext().getApplicationContext());
         boolean useCircularIcons = Utils.useCircularIcons(getContext());
-        // 列表项根节点已是卡片：直接对 itemView 设背景色会抹掉圆角与卡片面色，改为设置卡片背景色
+        // 列表项根节点已是卡片：直接对 itemView 设背景色会抹掉圆角与卡片面色，改为设置卡片背景色。
+        // 失效/已删除的标记底色统一走主题属性：亮色主题浅底深字，暗色主题深底浅字，避免文字与底色撞色。
         if (holder.itemView instanceof MaterialCardView) {
             MaterialCardView card = (MaterialCardView) holder.itemView;
             if (station.DeletedOnServer) {
-                // 已被服务器删除：红色底
-                card.setCardBackgroundColor(0xFFFF0000);
+                // 已被服务器删除
+                card.setCardBackgroundColor(Utils.getThemeColor(getContext(), R.attr.colorStationDeleted));
             } else if (!station.Working) {
-                // 当前不可用：黄色底
-                card.setCardBackgroundColor(0xFFFFFF00);
+                // 当前不可用
+                card.setCardBackgroundColor(Utils.getThemeColor(getContext(), R.attr.colorStationUnavailable));
             } else {
                 card.setCardBackgroundColor(Utils.getThemeColor(getContext(), R.attr.colorSurfaceCard));
             }
         } else if (station.DeletedOnServer) {
-            holder.itemView.setBackgroundColor(0xFFFF0000);
+            holder.itemView.setBackgroundColor(Utils.getThemeColor(getContext(), R.attr.colorStationDeleted));
         } else if (!station.Working) {
-            holder.itemView.setBackgroundColor(0xFFFFFF00);
+            holder.itemView.setBackgroundColor(Utils.getThemeColor(getContext(), R.attr.colorStationUnavailable));
         } else {
             holder.itemView.setBackgroundColor(0x00000000);
         }

@@ -48,10 +48,11 @@
         android:layout_marginStart="@dimen/space_sm"
         android:layout_marginLeft="@dimen/space_sm"
         android:layout_marginEnd="@dimen/space_sm"
+        android:layout_marginBottom="@dimen/space_xs"
         android:ellipsize="marquee"
         android:singleLine="true"
         android:textAppearance="@style/TextAppearance.RadioDroid.BodySmall"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/dividerBottom"
         app:layout_constraintEnd_toStartOf="@id/textViewPlayTime"
         app:layout_constraintStart_toEndOf="@id/imageViewStationIcon"
         app:layout_constraintTop_toBottomOf="@id/textViewTrackName" />
@@ -65,8 +66,18 @@
         android:gravity="end|center_vertical"
         android:maxLines="2"
         android:textAppearance="@style/TextAppearance.RadioDroid.Caption"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/dividerBottom"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- 行间分割线（UI 美化）：浅色主题下曲目条目不再粘连 -->
+    <View
+        android:id="@+id/dividerBottom"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/divider_thickness"
+        android:background="?attr/colorSeparator"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
