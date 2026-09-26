@@ -35,10 +35,11 @@
 
         <ImageButton
             android:id="@+id/buttonMore"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="@dimen/touch_target_min"
+            android:layout_height="@dimen/touch_target_min"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/image_button_more"
+            android:padding="@dimen/space_md"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_more" />
@@ -96,6 +97,7 @@
             android:id="@+id/buttonMPDDecreaseVolume"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:minHeight="@dimen/touch_target_min"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/detail_play"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -109,6 +111,7 @@
             android:id="@+id/buttonMPDIncreaseVolume"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:minHeight="@dimen/touch_target_min"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/detail_play"
             app:layout_constraintBottom_toBottomOf="parent"

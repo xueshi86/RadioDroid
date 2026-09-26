@@ -3,9 +3,9 @@
     android:id="@android:id/text1"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="36dp"
+    android:minHeight="@dimen/touch_target_min"
     android:textAppearance="?android:attr/textAppearanceListItemSmall"
     android:gravity="center_vertical"
-    android:paddingStart="8dp"
-    android:paddingEnd="8dp"
+    android:paddingStart="@dimen/space_sm"
+    android:paddingEnd="@dimen/space_sm"
     android:background="?android:attr/activatedBackgroundIndicator" />
