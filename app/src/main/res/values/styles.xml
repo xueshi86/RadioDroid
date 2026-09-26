@@ -27,6 +27,13 @@
         <item name="colorPrimaryDark">?attr/presetPrimaryColor</item>
         <item name="colorAccent">?attr/presetAccentColor</item>
         <item name="colorTabUnderline">?attr/presetAccentBrightColor</item>
+        <!-- 抽屉与底栏文字/底色（API16-20 同样赋值，避免引用落空）：
+             选中态走预设强调色，未选中态走文字角色，底栏底色用卡片面 -->
+        <item name="menuTextColorSelected">?attr/presetAccentColor</item>
+        <item name="menuTextColorDefault">?attr/colorTextPrimary</item>
+        <item name="menuBottomTextColorSelected">?attr/presetAccentColor</item>
+        <item name="menuBottomTextColorDefault">?attr/colorTextSecondary</item>
+        <item name="menuBottomBackgroundColor">?attr/colorSurfaceCard</item>
         <item name="actionButtonStyle">@style/ToolbarActionButton</item>
     </style>
     
@@ -51,6 +58,12 @@
         <item name="colorPrimaryDark">?attr/presetPrimaryColor</item>
         <item name="colorAccent">?attr/presetAccentColor</item>
         <item name="colorTabUnderline">?attr/presetAccentBrightColor</item>
+        <!-- 抽屉与底栏文字/底色 -->
+        <item name="menuTextColorSelected">?attr/presetAccentColor</item>
+        <item name="menuTextColorDefault">?attr/colorTextPrimary</item>
+        <item name="menuBottomTextColorSelected">?attr/presetAccentColor</item>
+        <item name="menuBottomTextColorDefault">?attr/colorTextSecondary</item>
+        <item name="menuBottomBackgroundColor">?attr/colorSurfaceCard</item>
         <item name="actionButtonStyle">@style/ToolbarActionButton</item>
     </style>
     
@@ -251,11 +264,11 @@
         <item name="android:indeterminateDrawable">@drawable/progress_circle</item>
     </style>
     
-    <!-- Toolbar action button style with reduced padding -->
+    <!-- Toolbar action button style（触摸目标统一 ≥48dp） -->
     <style name="ToolbarActionButton" parent="Widget.AppCompat.ActionButton">
-        <item name="android:minWidth">40dp</item>
-        <item name="android:paddingLeft">4dp</item>
-        <item name="android:paddingRight">4dp</item>
+        <item name="android:minWidth">@dimen/touch_target_min</item>
+        <item name="android:paddingLeft">@dimen/space_xs</item>
+        <item name="android:paddingRight">@dimen/space_xs</item>
     </style>
 
     <!-- Icon button style -->

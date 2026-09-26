@@ -43,7 +43,7 @@
                         <androidx.appcompat.widget.Toolbar
                             android:id="@+id/my_awesome_toolbar"
                             android:layout_width="match_parent"
-                            android:layout_height="?attr/actionBarSize"
+                            android:layout_height="@dimen/appbar_height"
                             android:background="?attr/colorPrimary"
                             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
                             app:popupTheme="?attr/actionBarPopupTheme">
@@ -52,24 +52,29 @@
                                 android:id="@+id/progressBarLoading"
                                 android:layout_width="34dp"
                                 android:layout_height="34dp"
-                                android:layout_marginStart="22dp"
-                                android:layout_marginLeft="22dp"
+                                android:layout_marginStart="@dimen/space_xl"
+                                android:layout_marginLeft="@dimen/space_xl"
                                 android:indeterminate="true"
+                                android:indeterminateTint="@android:color/white"
                                 android:theme="@style/ProgressBarCircle"
                                 android:visibility="gone" />
                         </androidx.appcompat.widget.Toolbar>
 
+                        <!-- 标签栏移到主色顶栏之下、内容面之上：
+                             底色用卡片面，选中态靠强调色文字 + 短下划线区分（原先选中/未选中同色，看不出选中） -->
                         <com.google.android.material.tabs.TabLayout
                             android:id="@+id/tabs"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_gravity="bottom"
-                            android:background="?attr/colorPrimary"
+                            android:background="?attr/colorSurfaceCard"
                             android:visibility="gone"
-                            app:tabIndicatorColor="?attr/colorTabUnderline"
+                            app:tabIndicatorColor="?attr/presetAccentColor"
+                            app:tabIndicatorFullWidth="false"
+                            app:tabIndicatorHeight="3dp"
                             app:tabMode="scrollable"
-                            app:tabSelectedTextColor="@color/windowBackground"
-                            app:tabTextColor="@color/windowBackground" />
+                            app:tabSelectedTextColor="?attr/presetAccentColor"
+                            app:tabTextColor="?attr/colorTextSecondary" />
                     </LinearLayout>
 
 
@@ -80,7 +85,7 @@
                 android:id="@+id/containerView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginBottom="?android:attr/actionBarSize"
+                android:layout_marginBottom="@dimen/mini_player_height"
                 android:orientation="vertical"
                 app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
@@ -94,7 +99,7 @@
             android:layout_height="match_parent"
             android:layout_gravity="start"
             android:layout_marginTop="0dp"
-            android:background="?android:attr/windowBackground"
+            android:background="?attr/colorSurfaceCard"
             app:itemIconTint="@color/menu_text_color"
             app:itemTextColor="@color/menu_text_color"
             app:menu="@menu/menu_drawer" />
@@ -102,11 +107,19 @@
     </androidx.drawerlayout.widget.DrawerLayout>
 
 
+    <!-- 底栏与内容之间的 1dp 弱分隔线：底栏改用卡片面后需要与窗口底区分开 -->
+    <View
+        android:id="@+id/bottomNavDivider"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/divider_thickness"
+        android:background="?attr/colorSeparator" />
+
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?attr/menuBottomBackgroundColor"
+        android:minHeight="@dimen/appbar_height"
+        android:background="?attr/colorSurfaceCard"
         app:itemBackground="?attr/selectableItemBackgroundBorderless"
         app:itemHorizontalTranslationEnabled="true"
         app:itemIconTint="@color/menu_bottom_text_color"

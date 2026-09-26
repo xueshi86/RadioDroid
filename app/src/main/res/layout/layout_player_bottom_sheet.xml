@@ -8,13 +8,13 @@
     android:translationZ="10dp"
     app:gestureInsetBottomIgnored="true"
     app:behavior_hideable="false"
-    app:behavior_peekHeight="?android:attr/actionBarSize"
+    app:behavior_peekHeight="@dimen/mini_player_height"
     app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
     <FrameLayout
         android:id="@+id/fragment_player_small"
         android:layout_width="match_parent"
-        android:layout_height="?android:attr/actionBarSize"
+        android:layout_height="@dimen/mini_player_height"
         android:tag="1" />
 
     <FrameLayout

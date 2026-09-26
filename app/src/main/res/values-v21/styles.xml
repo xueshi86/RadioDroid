@@ -31,6 +31,7 @@
         <item name="colorRipple">@color/colorRippleLight</item>
         <item name="android:windowBackground">?attr/presetWindowBackground</item>
         <item name="android:statusBarColor">?attr/presetPrimaryColor</item>
+        <item name="android:navigationBarColor">?attr/presetPrimaryColor</item>
         <item name="colorPrimary">?attr/presetPrimaryColor</item>
         <item name="colorPrimaryDark">?attr/presetPrimaryColor</item>
         <item name="colorAccent">?attr/presetAccentColor</item>
@@ -43,15 +44,15 @@
         <item name="colorPlayerShadow">@color/colorPlayerShadow</item>
         <item name="tagBackgroundColor">@color/tagBackgroundColor</item>
 
-        <item name="menuTextColorSelected">@color/menuTextColorSelected</item>
-        <item name="menuTextColorDefault">@color/menuTextColorDefault</item>
+        <item name="menuTextColorSelected">?attr/presetAccentColor</item>
+        <item name="menuTextColorDefault">?attr/colorTextPrimary</item>
         <item name="itemTextAppearance">@style/MenuTextAppearance</item>
 
         <item name="actionBarPopupTheme">@style/ThemeOverlay.AppCompat.Light</item>
 
-        <item name="menuBottomTextColorSelected">@color/menuBottomTextColorSelected</item>
-        <item name="menuBottomTextColorDefault">@color/menuBottomTextColorDefault</item>
-        <item name="menuBottomBackgroundColor">?attr/presetAccentColor</item>
+        <item name="menuBottomTextColorSelected">?attr/presetAccentColor</item>
+        <item name="menuBottomTextColorDefault">?attr/colorTextSecondary</item>
+        <item name="menuBottomBackgroundColor">?attr/colorSurfaceCard</item>
 
         <item name="swipeDeleteIconColor">@color/swipeDeleteIconColor</item>
         <item name="swipeDeleteBackgroundColor">@color/swipeDeleteBackgroundColor</item>
@@ -94,6 +95,7 @@
         <item name="colorRipple">@color/colorRippleDark</item>
         <item name="android:windowBackground">?attr/presetWindowBackground</item>
         <item name="android:statusBarColor">?attr/presetPrimaryColor</item>
+        <item name="android:navigationBarColor">?attr/presetPrimaryColor</item>
         <item name="colorPrimary">?attr/presetPrimaryColor</item>
         <item name="colorPrimaryDark">?attr/presetPrimaryColor</item>
         <item name="colorAccent">?attr/presetAccentColor</item>
@@ -107,15 +109,15 @@
 
         <item name="tagBackgroundColor">@color/tagBackgroundColorDark</item>
 
-        <item name="menuTextColorSelected">@color/menuTextColorSelectedDark</item>
-        <item name="menuTextColorDefault">@color/menuTextColorDefaultDark</item>
+        <item name="menuTextColorSelected">?attr/presetAccentColor</item>
+        <item name="menuTextColorDefault">?attr/colorTextPrimary</item>
         <item name="android:itemTextAppearance">@style/MenuTextAppearance.Dark</item>
 
         <item name="actionBarPopupTheme">@style/ThemeOverlay.AppCompat.Dark</item>
 
-        <item name="menuBottomTextColorSelected">@color/menuBottomTextColorSelectedDark</item>
-        <item name="menuBottomTextColorDefault">@color/menuBottomTextColorDefaultDark</item>
-        <item name="menuBottomBackgroundColor">@color/menuBottomBackgroundColorDark</item>
+        <item name="menuBottomTextColorSelected">?attr/presetAccentColor</item>
+        <item name="menuBottomTextColorDefault">?attr/colorTextSecondary</item>
+        <item name="menuBottomBackgroundColor">?attr/colorSurfaceCard</item>
 
         <item name="swipeDeleteIconColor">@color/swipeDeleteIconColorDark</item>
         <item name="swipeDeleteBackgroundColor">@color/swipeDeleteBackgroundColorDark</item>
