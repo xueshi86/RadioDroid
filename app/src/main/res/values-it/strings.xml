@@ -484,12 +484,7 @@
     <string name="webdav_result_pending">In attesa di conferma</string>
     <string name="webdav_result_canceled">Annullato</string>
     <string name="webdav_restore_failed">Ripristino del database non riuscito; il database originale è stato mantenuto</string>
-    <string name="webdav_restore_favourites_confirm">Il ripristino dei preferiti utilizzerà il file dei preferiti salvato sul server.
-
-• Sostituisci: l’elenco locale corrisponderà esattamente al server; le stazioni esistenti solo in locale verranno rimosse.
-• Unisci: mantiene tutte le stazioni locali e aggiunge le stazioni presenti solo sul server.
-
-Prima dell’operazione verrà salvata una copia dei preferiti attuali su questo dispositivo.</string>
+    <string name="webdav_restore_favourites_confirm">Il ripristino dei preferiti utilizzerà il file dei preferiti salvato sul server.\n\n• Sostituisci: l’elenco locale corrisponderà esattamente al server; le stazioni esistenti solo in locale verranno rimosse.\n• Unisci: mantiene tutte le stazioni locali e aggiunge le stazioni presenti solo sul server.\n\nPrima dell’operazione verrà salvata una copia dei preferiti attuali su questo dispositivo.</string>
     <string name="webdav_restore_overwrite">Sostituisci</string>
     <string name="webdav_restore_merge">Unisci</string>
     <string name="webdav_database_restore_confirm">Sostituire il database locale con il database salvato sul server WebDAV?</string>

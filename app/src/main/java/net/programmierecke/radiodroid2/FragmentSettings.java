@@ -1556,15 +1556,27 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
 
     private void showWebDavFavouritesRestoreDialog(WebDavBackupType type) {
         if (!isActivityUsable()) return;
-        // 注意：AlertDialog 同时设置 message 与 setItems 时，AlertController 只渲染 message，
-        // 列表项不会被加入布局（用户只看到说明和一个"取消"按钮，无法选择恢复方式），因此这里改用三个按钮。
-        new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
+        // 说明文案为多行内容，且要求按钮顺序为「覆盖 / 合并 / 取消」、三键等距：
+        // AlertDialog 自带按钮栏顺序固定（中性/否定/肯定）且间距不均，故改用自定义内容区承载按钮。
+        // 必须用对话框主题 inflate，否则 ?attr/presetAccentColor 会按 Activity 主题解析。
+        android.view.ContextThemeWrapper themedContext = new android.view.ContextThemeWrapper(requireContext(), Utils.getAlertDialogThemeResId(requireContext()));
+        View dialogView = android.view.LayoutInflater.from(themedContext).inflate(R.layout.dialog_webdav_restore_favourites, null, false);
+
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
                 .setTitle(R.string.webdav_restore)
-                .setMessage(R.string.webdav_restore_favourites_confirm)
-                .setNeutralButton(R.string.webdav_restore_overwrite, (dialog, which) -> startWebDavFavouritesRestore(type, WebDavBackupWorker.MODE_OVERWRITE))
-                .setPositiveButton(R.string.webdav_restore_merge, (dialog, which) -> startWebDavFavouritesRestore(type, WebDavBackupWorker.MODE_MERGE))
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
+                .setView(dialogView)
+                .create();
+
+        dialogView.findViewById(R.id.buttonRestoreOverwrite).setOnClickListener(v -> {
+            dialog.dismiss();
+            startWebDavFavouritesRestore(type, WebDavBackupWorker.MODE_OVERWRITE);
+        });
+        dialogView.findViewById(R.id.buttonRestoreMerge).setOnClickListener(v -> {
+            dialog.dismiss();
+            startWebDavFavouritesRestore(type, WebDavBackupWorker.MODE_MERGE);
+        });
+        dialogView.findViewById(R.id.buttonRestoreCancel).setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     private void startWebDavFavouritesRestore(WebDavBackupType type, String favMode) {

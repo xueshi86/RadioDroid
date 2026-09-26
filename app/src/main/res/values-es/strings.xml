@@ -827,12 +827,7 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="webdav_result_pending">Pendiente de confirmación</string>
     <string name="webdav_result_canceled">Cancelado</string>
     <string name="webdav_restore_failed">Error al restaurar la base de datos; se conservó la base de datos original</string>
-    <string name="webdav_restore_favourites_confirm">La restauración de las emisoras favoritas utilizará el archivo de favoritas guardado en el servidor.
-
-• Reemplazar: la lista local coincidirá exactamente con el servidor; las emisoras que solo existan localmente se eliminarán.
-• Combinar: conserva todas las emisoras locales y añade las que solo existan en el servidor.
-
-Antes de la operación se guarda una copia de sus emisoras favoritas actuales en este dispositivo.</string>
+    <string name="webdav_restore_favourites_confirm">La restauración de las emisoras favoritas utilizará el archivo de favoritas guardado en el servidor.\n\n• Reemplazar: la lista local coincidirá exactamente con el servidor; las emisoras que solo existan localmente se eliminarán.\n• Combinar: conserva todas las emisoras locales y añade las que solo existan en el servidor.\n\nAntes de la operación se guarda una copia de sus emisoras favoritas actuales en este dispositivo.</string>
     <string name="webdav_restore_overwrite">Reemplazar</string>
     <string name="webdav_restore_merge">Combinar</string>
     <string name="webdav_database_restore_confirm">¿Reemplazar la base de datos local por la base de datos guardada en el servidor WebDAV?</string>

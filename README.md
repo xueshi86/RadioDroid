@@ -335,8 +335,10 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 - **状态标记**：失效（当前不可用）与已被服务器删除的电台底色由硬编码纯黄 / 纯红改为主题属性，亮色主题用浅底 + 深色文字、暗色主题用深底 + 浅色文字，电台名在任何主题下都清晰可读
 - **主外壳**：标签栏改为浅色底 + 强调色选中态与加粗圆角下划线（原先选中/未选中文字色都被写死为白色，选中态几乎不可辨）；抽屉与底部导航文字色改为跟随配色；内容区与卡片分层，窗口留出层次感
 - **列表**：电台列表项改为卡片（12dp 圆角、无阴影、留白分隔，替代原直角实线分隔线），补齐图标模式的点击反馈，统一行高与图标尺寸，建立标题/副标题/标签三级文字层级；「外观 → 紧凑模式」未勾选时为大图标模式（行高 80dp、图标 56dp，显示电台详情行），勾选后为小图标模式（行高 60dp、图标 40dp，不显示详情行），两种模式差异明确；大图标模式下亦收紧了卡片行高与间距，列表更紧凑
+- **播放高亮**：电台列表「正在播放」的条目按当前配色（预设强调色）在电台图标外围绘制 3dp 圆角高亮框，并叠加半透明强调色遮罩与加粗标题，大图标与紧凑两种模式均可见
 - **播放器**：迷你播放条与全屏播放器统一封面圆角与柔和阴影，控制按钮改为圆形并保证 48dp 触摸目标，信息层级重排
 - **设置与对话框**：设置页分组标题走强调色、字号与设置项一致，对话框统一 16dp 圆角与文字按钮风格，文本框与下拉框替换为 Material 控件
+- **确认弹窗**：WebDAV 恢复收藏确认弹窗的说明文案分行显示（要点逐条列出），操作按钮按「覆盖 / 合并 / 取消」等宽等距排列，避免误触
 - **触摸目标**：操作按钮触摸区域统一 ≥48dp，修正部分 24–36dp 的偏小点击区
 - **动效**：列表卡片按下有轻微抬升与微缩反馈，迷你播放条与全屏播放器切换补 150ms 淡入淡出；过渡统一控制在 200ms 以内，并尊重系统「关闭动画」设置
 - **状态反馈**：列表空态与错误态改为居中的矢量图标 + 主文案 + 操作按钮，搜索类列表补居中加载态，加载态与空态互斥，避免结果返回前误闪
@@ -700,8 +702,10 @@ A full visual pass over the original interface, leaving page structure, navigati
 - **Status markers**: the background of unavailable and server-deleted stations moved from hardcoded pure yellow/red to theme attributes — light tints with dark text in the light theme, dark tints with light text in the dark theme, so station names stay readable in either theme
 - **App shell**: the tab bar now uses a surface background with an accent-colored selected state and a thicker rounded underline (previously both selected and unselected text colors were hardcoded white, making the selection nearly invisible); drawer and bottom navigation text colors follow the scheme; content and cards are layered for depth
 - **Lists**: station rows are now cards (12dp radius, no shadow, whitespace instead of straight divider lines), with click feedback in icon mode, consistent row heights and icon sizes, and a three-level text hierarchy; in large-icon mode the row height and spacing are further tightened for a denser list
+- **Playing highlight**: the "currently playing" station row draws a 3dp rounded highlight frame around the station icon in the current scheme's accent color, with a translucent accent overlay and a bold title — visible in both large-icon and compact modes
 - **Player**: mini player and full-screen player share rounded artwork with a soft shadow and circular control buttons meeting the 48dp touch target
 - **Settings & dialogs**: accent-colored section titles matching the type size of other settings rows, 16dp dialog radius with text-button style, Material text fields and dropdowns
+- **Confirmation dialogs**: the WebDAV restore-favourites confirmation dialog now shows its explanation on separate lines (bullet points) with equal-width, evenly spaced "Overwrite / Merge / Cancel" buttons to prevent mis-taps
 - **Touch targets**: action button touch areas unified to ≥48dp (was as small as 24–36dp in places)
 - **Motion**: a subtle press lift/scale on list cards and a 150ms crossfade when switching between the mini player and the full-screen player; all transitions stay under 200ms and respect the system "animations off" setting
 - **State feedback**: empty and error states now show a centered vector icon with primary text and an action button; search lists gained a centered loading state that is mutually exclusive with the empty state to avoid flashing

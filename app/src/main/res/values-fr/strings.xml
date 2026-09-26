@@ -488,12 +488,7 @@
     <string name="webdav_result_pending">En attente de confirmation</string>
     <string name="webdav_result_canceled">Annulé</string>
     <string name="webdav_restore_failed">Échec de la restauration de la base de données ; la base de données d’origine a été conservée</string>
-    <string name="webdav_restore_favourites_confirm">La restauration des favorites utilisera le fichier de favorites stocké sur le serveur.
-
-• Remplacer : la liste locale correspondra exactement au serveur ; les stations présentes uniquement en local seront supprimées.
-• Fusionner : conserve toutes les stations locales et ajoute celles présentes uniquement sur le serveur.
-
-Une copie de vos favorites actuelles est enregistrée sur cet appareil avant l’opération.</string>
+    <string name="webdav_restore_favourites_confirm">La restauration des favorites utilisera le fichier de favorites stocké sur le serveur.\n\n• Remplacer : la liste locale correspondra exactement au serveur ; les stations présentes uniquement en local seront supprimées.\n• Fusionner : conserve toutes les stations locales et ajoute celles présentes uniquement sur le serveur.\n\nUne copie de vos favorites actuelles est enregistrée sur cet appareil avant l’opération.</string>
     <string name="webdav_restore_overwrite">Remplacer</string>
     <string name="webdav_restore_merge">Fusionner</string>
     <string name="webdav_database_restore_confirm">Remplacer la base de données locale par la base de données stockée sur le serveur WebDAV ?</string>

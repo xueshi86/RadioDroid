@@ -39,8 +39,8 @@
 
             <FrameLayout
                     android:id="@+id/frameLayout"
-                    android:layout_width="@dimen/icon_station_list"
-                    android:layout_height="@dimen/icon_station_list"
+                    android:layout_width="@dimen/icon_station_list_frame"
+                    android:layout_height="@dimen/icon_station_list_frame"
                     android:layout_gravity="center_vertical"
                     android:measureAllChildren="true">
 

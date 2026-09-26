@@ -28,6 +28,9 @@
     <dimen name="item_height_standard">80dp</dimen>
     <dimen name="item_height_compact">72dp</dimen>
     <dimen name="icon_station_list">56dp</dimen>
+    <!-- 「正在播放」高亮边框容器：必须大于图标（icon_station_list），
+         否则边框会被图标完全盖住而看不见（边框画在容器背景上，位于子视图之下） -->
+    <dimen name="icon_station_list_frame">64dp</dimen>
     <dimen name="icon_station_grid">72dp</dimen>
     <dimen name="icon_action">24dp</dimen>
     <dimen name="icon_action_small">20dp</dimen>

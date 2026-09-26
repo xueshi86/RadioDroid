@@ -808,12 +808,7 @@
     <string name="webdav_result_pending">等待确认</string>
     <string name="webdav_result_canceled">已取消</string>
     <string name="webdav_restore_failed">数据库恢复失败，已保留原数据库</string>
-    <string name="webdav_restore_favourites_confirm">恢复收藏将使用服务器上保存的收藏文件。
-
-• 覆盖：本地列表与服务器完全一致，仅本地存在的电台将被移除。
-• 合并：保留本地全部电台，并追加仅服务器上存在的电台。
-
-操作前会在本机自动保存当前收藏的副本。</string>
+    <string name="webdav_restore_favourites_confirm">恢复收藏将使用服务器上保存的收藏文件。\n\n• 覆盖：本地列表与服务器完全一致，仅本地存在的电台将被移除。\n• 合并：保留本地全部电台，并追加仅服务器上存在的电台。\n\n操作前会在本机自动保存当前收藏的副本。</string>
     <string name="webdav_restore_overwrite">覆盖</string>
     <string name="webdav_restore_merge">合并</string>
     <string name="webdav_database_restore_confirm">要用 WebDAV 服务器保存的数据库替换本地数据库吗？</string>

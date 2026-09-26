@@ -405,12 +405,7 @@
     <string name="webdav_result_pending">Wartet auf Bestätigung</string>
     <string name="webdav_result_canceled">Abgebrochen</string>
     <string name="webdav_restore_failed">Wiederherstellung der Datenbank fehlgeschlagen; die ursprüngliche Datenbank wurde beibehalten</string>
-    <string name="webdav_restore_favourites_confirm">Beim Wiederherstellen der Favoriten wird die auf dem Server gespeicherte Favoritendatei verwendet.
-
-• Ersetzen: Die lokale Liste entspricht exakt dem Server; Sender, die nur lokal existieren, werden entfernt.
-• Zusammenführen: Behält alle lokalen Sender bei und fügt Sender hinzu, die nur auf dem Server existieren.
-
-Vor dem Vorgang wird eine Kopie Ihrer aktuellen Favoriten auf diesem Gerät gespeichert.</string>
+    <string name="webdav_restore_favourites_confirm">Beim Wiederherstellen der Favoriten wird die auf dem Server gespeicherte Favoritendatei verwendet.\n\n• Ersetzen: Die lokale Liste entspricht exakt dem Server; Sender, die nur lokal existieren, werden entfernt.\n• Zusammenführen: Behält alle lokalen Sender bei und fügt Sender hinzu, die nur auf dem Server existieren.\n\nVor dem Vorgang wird eine Kopie Ihrer aktuellen Favoriten auf diesem Gerät gespeichert.</string>
     <string name="webdav_restore_overwrite">Ersetzen</string>
     <string name="webdav_restore_merge">Zusammenführen</string>
     <string name="webdav_database_restore_confirm">Die lokale Datenbank durch die auf dem WebDAV-Server gespeicherte Datenbank ersetzen?</string>

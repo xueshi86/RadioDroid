@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WebDAV 恢复收藏确认框（自定义内容区）：
+     标题由 AlertDialog 的 setTitle 渲染，这里只放多行说明与三个操作按钮。
+     说明文案里的换行由字符串资源中的 \n 转义提供（XML 字面换行会被资源编译器折叠为空格）。
+     三个按钮等宽（layout_weight=1）且间距相等（统一 marginStart=space_sm），
+     顺序为 覆盖 / 合并 / 取消，不使用 AlertDialog 自带按钮栏（其顺序与间距均固定且不均）。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/space_xl"
+    android:paddingEnd="@dimen/space_xl"
+    android:paddingBottom="@dimen/space_sm">
+
+    <TextView
+        android:id="@+id/textViewRestoreFavouritesMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/webdav_restore_favourites_confirm"
+        android:textAppearance="@style/TextAppearance.RadioDroid.Body"
+        android:lineSpacingExtra="@dimen/space_xs" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="@dimen/space_lg">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonRestoreOverwrite"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/webdav_restore_overwrite"
+            android:textColor="?attr/presetAccentColor"
+            android:textSize="@dimen/text_body"
+            android:textAllCaps="false" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonRestoreMerge"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="@dimen/space_sm"
+            android:text="@string/webdav_restore_merge"
+            android:textColor="?attr/presetAccentColor"
+            android:textSize="@dimen/text_body"
+            android:textAllCaps="false" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonRestoreCancel"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="@dimen/space_sm"
+            android:text="@string/action_cancel"
+            android:textColor="?attr/presetAccentColor"
+            android:textSize="@dimen/text_body"
+            android:textAllCaps="false" />
+
+    </LinearLayout>
+
+</LinearLayout>

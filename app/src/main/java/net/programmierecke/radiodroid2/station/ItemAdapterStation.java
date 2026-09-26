@@ -668,10 +668,12 @@ public class ItemAdapterStation
      */
     private void setupStandardStyle(final StationViewHolder holder) {
         int iconSize = (int) getContext().getResources().getDimension(R.dimen.icon_station_list);
+        // 图标容器必须比图标大，否则「正在播放」高亮边框（画在容器背景上，位于子视图之下）会被图标盖住
+        int frameSize = (int) getContext().getResources().getDimension(R.dimen.icon_station_list_frame);
 
         holder.layoutMain.setMinimumHeight((int) getContext().getResources().getDimension(R.dimen.item_height_standard));
-        holder.frameLayout.getLayoutParams().width = iconSize;
-        holder.frameLayout.getLayoutParams().height = iconSize;
+        holder.frameLayout.getLayoutParams().width = frameSize;
+        holder.frameLayout.getLayoutParams().height = frameSize;
         holder.imageViewIcon.getLayoutParams().width = iconSize;
         holder.imageViewIcon.getLayoutParams().height = iconSize;
         holder.playingOverlay.getLayoutParams().width = iconSize;

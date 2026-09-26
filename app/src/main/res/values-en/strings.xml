@@ -558,12 +558,7 @@
 
     <string name="export_database_title">Export Main Database</string>
     <string name="webdav_restore_failed">Database restore failed; the original database was retained</string>
-    <string name="webdav_restore_favourites_confirm">Restoring favourites will use the favourites file stored on the server.
-
-• Overwrite: the local list will match the server exactly; stations that only exist locally will be removed.
-• Merge: keep all local stations and add stations that only exist on the server.
-
-A copy of your current favourites is saved on this device before the operation.</string>
+    <string name="webdav_restore_favourites_confirm">Restoring favourites will use the favourites file stored on the server.\n\n• Overwrite: the local list will match the server exactly; stations that only exist locally will be removed.\n• Merge: keep all local stations and add stations that only exist on the server.\n\nA copy of your current favourites is saved on this device before the operation.</string>
     <string name="webdav_restore_overwrite">Overwrite</string>
     <string name="webdav_restore_merge">Merge</string>
     <string name="webdav_database_restore_confirm">Replace the local database with the database stored on the WebDAV server?</string>
