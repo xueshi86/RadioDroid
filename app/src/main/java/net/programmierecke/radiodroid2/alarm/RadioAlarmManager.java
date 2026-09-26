@@ -57,7 +57,7 @@ public class RadioAlarmManager {
         return savedAlarmsObservable;
     }
 
-    public void add(DataRadioStation station, int hour, int minute){
+    public DataRadioStationAlarm add(DataRadioStation station, int hour, int minute){
         if(BuildConfig.DEBUG) { Log.d("ALARM","added station:"+station.Name); }
         DataRadioStationAlarm alarm = new DataRadioStationAlarm();
         alarm.station = station;
@@ -73,6 +73,8 @@ public class RadioAlarmManager {
         save();
 
         setEnabled(alarm.id, true);
+
+        return alarm;
     }
 
     public DataRadioStationAlarm[] getList(){

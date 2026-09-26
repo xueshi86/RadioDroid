@@ -2,7 +2,6 @@ package net.programmierecke.radiodroid2;
 
 
 import android.Manifest;
-import android.app.TimePickerDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -24,7 +23,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.TimePicker;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -62,7 +60,6 @@ import com.rustamg.filedialogs.OpenFileDialog;
 import com.rustamg.filedialogs.SaveFileDialog;
 
 import net.programmierecke.radiodroid2.alarm.FragmentAlarm;
-import net.programmierecke.radiodroid2.alarm.TimePickerFragment;
 import net.programmierecke.radiodroid2.station.FragmentLocalStations;
 import net.programmierecke.radiodroid2.FragmentStarred;
 import net.programmierecke.radiodroid2.FragmentTabs;
@@ -94,6 +91,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -106,7 +104,6 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         NavigationView.OnNavigationItemSelectedListener,
         BottomNavigationView.OnNavigationItemSelectedListener,
         FileDialog.OnFileSelectedListener,
-        TimePickerDialog.OnTimeSetListener,
         SearchPreferenceResultListener,
         CastAwareActivity {
 
@@ -1122,9 +1119,8 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             showSortDialog();
             return true;
         } else if (itemId == R.id.action_add_alarm) {
-            TimePickerFragment newFragment = new TimePickerFragment();
-            newFragment.setCallback(this);
-            newFragment.show(this, getSupportFragmentManager(), "timePicker");
+            // 新建闹钟直接进入闹钟设置界面（时间在界面内点时间按钮再选）
+            openNewAlarmEditor();
             return true;
         } else {
             return super.onOptionsItemSelected(menuItem);
@@ -1242,22 +1238,28 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         }
     }
 
-    @Override
-    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+    /**
+     * 新建闹钟：直接打开闹钟设置界面（电台 / 时间 / 音量渐增等设置项完整可见），
+     * 时间在界面内点时间按钮再选，与「点击已有闹钟条目」进入的是同一个界面。
+     */
+    private void openNewAlarmEditor() {
         RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
         HistoryManager historyManager = radioDroidApp.getHistoryManager();
-        // 必须取容器里的当前顶层 Fragment：getFragments() 还包含播放器小/大 Fragment，
-        // 按 size-2 取样会取到播放器 Fragment，导致闹钟页新建闹钟静默失败（闹钟永不入库）。
+        // 必须取容器里的当前顶层 Fragment：getFragments() 还包含播放器小/大 Fragment
         Fragment currentFragment = mFragmentManager.findFragmentById(R.id.containerView);
         if (!(currentFragment instanceof FragmentAlarm)) {
             return;
         }
         final FragmentAlarm alarmFragment = (FragmentAlarm) currentFragment;
 
+        Calendar calendar = Calendar.getInstance();
+        final int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        final int minute = calendar.get(Calendar.MINUTE);
+
         if (historyManager.size() > 0) {
             // 有播放历史：使用最近播放的电台作为闹钟电台
             DataRadioStation station = historyManager.getList().get(0);
-            alarmFragment.getRam().add(station, hourOfDay, minute);
+            alarmFragment.addAlarmAndShowEditor(station, hour, minute);
             return;
         }
 
@@ -1270,7 +1272,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
                 DataRadioStation firstPlayable = localFragment.getFirstPlayableStation();
                 if (firstPlayable != null) {
                     Toast.makeText(this, getString(R.string.alarm_no_history_auto_pick), Toast.LENGTH_LONG).show();
-                    alarmFragment.getRam().add(firstPlayable, hourOfDay, minute);
+                    alarmFragment.addAlarmAndShowEditor(firstPlayable, hour, minute);
                     return;
                 }
             }
@@ -1300,7 +1302,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             runOnUiThread(() -> {
                 if (picked != null) {
                     Toast.makeText(this, getString(R.string.alarm_no_history_auto_pick), Toast.LENGTH_LONG).show();
-                    alarmFragment.getRam().add(picked.toDataRadioStation(), hourOfDay, minute);
+                    alarmFragment.addAlarmAndShowEditor(picked.toDataRadioStation(), hour, minute);
                 } else {
                     Toast.makeText(this, getString(R.string.alarm_no_available_station), Toast.LENGTH_LONG).show();
                 }

@@ -23,6 +23,7 @@ import com.google.android.material.slider.Slider;
 import net.programmierecke.radiodroid2.R;
 import net.programmierecke.radiodroid2.RadioDroidApp;
 import net.programmierecke.radiodroid2.Utils;
+import net.programmierecke.radiodroid2.station.DataRadioStation;
 
 import java.util.Locale;
 import java.util.Observer;
@@ -94,12 +95,28 @@ public class FragmentAlarm extends Fragment implements TimePickerDialog.OnTimeSe
         showAlarmEditorDialog(anObject);
     }
 
+    /**
+     * 新建闹钟入口（工具条「+」）：先写入管理器取得 id 与默认渐增参数，再直接打开设置界面，
+     * 与「点击已有闹钟条目」进入的是同一个界面；用户在设置界面取消时撤销该闹钟，
+     * 不留下未确认的默认闹钟。
+     */
+    public void addAlarmAndShowEditor(DataRadioStation station, int hour, int minute) {
+        DataRadioStationAlarm alarm = ram.add(station, hour, minute);
+        if (alarm != null) {
+            showAlarmEditorDialog(alarm, true);
+        }
+    }
+
     private DataRadioStationAlarm editingAlarm = null;
     private int editorHour;
     private int editorMinute;
     private MaterialButton editorTimeButton = null;
 
     private void showAlarmEditorDialog(final DataRadioStationAlarm alarm) {
+        showAlarmEditorDialog(alarm, false);
+    }
+
+    private void showAlarmEditorDialog(final DataRadioStationAlarm alarm, final boolean isNew) {
         editingAlarm = alarm;
         editorHour = alarm.hour;
         editorMinute = alarm.minute;
@@ -122,6 +139,8 @@ public class FragmentAlarm extends Fragment implements TimePickerDialog.OnTimeSe
 
         // 对话框创建前匿名类无法捕获 dialog 变量本身，用数组间接引用
         final AlertDialog[] dialogHolder = {null};
+        // 是否真正保存过：新建流程下若未保存就关闭对话框，需要撤销刚创建的闹钟
+        final boolean[] saved = {false};
 
         tvStation.setText(alarm.station.Name);
         editorTimeButton.setText(String.format(Locale.getDefault(), "%02d:%02d", editorHour, editorMinute));
@@ -209,14 +228,14 @@ public class FragmentAlarm extends Fragment implements TimePickerDialog.OnTimeSe
                     new AlertDialog.Builder(requireContext())
                             .setMessage(R.string.alarm_volume_zero_warning)
                             .setPositiveButton(R.string.alarm_save, (d, w) -> {
-                                saveAndDismiss(alarm, sliderStartVol, sliderTargetVol, sliderFadeDur, dialog);
+                                saveAndDismiss(alarm, sliderStartVol, sliderTargetVol, sliderFadeDur, dialog, saved);
                             })
                             .setNegativeButton(R.string.alarm_cancel, null)
                             .show();
                     return;
                 }
 
-                saveAndDismiss(alarm, sliderStartVol, sliderTargetVol, sliderFadeDur, dialog);
+                saveAndDismiss(alarm, sliderStartVol, sliderTargetVol, sliderFadeDur, dialog, saved);
             });
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v -> {
                 editingAlarm = null;
@@ -226,6 +245,10 @@ public class FragmentAlarm extends Fragment implements TimePickerDialog.OnTimeSe
         });
 
         dialog.setOnDismissListener(dialogInterface -> {
+            // 新建流程中未保存就关闭：撤销刚创建的闹钟，避免留下未确认的默认闹钟
+            if (isNew && !saved[0]) {
+                ram.remove(alarm.id);
+            }
             editingAlarm = null;
             editorTimeButton = null;
         });
@@ -233,11 +256,12 @@ public class FragmentAlarm extends Fragment implements TimePickerDialog.OnTimeSe
         dialog.show();
     }
 
-    private void saveAndDismiss(DataRadioStationAlarm alarm, int startVolume, int targetVolume, int fadeDuration, AlertDialog dialog) {
+    private void saveAndDismiss(DataRadioStationAlarm alarm, int startVolume, int targetVolume, int fadeDuration, AlertDialog dialog, boolean[] saved) {
         ram.changeTime(alarm.id, editorHour, editorMinute);
         ram.setAlarmFade(alarm.id, startVolume, targetVolume, fadeDuration);
         ram.setEnabled(alarm.id, true);
 
+        saved[0] = true;
         editingAlarm = null;
         editorTimeButton = null;
         dialog.dismiss();

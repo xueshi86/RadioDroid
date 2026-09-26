@@ -341,8 +341,13 @@ public class ItemAdapterStation
                 }
             }
 
+            // 两种模式下的行高、图标尺寸与详情行可见性都必须显式设定：
+            // 它们会被写进 ViewHolder 的 LayoutParams，仅设置紧凑模式的话，
+            // 复用到的（或模式切换前已绑定的）条目会残留紧凑尺寸，外观与大图标模式几乎无差别
             if (prefs.getBoolean("compact_style", false))
                 setupCompactStyle(holder);
+            else
+                setupStandardStyle(holder);
 
             if (prefs.getBoolean("icon_click_toggles_favorite", true)) {
 
@@ -655,6 +660,26 @@ public class ItemAdapterStation
         holder.transparentImageView.getLayoutParams().height = (int) getContext().getResources().getDimension(R.dimen.compact_style_icon_height);
 
         holder.textViewShortDescription.setVisibility(View.GONE);
+    }
+
+    /**
+     * 大图标模式（未勾选「紧凑模式」）：大图标 + 行高按布局默认值，并显示电台详情行。
+     * 与 {@link #setupCompactStyle} 成对，保证两种模式相互切换、条目复用时外观一致。
+     */
+    private void setupStandardStyle(final StationViewHolder holder) {
+        int iconSize = (int) getContext().getResources().getDimension(R.dimen.icon_station_list);
+
+        holder.layoutMain.setMinimumHeight((int) getContext().getResources().getDimension(R.dimen.item_height_standard));
+        holder.frameLayout.getLayoutParams().width = iconSize;
+        holder.frameLayout.getLayoutParams().height = iconSize;
+        holder.imageViewIcon.getLayoutParams().width = iconSize;
+        holder.imageViewIcon.getLayoutParams().height = iconSize;
+        holder.playingOverlay.getLayoutParams().width = iconSize;
+        holder.playingOverlay.getLayoutParams().height = iconSize;
+        holder.transparentImageView.getLayoutParams().width = iconSize;
+        holder.transparentImageView.getLayoutParams().height = iconSize;
+
+        holder.textViewShortDescription.setVisibility(View.VISIBLE);
     }
 
     private void highlightCurrentStation() {
