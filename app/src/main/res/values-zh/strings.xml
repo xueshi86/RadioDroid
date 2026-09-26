@@ -813,7 +813,7 @@
     <string name="webdav_restore_merge">合并</string>
     <string name="webdav_database_restore_confirm">要用 WebDAV 服务器保存的数据库替换本地数据库吗？</string>
     <string name="webdav_database_replace">替换</string>
-    <string name="webdav_pending_database_restore_confirm">检测到上次未完成的数据库恢复。要用服务器上保存的数据库替换本地数据库吗？选择「取消」将保留该状态，下次进入恢复时仍可继续。</string>
+    <string name="webdav_pending_database_restore_confirm">检测到上次未完成的数据库恢复。要用服务器上保存的数据库替换本地数据库吗？选择「取消」将放弃上次未完成的恢复。</string>
     <string name="webdav_database_restoring">数据库替换中，请稍等…</string>
     <string name="webdav_error_authentication">认证失败</string>
     <string name="webdav_error_permission">权限被拒绝</string>

@@ -384,8 +384,11 @@ public class FragmentPlayerSmall extends Fragment {
         } else {
             imageViewIcon.setVisibility(View.VISIBLE);
             if (station != null) {
+                // 同步 tag，避免图标缓存写入后按旧电台刷新到错误的图片
+                imageViewIcon.setTag(R.id.tag_station_uuid, station.StationUuid);
                 imageViewIcon.setImageDrawable(StationPlaceholderUtils.createPlaceholderDrawable(getContext(), station.Name, station.StationUuid));
             } else {
+                imageViewIcon.setTag(R.id.tag_station_uuid, null);
                 imageViewIcon.setImageResource(R.drawable.ic_launcher);
             }
         }

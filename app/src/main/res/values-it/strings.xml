@@ -489,7 +489,7 @@
     <string name="webdav_restore_merge">Unisci</string>
     <string name="webdav_database_restore_confirm">Sostituire il database locale con il database salvato sul server WebDAV?</string>
     <string name="webdav_database_replace">Sostituisci</string>
-    <string name="webdav_pending_database_restore_confirm">È presente un ripristino del database non ancora completato. Sostituire il database locale con quello salvato sul server? Scegli Sostituisci per procedere oppure Annulla per conservarlo e continuare più tardi.</string>
+    <string name="webdav_pending_database_restore_confirm">È presente un ripristino del database non ancora completato. Sostituire il database locale con quello salvato sul server? Scegli Annulla per scartare il ripristino incompleto.</string>
     <string name="webdav_database_restoring">Sostituzione del database in corso, attendere…</string>
     <string name="webdav_error_authentication">Autenticazione non riuscita</string>
     <string name="webdav_error_permission">Permesso negato</string>

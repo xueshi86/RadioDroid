@@ -1535,8 +1535,9 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 }).show();
     }
 
-    // 检查是否有上次未确认的数据库恢复：存在时提示"继续替换 / 取消"并返回 true。
-    // 用户点取消或返回键时保留该状态，下次进入恢复流程仍可继续。
+    // 检查是否有上次未确认的数据库恢复：存在时提示"替换 / 取消"并返回 true。
+    // 点「替换」执行上次的数据库替换；点「取消」或返回键则丢弃该待确认状态（清除记录并删除临时文件），
+    // 不再保留——否则每次进入恢复流程都会弹出此提示，用户只能选择替换而无法真正取消。
     private boolean showPendingWebDavDatabaseRestoreIfAny() {
         SharedPreferences preferences = requireContext().getSharedPreferences("webdav_pending_restore", Context.MODE_PRIVATE);
         String path = preferences.getString("database", null);
@@ -1545,10 +1546,15 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             if (path != null) preferences.edit().clear().apply();
             return false;
         }
+        Runnable discardPendingRestore = () -> {
+            preferences.edit().clear().apply();
+            if (file.isFile()) file.delete();
+        };
         new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
                 .setTitle(R.string.webdav_restore)
                 .setMessage(R.string.webdav_pending_database_restore_confirm)
-                .setNegativeButton(android.R.string.cancel, null)
+                .setNegativeButton(android.R.string.cancel, (dialog, which) -> discardPendingRestore.run())
+                .setOnCancelListener(dialog -> discardPendingRestore.run())
                 .setPositiveButton(R.string.webdav_database_replace, (dialog, which) -> applyWebDavDatabaseRestore(file, preferences, null, true))
                 .show();
         return true;

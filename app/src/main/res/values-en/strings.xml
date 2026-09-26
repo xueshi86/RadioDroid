@@ -563,7 +563,7 @@
     <string name="webdav_restore_merge">Merge</string>
     <string name="webdav_database_restore_confirm">Replace the local database with the database stored on the WebDAV server?</string>
     <string name="webdav_database_replace">Replace</string>
-    <string name="webdav_pending_database_restore_confirm">A database restore from a previous session is still pending. Replace the local database with the one saved on the server? Choose Cancel to keep it and continue later.</string>
+    <string name="webdav_pending_database_restore_confirm">A database restore from a previous session is still pending. Replace the local database with the one saved on the server? Choose Cancel to discard the unfinished restore.</string>
     <string name="webdav_database_restoring">Replacing database, please wait…</string>
     <string name="webdav_error_authentication">Authentication failed</string>
     <string name="webdav_error_permission">Permission denied</string>

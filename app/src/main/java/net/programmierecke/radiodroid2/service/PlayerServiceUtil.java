@@ -40,13 +40,17 @@ import net.programmierecke.radiodroid2.ui.StationPlaceholderUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -367,6 +371,7 @@ public class PlayerServiceUtil {
 
         if (stationUuid != null && !stationUuid.isEmpty()) {
             holder.setTag(R.id.tag_station_uuid, stationUuid);
+            registerIconView(stationUuid, holder);
         }
 
         if (stationUuid != null && !stationUuid.isEmpty()) {
@@ -633,6 +638,92 @@ public class PlayerServiceUtil {
     // 持有 Picasso Target 的强引用，防止被 GC
     private static final java.util.List<Target> backgroundTargets = new ArrayList<>();
 
+    /**
+     * 电台图标消费者登记表：stationUuid -> 正在显示该电台图标的 ImageView（弱引用）。
+     *
+     * 列表与曲目历史在图标就绪后会因条目重新绑定而自然更新，但迷你播放器与全屏播放器的图标
+     * 只在播放开始时请求一次：若那一次请求未命中、随后又失败（或图标由后台升级/回退路径写入缓存），
+     * 这两个控件就会一直停留在占位图上。因此图标文件缓存写入新图标时，主动刷新登记过的 ImageView。
+     */
+    private static final Map<String, List<WeakReference<ImageView>>> iconViews = new HashMap<>();
+
+    private static void registerIconView(final String stationUuid, final ImageView view) {
+        synchronized (iconViews) {
+            List<WeakReference<ImageView>> views = iconViews.get(stationUuid);
+            if (views == null) {
+                views = new ArrayList<>();
+                iconViews.put(stationUuid, views);
+            }
+            for (Iterator<WeakReference<ImageView>> it = views.iterator(); it.hasNext(); ) {
+                ImageView registered = it.next().get();
+                if (registered == null) {
+                    it.remove();
+                } else if (registered == view) {
+                    return;
+                }
+            }
+            views.add(new WeakReference<>(view));
+        }
+    }
+
+    /**
+     * 图标文件缓存写入新图标后调用：让仍绑定该电台的 ImageView（含播放器图标/专辑封面）从缓存重新取图标。
+     * 仅在主线程调用（Picasso 回调均在主线程）。
+     */
+    private static void refreshRegisteredIconViews(final String stationUuid) {
+        List<ImageView> toRefresh = new ArrayList<>();
+        synchronized (iconViews) {
+            List<WeakReference<ImageView>> views = iconViews.get(stationUuid);
+            if (views == null) {
+                return;
+            }
+            for (Iterator<WeakReference<ImageView>> it = views.iterator(); it.hasNext(); ) {
+                ImageView registered = it.next().get();
+                if (registered == null) {
+                    it.remove();
+                } else {
+                    toRefresh.add(registered);
+                }
+            }
+        }
+        for (ImageView view : toRefresh) {
+            Object tag = view.getTag(R.id.tag_station_uuid);
+            if (tag == null || !tag.equals(stationUuid)) {
+                continue;
+            }
+            applyCachedIcon(view, stationUuid);
+        }
+    }
+
+    /**
+     * 只用图标文件缓存为 ImageView 设置图标。
+     * 读取文件缓存不会再次写入缓存，因此不会与 {@link #refreshRegisteredIconViews} 形成递归。
+     */
+    private static void applyCachedIcon(final ImageView holder, final String stationUuid) {
+        final String cachedPath = StationIconCache.getInstance(mainContext).getIconPath(stationUuid);
+        if (cachedPath == null) {
+            return;
+        }
+        Resources r = mainContext.getResources();
+        final int targetPxSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 70, r.getDisplayMetrics());
+        final int maxPxSize = Math.min(targetPxSize * 3, 512);
+        Picasso.get()
+                .load(Uri.fromFile(new File(cachedPath)))
+                .resize(maxPxSize, 0)
+                .onlyScaleDown()
+                .noFade()
+                .into(holder, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        applySmartDisplayLogic(holder, targetPxSize, stationUuid);
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                    }
+                });
+    }
+
     private static List<String> buildFallbackUrls(String homePageUrl) {
         List<String> fallbacks = new ArrayList<>();
         try {
@@ -682,6 +773,7 @@ public class PlayerServiceUtil {
                     cache.saveIcon(stationUuid, bitmap, isFavorite);
                     cache.clearFallbackMark(stationUuid);
                     cache.recordIconUrlRetryTime(stationUuid);
+                    refreshRegisteredIconViews(stationUuid);
                     Log.d("PlayerServiceUtil", "Background IconUrl upgrade succeeded for: " + stationUuid);
 
                     if (holder != null) {
@@ -797,6 +889,7 @@ public class PlayerServiceUtil {
                 }
                 boolean isFavorite = isStationFavorited(stationUuid);
                 StationIconCache.getInstance(mainContext).saveIcon(stationUuid, bitmap, isFavorite);
+                refreshRegisteredIconViews(stationUuid);
             } else {
                 Log.w(TAG, "saveIconToCacheFromView: bitmap is null for " + stationUuid);
             }
@@ -966,6 +1059,7 @@ public class PlayerServiceUtil {
                         if (bitmap.getWidth() >= currentWidth) {
                             cache.saveIcon(stationUuid, bitmap, isFavorite);
                             cache.clearFallbackMark(stationUuid);
+                            refreshRegisteredIconViews(stationUuid);
                             Log.d(TAG, "HD discovery succeeded for: " + stationUuid);
                             holder.setImageBitmap(bitmap);
                             applySmartDisplayLogic(holder, targetPxSize, stationUuid);

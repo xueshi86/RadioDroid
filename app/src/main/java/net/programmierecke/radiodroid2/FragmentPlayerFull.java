@@ -871,6 +871,8 @@ public class FragmentPlayerFull extends Fragment {
             } else if (!TextUtils.isEmpty(station.HomePageUrl)) {
                 loadStationIconWithFallback(artAndInfoPagerAdapter.imageViewArt, null, station.HomePageUrl, station.StationUuid, station.Name);
             } else {
+                // 同步 tag，避免图标缓存写入后按旧电台刷新到错误的图片
+                artAndInfoPagerAdapter.imageViewArt.setTag(R.id.tag_station_uuid, station.StationUuid);
                 artAndInfoPagerAdapter.imageViewArt.setImageDrawable(StationPlaceholderUtils.createPlaceholderDrawable(getContext(), station.Name, station.StationUuid));
             }
             return;
@@ -960,8 +962,10 @@ public class FragmentPlayerFull extends Fragment {
                     } else if (station != null && !TextUtils.isEmpty(station.HomePageUrl)) {
                         fragment.loadStationIconWithFallback(fragment.artAndInfoPagerAdapter.imageViewArt, null, station.HomePageUrl, station.StationUuid, station.Name);
                     } else if (station != null) {
+                        fragment.artAndInfoPagerAdapter.imageViewArt.setTag(R.id.tag_station_uuid, station.StationUuid);
                         fragment.artAndInfoPagerAdapter.imageViewArt.setImageDrawable(StationPlaceholderUtils.createPlaceholderDrawable(fragment.getContext(), station.Name, station.StationUuid));
                     } else {
+                        fragment.artAndInfoPagerAdapter.imageViewArt.setTag(R.id.tag_station_uuid, null);
                         fragment.artAndInfoPagerAdapter.imageViewArt.setImageResource(R.drawable.ic_launcher);
                     }
 
@@ -984,6 +988,8 @@ public class FragmentPlayerFull extends Fragment {
                         final String albumArtUrl = albumArts.get(0).url;
 
                         if (!TextUtils.isEmpty(albumArtUrl)) {
+                            // 专辑封面与电台图标无关：清除 tag，避免电台图标缓存写入后覆盖专辑封面
+                            fragment.artAndInfoPagerAdapter.imageViewArt.setTag(R.id.tag_station_uuid, null);
                             Picasso.get()
                                     .load(albumArtUrl)
                                     .into(fragment.artAndInfoPagerAdapter.imageViewArt);
