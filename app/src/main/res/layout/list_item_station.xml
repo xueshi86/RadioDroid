@@ -15,6 +15,7 @@
     android:layout_marginBottom="@dimen/space_xs"
     android:clickable="true"
     android:focusable="true"
+    android:stateListAnimator="@animator/item_press_anim"
     app:cardBackgroundColor="?attr/colorSurfaceCard"
     app:cardCornerRadius="@dimen/radius_card"
     app:cardElevation="0dp"

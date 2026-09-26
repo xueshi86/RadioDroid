@@ -222,14 +222,46 @@
                 android:padding="@dimen/space_xl"
                 android:visibility="gone">
 
+                <ImageView
+                    android:id="@+id/stateIcon"
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:contentDescription="@null"
+                    app:srcCompat="@drawable/ic_rd_state_empty"
+                    app:tint="?attr/colorTextTertiary" />
+
                 <TextView
                     android:id="@+id/textErrorMessage"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/space_lg"
+                    android:layout_marginTop="@dimen/space_lg"
                     android:gravity="center"
                     android:text="@string/multi_search_no_results"
-                    android:textAppearance="@style/TextAppearance.RadioDroid.Title" />
+                    android:textAppearance="@style/TextAppearance.RadioDroid.Title"
+                    android:textColor="?attr/colorTextSecondary" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutLoading"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <ProgressBar
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:indeterminate="true" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_md"
+                    android:text="@string/state_loading"
+                    android:textAppearance="@style/TextAppearance.RadioDroid.BodySmall"
+                    android:textColor="?attr/colorTextSecondary" />
 
             </LinearLayout>
 

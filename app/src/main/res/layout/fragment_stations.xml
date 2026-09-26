@@ -26,22 +26,34 @@
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:padding="16dp"
+                android:paddingStart="@dimen/space_xl"
+                android:paddingEnd="@dimen/space_xl"
                 android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/stateIcon"
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:contentDescription="@null"
+                    app:srcCompat="@drawable/ic_rd_state_empty"
+                    app:tint="?attr/colorTextTertiary" />
 
                 <TextView
                     android:id="@+id/textErrorMessage"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
+                    android:layout_marginTop="@dimen/space_lg"
                     android:gravity="center"
                     android:text="@string/error_loading_data"
-                    android:textSize="@dimen/text_title" />
+                    android:textAppearance="@style/TextAppearance.RadioDroid.Title"
+                    android:textColor="?attr/colorTextSecondary" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRetry"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_sm"
                     android:text="@string/action_retry" />
 
             </LinearLayout>

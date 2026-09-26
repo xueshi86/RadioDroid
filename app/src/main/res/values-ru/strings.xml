@@ -875,4 +875,6 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="pref_lyrics_lrcapi_instance_summary">Полный адрес, например https://host:port/path. Оставьте пустым, чтобы использовать публичный api.lrc.cx</string>
     <string name="pref_lyrics_netease">NetEase Cloud Music (экспериментально)</string>
     <string name="pref_lyrics_netease_summary">Неофициальный публичный API, используется как резервный источник после LRCLIB и LrcAPI. По умолчанию включено.</string>
+<!-- 列表加载态文案（UI 美化 Phase 7） -->
+    <string name="state_loading">Загрузка…</string>
 </resources>

@@ -457,4 +457,6 @@ Die App wird automatisch neu gestartet, um die neue Datenbank zu laden.</string>
     <string name="error_cannot_delete_old_db">Alte Datenbankdatei kann nicht gelöscht werden</string>
     <string name="error_target_file_not_exist">Zieldatei existiert nicht, Kopieren fehlgeschlagen</string>
     <string name="error_database_corrupted">Die importierte Datenbank kann nicht richtig gelesen werden, die Datei ist möglicherweise beschädigt</string>
-    </resources>
+    <!-- 列表加载态文案（UI 美化 Phase 7） -->
+    <string name="state_loading">Wird geladen…</string>
+</resources>

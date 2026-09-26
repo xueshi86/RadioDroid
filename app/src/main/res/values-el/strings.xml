@@ -353,4 +353,6 @@
     <string name="error_cannot_delete_old_db">Δεν είναι δυνατή η διαγραφή του παλιού αρχείου βάσης δεδομένων</string>
     <string name="error_target_file_not_exist">Το αρχείο προορισμού δεν υπάρχει, η αντιγραφή απέτυχε</string>
     <string name="error_database_corrupted">Η εισαγόμενη βάση δεδομένων δεν μπορεί να διαβαστεί σωστά, το αρχείο μπορεί να είναι κατεστραμμένο</string>
-    </resources>
+    <!-- 列表加载态文案（UI 美化 Phase 7） -->
+    <string name="state_loading">Φόρτωση…</string>
+</resources>

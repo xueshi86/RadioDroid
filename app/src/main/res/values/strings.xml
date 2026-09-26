@@ -866,4 +866,6 @@ A copy of your current favourites is saved on this device before the operation.<
     <string name="webdav_error_empty_favourites">The favourites file on the server is empty</string>
     <string name="webdav_error_unknown">Unknown error</string>
 
+<!-- 列表加载态文案（UI 美化 Phase 7） -->
+    <string name="state_loading">Loading…</string>
 </resources>

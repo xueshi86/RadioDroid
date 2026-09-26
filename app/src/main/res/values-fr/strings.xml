@@ -540,4 +540,6 @@ L\'application redémarrera automatiquement pour charger la nouvelle base.</stri
     <string name="error_cannot_delete_old_db">Impossible de supprimer l\'ancien fichier de base de données</string>
     <string name="error_target_file_not_exist">Le fichier cible n\'existe pas, la copie a échoué</string>
     <string name="error_database_corrupted">La base de données importée ne peut pas être lue correctement, le fichier est peut-être corrompu</string>
-    </resources>
+    <!-- 列表加载态文案（UI 美化 Phase 7） -->
+    <string name="state_loading">Chargement…</string>
+</resources>

@@ -58,6 +58,8 @@ public class FragmentMultiSearch extends FragmentBase {
     private ScrollView scrollViewFilters;
     private androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipeRefreshLayout;
     private FloatingActionButton fabScrollToTop;
+    // 居中加载态（UI 美化 Phase 7）：与空/错误态互斥，避免结果回来前先闪出空态
+    private View layoutLoading;
 
     private ItemAdapterStation stationListAdapter;
     private RadioStationRepository repository;
@@ -98,6 +100,7 @@ public class FragmentMultiSearch extends FragmentBase {
         scrollViewFilters = view.findViewById(R.id.scrollViewFilters);
         swipeRefreshLayout = view.findViewById(R.id.swiperefresh);
         fabScrollToTop = view.findViewById(R.id.fabScrollToTop);
+        layoutLoading = view.findViewById(R.id.layoutLoading);
 
         return view;
     }
@@ -461,6 +464,9 @@ public class FragmentMultiSearch extends FragmentBase {
         }
         Log.d(TAG, "执行多条件搜索: 国家=" + selectedCountry + ", 语言=" + selectedLanguage + ", 标签=" + selectedTag + ", 关键词=" + searchQuery);
 
+        // 先进入加载态并收起旧结果/空态，等结果回来再决定展示内容，避免空态误闪
+        setLoading(true);
+
         // 使用统一的空数据库检查
         LinearLayout errorLayout = getView().findViewById(R.id.layoutError);
         DatabaseEmptyHelper.checkAndShowEmptyDatabaseError(this, errorLayout, recyclerViewStations,
@@ -473,20 +479,39 @@ public class FragmentMultiSearch extends FragmentBase {
                             .observe(getViewLifecycleOwner(), stations -> {
                                 handleSearchResults(stations);
                             });
+                    } else {
+                        // 数据库为空：空态由 EmptyDatabaseView 接管，收起居中加载态
+                        setLoading(false);
                     }
                 }
 
                 @Override
                 public void onCheckError(String error) {
                     Log.e(TAG, "数据库检查错误: " + error);
+                    setLoading(false);
                 }
             });
+    }
+
+    /**
+     * 切换居中加载态；加载中同时收起错误/空态，保证三态互斥（UI 美化 Phase 7）。
+     */
+    private void setLoading(boolean loading) {
+        if (getView() == null || layoutLoading == null) {
+            return;
+        }
+        layoutLoading.setVisibility(loading ? View.VISIBLE : View.GONE);
+        if (loading) {
+            getView().findViewById(R.id.layoutError).setVisibility(View.GONE);
+        }
     }
 
     private void handleSearchResults(List<RadioStation> radioStations) {
         if (getView() == null) {
             return; // 异步回调返回时视图可能已销毁
         }
+        // 结果已回来，收起加载态后再决定展示列表还是空态
+        setLoading(false);
         if (radioStations != null && !radioStations.isEmpty()) {
             // 无效电台过滤：用户可在设置中关闭"在列表中显示无效电台"
             boolean showBroken = PreferenceManager.getDefaultSharedPreferences(getContext())

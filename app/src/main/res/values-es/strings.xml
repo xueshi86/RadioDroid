@@ -867,4 +867,6 @@ Antes de la operación se guarda una copia de sus emisoras favoritas actuales en
     <string name="pref_lyrics_lrcapi_instance_summary">URL completa, p. ej. https://host:port/path. Déjelo vacío para usar el api.lrc.cx público</string>
     <string name="pref_lyrics_netease">NetEase Cloud Music (experimental)</string>
     <string name="pref_lyrics_netease_summary">API pública no oficial, se usa como fuente alternativa después de LRCLIB y LrcAPI. Activada de forma predeterminada.</string>
+<!-- 列表加载态文案（UI 美化 Phase 7） -->
+    <string name="state_loading">Cargando…</string>
 </resources>

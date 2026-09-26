@@ -19,6 +19,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -443,6 +444,24 @@ public class Utils {
 
     public static boolean isDarkTheme(final Context context) {
         return getThemeResId(context) == R.style.MyMaterialTheme_Dark;
+    }
+
+    /**
+     * 系统是否允许播放动画（UI 美化 Phase 7）。
+     * 「动画时长缩放」被设为 0（开发者选项里的关闭动画 / 减少动画）时返回 false，
+     * 调用方应跳过纯装饰性的过渡动画，避免出现僵硬或空白的过渡帧。
+     */
+    public static boolean areAnimationsEnabled(final Context context) {
+        if (context == null) {
+            return true;
+        }
+        try {
+            float scale = Settings.Global.getFloat(context.getContentResolver(),
+                    Settings.Global.ANIMATOR_DURATION_SCALE, 1f);
+            return scale != 0f;
+        } catch (Exception e) {
+            return true;
+        }
     }
 
     public static int getAlertDialogThemeResId(final Context context) {

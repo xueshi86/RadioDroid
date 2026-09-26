@@ -313,6 +313,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
                     smallPlayerFragment.setRole(FragmentPlayerSmall.Role.HEADER);
 
                     FragmentTransaction fragmentTransaction = mFragmentManager.beginTransaction();
+                    applyPlayerFadeAnimation(fragmentTransaction);
                     fragmentTransaction.hide(mFragmentManager.findFragmentById(R.id.containerView));
                     fragmentTransaction.commit();
                 } else if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
@@ -321,12 +322,14 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
                     fullPlayerFragment.resetScroll();
 
                     FragmentTransaction fragmentTransaction = mFragmentManager.beginTransaction();
+                    applyPlayerFadeAnimation(fragmentTransaction);
                     fragmentTransaction.hide(fullPlayerFragment);
                     fragmentTransaction.commit();
                 }
 
                 if (oldState == BottomSheetBehavior.STATE_EXPANDED && newState != BottomSheetBehavior.STATE_EXPANDED) {
                     FragmentTransaction fragmentTransaction = mFragmentManager.beginTransaction();
+                    applyPlayerFadeAnimation(fragmentTransaction);
                     fragmentTransaction.show(mFragmentManager.findFragmentById(R.id.containerView));
                     fragmentTransaction.commit();
                 }
@@ -335,6 +338,7 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
                     fullPlayerFragment.init();
 
                     FragmentTransaction fragmentTransaction = mFragmentManager.beginTransaction();
+                    applyPlayerFadeAnimation(fragmentTransaction);
                     fragmentTransaction.show(fullPlayerFragment);
                     fragmentTransaction.commit();
                 }
@@ -1470,6 +1474,17 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
 
     private void hideLoadingIcon() {
         findViewById(R.id.progressBarLoading).setVisibility(View.GONE);
+    }
+
+    /**
+     * 迷你播放条 <-> 全屏播放器切换时补一次淡入淡出（UI 美化 Phase 7）。
+     * 仍沿用 BottomSheetBehavior 原有的展开/收起方式，只给 Fragment 的显示/隐藏叠一层 150ms 过渡，
+     * 让内容区的进出更连贯；系统关闭动画时不加动画，避免出现空白过渡帧。
+     */
+    private void applyPlayerFadeAnimation(FragmentTransaction transaction) {
+        if (Utils.areAnimationsEnabled(this)) {
+            transaction.setCustomAnimations(R.anim.fade_in, R.anim.fade_out);
+        }
     }
     
     // 从URI获取文件路径

@@ -48,6 +48,8 @@ public class FragmentStations extends FragmentBase implements IFragmentSearchabl
     private MaterialButton btnRetry;
     private SwipeRefreshLayout swipeRefreshLayout;
     private FloatingActionButton fabScrollToTop;
+    // 居中加载态（UI 美化 Phase 7）：与空/错误态互斥，避免结果回来前先闪出空态
+    private View layoutLoading;
 
     private SharedPreferences sharedPref;
 
@@ -129,6 +131,7 @@ public class FragmentStations extends FragmentBase implements IFragmentSearchabl
                     }
                     
                     // 隐藏加载状态
+                    setLoading(false);
                     LocalBroadcastManager.getInstance(getContext()).sendBroadcast(new Intent(ActivityMain.ACTION_HIDE_LOADING));
                     if (swipeRefreshLayout != null) {
                         swipeRefreshLayout.setRefreshing(false);
@@ -154,6 +157,7 @@ public class FragmentStations extends FragmentBase implements IFragmentSearchabl
         layoutError = view.findViewById(R.id.layoutError);
         btnRetry = view.findViewById(R.id.btnRefresh);
         fabScrollToTop = view.findViewById(R.id.fabScrollToTop);
+        layoutLoading = view.findViewById(R.id.layoutLoading);
 
         // Adapter将在onActivityCreated中初始化，确保Activity可用
         rvStations.setAdapter(null);
@@ -253,6 +257,7 @@ public class FragmentStations extends FragmentBase implements IFragmentSearchabl
                 });
 
                 adapter.setFilterListener(searchStatus -> {
+                    setLoading(false);
                     layoutError.setVisibility(searchStatus == StationsFilter.SearchStatus.ERROR ? View.VISIBLE : View.GONE);
                     LocalBroadcastManager.getInstance(getContext()).sendBroadcast(new Intent(ActivityMain.ACTION_HIDE_LOADING));
                     swipeRefreshLayout.setRefreshing(false);
@@ -283,6 +288,19 @@ public class FragmentStations extends FragmentBase implements IFragmentSearchabl
         rvStations.setAdapter(null);
     }
 
+    /**
+     * 切换居中加载态；加载中同时收起错误/空态，保证三态互斥（UI 美化 Phase 7）。
+     */
+    private void setLoading(boolean loading) {
+        if (layoutLoading == null) {
+            return;
+        }
+        layoutLoading.setVisibility(loading ? View.VISIBLE : View.GONE);
+        if (loading && layoutError != null) {
+            layoutError.setVisibility(View.GONE);
+        }
+    }
+
     @Override
     public void search(StationsFilter.SearchStyle searchStyle, String query) {
         Log.d("STATIONS", "query = "+query + " searchStyle="+searchStyle);
@@ -292,6 +310,7 @@ public class FragmentStations extends FragmentBase implements IFragmentSearchabl
         if (rvStations != null && searchEnabled) {
             Log.d("STATIONS", "query a = "+query);
             if (!TextUtils.isEmpty(query)) {
+                setLoading(true);
                 LocalBroadcastManager.getInstance(getContext()).sendBroadcast(new Intent(ActivityMain.ACTION_SHOW_LOADING));
             }
 

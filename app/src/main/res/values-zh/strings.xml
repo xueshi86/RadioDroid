@@ -852,4 +852,6 @@
     <string name="recording_start_failed">无法开始录音，请检查存储访问权限后重试。</string>
     <string name="recording_write_failed">由于无法写入录音文件，录音已停止。</string>
     <string name="recording_not_available">当前音频流不支持录音</string>
+<!-- 列表加载态文案（UI 美化 Phase 7） -->
+    <string name="state_loading">加载中…</string>
 </resources>

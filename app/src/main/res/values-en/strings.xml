@@ -612,4 +612,6 @@ The app will automatically restart to load the new database.</string>
     <string name="error_database_corrupted">The imported database cannot be accessed properly, the file may be corrupted</string>
     <string name="export_database_corrupted">The main database cannot be accessed properly, the file may be corrupted</string>
     <string name="export_database_empty">The main database file is empty and cannot be exported</string>
+<!-- 列表加载态文案（UI 美化 Phase 7） -->
+    <string name="state_loading">Loading…</string>
 </resources>

@@ -536,4 +536,6 @@ L\'app si riavvierà automaticamente per caricare la nuova base dati.</string>
     <string name="error_cannot_delete_old_db">Impossibile eliminare il vecchio file della base dati</string>
     <string name="error_target_file_not_exist">Il file di destinazione non esiste, la copia è fallita</string>
     <string name="error_database_corrupted">La base dati importata non può essere letta correttamente, il file potrebbe essere danneggiato</string>
-    </resources>
+    <!-- 列表加载态文案（UI 美化 Phase 7） -->
+    <string name="state_loading">Caricamento…</string>
+</resources>
