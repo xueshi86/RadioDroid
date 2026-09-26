@@ -28,6 +28,7 @@
     <dimen name="icon_action">24dp</dimen>
     <dimen name="icon_action_small">20dp</dimen>
     <dimen name="mini_player_height">64dp</dimen>
+    <dimen name="mini_player_cover">48dp</dimen>
     <dimen name="cover_size_full">240dp</dimen>
     <dimen name="divider_thickness">1dp</dimen>
     <dimen name="divider_inset">16dp</dimen>

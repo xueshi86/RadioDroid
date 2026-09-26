@@ -4,16 +4,27 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ImageView
-        android:id="@+id/imageViewArt"
+    <!-- 封面用 MaterialCardView 包裹：靠卡片的圆角轮廓裁剪出圆角封面（API21+ 生效），
+         卡片自身透明、无阴影，只提供圆角裁剪能力。 -->
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
-        android:scaleType="fitCenter"
-        android:contentDescription="@string/tab_player_art" />
+        android:layout_marginTop="@dimen/space_sm"
+        android:layout_marginStart="@dimen/space_sm"
+        android:layout_marginLeft="@dimen/space_sm"
+        android:layout_marginEnd="@dimen/space_sm"
+        android:layout_marginRight="@dimen/space_sm"
+        app:cardBackgroundColor="@android:color/transparent"
+        app:cardCornerRadius="@dimen/radius_cover"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp">
+
+        <ImageView
+            android:id="@+id/imageViewArt"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/tab_player_art" />
+    </com.google.android.material.card.MaterialCardView>
 
 </LinearLayout>

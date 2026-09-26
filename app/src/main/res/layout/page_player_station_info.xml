@@ -4,17 +4,18 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:padding="@dimen/space_lg">
 
     <TextView
         android:id="@+id/textViewStationDescription"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:drawablePadding="4sp"
+        android:drawablePadding="@dimen/space_xs"
         android:ellipsize="end"
         android:maxLines="1"
         android:minLines="1"
-        android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+        android:textColor="?attr/colorTextPrimary"
+        android:textAppearance="@style/TextAppearance.RadioDroid.Body" />
 
     <net.programmierecke.radiodroid2.views.TagsView
         android:id="@+id/viewTags"
@@ -22,9 +23,9 @@
         android:layout_height="wrap_content"
         android:lineSpacingMultiplier="1"
         android:textSize="@dimen/text_title"
-        app:cornerRadius="8dp"
+        app:cornerRadius="@dimen/radius_sm"
         app:tagBackgroundColor="?attr/tagBackgroundColor"
         app:tagHeight="25sp"
-        app:textHorizontalPadding="8dp"
-        app:textVerticalMargin="4dp" />
+        app:textHorizontalPadding="@dimen/space_sm"
+        app:textVerticalMargin="@dimen/space_xs" />
 </LinearLayout>

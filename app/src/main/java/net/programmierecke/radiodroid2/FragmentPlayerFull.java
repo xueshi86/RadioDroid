@@ -33,7 +33,6 @@ import androidx.lifecycle.ViewModelProviders;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.paging.PagedList;
 import androidx.preference.PreferenceManager;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.PagerAdapter;
@@ -294,17 +293,11 @@ public class FragmentPlayerFull extends Fragment {
         llmCurrentStationHistory.setOrientation(RecyclerView.VERTICAL);
         historyAndRecordsPagerAdapter.recyclerViewCurrentStationHistory.setLayoutManager(llmCurrentStationHistory);
 
-        DividerItemDecoration dividerItemDecorationCurrent = new DividerItemDecoration(historyAndRecordsPagerAdapter.recyclerViewCurrentStationHistory.getContext(), llmCurrentStationHistory.getOrientation());
-        historyAndRecordsPagerAdapter.recyclerViewCurrentStationHistory.addItemDecoration(dividerItemDecorationCurrent);
-
         historyAndRecordsPagerAdapter.recyclerViewSongHistory.setAdapter(trackHistoryAdapter);
 
         LinearLayoutManager llmHistory = new LinearLayoutManager(getContext());
         llmHistory.setOrientation(RecyclerView.VERTICAL);
         historyAndRecordsPagerAdapter.recyclerViewSongHistory.setLayoutManager(llmHistory);
-
-        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(historyAndRecordsPagerAdapter.recyclerViewSongHistory.getContext(), llmHistory.getOrientation());
-        historyAndRecordsPagerAdapter.recyclerViewSongHistory.addItemDecoration(dividerItemDecoration);
 
         trackHistoryViewModel = ViewModelProviders.of(this).get(TrackHistoryViewModel.class);
         trackHistoryViewModel.getStationHistoryPaged().observe(getViewLifecycleOwner(), new Observer<PagedList<TrackHistoryEntry>>() {
@@ -335,8 +328,6 @@ public class FragmentPlayerFull extends Fragment {
         LinearLayoutManager llmRecordings = new LinearLayoutManager(getContext());
         llmRecordings.setOrientation(RecyclerView.VERTICAL);
         historyAndRecordsPagerAdapter.recyclerViewRecordings.setLayoutManager(llmRecordings);
-
-        historyAndRecordsPagerAdapter.recyclerViewRecordings.addItemDecoration(dividerItemDecoration);
 
         // The scrollable part of the player should have the height of its parent but
         // we only can do this at the runtime.

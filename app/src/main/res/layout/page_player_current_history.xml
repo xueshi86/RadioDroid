@@ -10,20 +10,20 @@
         android:id="@+id/layoutCurrentPlaying"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?android:attr/selectableItemBackground"
+        android:background="?attr/selectableItemBackground"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="8dp"
-        android:paddingTop="8dp"
-        android:paddingEnd="8dp"
-        android:paddingBottom="8dp">
+        android:paddingStart="@dimen/space_md"
+        android:paddingTop="@dimen/space_sm"
+        android:paddingEnd="@dimen/space_md"
+        android:paddingBottom="@dimen/space_sm">
 
         <ImageView
             android:id="@+id/imageViewCurrentPlayingIcon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginEnd="12dp"
-            android:layout_marginRight="12dp"
+            android:layout_width="@dimen/mini_player_cover"
+            android:layout_height="@dimen/mini_player_cover"
+            android:layout_marginEnd="@dimen/space_md"
+            android:layout_marginRight="@dimen/space_md"
             android:contentDescription="@null"
             app:srcCompat="@mipmap/ic_launcher" />
 
@@ -38,8 +38,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/action_currently_playing"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="@dimen/text_caption" />
+                android:textColor="?attr/colorTextTertiary"
+                android:textSize="@dimen/text_label"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/textViewCurrentTrack"
@@ -47,7 +48,7 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="marquee"
                 android:singleLine="true"
-                android:textColor="?android:attr/textColorPrimary"
+                android:textColor="?attr/colorTextPrimary"
                 android:textSize="@dimen/text_title"
                 android:textStyle="bold" />
 
@@ -57,15 +58,15 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="marquee"
                 android:singleLine="true"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="@dimen/text_body" />
+                android:textColor="?attr/colorTextSecondary"
+                android:textSize="@dimen/text_body_small" />
         </LinearLayout>
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="?android:attr/dividerVertical" />
+        android:layout_height="@dimen/divider_thickness"
+        android:background="?attr/colorPlayerShadow" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewCurrentStationHistory"

@@ -4,53 +4,64 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingBottom="8dp"
-    app:layout_behavior="android.support.design.widget.BottomSheetBehavior">
+    android:paddingBottom="@dimen/space_sm"
+    app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/imageViewTrackArt"
+    <!-- 封面用 MaterialCardView 包裹获得圆角（API21+ 生效），卡片透明无阴影 -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardTrackArt"
         android:layout_width="180dp"
         android:layout_height="180dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginTop="8dp"
-        android:contentDescription="@string/tab_player_art"
+        android:layout_marginStart="@dimen/space_sm"
+        android:layout_marginLeft="@dimen/space_sm"
+        android:layout_marginTop="@dimen/space_sm"
+        app:cardBackgroundColor="@android:color/transparent"
+        app:cardCornerRadius="@dimen/radius_card"
+        app:cardElevation="0dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:strokeWidth="0dp">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/imageViewTrackArt"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/tab_player_art" />
+    </com.google.android.material.card.MaterialCardView>
 
     <TextView
         android:id="@+id/textViewTrackName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginLeft="12dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
+        android:layout_marginStart="@dimen/space_md"
+        android:layout_marginLeft="@dimen/space_md"
+        android:layout_marginEnd="@dimen/space_sm"
+        android:layout_marginRight="@dimen/space_sm"
         android:ellipsize="marquee"
         android:singleLine="true"
-        android:textColor="?android:attr/textColorPrimary"
+        android:textColor="?attr/colorTextPrimary"
         android:textSize="@dimen/text_title"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/imageViewTrackArt"
-        app:layout_constraintTop_toTopOf="@id/imageViewTrackArt"
+        app:layout_constraintStart_toEndOf="@id/cardTrackArt"
+        app:layout_constraintTop_toTopOf="@id/cardTrackArt"
         tools:text="Song name" />
 
     <TextView
         android:id="@+id/textViewTrackArtist"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginLeft="12dp"
-        android:layout_marginTop="4dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
+        android:layout_marginStart="@dimen/space_md"
+        android:layout_marginLeft="@dimen/space_md"
+        android:layout_marginTop="@dimen/space_xs"
+        android:layout_marginEnd="@dimen/space_sm"
+        android:layout_marginRight="@dimen/space_sm"
         android:ellipsize="marquee"
         android:singleLine="true"
-        android:textColor="?android:attr/textColorSecondary"
+        android:textColor="?attr/colorTextSecondary"
         android:textSize="@dimen/text_body"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/imageViewTrackArt"
+        app:layout_constraintStart_toEndOf="@id/cardTrackArt"
         app:layout_constraintTop_toBottomOf="@id/textViewTrackName"
         tools:text="Artist" />
 
@@ -58,25 +69,25 @@
         android:id="@+id/textViewDate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginLeft="12dp"
-        android:textColor="?android:attr/textColorSecondary"
+        android:layout_marginStart="@dimen/space_md"
+        android:layout_marginLeft="@dimen/space_md"
+        android:textColor="?attr/colorTextTertiary"
         android:textSize="@dimen/text_caption"
         app:layout_constraintBottom_toTopOf="@id/textViewDuration"
-        app:layout_constraintStart_toEndOf="@id/imageViewTrackArt"
+        app:layout_constraintStart_toEndOf="@id/cardTrackArt"
         tools:text="01.10.2019 11:11" />
 
     <TextView
         android:id="@+id/textViewDuration"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginLeft="12dp"
+        android:layout_marginStart="@dimen/space_md"
+        android:layout_marginLeft="@dimen/space_md"
         android:layout_marginTop="2dp"
-        android:textColor="?android:attr/textColorSecondary"
+        android:textColor="?attr/colorTextTertiary"
         android:textSize="@dimen/text_caption"
-        app:layout_constraintBottom_toBottomOf="@id/imageViewTrackArt"
-        app:layout_constraintStart_toEndOf="@id/imageViewTrackArt"
+        app:layout_constraintBottom_toBottomOf="@id/cardTrackArt"
+        app:layout_constraintStart_toEndOf="@id/cardTrackArt"
         tools:text="03:30" />
 
     <com.google.android.material.button.MaterialButton
@@ -84,24 +95,24 @@
         style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
+        android:layout_marginStart="@dimen/space_xs"
+        android:layout_marginLeft="@dimen/space_xs"
         android:text="@string/action_lyrics"
-        android:textColor="?android:attr/textColorPrimary"
+        android:textColor="?attr/presetAccentColor"
         app:layout_constraintEnd_toStartOf="@id/btnCopyTrackInfo"
-        app:layout_constraintTop_toBottomOf="@id/imageViewTrackArt" />
+        app:layout_constraintTop_toBottomOf="@id/cardTrackArt" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnCopyTrackInfo"
         style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
+        android:layout_marginStart="@dimen/space_xs"
+        android:layout_marginLeft="@dimen/space_xs"
         android:text="@string/action_copy_info"
-        android:textColor="?android:attr/textColorPrimary"
+        android:textColor="?attr/presetAccentColor"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="100"
-        app:layout_constraintTop_toBottomOf="@id/imageViewTrackArt" />
+        app:layout_constraintTop_toBottomOf="@id/cardTrackArt" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
