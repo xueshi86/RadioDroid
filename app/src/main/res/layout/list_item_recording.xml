@@ -27,11 +27,12 @@
         android:maxLines="1"
         android:textAppearance="@style/TextAppearance.RadioDroid.Caption" />
 
-    <!-- 行间分割线（UI 美化）：浅色主题下录音条目不再粘连 -->
+    <!-- 行间分割线：位于全屏播放器内部，必须用播放器自身的分隔色（?attr/colorPlayerShadow），
+         否则暗色主题下与「正在播放」行下方分割线深浅不一致 -->
     <View
         android:layout_width="match_parent"
         android:layout_height="@dimen/divider_thickness"
         android:layout_marginTop="@dimen/space_sm"
-        android:background="?attr/colorSeparator" />
+        android:background="?attr/colorPlayerShadow" />
 
 </LinearLayout>

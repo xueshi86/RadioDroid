@@ -70,12 +70,13 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- 行间分割线（UI 美化）：浅色主题下曲目条目不再粘连 -->
+    <!-- 行间分割线：位于全屏播放器内部，必须用播放器自身的分隔色（?attr/colorPlayerShadow），
+         否则暗色主题下与「正在播放」行下方分割线深浅不一致 -->
     <View
         android:id="@+id/dividerBottom"
         android:layout_width="0dp"
         android:layout_height="@dimen/divider_thickness"
-        android:background="?attr/colorSeparator"
+        android:background="?attr/colorPlayerShadow"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

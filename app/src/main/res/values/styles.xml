@@ -160,10 +160,10 @@
     </style>
 
     <!-- ================= 设置页偏好样式（UI 美化） =================
-         继承 androidx.preference 的默认覆盖层，只调整两项：
-         分组标题改用 Label 字阶 + 预设强调色；行摘要改用 Caption 字阶。 -->
+         继承 androidx.preference 的默认覆盖层，只调整一项：
+         分组标题改用与其他设置项一致的 Title 字阶（16sp），颜色仍走预设强调色。 -->
     <style name="PreferenceThemeOverlay.RadioDroid" parent="PreferenceThemeOverlay">
-        <item name="preferenceCategoryTitleTextAppearance">@style/TextAppearance.RadioDroid.Label</item>
+        <item name="preferenceCategoryTitleTextAppearance">@style/TextAppearance.RadioDroid.Title</item>
         <item name="preferenceCategoryTitleTextColor">?attr/presetAccentColor</item>
     </style>
 

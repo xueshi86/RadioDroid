@@ -5,6 +5,7 @@
 <resources>
 
     <!-- ================= 间距 ================= -->
+    <dimen name="space_xxs">2dp</dimen>
     <dimen name="space_xs">4dp</dimen>
     <dimen name="space_sm">8dp</dimen>
     <dimen name="space_md">12dp</dimen>
@@ -21,7 +22,8 @@
     <!-- ================= 尺寸 ================= -->
     <dimen name="touch_target_min">48dp</dimen>
     <dimen name="appbar_height">56dp</dimen>
-    <dimen name="item_height_standard">88dp</dimen>
+    <!-- 标准行高：图标 56dp + 三行文字，88dp 会在卡片上下留出明显空白，压缩到 64dp -->
+    <dimen name="item_height_standard">64dp</dimen>
     <dimen name="item_height_compact">72dp</dimen>
     <dimen name="icon_station_list">56dp</dimen>
     <dimen name="icon_station_grid">72dp</dimen>

@@ -1246,7 +1246,9 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
         RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
         HistoryManager historyManager = radioDroidApp.getHistoryManager();
-        Fragment currentFragment = mFragmentManager.getFragments().get(mFragmentManager.getFragments().size() - 2);
+        // 必须取容器里的当前顶层 Fragment：getFragments() 还包含播放器小/大 Fragment，
+        // 按 size-2 取样会取到播放器 Fragment，导致闹钟页新建闹钟静默失败（闹钟永不入库）。
+        Fragment currentFragment = mFragmentManager.findFragmentById(R.id.containerView);
         if (!(currentFragment instanceof FragmentAlarm)) {
             return;
         }
