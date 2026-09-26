@@ -1,148 +1,159 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- 电台列表项：根节点为卡片（id 保持 station_foreground，供拖拽/滑动复用），
+     卡片之间用留白分隔，不再依赖 DividerItemDecoration。 -->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/station_foreground"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
-    android:orientation="vertical">
+    android:layout_marginStart="@dimen/space_sm"
+    android:layout_marginLeft="@dimen/space_sm"
+    android:layout_marginEnd="@dimen/space_sm"
+    android:layout_marginRight="@dimen/space_sm"
+    android:layout_marginTop="@dimen/space_xs"
+    android:layout_marginBottom="@dimen/space_xs"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardBackgroundColor="?attr/colorSurfaceCard"
+    app:cardCornerRadius="@dimen/radius_card"
+    app:cardElevation="0dp"
+    app:rippleColor="?attr/colorRipple"
+    app:strokeWidth="0dp">
 
     <LinearLayout
-            android:id="@+id/layoutMain"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="78dp">
-
-        <FrameLayout
-                android:id="@+id/frameLayout"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:layout_gravity="center_vertical"
-                android:measureAllChildren="true">
-
-            <ImageView
-                    android:id="@+id/imageViewIcon"
-                    android:layout_width="70dp"
-                    android:layout_height="70dp"
-                    android:layout_gravity="center"
-                    android:layout_marginEnd="5dp"
-                    android:layout_marginLeft="5dp"
-                    android:layout_marginRight="5dp"
-                    android:layout_marginStart="5dp"
-                    android:contentDescription="@null" />
-
-            <ImageView
-                android:id="@+id/transparentCircle"
-                android:layout_width="70dp"
-                android:layout_height="70dp"
-                android:layout_gravity="center"
-                android:layout_marginStart="5dp"
-                android:layout_marginLeft="5dp"
-                android:layout_marginEnd="5dp"
-                android:layout_marginRight="5dp"
-                android:contentDescription="@null"
-                android:visibility="gone"
-                app:srcCompat="@drawable/ic_transparent_circle"
-                app:tint="?android:attr/windowBackground" />
-
-            <ImageView
-                android:id="@+id/trendStatusIcon"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_gravity="top|start"
-                android:scaleType="fitCenter"
-                app:srcCompat="@drawable/ic_trending_flat_black_24dp" />
-
-            <ImageView
-                    android:id="@+id/starredStatusIcon"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_gravity="top|end"
-                    android:scaleType="fitCenter"
-                    app:srcCompat="@drawable/ic_star_transparent_with_border_24dp" />
-
-            <ImageView
-                android:id="@+id/playingOverlay"
-                android:layout_width="70dp"
-                android:layout_height="70dp"
-                android:layout_gravity="center"
-                android:layout_marginStart="5dp"
-                android:layout_marginLeft="5dp"
-                android:layout_marginEnd="5dp"
-                android:layout_marginRight="5dp"
-                android:contentDescription="@null"
-                android:visibility="gone"
-                android:scaleType="fitCenter" />
-
-        </FrameLayout>
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
         <LinearLayout
-                android:layout_width="0dp"
+                android:id="@+id/layoutMain"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:paddingBottom="4dp"
-                android:paddingLeft="5dp"
-                android:paddingStart="5dp"
-                android:paddingTop="4dp">
+                android:minHeight="@dimen/item_height_standard"
+                android:paddingStart="@dimen/space_xs"
+                android:paddingLeft="@dimen/space_xs"
+                android:paddingEnd="@dimen/space_xs"
+                android:paddingRight="@dimen/space_xs">
 
-            <TextView
-                    android:id="@+id/textViewTitle"
-                    android:layout_width="match_parent"
+            <FrameLayout
+                    android:id="@+id/frameLayout"
+                    android:layout_width="@dimen/icon_station_list"
+                    android:layout_height="@dimen/icon_station_list"
+                    android:layout_gravity="center_vertical"
+                    android:measureAllChildren="true">
+
+                <ImageView
+                        android:id="@+id/imageViewIcon"
+                        android:layout_width="@dimen/icon_station_list"
+                        android:layout_height="@dimen/icon_station_list"
+                        android:layout_gravity="center"
+                        android:contentDescription="@null" />
+
+                <ImageView
+                    android:id="@+id/transparentCircle"
+                    android:layout_width="@dimen/icon_station_list"
+                    android:layout_height="@dimen/icon_station_list"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:visibility="gone"
+                    app:srcCompat="@drawable/ic_transparent_circle"
+                    app:tint="?android:attr/windowBackground" />
+
+                <ImageView
+                    android:id="@+id/trendStatusIcon"
+                    android:layout_width="@dimen/icon_action"
+                    android:layout_height="@dimen/icon_action"
+                    android:layout_gravity="top|start"
+                    android:scaleType="fitCenter"
+                    app:srcCompat="@drawable/ic_trending_flat_black_24dp" />
+
+                <ImageView
+                        android:id="@+id/starredStatusIcon"
+                        android:layout_width="@dimen/icon_action"
+                        android:layout_height="@dimen/icon_action"
+                        android:layout_gravity="top|end"
+                        android:scaleType="fitCenter"
+                        app:srcCompat="@drawable/ic_star_transparent_with_border_24dp" />
+
+                <ImageView
+                    android:id="@+id/playingOverlay"
+                    android:layout_width="@dimen/icon_station_list"
+                    android:layout_height="@dimen/icon_station_list"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:visibility="gone"
+                    android:scaleType="fitCenter" />
+
+            </FrameLayout>
+
+            <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:lines="1"
-                    android:scrollbars="none"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:paddingBottom="@dimen/space_xs"
+                    android:paddingLeft="@dimen/space_sm"
+                    android:paddingStart="@dimen/space_sm"
+                    android:paddingTop="@dimen/space_xs">
 
-            <TextView
-                    android:id="@+id/textViewShortDescription"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawablePadding="4sp"
-                    android:ellipsize="end"
-                    android:lines="1"
-                    android:scrollbars="none"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+                <TextView
+                        android:id="@+id/textViewTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:lines="1"
+                        android:scrollbars="none"
+                        android:textAppearance="@style/TextAppearance.RadioDroid.Title" />
 
-            <TextView
-                    android:id="@+id/textViewTags"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:lines="1"
-                    android:scrollbars="none"
-                    android:textColor="@color/textColorSecondary"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+                <TextView
+                        android:id="@+id/textViewShortDescription"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:drawablePadding="4sp"
+                        android:ellipsize="end"
+                        android:lines="1"
+                        android:scrollbars="none"
+                        android:textAppearance="@style/TextAppearance.RadioDroid.BodySmall" />
 
+                <TextView
+                        android:id="@+id/textViewTags"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:lines="1"
+                        android:scrollbars="none"
+                        android:textAppearance="@style/TextAppearance.RadioDroid.Caption" />
+
+            </LinearLayout>
+
+            <ImageButton
+                    android:id="@+id/buttonMore"
+                    android:layout_width="@dimen/touch_target_min"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/image_button_more"
+                    android:minWidth="@dimen/touch_target_min"
+                    android:padding="@dimen/space_sm"
+                    app:tint="?attr/iconsInItemBackgroundColor"
+                    app:srcCompat="@drawable/ic_expand_more_white_24dp" />
         </LinearLayout>
 
-        <ImageButton
-                android:id="@+id/buttonMore"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="center"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/image_button_more"
-                android:minWidth="50dp"
-                android:padding="5dp"
-                app:tint="?attr/iconsInItemBackgroundColor"
-                app:srcCompat="@drawable/ic_expand_more_white_24dp" />
+        <ViewStub
+                android:id="@+id/stubDetails"
+                android:inflatedId="@+id/layoutDetails"
+                android:layout="@layout/stub_list_item_station_details"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/space_lg"
+                android:layout_marginLeft="@dimen/space_lg"
+                android:layout_marginRight="@dimen/space_lg"
+                android:layout_marginStart="@dimen/space_lg"
+                android:clickable="true"
+                android:descendantFocusability="blocksDescendants"
+                android:orientation="vertical"/>
     </LinearLayout>
 
-    <ViewStub
-            android:id="@+id/stubDetails"
-            android:inflatedId="@+id/layoutDetails"
-            android:layout="@layout/stub_list_item_station_details"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginStart="16dp"
-            android:clickable="true"
-            android:descendantFocusability="blocksDescendants"
-            android:orientation="vertical"/>
-
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>

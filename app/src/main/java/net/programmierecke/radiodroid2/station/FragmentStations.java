@@ -16,7 +16,6 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -168,10 +167,7 @@ public class FragmentStations extends FragmentBase implements IFragmentSearchabl
 
         rvStations.setLayoutManager(llm);
 
-        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(rvStations.getContext(),
-                llm.getOrientation());
-        rvStations.addItemDecoration(dividerItemDecoration);
-
+        // 列表项已卡片化，用卡片之间的留白替代分隔线
         rvStations.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {

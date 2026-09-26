@@ -13,7 +13,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
 import androidx.preference.PreferenceManager;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -169,7 +168,6 @@ public class FragmentLocalStations extends FragmentBase implements IFragmentSear
         // 初始化RecyclerView
         if (getContext() != null) {
             rvStations.setLayoutManager(new LinearLayoutManager(getContext()));
-            rvStations.addItemDecoration(new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL));
         }
 
         rvStations.addOnScrollListener(new RecyclerView.OnScrollListener() {

@@ -8,7 +8,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceManager;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -197,7 +196,6 @@ public class FragmentStarred extends Fragment implements IAdapterRefreshable, Ob
                 llm.setOrientation(RecyclerView.VERTICAL);
                 rvStations.setAdapter(adapter);
                 rvStations.setLayoutManager(llm);
-                rvStations.addItemDecoration(new DividerItemDecoration(rvStations.getContext(), llm.getOrientation()));
                 adapter.enableItemMoveAndRemoval(rvStations);
             }
 

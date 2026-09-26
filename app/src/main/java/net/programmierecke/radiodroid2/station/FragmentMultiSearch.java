@@ -18,7 +18,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
 import androidx.preference.PreferenceManager;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -148,7 +147,6 @@ public class FragmentMultiSearch extends FragmentBase {
                 });
                 recyclerViewStations.setAdapter(stationListAdapter);
                 recyclerViewStations.setLayoutManager(new LinearLayoutManager(getActivity()));
-                recyclerViewStations.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL));
 
                 recyclerViewStations.addOnScrollListener(new RecyclerView.OnScrollListener() {
                     @Override

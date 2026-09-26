@@ -30,6 +30,7 @@ import android.view.ViewGroup;
 import android.view.ViewStub;
 import android.widget.*;
 
+import com.google.android.material.card.MaterialCardView;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.iconics.IconicsSize;
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial;
@@ -295,14 +296,23 @@ public class ItemAdapterStation
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext().getApplicationContext());
         boolean useCircularIcons = Utils.useCircularIcons(getContext());
-        if (station.DeletedOnServer){
-            // set to red
+        // 列表项根节点已是卡片：直接对 itemView 设背景色会抹掉圆角与卡片面色，改为设置卡片背景色
+        if (holder.itemView instanceof MaterialCardView) {
+            MaterialCardView card = (MaterialCardView) holder.itemView;
+            if (station.DeletedOnServer) {
+                // 已被服务器删除：红色底
+                card.setCardBackgroundColor(0xFFFF0000);
+            } else if (!station.Working) {
+                // 当前不可用：黄色底
+                card.setCardBackgroundColor(0xFFFFFF00);
+            } else {
+                card.setCardBackgroundColor(Utils.getThemeColor(getContext(), R.attr.colorSurfaceCard));
+            }
+        } else if (station.DeletedOnServer) {
             holder.itemView.setBackgroundColor(0xFFFF0000);
-        }else if (!station.Working){
-            // set to yellow
+        } else if (!station.Working) {
             holder.itemView.setBackgroundColor(0xFFFFFF00);
-        }else{
-            // set to transparent
+        } else {
             holder.itemView.setBackgroundColor(0x00000000);
         }
 
@@ -379,8 +389,7 @@ public class ItemAdapterStation
         // 确保电台名称可见
         holder.textViewTitle.setText(station.Name != null ? station.Name : activity.getString(R.string.unknown_station));
         
-        // 设置文本颜色，确保与背景有足够对比度
-        boolean isDarkTheme = Utils.isDarkTheme(getContext());
+        // 文字颜色统一走主题角色，不再按亮/暗主题硬编码
         // “正在播放”高亮色跟随预设配色（强调色）
         int highlightColor = Utils.getThemeColor(getContext(), R.attr.presetAccentColor);
 
@@ -392,25 +401,15 @@ public class ItemAdapterStation
             holder.playingOverlay.setBackgroundColor(overlayColor);
             holder.playingOverlay.setVisibility(View.VISIBLE);
         } else {
-            if (isDarkTheme) {
-                holder.textViewTitle.setTextColor(Color.LTGRAY);
-            } else {
-                holder.textViewTitle.setTextColor(Color.DKGRAY);
-            }
-            holder.textViewTitle.setTypeface(holder.textViewShortDescription.getTypeface());
+            // 还原主题主文字色，避免 ViewHolder 复用残留上一首的强调色
+            holder.textViewTitle.setTextColor(Utils.getThemeColor(getContext(), R.attr.colorTextPrimary));
+            holder.textViewTitle.setTypeface(null, Typeface.NORMAL);
             holder.frameLayout.setBackground(null);
             holder.playingOverlay.setVisibility(View.GONE);
         }
 
         holder.textViewShortDescription.setText(station.getShortDetails(getContext()));
         holder.textViewTags.setText(station.TagsAll != null ? station.TagsAll.replace(",", ", ") : "");
-        
-        // 设置简短描述和标签的文本颜色
-        if (isDarkTheme) {
-            // 暗色主题下使用浅灰色
-            holder.textViewShortDescription.setTextColor(Color.LTGRAY);
-            holder.textViewTags.setTextColor(Color.LTGRAY);
-        }
 
 
         boolean inFavourites = favouriteManager.has(station.StationUuid);

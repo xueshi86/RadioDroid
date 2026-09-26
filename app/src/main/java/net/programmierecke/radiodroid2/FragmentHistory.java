@@ -14,7 +14,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -94,9 +93,6 @@ public class FragmentHistory extends Fragment implements IAdapterRefreshable {
         // Adapter将在onActivityCreated中初始化，确保Activity可用
         rvStations.setAdapter(null);
         rvStations.setLayoutManager(llm);
-        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(rvStations.getContext(),
-                llm.getOrientation());
-        rvStations.addItemDecoration(dividerItemDecoration);
 
         swipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.swiperefresh);
         if (swipeRefreshLayout != null) {

@@ -20,34 +20,34 @@
             android:layout_height="wrap_content"
             android:textSize="@dimen/text_display"
             android:height="50dp"
-            android:layout_marginLeft="15dp"
-            android:layout_marginTop="15dp"
-            android:layout_marginRight="15dp" />
+            android:layout_marginLeft="@dimen/space_lg"
+            android:layout_marginTop="@dimen/space_lg"
+            android:layout_marginRight="@dimen/space_lg" />
 
         <TextView
             android:id="@+id/textViewStation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="@dimen/text_title"
-            android:layout_marginLeft="15dp"
-            android:layout_marginRight="15dp" />
+            android:layout_marginLeft="@dimen/space_lg"
+            android:layout_marginRight="@dimen/space_lg" />
 
         <TextView
             android:id="@+id/textViewFadeInfo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="@dimen/text_caption"
-            android:textColor="?android:attr/textColorSecondary"
-            android:layout_marginLeft="15dp"
-            android:layout_marginRight="15dp"
-            android:layout_marginBottom="5dp" />
+            android:textColor="?attr/colorTextSecondary"
+            android:layout_marginLeft="@dimen/space_lg"
+            android:layout_marginRight="@dimen/space_lg"
+            android:layout_marginBottom="@dimen/space_xs" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginLeft="15dp"
-            android:layout_marginRight="15dp"
+            android:layout_marginLeft="@dimen/space_lg"
+            android:layout_marginRight="@dimen/space_lg"
             android:layout_marginBottom="10dp"
             android:gravity="center_vertical">
 
@@ -83,7 +83,7 @@
             android:text=""
             android:id="@+id/switch1"
             android:height="10dp"
-            android:layout_margin="15dp" />
+            android:layout_margin="@dimen/space_lg" />
 
         <ImageButton
             android:layout_width="wrap_content"

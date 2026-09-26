@@ -1,27 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 录音列表项：补上点击涟漪反馈，间距与文字色统一走设计令牌。 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
     android:clickable="true"
     android:orientation="vertical"
+    android:paddingTop="@dimen/space_sm"
+    android:paddingBottom="@dimen/space_sm"
     android:focusable="true">
 
     <TextView
         android:id="@+id/textViewTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        android:textSize="@dimen/text_body"
+        android:layout_marginStart="@dimen/space_lg"
+        android:layout_marginEnd="@dimen/space_lg"
+        android:textAppearance="@style/TextAppearance.RadioDroid.Title"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/textViewTime"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
+        android:layout_marginStart="@dimen/space_lg"
+        android:layout_marginEnd="@dimen/space_lg"
         android:maxLines="1"
-        android:textSize="@dimen/text_caption" />
+        android:textAppearance="@style/TextAppearance.RadioDroid.Caption" />
 
 </LinearLayout>
