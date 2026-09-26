@@ -23,38 +23,37 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="@dimen/space_lg">
 
             <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/switchEqualizerEnabled"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="@dimen/space_lg"
                 android:text="@string/equalizer_enabled"
-                android:textSize="@dimen/text_title" />
+                android:textAppearance="@style/TextAppearance.RadioDroid.Title" />
 
             <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/switchBassBoost"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
+                android:layout_marginBottom="@dimen/space_sm"
                 android:text="@string/equalizer_bass_boost"
-                android:textSize="@dimen/text_title" />
+                android:textAppearance="@style/TextAppearance.RadioDroid.Title" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="@dimen/space_lg"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:layout_marginRight="8dp"
+                    android:layout_marginEnd="@dimen/space_sm"
                     android:text="@string/equalizer_bass_boost_strength"
-                    android:textSize="@dimen/text_body" />
+                    android:textAppearance="@style/TextAppearance.RadioDroid.Body" />
 
                 <SeekBar
                     android:id="@+id/seekBarBassBoost"
@@ -67,36 +66,33 @@
                     android:id="@+id/textBassBoostValue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginLeft="8dp"
+                    android:layout_marginStart="@dimen/space_sm"
                     android:minWidth="40dp"
                     android:text="0"
-                    android:textSize="@dimen/text_body" />
+                    android:textAppearance="@style/TextAppearance.RadioDroid.Body" />
             </LinearLayout>
 
             <TextView
                 android:id="@+id/textPresetLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
+                android:layout_marginBottom="@dimen/space_sm"
                 android:text="@string/equalizer_preset"
-                android:textSize="@dimen/text_title"
-                android:textStyle="bold" />
+                android:textAppearance="@style/TextAppearance.RadioDroid.Title" />
 
             <Spinner
                 android:id="@+id/spinnerPreset"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:minHeight="48dp" />
+                android:layout_marginBottom="@dimen/space_lg"
+                android:minHeight="@dimen/touch_target_min" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
+                android:layout_marginBottom="@dimen/space_sm"
                 android:text="@string/equalizer_bands"
-                android:textSize="@dimen/text_title"
-                android:textStyle="bold" />
+                android:textAppearance="@style/TextAppearance.RadioDroid.Title" />
 
             <LinearLayout
                 android:id="@+id/layoutBands"
@@ -108,10 +104,10 @@
                 android:id="@+id/textNotPlaying"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="@dimen/space_lg"
                 android:gravity="center"
                 android:text="@string/equalizer_not_playing"
-                android:textSize="@dimen/text_body"
+                android:textAppearance="@style/TextAppearance.RadioDroid.BodySmall"
                 android:visibility="gone" />
 
         </LinearLayout>

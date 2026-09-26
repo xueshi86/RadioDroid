@@ -23,6 +23,19 @@
     <color name="colorRippleLight">#14000000</color>
     <color name="colorRippleDark">#1FFFFFFF</color>
 
+    <!-- 对话框内嵌控件（UI 美化）：时间选择器滚轮卡片底色、滑块未激活轨道/刻度与光晕。
+         对话框主题只引用这些命名色，样式里不再出现裸十六进制。 -->
+    <color name="colorSurfaceInset">#F0F0F0</color>
+    <color name="colorSurfaceInsetDark">#3A3A3C</color>
+    <color name="colorSliderInactive">#3D808080</color>
+    <color name="colorSliderInactiveDark">#66FFFFFF</color>
+    <color name="colorSliderHaloDark">#33FFFFFF</color>
+
+    <!-- 状态指示（UI 美化）：连接检测等状态点的「成功」色。
+         亮色主题用深绿保证白底可读，暗色主题用亮绿保证深底可读。 -->
+    <color name="colorStatusOk">#2E7D32</color>
+    <color name="colorStatusOkDark">#81C784</color>
+
     <!-- ================= 旧血统颜色（逐步废弃） =================
          以下色值属于 fork 前的旧配色，不再跟随预设配色。
          页面与样式不应再直接引用它们；仅在尚未改造完成的角落保留，改造完成后删除。 -->

@@ -4,15 +4,15 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingTop="4dp"
-    android:paddingBottom="8dp">
+    android:paddingTop="@dimen/space_xs"
+    android:paddingBottom="@dimen/space_sm">
 
     <!-- Drag handle -->
     <View
         android:layout_width="32dp"
         android:layout_height="4dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="4dp"
+        android:layout_marginBottom="@dimen/space_sm"
         android:background="@drawable/bottom_sheet_drag_handle" />
 
     <!-- Title row -->
@@ -21,17 +21,15 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingLeft="16dp"
-        android:paddingEnd="16dp"
-        android:paddingRight="16dp"
-        android:paddingBottom="8dp">
+        android:paddingStart="@dimen/space_lg"
+        android:paddingEnd="@dimen/space_lg"
+        android:paddingBottom="@dimen/space_md">
 
         <ImageView
-            android:layout_width="22dp"
-            android:layout_height="22dp"
+            android:layout_width="@dimen/icon_action_small"
+            android:layout_height="@dimen/icon_action_small"
             app:srcCompat="@drawable/ic_buffer_settings_24dp"
-            app:tint="?attr/colorPrimary"
+            app:tint="?attr/presetAccentColor"
             android:importantForAccessibility="no" />
 
         <TextView
@@ -39,11 +37,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="10dp"
-            android:layout_marginLeft="10dp"
+            android:layout_marginStart="@dimen/space_sm"
             android:text="@string/buffer_strategy_title"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"
-            android:textColor="?attr/colorOnSurface" />
+            android:textAppearance="@style/TextAppearance.RadioDroid.Title" />
 
     </LinearLayout>
 
@@ -52,18 +48,14 @@
         android:id="@+id/strategyRadioGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingStart="12dp"
-        android:paddingLeft="12dp"
-        android:paddingEnd="16dp"
-        android:paddingRight="16dp">
+        android:paddingStart="@dimen/space_sm"
+        android:paddingEnd="@dimen/space_lg">
 
         <!-- LIGHT strategy -->
         <RadioButton
             android:id="@+id/radioLight"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingTop="2dp"
-            android:paddingBottom="0dp"
             android:text="@string/buffer_strategy_light"
             android:textStyle="bold"
             android:textSize="@dimen/text_body" />
@@ -72,19 +64,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="36dp"
-            android:layout_marginLeft="36dp"
-            android:layout_marginBottom="2dp"
+            android:layout_marginBottom="@dimen/space_sm"
             android:text="@string/buffer_strategy_light_desc"
-            android:textSize="@dimen/text_caption"
-            android:textColor="?android:attr/textColorSecondary" />
+            android:textAppearance="@style/TextAppearance.RadioDroid.Caption" />
 
         <!-- ENHANCED strategy -->
         <RadioButton
             android:id="@+id/radioEnhanced"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingTop="2dp"
-            android:paddingBottom="0dp"
             android:text="@string/buffer_strategy_enhanced"
             android:textStyle="bold"
             android:textSize="@dimen/text_body" />
@@ -93,19 +81,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="36dp"
-            android:layout_marginLeft="36dp"
-            android:layout_marginBottom="2dp"
+            android:layout_marginBottom="@dimen/space_sm"
             android:text="@string/buffer_strategy_enhanced_desc"
-            android:textSize="@dimen/text_caption"
-            android:textColor="?android:attr/textColorSecondary" />
+            android:textAppearance="@style/TextAppearance.RadioDroid.Caption" />
 
         <!-- EXTREME strategy -->
         <RadioButton
             android:id="@+id/radioExtreme"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingTop="2dp"
-            android:paddingBottom="0dp"
             android:text="@string/buffer_strategy_extreme"
             android:textStyle="bold"
             android:textSize="@dimen/text_body" />
@@ -114,11 +98,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="36dp"
-            android:layout_marginLeft="36dp"
-            android:layout_marginBottom="2dp"
+            android:layout_marginBottom="@dimen/space_sm"
             android:text="@string/buffer_strategy_extreme_desc"
-            android:textSize="@dimen/text_caption"
-            android:textColor="?android:attr/textColorSecondary" />
+            android:textAppearance="@style/TextAppearance.RadioDroid.Caption" />
 
     </RadioGroup>
 
@@ -127,27 +109,27 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="end"
-        android:paddingStart="12dp"
-        android:paddingLeft="12dp"
-        android:paddingEnd="8dp"
-        android:paddingRight="8dp"
-        android:paddingTop="4dp">
+        android:gravity="end|center_vertical"
+        android:paddingStart="@dimen/space_sm"
+        android:paddingEnd="@dimen/space_sm"
+        android:paddingTop="@dimen/space_xs">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/bufferBtnCancel"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:textColor="?attr/colorPrimary"
+            android:layout_height="wrap_content"
+            android:textColor="?attr/presetAccentColor"
+            android:textAllCaps="false"
             android:text="@android:string/cancel" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/bufferBtnApply"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:textColor="?attr/colorPrimary"
+            android:layout_height="wrap_content"
+            android:textColor="?attr/presetAccentColor"
+            android:textAllCaps="false"
             android:text="@string/buffer_settings_apply" />
 
     </LinearLayout>

@@ -1,33 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="@dimen/space_lg">
 
     <TextView
         android:id="@+id/dialogTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="@dimen/text_title"
-        android:textStyle="bold" />
+        android:textAppearance="@style/TextAppearance.RadioDroid.TitleLarge" />
 
-    <EditText
-        android:id="@+id/dialogSearchInput"
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/dialogSearchInputLayout"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginTop="8dp"
-        android:hint="@string/multi_search_hint"
-        android:inputType="text"
-        android:maxLines="1"
-        android:padding="8dp"
-        android:textSize="@dimen/text_body" />
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_md"
+        app:boxCornerRadiusBottomEnd="@dimen/radius_sm"
+        app:boxCornerRadiusBottomStart="@dimen/radius_sm"
+        app:boxCornerRadiusTopEnd="@dimen/radius_sm"
+        app:boxCornerRadiusTopStart="@dimen/radius_sm"
+        android:hint="@string/multi_search_hint">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/dialogSearchInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:maxLines="1"
+            android:textSize="@dimen/text_body" />
+
+    </com.google.android.material.textfield.TextInputLayout>
 
     <ListView
         android:id="@+id/dialogList"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="@dimen/space_sm"
         android:maxHeight="360dp" />
 
 </LinearLayout>

@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:paddingTop="@dimen/space_sm"
+    android:paddingBottom="@dimen/space_sm">
 
     <TextView
         android:id="@+id/about_version"
         android:layout_width="match_parent"
-        android:textSize="@dimen/text_title"
-        android:layout_margin="10dp"
+        android:textAppearance="@style/TextAppearance.RadioDroid.Title"
+        android:layout_marginStart="@dimen/space_lg"
+        android:layout_marginEnd="@dimen/space_lg"
+        android:layout_marginTop="@dimen/space_sm"
         android:elegantTextHeight="false"
         android:typeface="normal"
         android:textIsSelectable="true"
@@ -16,11 +20,12 @@
     <TextView
         android:id="@+id/about_fork"
         android:layout_width="match_parent"
-        android:textSize="@dimen/text_title"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
+        android:textAppearance="@style/TextAppearance.RadioDroid.Body"
+        android:layout_marginStart="@dimen/space_lg"
+        android:layout_marginEnd="@dimen/space_lg"
         android:layout_marginTop="0dp"
-        android:layout_marginBottom="10dp"
+        android:layout_marginBottom="@dimen/space_sm"
+        android:lineSpacingMultiplier="1.15"
         android:elegantTextHeight="false"
         android:typeface="normal"
         android:textIsSelectable="true"
@@ -29,8 +34,10 @@
     <TextView
         android:id="@+id/about_github"
         android:layout_width="match_parent"
-        android:textSize="@dimen/text_title"
-        android:layout_margin="10dp"
+        android:textAppearance="@style/TextAppearance.RadioDroid.Body"
+        android:layout_marginStart="@dimen/space_lg"
+        android:layout_marginEnd="@dimen/space_lg"
+        android:layout_marginTop="@dimen/space_sm"
         android:elegantTextHeight="false"
         android:typeface="normal"
         android:textIsSelectable="true"

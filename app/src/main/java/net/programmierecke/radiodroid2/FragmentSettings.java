@@ -12,7 +12,6 @@ import android.annotation.SuppressLint;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.Manifest;
 import android.app.Activity;
@@ -40,6 +39,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.appcompat.widget.Toolbar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -124,7 +124,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 try {
                     WebDavSettings settings = new WebDavSettingsStore(requireContext()).load();
                     if (settings != null) {
-                        preference.setSummary(statusSummary(getString(R.string.webdav_connectivity_checking, settings.getUsername()), webDavBlinkGreen ? Color.GREEN : Color.GRAY));
+                        preference.setSummary(statusSummary(getString(R.string.webdav_connectivity_checking, settings.getUsername()), webDavBlinkGreen ? statusColor(STATUS_OK) : statusColor(STATUS_NEUTRAL)));
                     }
                 } catch (WebDavException ignored) {
                     return;
@@ -660,20 +660,26 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         ScrollView scrollView = new ScrollView(requireContext());
         LinearLayout linearLayout = new LinearLayout(requireContext());
         linearLayout.setOrientation(LinearLayout.VERTICAL);
-        linearLayout.setPadding(60, 40, 60, 40);
-        
-        // Check if dark theme is active
-        boolean isDarkTheme = Utils.isDarkTheme(requireContext());
-        int textColor = isDarkTheme ? Color.WHITE : Color.BLACK;
-        int grayColor = isDarkTheme ? Color.GRAY : Color.DKGRAY;
-        int successColor = isDarkTheme ? Color.GREEN : Color.parseColor("#008000");
-        
+        // 内边距统一取自设计令牌（UI 美化），不再使用裸 px
+        int padXl = getResources().getDimensionPixelSize(R.dimen.space_xl);
+        int padLg = getResources().getDimensionPixelSize(R.dimen.space_lg);
+        int padMd = getResources().getDimensionPixelSize(R.dimen.space_md);
+        int padSm = getResources().getDimensionPixelSize(R.dimen.space_sm);
+        int padXs = getResources().getDimensionPixelSize(R.dimen.space_xs);
+        linearLayout.setPadding(padXl, padSm, padXl, padSm);
+
+        // 颜色统一从主题派生（UI 美化），随亮暗主题与配色方案联动
+        int textColor = Utils.getThemeColor(requireContext(), R.attr.colorTextPrimary);
+        int grayColor = Utils.getThemeColor(requireContext(), R.attr.colorTextSecondary);
+        int successColor = statusColor(STATUS_OK);
+        int errorColor = statusColor(STATUS_ERROR);
+
         // Title
         TextView titleView = new TextView(requireContext());
         titleView.setText(R.string.network_check_results_title);
         titleView.setTextSize(20);
         titleView.setTypeface(null, Typeface.BOLD);
-        titleView.setPadding(0, 0, 0, 30);
+        titleView.setPadding(0, 0, 0, padMd);
         titleView.setTextColor(textColor);
         linearLayout.addView(titleView);
         
@@ -688,7 +694,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 .format(new java.util.Date())));
         }
         timeView.setTextSize(14);
-        timeView.setPadding(0, 0, 0, 20);
+        timeView.setPadding(0, 0, 0, padSm);
         timeView.setTextColor(grayColor);
         linearLayout.addView(timeView);
         
@@ -720,7 +726,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             serverTitle.setText(String.format(requireContext().getString(R.string.network_check_server_label), serverIndex) + ": " + server);
             serverTitle.setTextSize(16);
             serverTitle.setTypeface(null, Typeface.BOLD);
-            serverTitle.setPadding(0, 20, 0, 10);
+            serverTitle.setPadding(0, padLg, 0, padSm);
             serverTitle.setTextColor(textColor);
             linearLayout.addView(serverTitle);
             
@@ -729,8 +735,8 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             TextView httpView = new TextView(requireContext());
             httpView.setText("HTTP: " + (httpTime == Long.MAX_VALUE ? requireContext().getString(R.string.network_check_connection_failed) : httpTime + " ms"));
             httpView.setTextSize(14);
-            httpView.setPadding(30, 5, 0, 5);
-            httpView.setTextColor(httpTime == Long.MAX_VALUE ? Color.RED : textColor);
+            httpView.setPadding(padMd, padXs, 0, padXs);
+            httpView.setTextColor(httpTime == Long.MAX_VALUE ? errorColor : textColor);
             linearLayout.addView(httpView);
             
             // HTTPS result
@@ -738,8 +744,8 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             TextView httpsView = new TextView(requireContext());
             httpsView.setText("HTTPS: " + (httpsTime == Long.MAX_VALUE ? requireContext().getString(R.string.network_check_connection_failed) : httpsTime + " ms"));
             httpsView.setTextSize(14);
-            httpsView.setPadding(30, 5, 0, 5);
-            httpsView.setTextColor(httpsTime == Long.MAX_VALUE ? Color.RED : textColor);
+            httpsView.setPadding(padMd, padXs, 0, padXs);
+            httpsView.setTextColor(httpsTime == Long.MAX_VALUE ? errorColor : textColor);
             linearLayout.addView(httpsView);
             
             serverIndex++;
@@ -750,8 +756,8 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             TextView noResultsView = new TextView(requireContext());
             noResultsView.setText(requireContext().getString(R.string.network_check_no_available));
             noResultsView.setTextSize(14);
-            noResultsView.setPadding(30, 5, 0, 5);
-            noResultsView.setTextColor(Color.RED);
+            noResultsView.setPadding(padMd, padXs, 0, padXs);
+            noResultsView.setTextColor(errorColor);
             linearLayout.addView(noResultsView);
         }
         
@@ -760,7 +766,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         fastestTitle.setText(requireContext().getString(R.string.network_check_fastest_label) + ":");
         fastestTitle.setTextSize(16);
         fastestTitle.setTypeface(null, Typeface.BOLD);
-        fastestTitle.setPadding(0, 20, 0, 10);
+        fastestTitle.setPadding(0, padLg, 0, padSm);
         fastestTitle.setTextColor(textColor);
         linearLayout.addView(fastestTitle);
         
@@ -783,8 +789,8 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         TextView fastestResult = new TextView(requireContext());
         fastestResult.setText(fastestConnection + " - " + (minTime == Long.MAX_VALUE ? requireContext().getString(R.string.network_check_no_available) : minTime + " ms"));
         fastestResult.setTextSize(14);
-        fastestResult.setPadding(30, 5, 0, 5);
-        fastestResult.setTextColor(minTime == Long.MAX_VALUE ? Color.RED : successColor);
+        fastestResult.setPadding(padMd, padXs, 0, padXs);
+        fastestResult.setTextColor(minTime == Long.MAX_VALUE ? errorColor : successColor);
         linearLayout.addView(fastestResult);
         
         scrollView.addView(linearLayout);
@@ -1166,16 +1172,16 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         try {
             WebDavSettings settings = new WebDavSettingsStore(requireContext()).load();
             if (settings == null) {
-                preference.setSummary(statusSummary(getString(R.string.webdav_not_configured), Color.GRAY));
+                preference.setSummary(statusSummary(getString(R.string.webdav_not_configured), statusColor(STATUS_NEUTRAL)));
                 return;
             }
-            preference.setSummary(statusSummary(getString(R.string.webdav_connectivity_checking, settings.getUsername()), Color.GRAY));
+            preference.setSummary(statusSummary(getString(R.string.webdav_connectivity_checking, settings.getUsername()), statusColor(STATUS_NEUTRAL)));
             webDavBlinkGreen = false;
             webDavHandler.removeCallbacks(webDavBlinkRunnable);
             webDavHandler.postDelayed(webDavBlinkRunnable, 500);
             startWebDavConnectionCheck(settings);
         } catch (WebDavException e) {
-            preference.setSummary(statusSummary(getString(R.string.webdav_not_configured), Color.GRAY));
+            preference.setSummary(statusSummary(getString(R.string.webdav_not_configured), statusColor(STATUS_NEUTRAL)));
         }
     }
 
@@ -1204,13 +1210,13 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     int color;
                     if (result) {
                         text = getString(R.string.webdav_connectivity_ok, settings.getUsername());
-                        color = Color.GREEN;
+                        color = statusColor(STATUS_OK);
                     } else if (reason != null) {
                         text = getString(R.string.webdav_connectivity_failed_reason, settings.getUsername(), reason);
-                        color = Color.RED;
+                        color = statusColor(STATUS_ERROR);
                     } else {
                         text = getString(R.string.webdav_connectivity_failed, settings.getUsername());
-                        color = Color.RED;
+                        color = statusColor(STATUS_ERROR);
                     }
                     preference.setSummary(statusSummary(text, color));
                 }
@@ -1238,6 +1244,28 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         summary.setSpan(new ForegroundColorSpan(color), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return summary;
     }
+
+    /** WebDAV 状态指示色种类（UI 美化）：中性 / 成功 / 失败。 */
+    private static final int STATUS_NEUTRAL = 0;
+    private static final int STATUS_OK = 1;
+    private static final int STATUS_ERROR = 2;
+
+    /**
+     * 状态指示色（UI 美化）：统一从主题派生，不再硬编码 Color.GREEN / GRAY / RED，
+     * 保证随亮暗主题与配色方案联动。
+     */
+    private int statusColor(int kind) {
+        Context context = requireContext();
+        if (kind == STATUS_OK) {
+            return ContextCompat.getColor(context,
+                    Utils.isDarkTheme(context) ? R.color.colorStatusOkDark : R.color.colorStatusOk);
+        }
+        if (kind == STATUS_ERROR) {
+            return Utils.getThemeColor(context, R.attr.colorError);
+        }
+        return Utils.getThemeColor(context, R.attr.colorTextTertiary);
+    }
+
     private void registerWebDavWorkStatus() {
         if (!isAdded()) return;
         Preference backup = findPreference("webdav_backup");
@@ -1435,7 +1463,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         url.setSingleLine(true);
         final android.widget.TextView httpWarning = new android.widget.TextView(requireContext());
         httpWarning.setText(R.string.webdav_http_warning);
-        httpWarning.setTextColor(Color.RED);
+        httpWarning.setTextColor(statusColor(STATUS_ERROR));
         int warningPadding = (int) (4 * getResources().getDisplayMetrics().density);
         httpWarning.setPadding(0, warningPadding, 0, 0);
         httpWarning.setVisibility(android.view.View.GONE);

@@ -6,9 +6,9 @@
     android:checkMark="?android:attr/listChoiceIndicatorSingle"
     android:ellipsize="marquee"
     android:gravity="center_vertical"
-    android:minHeight="48dp"
-    android:paddingStart="12dp"
-    android:paddingEnd="12dp"
+    android:minHeight="@dimen/touch_target_min"
+    android:paddingStart="@dimen/space_md"
+    android:paddingEnd="@dimen/space_md"
     android:singleLine="true"
     android:textColor="?android:attr/textColorPrimary"
     android:textSize="@dimen/text_title" />

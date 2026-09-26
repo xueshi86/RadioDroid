@@ -35,6 +35,8 @@
         <item name="menuBottomTextColorDefault">?attr/colorTextSecondary</item>
         <item name="menuBottomBackgroundColor">?attr/colorSurfaceCard</item>
         <item name="actionButtonStyle">@style/ToolbarActionButton</item>
+        <!-- 设置页偏好样式（UI 美化）：分组标题走 Label 字阶 + 强调色 -->
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.RadioDroid</item>
     </style>
     
     <style name="MyMaterialTheme.Base.Dark" parent="Theme.MaterialComponents">
@@ -65,6 +67,8 @@
         <item name="menuBottomTextColorDefault">?attr/colorTextSecondary</item>
         <item name="menuBottomBackgroundColor">?attr/colorSurfaceCard</item>
         <item name="actionButtonStyle">@style/ToolbarActionButton</item>
+        <!-- 设置页偏好样式（UI 美化）：分组标题走 Label 字阶 + 强调色 -->
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.RadioDroid</item>
     </style>
     
     <!-- Dialog themes -->
@@ -72,19 +76,19 @@
         <item name="colorPrimary">?attr/presetAccentColor</item>
         <item name="colorPrimaryDark">?attr/presetPrimaryColor</item>
         <item name="colorAccent">?attr/presetAccentColor</item>
-        <!-- 时间选择器滚轮文字/分割线/按钮（浅色主题） -->
-        <item name="timePickerValueColor">#212121</item>
-        <item name="timePickerDividerColor">#555555</item>
-        <item name="timePickerButtonColor">#212121</item>
-        <item name="timePickerCardBackground">#F0F0F0</item>
+        <!-- 时间选择器滚轮文字/分割线/按钮（浅色主题）：全部走颜色角色或命名色，不再写死色值 -->
+        <item name="timePickerValueColor">@color/colorTextPrimaryLight</item>
+        <item name="timePickerDividerColor">@color/colorTextSecondaryLight</item>
+        <item name="timePickerButtonColor">?attr/presetAccentColor</item>
+        <item name="timePickerCardBackground">@color/colorSurfaceInset</item>
         <!-- 闹钟编辑页控件（浅色主题跟随预设强调色） -->
         <item name="alarmTimeButtonColor">?attr/presetAccentColor</item>
         <item name="sliderThumbColor">?attr/presetAccentColor</item>
         <item name="sliderHaloColor">?attr/presetAccentColor</item>
         <item name="sliderTrackActiveColor">?attr/presetAccentColor</item>
-        <item name="sliderTrackInactiveColor">#3D808080</item>
+        <item name="sliderTrackInactiveColor">@color/colorSliderInactive</item>
         <item name="sliderTickColor">?attr/presetAccentColor</item>
-        <item name="sliderTickInactiveColor">#3D808080</item>
+        <item name="sliderTickInactiveColor">@color/colorSliderInactive</item>
     </style>
 
     
@@ -98,19 +102,19 @@
         <item name="android:windowBackground">?attr/presetSurfaceBackground</item>
         <item name="android:colorBackground">?attr/presetSurfaceBackground</item>
         <item name="android:background">?attr/presetSurfaceBackground</item>
-        <!-- 时间选择器滚轮文字/分割线/按钮（暗色主题统一白色） -->
-        <item name="timePickerValueColor">@android:color/white</item>
-        <item name="timePickerDividerColor">#99FFFFFF</item>
-        <item name="timePickerButtonColor">@android:color/white</item>
-        <item name="timePickerCardBackground">#3A3A3C</item>
+        <!-- 时间选择器滚轮文字/分割线/按钮（暗色主题）：与浅色主题走同一套颜色角色 -->
+        <item name="timePickerValueColor">@color/colorTextPrimaryDark</item>
+        <item name="timePickerDividerColor">@color/colorTextSecondaryDark</item>
+        <item name="timePickerButtonColor">?attr/presetAccentColor</item>
+        <item name="timePickerCardBackground">@color/colorSurfaceInsetDark</item>
         <!-- 闹钟编辑页控件（暗色主题跟随预设强调色） -->
         <item name="alarmTimeButtonColor">?attr/presetAccentColor</item>
         <item name="sliderThumbColor">?attr/presetAccentColor</item>
-        <item name="sliderHaloColor">#33FFFFFF</item>
+        <item name="sliderHaloColor">@color/colorSliderHaloDark</item>
         <item name="sliderTrackActiveColor">?attr/presetAccentColor</item>
-        <item name="sliderTrackInactiveColor">#66FFFFFF</item>
+        <item name="sliderTrackInactiveColor">@color/colorSliderInactiveDark</item>
         <item name="sliderTickColor">?attr/presetAccentColor</item>
-        <item name="sliderTickInactiveColor">#66FFFFFF</item>
+        <item name="sliderTickInactiveColor">@color/colorSliderInactiveDark</item>
     </style>
 
     <!-- Alert themes -->
@@ -123,9 +127,9 @@
         <item name="sliderThumbColor">?attr/presetAccentColor</item>
         <item name="sliderHaloColor">?attr/presetAccentColor</item>
         <item name="sliderTrackActiveColor">?attr/presetAccentColor</item>
-        <item name="sliderTrackInactiveColor">#3D808080</item>
+        <item name="sliderTrackInactiveColor">@color/colorSliderInactive</item>
         <item name="sliderTickColor">?attr/presetAccentColor</item>
-        <item name="sliderTickInactiveColor">#3D808080</item>
+        <item name="sliderTickInactiveColor">@color/colorSliderInactive</item>
     </style>
 
     
@@ -144,11 +148,24 @@
         <!-- 闹钟编辑页控件颜色（暗色主题跟随预设强调色） -->
         <item name="alarmTimeButtonColor">?attr/presetAccentColor</item>
         <item name="sliderThumbColor">?attr/presetAccentColor</item>
-        <item name="sliderHaloColor">#33FFFFFF</item>
+        <item name="sliderHaloColor">@color/colorSliderHaloDark</item>
         <item name="sliderTrackActiveColor">?attr/presetAccentColor</item>
-        <item name="sliderTrackInactiveColor">#66FFFFFF</item>
+        <item name="sliderTrackInactiveColor">@color/colorSliderInactiveDark</item>
         <item name="sliderTickColor">?attr/presetAccentColor</item>
-        <item name="sliderTickInactiveColor">#66FFFFFF</item>
+        <item name="sliderTickInactiveColor">@color/colorSliderInactiveDark</item>
+    </style>
+
+    <!-- ================= 设置页偏好样式（UI 美化） =================
+         继承 androidx.preference 的默认覆盖层，只调整两项：
+         分组标题改用 Label 字阶 + 预设强调色；行摘要改用 Caption 字阶。 -->
+    <style name="PreferenceThemeOverlay.RadioDroid" parent="PreferenceThemeOverlay">
+        <item name="preferenceCategoryTitleTextAppearance">@style/TextAppearance.RadioDroid.Label</item>
+        <item name="preferenceCategoryTitleTextColor">?attr/presetAccentColor</item>
+    </style>
+
+    <!-- 覆盖 androidx.preference 的行摘要样式（摘要统一 Caption 字阶） -->
+    <style name="PreferenceSummaryTextStyle">
+        <item name="android:textAppearance">@style/TextAppearance.RadioDroid.Caption</item>
     </style>
 
     

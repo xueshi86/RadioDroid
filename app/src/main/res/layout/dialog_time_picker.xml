@@ -1,91 +1,94 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:gravity="center_horizontal"
-    android:paddingStart="24dp"
-    android:paddingEnd="24dp"
-    android:paddingTop="20dp"
-    android:paddingBottom="16dp">
+    android:paddingStart="@dimen/space_xl"
+    android:paddingEnd="@dimen/space_xl"
+    android:paddingTop="@dimen/space_lg"
+    android:paddingBottom="@dimen/space_sm">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/alarm_set_time"
-        android:textSize="@dimen/text_title"
-        android:textStyle="bold"
-        android:textColor="?attr/timePickerValueColor"
-        android:layout_marginBottom="16dp"
+        android:textAppearance="@style/TextAppearance.RadioDroid.Title"
+        android:layout_marginBottom="@dimen/space_lg"
         android:importantForAccessibility="no" />
 
-    <LinearLayout
+    <!-- 滚轮卡片：统一圆角 + 内嵌底色，选中项高、未选中项矮的滚动逻辑在 CompactNumberPicker 内保持不变 -->
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:background="?attr/timePickerCardBackground"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp">
+        app:cardBackgroundColor="?attr/timePickerCardBackground"
+        app:cardCornerRadius="@dimen/radius_card"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp">
 
-        <net.programmierecke.radiodroid2.alarm.CompactNumberPicker
-            android:id="@+id/npHour"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text=":"
-            android:textSize="@dimen/text_display"
-            android:textStyle="bold"
+            android:orientation="horizontal"
             android:gravity="center"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp"
-            android:textColor="?attr/timePickerValueColor"
-            android:importantForAccessibility="no" />
+            android:paddingStart="@dimen/space_lg"
+            android:paddingEnd="@dimen/space_lg"
+            android:paddingTop="@dimen/space_sm"
+            android:paddingBottom="@dimen/space_sm">
 
-        <net.programmierecke.radiodroid2.alarm.CompactNumberPicker
-            android:id="@+id/npMinute"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            <net.programmierecke.radiodroid2.alarm.CompactNumberPicker
+                android:id="@+id/npHour"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
 
-    </LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=":"
+                android:textSize="@dimen/text_display"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:paddingStart="@dimen/space_xs"
+                android:paddingEnd="@dimen/space_xs"
+                android:textColor="?attr/timePickerValueColor"
+                android:importantForAccessibility="no" />
+
+            <net.programmierecke.radiodroid2.alarm.CompactNumberPicker
+                android:id="@+id/npMinute"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginTop="20dp">
+        android:gravity="end|center_vertical"
+        android:layout_marginTop="@dimen/space_sm">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCancelTime"
-            style="?android:attr/borderlessButtonStyle"
-            android:layout_width="0dp"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:text="@string/alarm_cancel"
-            android:textColor="?attr/timePickerButtonColor"
+            android:textColor="?attr/presetAccentColor"
             android:textSize="@dimen/text_body"
-            android:minWidth="0dp"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp" />
+            android:textAllCaps="false" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnConfirmTime"
-            style="?android:attr/borderlessButtonStyle"
-            android:layout_width="0dp"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_marginStart="@dimen/space_xs"
             android:text="@string/alarm_save"
-            android:textColor="?attr/timePickerButtonColor"
+            android:textColor="?attr/presetAccentColor"
             android:textSize="@dimen/text_body"
-            android:minWidth="0dp"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp" />
+            android:textAllCaps="false" />
 
     </LinearLayout>
 </LinearLayout>

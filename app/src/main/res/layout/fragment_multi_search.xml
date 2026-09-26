@@ -11,9 +11,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
+        android:layout_marginTop="@dimen/space_sm"
+        android:layout_marginBottom="@dimen/space_sm"
         android:text="@string/multi_search_expand_filters"
         android:textAllCaps="false"
-        app:cornerRadius="4dp" />
+        app:cornerRadius="@dimen/radius_sm" />
 
     <!-- 筛选条件区域 -->
     <ScrollView
@@ -28,140 +30,135 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="2dp">
+            android:paddingStart="@dimen/space_lg"
+            android:paddingEnd="@dimen/space_lg"
+            android:paddingBottom="@dimen/space_sm">
 
             <!-- 国家筛选 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="2dp"
+                android:layout_marginBottom="@dimen/space_sm"
                 android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="0dp"
                     android:text="@string/multi_search_country"
-                    android:textSize="@dimen/text_body"
-                    android:textStyle="bold" />
+                    android:textAppearance="@style/TextAppearance.RadioDroid.Caption" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/spinnerCountry"
                     android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:layout_marginTop="2dp"
+                    android:layout_height="@dimen/touch_target_min"
+                    android:layout_marginTop="@dimen/space_xs"
                     android:gravity="center_vertical|start"
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
-                    android:paddingStart="12dp"
-                    android:paddingLeft="12dp"
-                    android:paddingEnd="8dp"
-                    android:paddingRight="8dp"
+                    android:paddingStart="@dimen/space_md"
+                    android:paddingEnd="@dimen/space_sm"
                     android:text="@string/multi_search_all"
                     android:textAllCaps="false"
-                    android:textColor="?android:attr/textColorPrimary"
+                    android:textColor="?attr/colorTextPrimary"
                     android:textSize="@dimen/text_body"
-                    app:cornerRadius="4dp" />
+                    app:cornerRadius="@dimen/radius_sm" />
             </LinearLayout>
 
             <!-- 语言筛选 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="2dp"
+                android:layout_marginBottom="@dimen/space_sm"
                 android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="0dp"
                     android:text="@string/multi_search_language"
-                    android:textSize="@dimen/text_body"
-                    android:textStyle="bold" />
+                    android:textAppearance="@style/TextAppearance.RadioDroid.Caption" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/spinnerLanguage"
                     android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:layout_marginTop="2dp"
+                    android:layout_height="@dimen/touch_target_min"
+                    android:layout_marginTop="@dimen/space_xs"
                     android:gravity="center_vertical|start"
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
-                    android:paddingStart="12dp"
-                    android:paddingLeft="12dp"
-                    android:paddingEnd="8dp"
-                    android:paddingRight="8dp"
+                    android:paddingStart="@dimen/space_md"
+                    android:paddingEnd="@dimen/space_sm"
                     android:text="@string/multi_search_all"
                     android:textAllCaps="false"
-                    android:textColor="?android:attr/textColorPrimary"
+                    android:textColor="?attr/colorTextPrimary"
                     android:textSize="@dimen/text_body"
-                    app:cornerRadius="4dp" />
+                    app:cornerRadius="@dimen/radius_sm" />
             </LinearLayout>
 
             <!-- 标签筛选 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="0dp"
+                android:layout_marginBottom="@dimen/space_sm"
                 android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="0dp"
                     android:text="@string/multi_search_tag"
-                    android:textSize="@dimen/text_body"
-                    android:textStyle="bold" />
+                    android:textAppearance="@style/TextAppearance.RadioDroid.Caption" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/spinnerTag"
                     android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:layout_marginTop="2dp"
+                    android:layout_height="@dimen/touch_target_min"
+                    android:layout_marginTop="@dimen/space_xs"
                     android:gravity="center_vertical|start"
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
-                    android:paddingStart="12dp"
-                    android:paddingLeft="12dp"
-                    android:paddingEnd="8dp"
-                    android:paddingRight="8dp"
+                    android:paddingStart="@dimen/space_md"
+                    android:paddingEnd="@dimen/space_sm"
                     android:text="@string/multi_search_all"
                     android:textAllCaps="false"
-                    android:textColor="?android:attr/textColorPrimary"
+                    android:textColor="?attr/colorTextPrimary"
                     android:textSize="@dimen/text_body"
-                    app:cornerRadius="4dp" />
+                    app:cornerRadius="@dimen/radius_sm" />
             </LinearLayout>
 
             <!-- 关键词搜索 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="0dp"
+                android:layout_marginBottom="@dimen/space_sm"
                 android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="-2dp"
                     android:includeFontPadding="false"
                     android:text="@string/multi_search_keyword"
-                    android:textSize="@dimen/text_body"
-                    android:textStyle="bold" />
+                    android:textAppearance="@style/TextAppearance.RadioDroid.Caption" />
 
-                <EditText
-                    android:id="@+id/etSearchQuery"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/etSearchQueryLayout"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
                     android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:layout_marginTop="2dp"
-                    android:hint="@string/multi_search_hint"
-                    app:hintTextColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="@dimen/text_body_small"
-                    android:inputType="text"
-                    android:maxLines="1"
-                    android:padding="12dp"
-                    android:background="@drawable/rounded_search_box"
-                    android:elevation="0dp"
-                    android:translationZ="0dp" />
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_xs"
+                    app:boxCornerRadiusBottomEnd="@dimen/radius_sm"
+                    app:boxCornerRadiusBottomStart="@dimen/radius_sm"
+                    app:boxCornerRadiusTopEnd="@dimen/radius_sm"
+                    app:boxCornerRadiusTopStart="@dimen/radius_sm"
+                    android:hint="@string/multi_search_hint">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etSearchQuery"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:maxLines="1"
+                        android:textSize="@dimen/text_body_small" />
+
+                </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
             <!-- 按钮区域 -->
@@ -169,31 +166,27 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:weightSum="2"
-                android:layout_marginTop="0dp"
-                android:layout_marginBottom="0dp">
+                android:weightSum="2">
                 <!-- 收起筛选条件按钮 -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnToggleFilters"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginEnd="4dp"
-                    android:layout_marginRight="4dp"
+                    android:layout_marginEnd="@dimen/space_xs"
                     android:text="@string/multi_search_expand_filters"
                     android:textAllCaps="false"
-                    app:cornerRadius="4dp" />
+                    app:cornerRadius="@dimen/radius_sm" />
                 <!-- 重置筛选按钮 -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnResetFilters"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginLeft="4dp"
+                    android:layout_marginStart="@dimen/space_xs"
                     android:text="@string/multi_search_reset"
                     android:textAllCaps="false"
-                    app:cornerRadius="4dp" />
+                    app:cornerRadius="@dimen/radius_sm" />
             </LinearLayout>
 
         </LinearLayout>
@@ -226,17 +219,17 @@
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:padding="16dp"
+                android:padding="@dimen/space_xl"
                 android:visibility="gone">
 
                 <TextView
                     android:id="@+id/textErrorMessage"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
+                    android:layout_marginBottom="@dimen/space_lg"
                     android:gravity="center"
                     android:text="@string/multi_search_no_results"
-                    android:textSize="@dimen/text_title" />
+                    android:textAppearance="@style/TextAppearance.RadioDroid.Title" />
 
             </LinearLayout>
 
@@ -246,8 +239,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|end"
                 android:layout_marginEnd="40dp"
-                android:layout_marginRight="40dp"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="@dimen/space_lg"
                 app:srcCompat="@drawable/ic_arrow_upward_24dp"
                 android:visibility="gone"
                 app:fabSize="mini"

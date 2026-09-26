@@ -38,7 +38,7 @@
 
         <item name="actionButtonStyle">@style/ToolbarActionButton</item>
 
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.RadioDroid</item>
 
         <item name="colorPlayerBackground">@color/colorPlayerBackground</item>
         <item name="colorPlayerShadow">@color/colorPlayerShadow</item>
@@ -102,7 +102,7 @@
 
         <item name="actionButtonStyle">@style/ToolbarActionButton</item>
 
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.RadioDroid</item>
 
         <item name="colorPlayerBackground">?attr/presetPrimaryColor</item>
         <item name="colorPlayerShadow">@color/colorPlayerShadowDark</item>
