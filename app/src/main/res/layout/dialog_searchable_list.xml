@@ -9,7 +9,7 @@
         android:id="@+id/dialogTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="16sp"
+        android:textSize="@dimen/text_title"
         android:textStyle="bold" />
 
     <EditText
@@ -21,7 +21,7 @@
         android:inputType="text"
         android:maxLines="1"
         android:padding="8dp"
-        android:textSize="14sp" />
+        android:textSize="@dimen/text_body" />
 
     <ListView
         android:id="@+id/dialogList"

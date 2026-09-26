@@ -11,7 +11,7 @@
         android:id="@+id/textBandFreq"
         android:layout_width="70dp"
         android:layout_height="wrap_content"
-        android:textSize="12sp" />
+        android:textSize="@dimen/text_caption" />
 
     <SeekBar
         android:id="@+id/seekBarBand"
@@ -24,6 +24,6 @@
         android:layout_width="60dp"
         android:layout_height="wrap_content"
         android:gravity="end"
-        android:textSize="12sp" />
+        android:textSize="@dimen/text_caption" />
 
 </LinearLayout>

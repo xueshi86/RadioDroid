@@ -20,13 +20,13 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="@string/detail_name"
-        android:textSize="20sp" />
+        android:textSize="@dimen/text_title_large" />
 
     <TextView
         android:id="@+id/textViewStationName"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:textSize="16sp" />
+        android:textSize="@dimen/text_title" />
 
     <TextView
         android:layout_width="fill_parent"
@@ -38,13 +38,13 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="@string/detail_tags"
-        android:textSize="20sp" />
+        android:textSize="@dimen/text_title_large" />
 
     <TextView
         android:id="@+id/detail_station_tags_value"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:textSize="16sp" />
+        android:textSize="@dimen/text_title" />
 
     <TextView
         android:layout_width="fill_parent"
@@ -56,13 +56,13 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="@string/detail_country"
-        android:textSize="20sp" />
+        android:textSize="@dimen/text_title_large" />
 
     <TextView
         android:id="@+id/detail_station_country_value"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:textSize="16sp" />
+        android:textSize="@dimen/text_title" />
 
     <TextView
         android:layout_width="fill_parent"
@@ -74,13 +74,13 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="@string/detail_language"
-        android:textSize="20sp" />
+        android:textSize="@dimen/text_title_large" />
 
     <TextView
         android:id="@+id/detail_station_language_value"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:textSize="16sp" />
+        android:textSize="@dimen/text_title" />
 
     <TextView
         android:layout_width="fill_parent"
@@ -100,13 +100,13 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:text="@string/detail_weblink"
-            android:textSize="20sp" />
+            android:textSize="@dimen/text_title_large" />
 
         <TextView
             android:id="@+id/detail_station_www_value"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:textSize="16sp" />
+            android:textSize="@dimen/text_title" />
     </LinearLayout>
 
     <TextView

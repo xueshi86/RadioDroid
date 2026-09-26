@@ -42,7 +42,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="0dp"
                     android:text="@string/multi_search_country"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/text_body"
                     android:textStyle="bold" />
 
                 <com.google.android.material.button.MaterialButton
@@ -60,7 +60,7 @@
                     android:text="@string/multi_search_all"
                     android:textAllCaps="false"
                     android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/text_body"
                     app:cornerRadius="4dp" />
             </LinearLayout>
 
@@ -76,7 +76,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="0dp"
                     android:text="@string/multi_search_language"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/text_body"
                     android:textStyle="bold" />
 
                 <com.google.android.material.button.MaterialButton
@@ -94,7 +94,7 @@
                     android:text="@string/multi_search_all"
                     android:textAllCaps="false"
                     android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/text_body"
                     app:cornerRadius="4dp" />
             </LinearLayout>
 
@@ -110,7 +110,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="0dp"
                     android:text="@string/multi_search_tag"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/text_body"
                     android:textStyle="bold" />
 
                 <com.google.android.material.button.MaterialButton
@@ -128,7 +128,7 @@
                     android:text="@string/multi_search_all"
                     android:textAllCaps="false"
                     android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/text_body"
                     app:cornerRadius="4dp" />
             </LinearLayout>
 
@@ -145,7 +145,7 @@
                     android:layout_marginBottom="-2dp"
                     android:includeFontPadding="false"
                     android:text="@string/multi_search_keyword"
-                    android:textSize="14sp"
+                    android:textSize="@dimen/text_body"
                     android:textStyle="bold" />
 
                 <EditText
@@ -155,7 +155,7 @@
                     android:layout_marginTop="2dp"
                     android:hint="@string/multi_search_hint"
                     app:hintTextColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="13sp"
+                    android:textSize="@dimen/text_body_small"
                     android:inputType="text"
                     android:maxLines="1"
                     android:padding="12dp"
@@ -236,7 +236,7 @@
                     android:layout_marginBottom="16dp"
                     android:gravity="center"
                     android:text="@string/multi_search_no_results"
-                    android:textSize="16sp" />
+                    android:textSize="@dimen/text_title" />
 
             </LinearLayout>
 

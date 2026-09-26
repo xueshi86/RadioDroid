@@ -1,7 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="windowBackground">#ffffff</color>
-    <color name="windowBackgroundDark">#2c2c2e</color>
+    <!-- ================= 表面层次（UI 美化） =================
+         窗口 < 卡片 < 弹层，三层由暗到亮（暗色主题下由深到浅），
+         让列表卡片、底栏、对话框从页面底色上"浮"起来。
+         纯黑预设在暗色主题下另有一组覆盖值（见 preset_pure_black_*）。 -->
+    <color name="windowBackground">#F4F5F7</color>
+    <color name="windowBackgroundDark">#121214</color>
+    <color name="colorSurfaceCard">#FFFFFF</color>
+    <color name="colorSurfaceCardDark">#1E1E20</color>
+    <color name="colorSurfaceElevated">#FFFFFF</color>
+    <color name="colorSurfaceElevatedDark">#26262A</color>
+
+    <!-- 文字三层 -->
+    <color name="colorTextPrimaryLight">#1A1A1A</color>
+    <color name="colorTextPrimaryDark">#ECECEC</color>
+    <color name="colorTextSecondaryLight">#6B6B6B</color>
+    <color name="colorTextSecondaryDark">#A8A8A8</color>
+    <color name="colorTextTertiaryLight">#9A9A9A</color>
+    <color name="colorTextTertiaryDark">#7C7C7C</color>
+
+    <!-- 点击涟漪 -->
+    <color name="colorRippleLight">#14000000</color>
+    <color name="colorRippleDark">#1FFFFFFF</color>
+
+    <!-- ================= 旧血统颜色（逐步废弃） =================
+         以下色值属于 fork 前的旧配色，不再跟随预设配色。
+         页面与样式不应再直接引用它们；仅在尚未改造完成的角落保留，改造完成后删除。 -->
     <color name="colorPrimary">#125688</color>
     <color name="colorPrimaryDark">#232325</color>
     <color name="textColorPrimary">#FFFFFF</color>
@@ -24,8 +48,8 @@
     <color name="tagBackgroundColorDark">#212121</color>
 
     <!-- 列表 / 详情页分隔线（中性色，不随预设变化） -->
-    <color name="colorSeparator">#dcdcdc</color>
-    <color name="colorSeparatorDark">#3A3A3C</color>
+    <color name="colorSeparator">#E3E3E5</color>
+    <color name="colorSeparatorDark">#2E2E30</color>
 
     <!-- ================= 预设配色（Issue #50） =================
          每套预设只有「主色 + 强调色」两个槽位，亮色 / 暗色主题各一组色值：

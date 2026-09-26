@@ -39,7 +39,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/action_currently_playing"
                 android:textColor="?android:attr/textColorSecondary"
-                android:textSize="12sp" />
+                android:textSize="@dimen/text_caption" />
 
             <TextView
                 android:id="@+id/textViewCurrentTrack"
@@ -48,7 +48,7 @@
                 android:ellipsize="marquee"
                 android:singleLine="true"
                 android:textColor="?android:attr/textColorPrimary"
-                android:textSize="16sp"
+                android:textSize="@dimen/text_title"
                 android:textStyle="bold" />
 
             <TextView
@@ -58,7 +58,7 @@
                 android:ellipsize="marquee"
                 android:singleLine="true"
                 android:textColor="?android:attr/textColorSecondary"
-                android:textSize="14sp" />
+                android:textSize="@dimen/text_body" />
         </LinearLayout>
     </LinearLayout>
 

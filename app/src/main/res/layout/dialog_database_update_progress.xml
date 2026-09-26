@@ -19,7 +19,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:text="@string/update_preparing"
-        android:textSize="14sp" />
+        android:textSize="@dimen/text_body" />
     
     <TextView
         android:id="@+id/progress_text"
@@ -28,7 +28,7 @@
         android:layout_marginBottom="16dp"
         android:gravity="end"
         android:text="@string/update_preparing"
-        android:textSize="12sp" />
+        android:textSize="@dimen/text_caption" />
     
     <Button
         android:id="@+id/cancel_button"

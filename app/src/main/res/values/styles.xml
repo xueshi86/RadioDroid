@@ -1,13 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
-    </style>
-    
     <!-- Material themes -->
     <style name="MyMaterialTheme" parent="MyMaterialTheme.Base" />
     <style name="MyMaterialTheme.Dark" parent="MyMaterialTheme.Base.Dark" />
@@ -21,8 +13,15 @@
         <item name="presetAccentColor">@color/preset_classic_blue_accent</item>
         <item name="presetAccentBrightColor">@color/preset_classic_blue_accent_dark</item>
         <item name="presetWindowBackground">@color/windowBackground</item>
-        <item name="presetSurfaceBackground">@color/windowBackground</item>
+        <item name="presetSurfaceBackground">@color/colorSurfaceElevated</item>
         <item name="colorSeparator">@color/colorSeparator</item>
+        <!-- 颜色角色（UI 美化）：布局与样式只引用这些角色，不再写死色值 -->
+        <item name="colorSurfaceCard">@color/colorSurfaceCard</item>
+        <item name="colorSurfaceElevated">@color/colorSurfaceElevated</item>
+        <item name="colorTextPrimary">@color/colorTextPrimaryLight</item>
+        <item name="colorTextSecondary">@color/colorTextSecondaryLight</item>
+        <item name="colorTextTertiary">@color/colorTextTertiaryLight</item>
+        <item name="colorRipple">@color/colorRippleLight</item>
         <item name="android:windowBackground">?attr/presetWindowBackground</item>
         <item name="colorPrimary">?attr/presetPrimaryColor</item>
         <item name="colorPrimaryDark">?attr/presetPrimaryColor</item>
@@ -38,8 +37,15 @@
         <item name="presetAccentColor">@color/preset_classic_blue_accent_dark</item>
         <item name="presetAccentBrightColor">@color/preset_classic_blue_accent_dark</item>
         <item name="presetWindowBackground">@color/windowBackgroundDark</item>
-        <item name="presetSurfaceBackground">@color/windowBackgroundDark</item>
+        <item name="presetSurfaceBackground">@color/colorSurfaceElevatedDark</item>
         <item name="colorSeparator">@color/colorSeparatorDark</item>
+        <!-- 颜色角色（UI 美化）：布局与样式只引用这些角色，不再写死色值 -->
+        <item name="colorSurfaceCard">@color/colorSurfaceCardDark</item>
+        <item name="colorSurfaceElevated">@color/colorSurfaceElevatedDark</item>
+        <item name="colorTextPrimary">@color/colorTextPrimaryDark</item>
+        <item name="colorTextSecondary">@color/colorTextSecondaryDark</item>
+        <item name="colorTextTertiary">@color/colorTextTertiaryDark</item>
+        <item name="colorRipple">@color/colorRippleDark</item>
         <item name="android:windowBackground">?attr/presetWindowBackground</item>
         <item name="colorPrimary">?attr/presetPrimaryColor</item>
         <item name="colorPrimaryDark">?attr/presetPrimaryColor</item>
@@ -135,7 +141,7 @@
     
     <style name="AlertButtonStyle.Dark" parent="Widget.MaterialComponents.Button.TextButton">
         <item name="android:textColor">@android:color/white</item>
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">@dimen/text_title</item>
     </style>
 
 
@@ -159,21 +165,72 @@
     
     <!-- Menu text appearance -->
     <style name="MenuTextAppearance" parent="TextAppearance.AppCompat.Body1">
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">@dimen/text_title</item>
     </style>
     
     <style name="MenuTextAppearance.Dark" parent="TextAppearance.AppCompat.Body1">
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">@dimen/text_title</item>
         <item name="android:textColor">@android:color/white</item>
     </style>
-    
+
+    <!-- ================= 字阶（UI 美化） =================
+         全项目文字统一走这几级，布局里不再散写 textSize；
+         颜色一律引用 ?attr/colorText*，随亮/暗主题与预设配色联动。 -->
+    <style name="TextAppearance.RadioDroid" parent="TextAppearance.AppCompat" />
+
+    <!-- 大号数字：闹钟时间、时间选择器 -->
+    <style name="TextAppearance.RadioDroid.Display">
+        <item name="android:textSize">@dimen/text_display</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">?attr/colorTextPrimary</item>
+    </style>
+
+    <style name="TextAppearance.RadioDroid.Headline">
+        <item name="android:textSize">@dimen/text_headline</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">?attr/colorTextPrimary</item>
+    </style>
+
+    <style name="TextAppearance.RadioDroid.TitleLarge">
+        <item name="android:textSize">@dimen/text_title_large</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">?attr/colorTextPrimary</item>
+    </style>
+
+    <style name="TextAppearance.RadioDroid.Title">
+        <item name="android:textSize">@dimen/text_title</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">?attr/colorTextPrimary</item>
+    </style>
+
+    <style name="TextAppearance.RadioDroid.Body">
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textColor">?attr/colorTextPrimary</item>
+    </style>
+
+    <style name="TextAppearance.RadioDroid.BodySmall">
+        <item name="android:textSize">@dimen/text_body_small</item>
+        <item name="android:textColor">?attr/colorTextSecondary</item>
+    </style>
+
+    <style name="TextAppearance.RadioDroid.Caption">
+        <item name="android:textSize">@dimen/text_caption</item>
+        <item name="android:textColor">?attr/colorTextSecondary</item>
+    </style>
+
+    <style name="TextAppearance.RadioDroid.Label">
+        <item name="android:textSize">@dimen/text_label</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">?attr/colorTextTertiary</item>
+    </style>
+
     <!-- Snackbar button styles -->
     <style name="SnackBarButton" parent="Widget.MaterialComponents.Button.TextButton">
-        <item name="android:textColor">@color/colorAccent</item>
+        <item name="android:textColor">?attr/presetAccentColor</item>
     </style>
     
     <style name="SnackBarButtonDark" parent="Widget.MaterialComponents.Button.TextButton">
-        <item name="android:textColor">@color/colorAccentDark</item>
+        <item name="android:textColor">?attr/presetAccentColor</item>
     </style>
     
     <!-- Custom spinner dropdown style -->
@@ -303,5 +360,8 @@
         <!-- 纯黑预设：窗口与内容面改为纯黑系 -->
         <item name="presetWindowBackground">@color/preset_pure_black_window_dark</item>
         <item name="presetSurfaceBackground">@color/preset_pure_black_surface_dark</item>
+        <!-- 表面层次同样压到纯黑系，保持"窗口 → 卡片 → 弹层"三级可辨 -->
+        <item name="colorSurfaceCard">@color/preset_pure_black_surface_dark</item>
+        <item name="colorSurfaceElevated">@color/preset_pure_black_surface_dark</item>
     </style>
 </resources>

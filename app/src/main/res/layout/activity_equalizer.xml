@@ -31,7 +31,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 android:text="@string/equalizer_enabled"
-                android:textSize="16sp" />
+                android:textSize="@dimen/text_title" />
 
             <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/switchBassBoost"
@@ -39,7 +39,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 android:text="@string/equalizer_bass_boost"
-                android:textSize="16sp" />
+                android:textSize="@dimen/text_title" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -54,7 +54,7 @@
                     android:layout_marginEnd="8dp"
                     android:layout_marginRight="8dp"
                     android:text="@string/equalizer_bass_boost_strength"
-                    android:textSize="14sp" />
+                    android:textSize="@dimen/text_body" />
 
                 <SeekBar
                     android:id="@+id/seekBarBassBoost"
@@ -71,7 +71,7 @@
                     android:layout_marginLeft="8dp"
                     android:minWidth="40dp"
                     android:text="0"
-                    android:textSize="14sp" />
+                    android:textSize="@dimen/text_body" />
             </LinearLayout>
 
             <TextView
@@ -80,7 +80,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 android:text="@string/equalizer_preset"
-                android:textSize="16sp"
+                android:textSize="@dimen/text_title"
                 android:textStyle="bold" />
 
             <Spinner
@@ -95,7 +95,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 android:text="@string/equalizer_bands"
-                android:textSize="16sp"
+                android:textSize="@dimen/text_title"
                 android:textStyle="bold" />
 
             <LinearLayout
@@ -111,7 +111,7 @@
                 android:layout_marginTop="16dp"
                 android:gravity="center"
                 android:text="@string/equalizer_not_playing"
-                android:textSize="14sp"
+                android:textSize="@dimen/text_body"
                 android:visibility="gone" />
 
         </LinearLayout>

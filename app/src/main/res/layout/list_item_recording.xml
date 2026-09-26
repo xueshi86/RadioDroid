@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
-        android:textSize="14sp"
+        android:textSize="@dimen/text_body"
         android:textStyle="bold" />
 
     <TextView
@@ -22,6 +22,6 @@
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
         android:maxLines="1"
-        android:textSize="12sp" />
+        android:textSize="@dimen/text_caption" />
 
 </LinearLayout>

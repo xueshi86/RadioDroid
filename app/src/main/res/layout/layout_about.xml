@@ -6,7 +6,7 @@
     <TextView
         android:id="@+id/about_version"
         android:layout_width="match_parent"
-        android:textSize="15sp"
+        android:textSize="@dimen/text_title"
         android:layout_margin="10dp"
         android:elegantTextHeight="false"
         android:typeface="normal"
@@ -16,7 +16,7 @@
     <TextView
         android:id="@+id/about_fork"
         android:layout_width="match_parent"
-        android:textSize="15sp"
+        android:textSize="@dimen/text_title"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"
         android:layout_marginTop="0dp"
@@ -29,7 +29,7 @@
     <TextView
         android:id="@+id/about_github"
         android:layout_width="match_parent"
-        android:textSize="15sp"
+        android:textSize="@dimen/text_title"
         android:layout_margin="10dp"
         android:elegantTextHeight="false"
         android:typeface="normal"

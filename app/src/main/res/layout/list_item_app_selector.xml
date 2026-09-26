@@ -26,6 +26,6 @@
         android:ellipsize="end"
         android:maxLines="1"
         android:textColor="?android:attr/textColorPrimary"
-        android:textSize="16sp" />
+        android:textSize="@dimen/text_title" />
 
 </LinearLayout>

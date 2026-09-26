@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- RadioDroid 设计令牌（UI 美化）：
+     全项目间距 / 圆角 / 尺寸 / 字号统一从这里取，布局里不再手写 dp、sp。
+     间距取自 4dp 基准，字号取自 7 级字阶（外加一个用于大号数字的 display）。 -->
+<resources>
+
+    <!-- ================= 间距 ================= -->
+    <dimen name="space_xs">4dp</dimen>
+    <dimen name="space_sm">8dp</dimen>
+    <dimen name="space_md">12dp</dimen>
+    <dimen name="space_lg">16dp</dimen>
+    <dimen name="space_xl">24dp</dimen>
+    <dimen name="space_2xl">32dp</dimen>
+
+    <!-- ================= 圆角 ================= -->
+    <dimen name="radius_sm">8dp</dimen>
+    <dimen name="radius_card">12dp</dimen>
+    <dimen name="radius_dialog">16dp</dimen>
+    <dimen name="radius_cover">16dp</dimen>
+
+    <!-- ================= 尺寸 ================= -->
+    <dimen name="touch_target_min">48dp</dimen>
+    <dimen name="appbar_height">56dp</dimen>
+    <dimen name="item_height_standard">88dp</dimen>
+    <dimen name="item_height_compact">72dp</dimen>
+    <dimen name="icon_station_list">56dp</dimen>
+    <dimen name="icon_station_grid">72dp</dimen>
+    <dimen name="icon_action">24dp</dimen>
+    <dimen name="icon_action_small">20dp</dimen>
+    <dimen name="mini_player_height">64dp</dimen>
+    <dimen name="cover_size_full">240dp</dimen>
+    <dimen name="divider_thickness">1dp</dimen>
+    <dimen name="divider_inset">16dp</dimen>
+
+    <!-- ================= 字号字阶 ================= -->
+    <dimen name="text_display">40sp</dimen>
+    <dimen name="text_headline">24sp</dimen>
+    <dimen name="text_title_large">20sp</dimen>
+    <dimen name="text_title">16sp</dimen>
+    <dimen name="text_body">14sp</dimen>
+    <dimen name="text_body_small">13sp</dimen>
+    <dimen name="text_caption">12sp</dimen>
+    <dimen name="text_label">11sp</dimen>
+
+</resources>

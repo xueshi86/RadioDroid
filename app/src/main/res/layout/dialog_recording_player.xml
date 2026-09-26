@@ -9,7 +9,7 @@
         android:id="@+id/textViewRecordingTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="14sp"
+        android:textSize="@dimen/text_body"
         android:textStyle="bold"
         android:ellipsize="middle"
         android:singleLine="true"
@@ -34,7 +34,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textSize="12sp"
+            android:textSize="@dimen/text_caption"
             android:gravity="start" />
 
         <Button
@@ -43,14 +43,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:minWidth="80dp"
-            android:textSize="14sp" />
+            android:textSize="@dimen/text_body" />
 
         <TextView
             android:id="@+id/textViewDuration"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textSize="12sp"
+            android:textSize="@dimen/text_caption"
             android:gravity="end" />
 
     </LinearLayout>

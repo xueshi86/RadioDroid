@@ -33,4 +33,17 @@
     <!-- 窗口底色 / 内容面底色：仅纯黑预设的暗色主题会改变它们 -->
     <attr name="presetWindowBackground" format="reference" />
     <attr name="presetSurfaceBackground" format="reference" />
+
+    <!-- 颜色角色（UI 美化）：页面里一律引用这些角色，不再出现硬编码色值。
+         窗口色 < 卡片色 < 弹层色，形成由暗到亮（暗色主题下由深到浅）的三层表面层次。 -->
+    <!-- 卡片 / 面板表面：列表卡片、底部导航、标签栏 -->
+    <attr name="colorSurfaceCard" format="reference" />
+    <!-- 悬浮层表面：对话框、底部弹窗 -->
+    <attr name="colorSurfaceElevated" format="reference" />
+    <!-- 文字三层：主 / 次 / 辅助 -->
+    <attr name="colorTextPrimary" format="reference" />
+    <attr name="colorTextSecondary" format="reference" />
+    <attr name="colorTextTertiary" format="reference" />
+    <!-- 点击涟漪色 -->
+    <attr name="colorRipple" format="reference" />
 </resources>

@@ -14,7 +14,7 @@
         android:paddingBottom="8dp"
         android:text="@string/alert_select_external_alarm_app"
         android:textColor="?android:attr/textColorPrimary"
-        android:textSize="18sp"
+        android:textSize="@dimen/text_title"
         android:textStyle="bold" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -34,7 +34,7 @@
         android:padding="32dp"
         android:text="@string/no_audio_apps_found"
         android:textColor="?android:attr/textColorSecondary"
-        android:textSize="14sp"
+        android:textSize="@dimen/text_body"
         android:visibility="gone" />
 
 </LinearLayout>

@@ -22,7 +22,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:text="@string/empty_database_title"
-        android:textSize="18sp"
+        android:textSize="@dimen/text_title"
         android:textStyle="bold" />
 
     <TextView
@@ -32,7 +32,7 @@
         android:layout_marginBottom="24dp"
         android:gravity="center"
         android:text="@string/empty_database_message"
-        android:textSize="14sp" />
+        android:textSize="@dimen/text_body" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnUpdateDatabase"

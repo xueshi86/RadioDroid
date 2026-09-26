@@ -66,7 +66,7 @@
             android:paddingBottom="0dp"
             android:text="@string/buffer_strategy_light"
             android:textStyle="bold"
-            android:textSize="14sp" />
+            android:textSize="@dimen/text_body" />
 
         <TextView
             android:layout_width="match_parent"
@@ -75,7 +75,7 @@
             android:layout_marginLeft="36dp"
             android:layout_marginBottom="2dp"
             android:text="@string/buffer_strategy_light_desc"
-            android:textSize="12sp"
+            android:textSize="@dimen/text_caption"
             android:textColor="?android:attr/textColorSecondary" />
 
         <!-- ENHANCED strategy -->
@@ -87,7 +87,7 @@
             android:paddingBottom="0dp"
             android:text="@string/buffer_strategy_enhanced"
             android:textStyle="bold"
-            android:textSize="14sp" />
+            android:textSize="@dimen/text_body" />
 
         <TextView
             android:layout_width="match_parent"
@@ -96,7 +96,7 @@
             android:layout_marginLeft="36dp"
             android:layout_marginBottom="2dp"
             android:text="@string/buffer_strategy_enhanced_desc"
-            android:textSize="12sp"
+            android:textSize="@dimen/text_caption"
             android:textColor="?android:attr/textColorSecondary" />
 
         <!-- EXTREME strategy -->
@@ -108,7 +108,7 @@
             android:paddingBottom="0dp"
             android:text="@string/buffer_strategy_extreme"
             android:textStyle="bold"
-            android:textSize="14sp" />
+            android:textSize="@dimen/text_body" />
 
         <TextView
             android:layout_width="match_parent"
@@ -117,7 +117,7 @@
             android:layout_marginLeft="36dp"
             android:layout_marginBottom="2dp"
             android:text="@string/buffer_strategy_extreme_desc"
-            android:textSize="12sp"
+            android:textSize="@dimen/text_caption"
             android:textColor="?android:attr/textColorSecondary" />
 
     </RadioGroup>

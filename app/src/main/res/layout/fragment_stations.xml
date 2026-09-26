@@ -36,7 +36,7 @@
                     android:layout_marginBottom="16dp"
                     android:gravity="center"
                     android:text="@string/error_loading_data"
-                    android:textSize="16sp" />
+                    android:textSize="@dimen/text_title" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRetry"

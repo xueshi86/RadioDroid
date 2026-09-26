@@ -22,7 +22,7 @@
         android:layout_margin="5dp"
         android:gravity="start"
         android:textStyle="italic"
-        android:textSize="20sp" />
+        android:textSize="@dimen/text_title_large" />
 
     <TextView
         android:id="@+id/textViewBottom"
@@ -32,6 +32,6 @@
         android:layout_margin="5dp"
         android:gravity="end"
         android:textStyle="bold"
-        android:textSize="20sp" />
+        android:textSize="@dimen/text_title_large" />
 
 </LinearLayout>

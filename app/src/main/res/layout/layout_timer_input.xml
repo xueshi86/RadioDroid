@@ -11,7 +11,7 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="10dp"
         android:text="@string/sleep_timer_set_title"
-        android:textSize="16sp" />
+        android:textSize="@dimen/text_title" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -26,7 +26,7 @@
             android:inputType="number"
             android:maxLength="2"
             android:gravity="center"
-            android:textSize="24sp"
+            android:textSize="@dimen/text_headline"
             android:hint="1-99"
             android:background="@android:drawable/edit_text"
             android:padding="10dp" />
@@ -36,7 +36,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:text="@string/sleep_timer_minutes_label"
-            android:textSize="16sp" />
+            android:textSize="@dimen/text_title" />
 
     </LinearLayout>
 
@@ -46,7 +46,7 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="10dp"
         android:text="@string/sleep_timer_hint"
-        android:textSize="14sp"
+        android:textSize="@dimen/text_body"
         android:textColor="?android:attr/textColorSecondary" />
 
 </LinearLayout>

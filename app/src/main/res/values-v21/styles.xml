@@ -20,8 +20,15 @@
         <item name="presetAccentColor">@color/preset_classic_blue_accent</item>
         <item name="presetAccentBrightColor">@color/preset_classic_blue_accent_dark</item>
         <item name="presetWindowBackground">@color/windowBackground</item>
-        <item name="presetSurfaceBackground">@color/windowBackground</item>
+        <item name="presetSurfaceBackground">@color/colorSurfaceElevated</item>
         <item name="colorSeparator">@color/colorSeparator</item>
+        <!-- 颜色角色（UI 美化）：布局与样式只引用这些角色，不再写死色值 -->
+        <item name="colorSurfaceCard">@color/colorSurfaceCard</item>
+        <item name="colorSurfaceElevated">@color/colorSurfaceElevated</item>
+        <item name="colorTextPrimary">@color/colorTextPrimaryLight</item>
+        <item name="colorTextSecondary">@color/colorTextSecondaryLight</item>
+        <item name="colorTextTertiary">@color/colorTextTertiaryLight</item>
+        <item name="colorRipple">@color/colorRippleLight</item>
         <item name="android:windowBackground">?attr/presetWindowBackground</item>
         <item name="android:statusBarColor">?attr/presetPrimaryColor</item>
         <item name="colorPrimary">?attr/presetPrimaryColor</item>
@@ -51,7 +58,7 @@
 
         <item name="colorTabUnderline">?attr/presetAccentBrightColor</item>
 
-        <item name="android:itemBackground">@color/windowBackground</item>
+        <item name="android:itemBackground">?attr/colorSurfaceElevated</item>
         <item name="iconsInItemBackgroundColor">@color/iconsInItemBackgroundColor</item>
 
         <item name="met_baseColor">?android:textColorPrimary</item>
@@ -76,8 +83,15 @@
         <item name="presetAccentColor">@color/preset_classic_blue_accent_dark</item>
         <item name="presetAccentBrightColor">@color/preset_classic_blue_accent_dark</item>
         <item name="presetWindowBackground">@color/windowBackgroundDark</item>
-        <item name="presetSurfaceBackground">@color/windowBackgroundDark</item>
+        <item name="presetSurfaceBackground">@color/colorSurfaceElevatedDark</item>
         <item name="colorSeparator">@color/colorSeparatorDark</item>
+        <!-- 颜色角色（UI 美化）：布局与样式只引用这些角色，不再写死色值 -->
+        <item name="colorSurfaceCard">@color/colorSurfaceCardDark</item>
+        <item name="colorSurfaceElevated">@color/colorSurfaceElevatedDark</item>
+        <item name="colorTextPrimary">@color/colorTextPrimaryDark</item>
+        <item name="colorTextSecondary">@color/colorTextSecondaryDark</item>
+        <item name="colorTextTertiary">@color/colorTextTertiaryDark</item>
+        <item name="colorRipple">@color/colorRippleDark</item>
         <item name="android:windowBackground">?attr/presetWindowBackground</item>
         <item name="android:statusBarColor">?attr/presetPrimaryColor</item>
         <item name="colorPrimary">?attr/presetPrimaryColor</item>
@@ -108,7 +122,7 @@
 
         <item name="colorTabUnderline">?attr/presetAccentBrightColor</item>
 
-        <item name="android:itemBackground">@color/windowBackgroundDark</item>
+        <item name="android:itemBackground">?attr/colorSurfaceElevated</item>
         <item name="iconsInItemBackgroundColor">@color/iconsInItemBackgroundColorDark</item>
 
         <item name="met_baseColor">?android:textColorPrimary</item>

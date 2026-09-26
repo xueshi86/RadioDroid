@@ -11,4 +11,4 @@
     android:paddingEnd="12dp"
     android:singleLine="true"
     android:textColor="?android:attr/textColorPrimary"
-    android:textSize="16sp" />
+    android:textSize="@dimen/text_title" />
