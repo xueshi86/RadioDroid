@@ -151,6 +151,8 @@ public class EqualizerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         setTheme(Utils.getThemeResId(this));
+        // 预设配色：在 setTheme 之后、setContentView 之前叠加
+        Utils.applyThemePreset(this);
 
         setContentView(R.layout.activity_equalizer);
 

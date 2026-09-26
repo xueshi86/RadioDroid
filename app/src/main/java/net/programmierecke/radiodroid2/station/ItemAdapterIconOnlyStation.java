@@ -1,9 +1,10 @@
 package net.programmierecke.radiodroid2.station;
 
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
+
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -32,6 +33,8 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
     class StationViewHolder extends ItemAdapterStation.StationViewHolder implements View.OnClickListener, View.OnCreateContextMenuListener, SwipeableViewHolder {
         PopupMenu contextMenu = null;
         boolean suppressContextMenu = false;
+        // 记录布局中声明的默认标题颜色，退出“正在播放”状态时还原（否则列表复用会残留强调色）
+        final ColorStateList defaultTitleColors;
 
         StationViewHolder(View itemView) {
             super(itemView);
@@ -43,6 +46,7 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
             transparentImageView = itemView.findViewById(R.id.iconTransparentCircle);
             playingOverlay = itemView.findViewById(R.id.playingOverlay);
             textViewTitle = itemView.findViewById(R.id.textViewStationName);
+            defaultTitleColors = textViewTitle.getTextColors();
             itemView.setOnCreateContextMenuListener(this);
         }
 
@@ -104,13 +108,9 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
         }
 
         if (playingStationPosition == position) {
-            int highlightColor = Color.parseColor("#FF9800");
-            GradientDrawable borderDrawable = new GradientDrawable();
-            borderDrawable.setShape(GradientDrawable.RECTANGLE);
-            borderDrawable.setCornerRadius(8 * getContext().getResources().getDisplayMetrics().density);
-            borderDrawable.setStroke(3, highlightColor);
-            borderDrawable.setColor(Color.TRANSPARENT);
-            holder.frameLayout.setBackground(borderDrawable);
+            // “正在播放”高亮色跟随预设配色（强调色）
+            int highlightColor = Utils.getThemeColor(getContext(), R.attr.presetAccentColor);
+            holder.frameLayout.setBackground(buildPlayingBorderDrawable(highlightColor));
             int overlayColor = Color.argb(50, Color.red(highlightColor), Color.green(highlightColor), Color.blue(highlightColor));
             holder.playingOverlay.setBackgroundColor(overlayColor);
             holder.playingOverlay.setVisibility(View.VISIBLE);
@@ -119,6 +119,8 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
         } else {
             holder.frameLayout.setBackground(null);
             holder.playingOverlay.setVisibility(View.GONE);
+            // 还原默认标题颜色，避免 ViewHolder 复用后残留上一首的强调色
+            holder.textViewTitle.setTextColor(((StationViewHolder) holder).defaultTitleColors);
             holder.textViewTitle.setTypeface(null, Typeface.NORMAL);
         }
 

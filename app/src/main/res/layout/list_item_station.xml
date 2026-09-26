@@ -15,19 +15,19 @@
 
         <FrameLayout
                 android:id="@+id/frameLayout"
-                android:layout_width="90dp"
-                android:layout_height="wrap_content"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
                 android:layout_gravity="center_vertical"
                 android:measureAllChildren="true">
 
             <ImageView
                     android:id="@+id/imageViewIcon"
                     android:layout_width="70dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center|start"
-                    android:layout_marginEnd="20dp"
+                    android:layout_height="70dp"
+                    android:layout_gravity="center"
+                    android:layout_marginEnd="5dp"
                     android:layout_marginLeft="5dp"
-                    android:layout_marginRight="20dp"
+                    android:layout_marginRight="5dp"
                     android:layout_marginStart="5dp"
                     android:contentDescription="@null" />
 
@@ -35,10 +35,11 @@
                 android:id="@+id/transparentCircle"
                 android:layout_width="70dp"
                 android:layout_height="70dp"
+                android:layout_gravity="center"
                 android:layout_marginStart="5dp"
                 android:layout_marginLeft="5dp"
-                android:layout_marginEnd="20dp"
-                android:layout_marginRight="20dp"
+                android:layout_marginEnd="5dp"
+                android:layout_marginRight="5dp"
                 android:contentDescription="@null"
                 android:visibility="gone"
                 app:srcCompat="@drawable/ic_transparent_circle"
@@ -64,10 +65,11 @@
                 android:id="@+id/playingOverlay"
                 android:layout_width="70dp"
                 android:layout_height="70dp"
+                android:layout_gravity="center"
                 android:layout_marginStart="5dp"
                 android:layout_marginLeft="5dp"
-                android:layout_marginEnd="20dp"
-                android:layout_marginRight="20dp"
+                android:layout_marginEnd="5dp"
+                android:layout_marginRight="5dp"
                 android:contentDescription="@null"
                 android:visibility="gone"
                 android:scaleType="fitCenter" />

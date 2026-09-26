@@ -85,6 +85,8 @@ public class TrackHistoryAdapter extends PagedListAdapter<TrackHistoryEntry, Tra
         }
 
         if (shouldLoadIcons) {
+            // 视图复用时可能残留上一轮的隐藏状态，需显式恢复显示
+            holder.imageViewStationIcon.setVisibility(View.VISIBLE);
             String iconUrl = historyEntry.stationIconUrl;
             String homePageUrl = homePageUrlCache.get(historyEntry.stationUuid);
 

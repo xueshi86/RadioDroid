@@ -97,6 +97,15 @@
     <string name="searchpreference_search">Rechercher…</string>
     <string name="settings_appearance">Apparence</string>
     <string name="settings_theme_selection_title">Thème</string>
+    <string name="settings_theme_preset_title">Palette de couleurs</string>
+    <string name="theme_preset_classic_blue">Bleu classique</string>
+    <string name="theme_preset_lake_teal">Turquoise lac</string>
+    <string name="theme_preset_forest_green">Vert forêt</string>
+    <string name="theme_preset_violet">Violet</string>
+    <string name="theme_preset_rose">Rose</string>
+    <string name="theme_preset_sunset_orange">Orange couchant</string>
+    <string name="theme_preset_graphite">Graphite</string>
+    <string name="theme_preset_pure_black">Noir pur</string>
     <string name="theme_light">Clair</string>
     <string name="theme_dark">Noir</string>
     <string name="settings_circular_icons">Utiliser des icônes circulaires</string>

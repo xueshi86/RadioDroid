@@ -1862,7 +1862,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 newFragment.show(getActivity().getSupportFragmentManager(), "appPicker");
             }
         }
-        if (key.equals("theme_name") || key.equals("circular_icons") || key.equals("bottom_navigation")) {
+        if (key.equals("theme_name") || key.equals(Utils.PREF_THEME_PRESET) || key.equals("circular_icons") || key.equals("bottom_navigation")) {
             if (key.equals("circular_icons"))
                 ((RadioDroidApp) getActivity().getApplication()).getFavouriteManager().updateShortcuts();
             getActivity().recreate();

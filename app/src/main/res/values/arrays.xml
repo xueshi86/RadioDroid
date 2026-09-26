@@ -51,6 +51,28 @@
         <item>@string/theme_auto</item>
     </string-array>
 
+    <!-- 配色预设（Issue #50）：entryValues 使用与语言无关的稳定标识，切换语言不影响已选配色 -->
+    <string-array name="theme_preset_entries">
+        <item>@string/theme_preset_classic_blue</item>
+        <item>@string/theme_preset_lake_teal</item>
+        <item>@string/theme_preset_forest_green</item>
+        <item>@string/theme_preset_violet</item>
+        <item>@string/theme_preset_rose</item>
+        <item>@string/theme_preset_sunset_orange</item>
+        <item>@string/theme_preset_graphite</item>
+        <item>@string/theme_preset_pure_black</item>
+    </string-array>
+    <string-array name="theme_preset_values">
+        <item>classic_blue</item>
+        <item>lake_teal</item>
+        <item>forest_green</item>
+        <item>violet</item>
+        <item>rose</item>
+        <item>sunset_orange</item>
+        <item>graphite</item>
+        <item>pure_black</item>
+    </string-array>
+
     <string-array name="lyrics_source_mode_entries">
         <item>@string/pref_lyrics_source_mode_internal</item>
         <item>@string/pref_lyrics_source_mode_external</item>

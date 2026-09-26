@@ -47,6 +47,6 @@
         android:layout_marginTop="10dp"
         android:text="@string/sleep_timer_hint"
         android:textSize="14sp"
-        android:textColor="#666666" />
+        android:textColor="?android:attr/textColorSecondary" />
 
 </LinearLayout>

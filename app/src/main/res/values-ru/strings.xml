@@ -218,6 +218,15 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="empty_database_icon_desc">Иконка пустой базы данных</string>
     <string name="no_results_message">Не найдено категорий %s, обновление базы данных может быть неполным, попробуйте обновить локальную базу данных в настройках</string>
     <string name="settings_theme_selection_title">Тема</string>
+    <string name="settings_theme_preset_title">Цветовая схема</string>
+    <string name="theme_preset_classic_blue">Классический синий</string>
+    <string name="theme_preset_lake_teal">Озёрная бирюза</string>
+    <string name="theme_preset_forest_green">Лесной зелёный</string>
+    <string name="theme_preset_violet">Фиолетовый</string>
+    <string name="theme_preset_rose">Розовый</string>
+    <string name="theme_preset_sunset_orange">Закатный оранжевый</string>
+    <string name="theme_preset_graphite">Графит</string>
+    <string name="theme_preset_pure_black">Чистый чёрный</string>
     <string name="theme_light">Светлая</string>
     <string name="theme_dark">Темная</string>
     <string name="theme_auto">Авто</string>

@@ -31,7 +31,7 @@
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="2dip"
-        android:background="#dcdcdc" />
+        android:background="?attr/colorSeparator" />
 
     <TextView
         android:id="@+id/detail_station_tags"
@@ -49,7 +49,7 @@
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="2dip"
-        android:background="#dcdcdc" />
+        android:background="?attr/colorSeparator" />
 
     <TextView
         android:id="@+id/detail_station_country"
@@ -67,7 +67,7 @@
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="2dip"
-        android:background="#dcdcdc" />
+        android:background="?attr/colorSeparator" />
 
     <TextView
         android:id="@+id/detail_station_language"
@@ -85,7 +85,7 @@
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="2dip"
-        android:background="#dcdcdc" />
+        android:background="?attr/colorSeparator" />
 
     <LinearLayout
         android:id="@+id/detail_station_www_clickable"
@@ -112,6 +112,6 @@
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="2dip"
-        android:background="#dcdcdc" />
+        android:background="?attr/colorSeparator" />
 
 </LinearLayout>

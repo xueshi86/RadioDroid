@@ -105,6 +105,15 @@
             search:summary=""
             android:summary="%s"/>
 
+        <ListPreference
+            android:defaultValue="classic_blue"
+            android:entries="@array/theme_preset_entries"
+            android:entryValues="@array/theme_preset_values"
+            android:key="theme_preset"
+            android:title="@string/settings_theme_preset_title"
+            search:summary=""
+            android:summary="%s"/>
+
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="circular_icons"

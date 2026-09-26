@@ -204,6 +204,8 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         }
         setTheme(Utils.getThemeResId(this));
+        // 预设配色：在 setTheme 之后、setContentView 之前叠加，保证窗口底色/顶栏/播放条等一次到位
+        Utils.applyThemePreset(this);
         setContentView(R.layout.layout_main);
 
         Log.d(TAG, "FilesDir: "+getFilesDir().getAbsolutePath());

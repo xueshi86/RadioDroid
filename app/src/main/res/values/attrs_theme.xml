@@ -19,4 +19,18 @@
 
     <attr name="colorAccentMy" format="reference" />
     <attr name="actionBarPopupTheme" format="reference" />
+
+    <!-- 列表 / 详情页分隔线颜色 -->
+    <attr name="colorSeparator" format="reference" />
+
+    <!-- 预设配色（Issue #50）：
+         基础主题只声明这 4 个属性，其余颜色一律由它们派生；
+         每套预设只需用一组 ThemePreset.xxx 样式覆盖这 4 个属性即可整体换色。 -->
+    <attr name="presetPrimaryColor" format="reference" />
+    <attr name="presetAccentColor" format="reference" />
+    <!-- 强调色的「明亮变体」：用于主色底之上的元素（标签下划线等） -->
+    <attr name="presetAccentBrightColor" format="reference" />
+    <!-- 窗口底色 / 内容面底色：仅纯黑预设的暗色主题会改变它们 -->
+    <attr name="presetWindowBackground" format="reference" />
+    <attr name="presetSurfaceBackground" format="reference" />
 </resources>

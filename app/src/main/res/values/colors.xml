@@ -23,6 +23,60 @@
     <color name="tagBackgroundColor">#E0E0E0</color>
     <color name="tagBackgroundColorDark">#212121</color>
 
+    <!-- 列表 / 详情页分隔线（中性色，不随预设变化） -->
+    <color name="colorSeparator">#dcdcdc</color>
+    <color name="colorSeparatorDark">#3A3A3C</color>
+
+    <!-- ================= 预设配色（Issue #50） =================
+         每套预设只有「主色 + 强调色」两个槽位，亮色 / 暗色主题各一组色值：
+         同一槽位在两种主题下色相保持一致，仅调整明度与饱和度，
+         保证亮底与暗底下都清晰、耐看。
+         primary    → 顶栏、状态栏（暗色下同时作为播放条底色）
+         accent     → 按钮、选中文字、滑块、「正在播放」高亮方框
+         _accent_dark 同时充当强调色的「明亮变体」，用于主色底之上的元素（标签下划线） -->
+    <color name="preset_classic_blue_primary">#1565C0</color>
+    <color name="preset_classic_blue_accent">#1565C0</color>
+    <color name="preset_classic_blue_primary_dark">#2F3540</color>
+    <color name="preset_classic_blue_accent_dark">#64B5F6</color>
+
+    <color name="preset_lake_teal_primary">#00695C</color>
+    <color name="preset_lake_teal_accent">#00695C</color>
+    <color name="preset_lake_teal_primary_dark">#2A3835</color>
+    <color name="preset_lake_teal_accent_dark">#4DB6AC</color>
+
+    <color name="preset_forest_green_primary">#2E7D32</color>
+    <color name="preset_forest_green_accent">#2E7D32</color>
+    <color name="preset_forest_green_primary_dark">#2D392D</color>
+    <color name="preset_forest_green_accent_dark">#81C784</color>
+
+    <color name="preset_violet_primary">#6A1B9A</color>
+    <color name="preset_violet_accent">#6A1B9A</color>
+    <color name="preset_violet_primary_dark">#332B3B</color>
+    <color name="preset_violet_accent_dark">#CE93D8</color>
+
+    <color name="preset_rose_primary">#AD1457</color>
+    <color name="preset_rose_accent">#AD1457</color>
+    <color name="preset_rose_primary_dark">#382B31</color>
+    <color name="preset_rose_accent_dark">#F48FB1</color>
+
+    <color name="preset_sunset_orange_primary">#BF360C</color>
+    <color name="preset_sunset_orange_accent">#BF360C</color>
+    <color name="preset_sunset_orange_primary_dark">#392A24</color>
+    <color name="preset_sunset_orange_accent_dark">#FFAB91</color>
+
+    <color name="preset_graphite_primary">#37474F</color>
+    <color name="preset_graphite_accent">#37474F</color>
+    <color name="preset_graphite_primary_dark">#30353A</color>
+    <color name="preset_graphite_accent_dark">#B0BEC5</color>
+
+    <color name="preset_pure_black_primary">#212121</color>
+    <color name="preset_pure_black_accent">#212121</color>
+    <color name="preset_pure_black_primary_dark">#000000</color>
+    <color name="preset_pure_black_accent_dark">#E0E0E0</color>
+    <!-- 纯黑预设：暗色主题窗口与内容面均为纯黑系 -->
+    <color name="preset_pure_black_window_dark">#000000</color>
+    <color name="preset_pure_black_surface_dark">#0E0E0E</color>
+
     <color name="menuTextColorSelected">@color/colorPrimary</color>
     <color name="menuTextColorSelectedDark">@android:color/white</color>
     <color name="menuTextColorDefault">@android:color/black</color>

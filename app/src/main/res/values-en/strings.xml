@@ -107,6 +107,15 @@
     <string name="settings_incremental_update_note">Note: Incremental updates do not sync stations deleted remotely. After prolonged use, your local station count may gradually exceed the remote count. You can view both counts under &quot;Local Database Status&quot; and decide when to update. When you want your local data to match the remote data, tap &quot;Update local database&quot; to perform a full update.</string>
     <string name="settings_local_database_status_failed">Update failed: %s</string>
     <string name="settings_theme_selection_title">Theme</string>
+    <string name="settings_theme_preset_title">Color scheme</string>
+    <string name="theme_preset_classic_blue">Classic Blue</string>
+    <string name="theme_preset_lake_teal">Lake Teal</string>
+    <string name="theme_preset_forest_green">Forest Green</string>
+    <string name="theme_preset_violet">Violet</string>
+    <string name="theme_preset_rose">Rose</string>
+    <string name="theme_preset_sunset_orange">Sunset Orange</string>
+    <string name="theme_preset_graphite">Graphite</string>
+    <string name="theme_preset_pure_black">Pure Black</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
     <string name="theme_auto">Auto</string>

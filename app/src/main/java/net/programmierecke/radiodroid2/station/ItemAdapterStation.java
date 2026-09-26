@@ -309,6 +309,8 @@ public class ItemAdapterStation
         if (!shouldLoadIcons) {
             holder.imageViewIcon.setVisibility(View.GONE);
         } else {
+            // 视图复用时可能残留上一轮的隐藏状态，需显式恢复显示
+            holder.imageViewIcon.setVisibility(View.VISIBLE);
             if (station.hasIcon()) {
                 setupIcon(useCircularIcons, holder.imageViewIcon, holder.transparentImageView);
                 PlayerServiceUtil.getStationIcon(holder.imageViewIcon, station.IconUrl, station.HomePageUrl, station.StationUuid, station.Name);
@@ -379,17 +381,13 @@ public class ItemAdapterStation
         
         // 设置文本颜色，确保与背景有足够对比度
         boolean isDarkTheme = Utils.isDarkTheme(getContext());
-        int highlightColor = Color.parseColor("#FF9800");
+        // “正在播放”高亮色跟随预设配色（强调色）
+        int highlightColor = Utils.getThemeColor(getContext(), R.attr.presetAccentColor);
 
         if (playingStationPosition == position) {
             holder.textViewTitle.setTextColor(highlightColor);
             holder.textViewTitle.setTypeface(null, Typeface.BOLD);
-            GradientDrawable borderDrawable = new GradientDrawable();
-            borderDrawable.setShape(GradientDrawable.RECTANGLE);
-            borderDrawable.setCornerRadius(8 * getContext().getResources().getDisplayMetrics().density);
-            borderDrawable.setStroke(3, highlightColor);
-            borderDrawable.setColor(Color.TRANSPARENT);
-            holder.frameLayout.setBackground(borderDrawable);
+            holder.frameLayout.setBackground(buildPlayingBorderDrawable(highlightColor));
             int overlayColor = Color.argb(50, Color.red(highlightColor), Color.green(highlightColor), Color.blue(highlightColor));
             holder.playingOverlay.setBackgroundColor(overlayColor);
             holder.playingOverlay.setVisibility(View.VISIBLE);
@@ -480,6 +478,8 @@ public class ItemAdapterStation
                 // favorite stations should only be removed in the favorites view
                 holder.buttonBookmark.setVisibility(View.GONE);
             } else {
+                // 视图复用时可能残留上一轮的隐藏状态，需显式恢复显示
+                holder.buttonBookmark.setVisibility(View.VISIBLE);
                 holder.buttonBookmark.setOnClickListener(view -> {
                     StationActions.markAsFavourite(getContext(), station);
                     int position1 = holder.getAdapterPosition();
@@ -615,6 +615,8 @@ public class ItemAdapterStation
                 imageView.setBackgroundColor(getContext().getResources().getColor(android.R.color.white));
             }
         } else {
+            // 非圆形图标模式下必须隐藏圆形遮罩，否则视图复用时可能残留上一个圆形绑定的遮罩
+            transparentImageView.setVisibility(View.GONE);
             if (Utils.isDarkTheme(getContext())) {
                 imageView.setBackgroundColor(getContext().getResources().getColor(R.color.windowBackgroundDark));
             } else {
@@ -623,17 +625,36 @@ public class ItemAdapterStation
         }
     }
 
+    /**
+     * 构建“正在播放”高亮方框。描边宽度用 dp 换算（此前直接传 px，导致高密度屏幕上描边过细）。
+     */
+    GradientDrawable buildPlayingBorderDrawable(int color) {
+        float density = getContext().getResources().getDisplayMetrics().density;
+        GradientDrawable borderDrawable = new GradientDrawable();
+        borderDrawable.setShape(GradientDrawable.RECTANGLE);
+        borderDrawable.setCornerRadius(8 * density);
+        borderDrawable.setStroke(Math.max(1, Math.round(3 * density)), color);
+        borderDrawable.setColor(Color.TRANSPARENT);
+        return borderDrawable;
+    }
+
     private void setupCompactStyle(final StationViewHolder holder) {
+        int containerSize = (int) getContext().getResources().getDimension(R.dimen.compact_style_icon_container_width);
+        int iconSize = (int) getContext().getResources().getDimension(R.dimen.compact_style_icon_width);
+
         holder.layoutMain.setMinimumHeight((int) getContext().getResources().getDimension(R.dimen.compact_style_item_minimum_height));
-        holder.frameLayout.getLayoutParams().width = (int) getContext().getResources().getDimension(R.dimen.compact_style_icon_container_width);
-        holder.imageViewIcon.getLayoutParams().width = (int) getContext().getResources().getDimension(R.dimen.compact_style_icon_width);
+        // 图标容器必须宽高相等，否则“正在播放”高亮方框会出现缺边
+        holder.frameLayout.getLayoutParams().width = containerSize;
+        holder.frameLayout.getLayoutParams().height = containerSize;
+        holder.imageViewIcon.getLayoutParams().width = iconSize;
+        holder.imageViewIcon.getLayoutParams().height = iconSize;
+        // 高亮遮罩与圆形遮罩需与图标同尺寸，保证方框紧贴图标
+        holder.playingOverlay.getLayoutParams().width = iconSize;
+        holder.playingOverlay.getLayoutParams().height = iconSize;
+        holder.transparentImageView.getLayoutParams().width = (int) getContext().getResources().getDimension(R.dimen.compact_style_icon_width);
+        holder.transparentImageView.getLayoutParams().height = (int) getContext().getResources().getDimension(R.dimen.compact_style_icon_height);
 
         holder.textViewShortDescription.setVisibility(View.GONE);
-        if (holder.transparentImageView.getVisibility() == View.VISIBLE) {
-            holder.transparentImageView.getLayoutParams().height = (int) getContext().getResources().getDimension(R.dimen.compact_style_icon_height);
-            holder.transparentImageView.getLayoutParams().width = (int) getContext().getResources().getDimension(R.dimen.compact_style_icon_width);
-            holder.imageViewIcon.getLayoutParams().height = (int) getContext().getResources().getDimension(R.dimen.compact_style_icon_height);
-        }
     }
 
     private void highlightCurrentStation() {

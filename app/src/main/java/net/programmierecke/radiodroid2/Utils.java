@@ -463,6 +463,66 @@ public class Utils {
         return theme;
     }
 
+    // ================= 预设配色（Issue #50） =================
+
+    public static final String PREF_THEME_PRESET = "theme_preset";
+    /** 默认预设：经典蓝（与改动前的配色一致） */
+    public static final String THEME_PRESET_DEFAULT = "classic_blue";
+
+    /**
+     * 读取当前配色预设。返回的是与语言无关的稳定标识（见 @array/theme_preset_values），
+     * 因此切换应用语言不会影响已选预设。
+     */
+    public static String getThemePreset(final Context context) {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+        String preset = sharedPref.getString(PREF_THEME_PRESET, THEME_PRESET_DEFAULT);
+        return preset == null ? THEME_PRESET_DEFAULT : preset;
+    }
+
+    /** 当前预设 + 当前亮/暗主题所对应的配色覆盖样式 */
+    public static int getThemePresetOverlayResId(final Context context) {
+        boolean dark = getThemeResId(context) == R.style.MyMaterialTheme_Dark;
+        switch (getThemePreset(context)) {
+            case "lake_teal":
+                return dark ? R.style.ThemePreset_LakeTeal_Dark : R.style.ThemePreset_LakeTeal;
+            case "forest_green":
+                return dark ? R.style.ThemePreset_ForestGreen_Dark : R.style.ThemePreset_ForestGreen;
+            case "violet":
+                return dark ? R.style.ThemePreset_Violet_Dark : R.style.ThemePreset_Violet;
+            case "rose":
+                return dark ? R.style.ThemePreset_Rose_Dark : R.style.ThemePreset_Rose;
+            case "sunset_orange":
+                return dark ? R.style.ThemePreset_SunsetOrange_Dark : R.style.ThemePreset_SunsetOrange;
+            case "graphite":
+                return dark ? R.style.ThemePreset_Graphite_Dark : R.style.ThemePreset_Graphite;
+            case "pure_black":
+                return dark ? R.style.ThemePreset_PureBlack_Dark : R.style.ThemePreset_PureBlack;
+            case "classic_blue":
+            default:
+                return dark ? R.style.ThemePreset_ClassicBlue_Dark : R.style.ThemePreset_ClassicBlue;
+        }
+    }
+
+    /**
+     * 在 setTheme() 之后、setContentView() 之前调用，把配色预设叠加到当前主题。
+     * 对话框 / 底部弹窗主题会继承 Activity 主题，故无需单独调用。
+     */
+    public static void applyThemePreset(final Context context) {
+        context.getTheme().applyStyle(getThemePresetOverlayResId(context), true);
+    }
+
+    /** 解析当前主题中某个属性的颜色值（例如 ?attr/presetAccentColor） */
+    public static int getThemeColor(final Context context, final int attrResId) {
+        TypedValue value = new TypedValue();
+        if (!context.getTheme().resolveAttribute(attrResId, value, true)) {
+            return 0;
+        }
+        if (value.resourceId != 0) {
+            return ContextCompat.getColor(context, value.resourceId);
+        }
+        return value.data;
+    }
+
     public static boolean useCircularIcons(final Context context) {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         return sharedPref.getBoolean("circular_icons", false);

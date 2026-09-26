@@ -62,6 +62,15 @@
 
     <string name="settings_appearance">Aussehen</string>
     <string name="settings_theme_selection_title">Thema</string>
+    <string name="settings_theme_preset_title">Farbschema</string>
+    <string name="theme_preset_classic_blue">Klassisches Blau</string>
+    <string name="theme_preset_lake_teal">Seetürkis</string>
+    <string name="theme_preset_forest_green">Waldgrün</string>
+    <string name="theme_preset_violet">Violett</string>
+    <string name="theme_preset_rose">Rosé</string>
+    <string name="theme_preset_sunset_orange">Abendsonnen-Orange</string>
+    <string name="theme_preset_graphite">Graphit</string>
+    <string name="theme_preset_pure_black">Reines Schwarz</string>
     <string name="theme_light">Hell</string>
     <string name="theme_dark">Dunkel</string>
     <string name="settings_circular_icons">Runde Icons benutzen</string>

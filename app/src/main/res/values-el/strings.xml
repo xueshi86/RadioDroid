@@ -88,6 +88,15 @@
     <string name="nav_item_add_sleep">Χρονοδιακόπτης ύπνου</string>
 
     <string name="settings_theme_selection_title">Θέμα</string>
+    <string name="settings_theme_preset_title">Χρωματική παλέτα</string>
+    <string name="theme_preset_classic_blue">Κλασικό μπλε</string>
+    <string name="theme_preset_lake_teal">Τιρκουάζ λίμνης</string>
+    <string name="theme_preset_forest_green">Δασικό πράσινο</string>
+    <string name="theme_preset_violet">Βιολετί</string>
+    <string name="theme_preset_rose">Ροζ</string>
+    <string name="theme_preset_sunset_orange">Πορτοκαλί ηλιοβασιλέματος</string>
+    <string name="theme_preset_graphite">Γραφίτης</string>
+    <string name="theme_preset_pure_black">Καθαρό μαύρο</string>
     <string name="theme_light">Φωτεινό</string>
     <string name="theme_dark">Σκοτεινό</string>
     <string name="settings_circular_icons">Κυκλικά εικονίδια</string>

@@ -14,11 +14,19 @@
         <item name="dialogTheme">@style/DialogTheme</item>
         <item name="alertDialogTheme">@style/AlertTheme</item>
         <item name="bottomSheetDialogTheme">@style/BottomSheetDialogTheme</item>
-        <item name="android:windowBackground">@color/windowBackground</item>
-        <item name="android:statusBarColor">@color/colorPrimary</item>
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <!-- 预设配色（Issue #50）：基础主题只声明 4 个预设属性，其余颜色全部由它们派生；
+             更换预设时只需用 ThemePreset.xxx 覆盖这 4 个属性即可整体换色 -->
+        <item name="presetPrimaryColor">@color/preset_classic_blue_primary</item>
+        <item name="presetAccentColor">@color/preset_classic_blue_accent</item>
+        <item name="presetAccentBrightColor">@color/preset_classic_blue_accent_dark</item>
+        <item name="presetWindowBackground">@color/windowBackground</item>
+        <item name="presetSurfaceBackground">@color/windowBackground</item>
+        <item name="colorSeparator">@color/colorSeparator</item>
+        <item name="android:windowBackground">?attr/presetWindowBackground</item>
+        <item name="android:statusBarColor">?attr/presetPrimaryColor</item>
+        <item name="colorPrimary">?attr/presetPrimaryColor</item>
+        <item name="colorPrimaryDark">?attr/presetPrimaryColor</item>
+        <item name="colorAccent">?attr/presetAccentColor</item>
 
         <item name="actionButtonStyle">@style/ToolbarActionButton</item>
 
@@ -36,12 +44,12 @@
 
         <item name="menuBottomTextColorSelected">@color/menuBottomTextColorSelected</item>
         <item name="menuBottomTextColorDefault">@color/menuBottomTextColorDefault</item>
-        <item name="menuBottomBackgroundColor">@color/menuBottomBackgroundColor</item>
+        <item name="menuBottomBackgroundColor">?attr/presetAccentColor</item>
 
         <item name="swipeDeleteIconColor">@color/swipeDeleteIconColor</item>
         <item name="swipeDeleteBackgroundColor">@color/swipeDeleteBackgroundColor</item>
 
-        <item name="colorTabUnderline">@color/colorTabUnderline</item>
+        <item name="colorTabUnderline">?attr/presetAccentBrightColor</item>
 
         <item name="android:itemBackground">@color/windowBackground</item>
         <item name="iconsInItemBackgroundColor">@color/iconsInItemBackgroundColor</item>
@@ -53,7 +61,7 @@
         <item name="snackbarButtonStyle">@style/SnackBarButton</item>
 
         <!-- workaround for lower API -->
-        <item name="colorAccentMy">@color/colorAccent</item>
+        <item name="colorAccentMy">?attr/presetAccentColor</item>
 
         <item name="viewInflaterClass">androidx.appcompat.app.AppCompatViewInflater</item>
     </style>
@@ -64,17 +72,23 @@
         <item name="dialogTheme">@style/DialogTheme.Dark</item>
         <item name="alertDialogTheme">@style/AlertTheme.Dark</item>
         <item name="bottomSheetDialogTheme">@style/BottomSheetDialogTheme.Dark</item>
-        <item name="android:windowBackground">@color/windowBackgroundDark</item>
-        <item name="android:statusBarColor">@color/colorPrimaryDark</item>
-        <item name="colorPrimary">@color/colorPrimaryDark</item>
-        <item name="colorPrimaryDark">@color/colorPrimary</item>
-        <item name="colorAccent">@color/colorAccentDark</item>
+        <item name="presetPrimaryColor">@color/preset_classic_blue_primary_dark</item>
+        <item name="presetAccentColor">@color/preset_classic_blue_accent_dark</item>
+        <item name="presetAccentBrightColor">@color/preset_classic_blue_accent_dark</item>
+        <item name="presetWindowBackground">@color/windowBackgroundDark</item>
+        <item name="presetSurfaceBackground">@color/windowBackgroundDark</item>
+        <item name="colorSeparator">@color/colorSeparatorDark</item>
+        <item name="android:windowBackground">?attr/presetWindowBackground</item>
+        <item name="android:statusBarColor">?attr/presetPrimaryColor</item>
+        <item name="colorPrimary">?attr/presetPrimaryColor</item>
+        <item name="colorPrimaryDark">?attr/presetPrimaryColor</item>
+        <item name="colorAccent">?attr/presetAccentColor</item>
 
         <item name="actionButtonStyle">@style/ToolbarActionButton</item>
 
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
 
-        <item name="colorPlayerBackground">@color/colorPlayerBackgroundDark</item>
+        <item name="colorPlayerBackground">?attr/presetPrimaryColor</item>
         <item name="colorPlayerShadow">@color/colorPlayerShadowDark</item>
 
         <item name="tagBackgroundColor">@color/tagBackgroundColorDark</item>
@@ -92,7 +106,7 @@
         <item name="swipeDeleteIconColor">@color/swipeDeleteIconColorDark</item>
         <item name="swipeDeleteBackgroundColor">@color/swipeDeleteBackgroundColorDark</item>
 
-        <item name="colorTabUnderline">@color/colorTabUnderlineDark</item>
+        <item name="colorTabUnderline">?attr/presetAccentBrightColor</item>
 
         <item name="android:itemBackground">@color/windowBackgroundDark</item>
         <item name="iconsInItemBackgroundColor">@color/iconsInItemBackgroundColorDark</item>
@@ -104,7 +118,7 @@
         <item name="snackbarButtonStyle">@style/SnackBarButtonDark</item>
 
         <!-- workaround for lower API -->
-        <item name="colorAccentMy">@color/colorAccentDark</item>
+        <item name="colorAccentMy">?attr/presetAccentColor</item>
 
         <item name="viewInflaterClass">androidx.appcompat.app.AppCompatViewInflater</item>
     </style>

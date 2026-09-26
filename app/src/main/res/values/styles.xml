@@ -15,104 +15,120 @@
     <style name="MyMaterialTheme.Base" parent="Theme.MaterialComponents.Light">
         <item name="windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
-        <item name="android:windowBackground">@color/windowBackground</item>
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <!-- 预设配色（Issue #50）：基础主题只声明 4 个预设属性，其余颜色全部由它们派生；
+             更换预设时只需用 ThemePreset.xxx 覆盖这 4 个属性即可整体换色 -->
+        <item name="presetPrimaryColor">@color/preset_classic_blue_primary</item>
+        <item name="presetAccentColor">@color/preset_classic_blue_accent</item>
+        <item name="presetAccentBrightColor">@color/preset_classic_blue_accent_dark</item>
+        <item name="presetWindowBackground">@color/windowBackground</item>
+        <item name="presetSurfaceBackground">@color/windowBackground</item>
+        <item name="colorSeparator">@color/colorSeparator</item>
+        <item name="android:windowBackground">?attr/presetWindowBackground</item>
+        <item name="colorPrimary">?attr/presetPrimaryColor</item>
+        <item name="colorPrimaryDark">?attr/presetPrimaryColor</item>
+        <item name="colorAccent">?attr/presetAccentColor</item>
+        <item name="colorTabUnderline">?attr/presetAccentBrightColor</item>
         <item name="actionButtonStyle">@style/ToolbarActionButton</item>
     </style>
     
     <style name="MyMaterialTheme.Base.Dark" parent="Theme.MaterialComponents">
         <item name="windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
-        <item name="android:windowBackground">@color/windowBackgroundDark</item>
-        <item name="colorPrimary">@color/colorPrimaryDark</item>
-        <item name="colorPrimaryDark">@color/colorPrimary</item>
-        <item name="colorAccent">@color/colorAccentDark</item>
+        <item name="presetPrimaryColor">@color/preset_classic_blue_primary_dark</item>
+        <item name="presetAccentColor">@color/preset_classic_blue_accent_dark</item>
+        <item name="presetAccentBrightColor">@color/preset_classic_blue_accent_dark</item>
+        <item name="presetWindowBackground">@color/windowBackgroundDark</item>
+        <item name="presetSurfaceBackground">@color/windowBackgroundDark</item>
+        <item name="colorSeparator">@color/colorSeparatorDark</item>
+        <item name="android:windowBackground">?attr/presetWindowBackground</item>
+        <item name="colorPrimary">?attr/presetPrimaryColor</item>
+        <item name="colorPrimaryDark">?attr/presetPrimaryColor</item>
+        <item name="colorAccent">?attr/presetAccentColor</item>
+        <item name="colorTabUnderline">?attr/presetAccentBrightColor</item>
         <item name="actionButtonStyle">@style/ToolbarActionButton</item>
     </style>
     
     <!-- Dialog themes -->
     <style name="DialogTheme" parent="Theme.MaterialComponents.Light.Dialog">
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorPrimary">?attr/presetAccentColor</item>
+        <item name="colorPrimaryDark">?attr/presetPrimaryColor</item>
+        <item name="colorAccent">?attr/presetAccentColor</item>
         <!-- 时间选择器滚轮文字/分割线/按钮（浅色主题） -->
         <item name="timePickerValueColor">#212121</item>
         <item name="timePickerDividerColor">#555555</item>
         <item name="timePickerButtonColor">#212121</item>
         <item name="timePickerCardBackground">#F0F0F0</item>
-        <!-- 闹钟编辑页控件（浅色主题保持原蓝色样式） -->
-        <item name="alarmTimeButtonColor">?attr/colorPrimary</item>
-        <item name="sliderThumbColor">?attr/colorPrimary</item>
-        <item name="sliderHaloColor">?attr/colorPrimary</item>
-        <item name="sliderTrackActiveColor">?attr/colorPrimary</item>
-        <item name="sliderTrackInactiveColor">#3D125688</item>
-        <item name="sliderTickColor">?attr/colorPrimary</item>
-        <item name="sliderTickInactiveColor">#3D125688</item>
+        <!-- 闹钟编辑页控件（浅色主题跟随预设强调色） -->
+        <item name="alarmTimeButtonColor">?attr/presetAccentColor</item>
+        <item name="sliderThumbColor">?attr/presetAccentColor</item>
+        <item name="sliderHaloColor">?attr/presetAccentColor</item>
+        <item name="sliderTrackActiveColor">?attr/presetAccentColor</item>
+        <item name="sliderTrackInactiveColor">#3D808080</item>
+        <item name="sliderTickColor">?attr/presetAccentColor</item>
+        <item name="sliderTickInactiveColor">#3D808080</item>
     </style>
 
     
     <style name="DialogTheme.Dark" parent="Theme.MaterialComponents.Dialog">
-        <item name="colorPrimary">@color/colorAccentDark</item>
-        <item name="colorPrimaryDark">@color/colorPrimary</item>
-        <item name="colorAccent">@color/colorAccentDark</item>
+        <item name="colorPrimary">?attr/presetAccentColor</item>
+        <item name="colorPrimaryDark">?attr/presetPrimaryColor</item>
+        <item name="colorAccent">?attr/presetAccentColor</item>
         <item name="android:textColor">@android:color/white</item>
         <item name="android:textColorPrimary">@android:color/white</item>
         <item name="android:textColorSecondary">@android:color/white</item>
-        <item name="android:windowBackground">@color/windowBackgroundDark</item>
-        <item name="android:colorBackground">@color/windowBackgroundDark</item>
-        <item name="android:background">@color/windowBackgroundDark</item>
+        <item name="android:windowBackground">?attr/presetSurfaceBackground</item>
+        <item name="android:colorBackground">?attr/presetSurfaceBackground</item>
+        <item name="android:background">?attr/presetSurfaceBackground</item>
         <!-- 时间选择器滚轮文字/分割线/按钮（暗色主题统一白色） -->
         <item name="timePickerValueColor">@android:color/white</item>
         <item name="timePickerDividerColor">#99FFFFFF</item>
         <item name="timePickerButtonColor">@android:color/white</item>
         <item name="timePickerCardBackground">#3A3A3C</item>
-        <!-- 闹钟编辑页控件（暗色主题统一白色） -->
-        <item name="alarmTimeButtonColor">@android:color/white</item>
-        <item name="sliderThumbColor">@android:color/white</item>
+        <!-- 闹钟编辑页控件（暗色主题跟随预设强调色） -->
+        <item name="alarmTimeButtonColor">?attr/presetAccentColor</item>
+        <item name="sliderThumbColor">?attr/presetAccentColor</item>
         <item name="sliderHaloColor">#33FFFFFF</item>
-        <item name="sliderTrackActiveColor">@android:color/white</item>
+        <item name="sliderTrackActiveColor">?attr/presetAccentColor</item>
         <item name="sliderTrackInactiveColor">#66FFFFFF</item>
-        <item name="sliderTickColor">@android:color/white</item>
+        <item name="sliderTickColor">?attr/presetAccentColor</item>
         <item name="sliderTickInactiveColor">#66FFFFFF</item>
     </style>
-    
+
     <!-- Alert themes -->
     <style name="AlertTheme" parent="Theme.MaterialComponents.Light.Dialog.Alert">
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
-        <!-- 闹钟编辑页控件（浅色主题保持原蓝色样式） -->
-        <item name="alarmTimeButtonColor">?attr/colorPrimary</item>
-        <item name="sliderThumbColor">?attr/colorPrimary</item>
-        <item name="sliderHaloColor">?attr/colorPrimary</item>
-        <item name="sliderTrackActiveColor">?attr/colorPrimary</item>
-        <item name="sliderTrackInactiveColor">#3D125688</item>
-        <item name="sliderTickColor">?attr/colorPrimary</item>
-        <item name="sliderTickInactiveColor">#3D125688</item>
+        <item name="colorPrimary">?attr/presetAccentColor</item>
+        <item name="colorPrimaryDark">?attr/presetPrimaryColor</item>
+        <item name="colorAccent">?attr/presetAccentColor</item>
+        <!-- 闹钟编辑页控件（浅色主题跟随预设强调色） -->
+        <item name="alarmTimeButtonColor">?attr/presetAccentColor</item>
+        <item name="sliderThumbColor">?attr/presetAccentColor</item>
+        <item name="sliderHaloColor">?attr/presetAccentColor</item>
+        <item name="sliderTrackActiveColor">?attr/presetAccentColor</item>
+        <item name="sliderTrackInactiveColor">#3D808080</item>
+        <item name="sliderTickColor">?attr/presetAccentColor</item>
+        <item name="sliderTickInactiveColor">#3D808080</item>
     </style>
 
     
     <style name="AlertTheme.Dark" parent="Theme.MaterialComponents.Dialog.Alert">
-        <item name="colorPrimary">@color/colorAlertPrimaryDark</item>
-        <item name="colorPrimaryDark">@color/colorPrimary</item>
-        <item name="colorAccent">@color/colorAlertPrimaryDark</item>
+        <item name="colorPrimary">?attr/presetAccentColor</item>
+        <item name="colorPrimaryDark">?attr/presetPrimaryColor</item>
+        <item name="colorAccent">?attr/presetAccentColor</item>
         <item name="android:textColor">@android:color/white</item>
         <item name="android:textColorPrimary">@android:color/white</item>
         <item name="android:textColorSecondary">@android:color/white</item>
         <item name="buttonBarButtonStyle">@style/AlertButtonStyle.Dark</item>
         <item name="materialButtonStyle">@style/AlertButtonStyle.Dark</item>
-        <item name="android:windowBackground">@color/windowBackgroundDark</item>
-        <item name="android:colorBackground">@color/windowBackgroundDark</item>
-        <item name="android:background">@color/windowBackgroundDark</item>
-        <!-- 闹钟编辑页控件颜色（暗色主题统一白色） -->
-        <item name="alarmTimeButtonColor">@android:color/white</item>
-        <item name="sliderThumbColor">@android:color/white</item>
+        <item name="android:windowBackground">?attr/presetSurfaceBackground</item>
+        <item name="android:colorBackground">?attr/presetSurfaceBackground</item>
+        <item name="android:background">?attr/presetSurfaceBackground</item>
+        <!-- 闹钟编辑页控件颜色（暗色主题跟随预设强调色） -->
+        <item name="alarmTimeButtonColor">?attr/presetAccentColor</item>
+        <item name="sliderThumbColor">?attr/presetAccentColor</item>
         <item name="sliderHaloColor">#33FFFFFF</item>
-        <item name="sliderTrackActiveColor">@android:color/white</item>
+        <item name="sliderTrackActiveColor">?attr/presetAccentColor</item>
         <item name="sliderTrackInactiveColor">#66FFFFFF</item>
-        <item name="sliderTickColor">@android:color/white</item>
+        <item name="sliderTickColor">?attr/presetAccentColor</item>
         <item name="sliderTickInactiveColor">#66FFFFFF</item>
     </style>
 
@@ -126,15 +142,15 @@
     
     <!-- Bottom sheet dialog themes -->
     <style name="BottomSheetDialogTheme" parent="Theme.MaterialComponents.BottomSheetDialog">
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorPrimary">?attr/presetAccentColor</item>
+        <item name="colorPrimaryDark">?attr/presetPrimaryColor</item>
+        <item name="colorAccent">?attr/presetAccentColor</item>
     </style>
     
     <style name="BottomSheetDialogTheme.Dark" parent="Theme.MaterialComponents.BottomSheetDialog">
-        <item name="colorPrimary">@color/colorAccentDark</item>
-        <item name="colorPrimaryDark">@color/colorPrimary</item>
-        <item name="colorAccent">@color/colorAccentDark</item>
+        <item name="colorPrimary">?attr/presetAccentColor</item>
+        <item name="colorPrimaryDark">?attr/presetPrimaryColor</item>
+        <item name="colorAccent">?attr/presetAccentColor</item>
         <item name="colorOnSurface">@android:color/white</item>
         <item name="android:textColor">@android:color/white</item>
         <item name="android:textColorPrimary">@android:color/white</item>
@@ -190,5 +206,102 @@
         <item name="android:minWidth">48dp</item>
         <item name="android:minHeight">48dp</item>
         <item name="android:padding">8dp</item>
+    </style>
+
+    <!-- ================= 预设配色覆盖样式（Issue #50） =================
+         亮色 / 暗色各一套，只覆盖 4 个预设属性；
+         Theme.applyStyle() 应用后，主色、强调色、窗口底色、内容面底色
+         以及派生出的全部颜色（顶栏/状态栏/播放条/标签下划线/对话框等）随之整体切换。 -->
+    <!-- 空基样式：供 ThemePreset.xxx 作为隐式父样式继承（带点号的样式名要求父样式存在） -->
+    <style name="ThemePreset" />
+    <style name="ThemePreset.ClassicBlue">
+        <item name="presetPrimaryColor">@color/preset_classic_blue_primary</item>
+        <item name="presetAccentColor">@color/preset_classic_blue_accent</item>
+        <item name="presetAccentBrightColor">@color/preset_classic_blue_accent_dark</item>
+    </style>
+    <style name="ThemePreset.ClassicBlue.Dark">
+        <item name="presetPrimaryColor">@color/preset_classic_blue_primary_dark</item>
+        <item name="presetAccentColor">@color/preset_classic_blue_accent_dark</item>
+        <item name="presetAccentBrightColor">@color/preset_classic_blue_accent_dark</item>
+    </style>
+
+    <style name="ThemePreset.LakeTeal">
+        <item name="presetPrimaryColor">@color/preset_lake_teal_primary</item>
+        <item name="presetAccentColor">@color/preset_lake_teal_accent</item>
+        <item name="presetAccentBrightColor">@color/preset_lake_teal_accent_dark</item>
+    </style>
+    <style name="ThemePreset.LakeTeal.Dark">
+        <item name="presetPrimaryColor">@color/preset_lake_teal_primary_dark</item>
+        <item name="presetAccentColor">@color/preset_lake_teal_accent_dark</item>
+        <item name="presetAccentBrightColor">@color/preset_lake_teal_accent_dark</item>
+    </style>
+
+    <style name="ThemePreset.ForestGreen">
+        <item name="presetPrimaryColor">@color/preset_forest_green_primary</item>
+        <item name="presetAccentColor">@color/preset_forest_green_accent</item>
+        <item name="presetAccentBrightColor">@color/preset_forest_green_accent_dark</item>
+    </style>
+    <style name="ThemePreset.ForestGreen.Dark">
+        <item name="presetPrimaryColor">@color/preset_forest_green_primary_dark</item>
+        <item name="presetAccentColor">@color/preset_forest_green_accent_dark</item>
+        <item name="presetAccentBrightColor">@color/preset_forest_green_accent_dark</item>
+    </style>
+
+    <style name="ThemePreset.Violet">
+        <item name="presetPrimaryColor">@color/preset_violet_primary</item>
+        <item name="presetAccentColor">@color/preset_violet_accent</item>
+        <item name="presetAccentBrightColor">@color/preset_violet_accent_dark</item>
+    </style>
+    <style name="ThemePreset.Violet.Dark">
+        <item name="presetPrimaryColor">@color/preset_violet_primary_dark</item>
+        <item name="presetAccentColor">@color/preset_violet_accent_dark</item>
+        <item name="presetAccentBrightColor">@color/preset_violet_accent_dark</item>
+    </style>
+
+    <style name="ThemePreset.Rose">
+        <item name="presetPrimaryColor">@color/preset_rose_primary</item>
+        <item name="presetAccentColor">@color/preset_rose_accent</item>
+        <item name="presetAccentBrightColor">@color/preset_rose_accent_dark</item>
+    </style>
+    <style name="ThemePreset.Rose.Dark">
+        <item name="presetPrimaryColor">@color/preset_rose_primary_dark</item>
+        <item name="presetAccentColor">@color/preset_rose_accent_dark</item>
+        <item name="presetAccentBrightColor">@color/preset_rose_accent_dark</item>
+    </style>
+
+    <style name="ThemePreset.SunsetOrange">
+        <item name="presetPrimaryColor">@color/preset_sunset_orange_primary</item>
+        <item name="presetAccentColor">@color/preset_sunset_orange_accent</item>
+        <item name="presetAccentBrightColor">@color/preset_sunset_orange_accent_dark</item>
+    </style>
+    <style name="ThemePreset.SunsetOrange.Dark">
+        <item name="presetPrimaryColor">@color/preset_sunset_orange_primary_dark</item>
+        <item name="presetAccentColor">@color/preset_sunset_orange_accent_dark</item>
+        <item name="presetAccentBrightColor">@color/preset_sunset_orange_accent_dark</item>
+    </style>
+
+    <style name="ThemePreset.Graphite">
+        <item name="presetPrimaryColor">@color/preset_graphite_primary</item>
+        <item name="presetAccentColor">@color/preset_graphite_accent</item>
+        <item name="presetAccentBrightColor">@color/preset_graphite_accent_dark</item>
+    </style>
+    <style name="ThemePreset.Graphite.Dark">
+        <item name="presetPrimaryColor">@color/preset_graphite_primary_dark</item>
+        <item name="presetAccentColor">@color/preset_graphite_accent_dark</item>
+        <item name="presetAccentBrightColor">@color/preset_graphite_accent_dark</item>
+    </style>
+
+    <style name="ThemePreset.PureBlack">
+        <item name="presetPrimaryColor">@color/preset_pure_black_primary</item>
+        <item name="presetAccentColor">@color/preset_pure_black_accent</item>
+        <item name="presetAccentBrightColor">@color/preset_pure_black_accent_dark</item>
+    </style>
+    <style name="ThemePreset.PureBlack.Dark">
+        <item name="presetPrimaryColor">@color/preset_pure_black_primary_dark</item>
+        <item name="presetAccentColor">@color/preset_pure_black_accent_dark</item>
+        <item name="presetAccentBrightColor">@color/preset_pure_black_accent_dark</item>
+        <!-- 纯黑预设：窗口与内容面改为纯黑系 -->
+        <item name="presetWindowBackground">@color/preset_pure_black_window_dark</item>
+        <item name="presetSurfaceBackground">@color/preset_pure_black_surface_dark</item>
     </style>
 </resources>

@@ -322,6 +322,10 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 
 支持亮色和暗色主题，可在设置中切换。修正了原版暗色模式下部分界面元素和字体颜色显示不正确的问题。常用界面元素（标题、标签、描述等）根据主题自动调整文字颜色。
 
+#### 配色方案
+
+在设置中提供 8 套预设配色：经典蓝（默认）、湖光青、森林绿、紫罗兰、玫瑰粉、日落橙、石墨灰、纯黑。每套配色同时为亮色主题和暗色主题准备了一组色值，色相一致、明暗分别调优，保证两种主题下都清晰美观；配色会统一作用于顶栏、状态栏、播放条、按钮、选中文字、滑块、标签下划线与「正在播放」高亮方框。其中纯黑配色在暗色主题下会进一步把窗口与内容面切换为纯黑系，适合 OLED 屏幕省电显示。
+
 #### 均衡器
 
 提供双套预设方案。一套调用 Android 系统原生均衡器预设，不同设备厂商的预设名称和调音效果可能存在差异；另一套为应用内置预设，包含「人声」（适合新闻、访谈、脱口秀等以人声为主的节目）和「音乐」（适合音乐类电台的通用调音方案）。
@@ -664,6 +668,10 @@ Language selector in settings: System, Chinese, English, Russian, Spanish, Germa
 #### Dark Theme
 
 Light/dark theme toggle in settings. Fixed incorrect colors on certain UI elements in dark mode. Text colors automatically adjust per theme.
+
+#### Color Schemes
+
+Settings offer 8 preset color schemes: Classic Blue (default), Lake Teal, Forest Green, Violet, Rose, Sunset Orange, Graphite, and Pure Black. Each scheme defines a separate set of colors for the light and dark themes — same hue, individually tuned brightness — so they stay clear and attractive in both. A scheme applies consistently to the toolbar, status bar, player bar, buttons, selected text, sliders, tab underline, and the "now playing" highlight box. Pure Black additionally switches the window and content surfaces to true-black tones in dark mode, ideal for power-saving on OLED screens.
 
 #### ️ Other Features
 
