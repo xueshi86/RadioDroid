@@ -614,4 +614,7 @@ The app will automatically restart to load the new database.</string>
     <string name="export_database_empty">The main database file is empty and cannot be exported</string>
 <!-- 列表加载态文案（UI 美化 Phase 7） -->
     <string name="state_loading">Loading…</string>
+    <string name="empty_recordings">No recordings yet</string>
+    <string name="empty_song_history">No song history yet</string>
+    <string name="empty_alarms">No alarms yet</string>
 </resources>

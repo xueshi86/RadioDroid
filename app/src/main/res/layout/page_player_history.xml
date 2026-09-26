@@ -1,15 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools">
+    android:layout_height="match_parent">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewSongHistory"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_constraintTop_toBottomOf="@+id/divider2"
         tools:listitem="@layout/list_item_history_track_item" />
 
-</LinearLayout>
+    <!-- 曲目历史空态（UI 美化）：列表为空时显示，与列表同层覆盖，不改变既有列表逻辑 -->
+    <LinearLayout
+        android:id="@+id/emptySongHistory"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/space_xl"
+        android:paddingEnd="@dimen/space_xl"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:contentDescription="@null"
+            app:srcCompat="@drawable/ic_rd_state_empty"
+            app:tint="?attr/colorTextTertiary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_lg"
+            android:gravity="center"
+            android:text="@string/empty_song_history"
+            android:textAppearance="@style/TextAppearance.RadioDroid.Title"
+            android:textColor="?attr/colorTextSecondary" />
+
+    </LinearLayout>
+
+</FrameLayout>

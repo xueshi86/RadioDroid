@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WebDAV 服务器配置表单（UI 美化 Phase 5 遗留补齐）：
+     原先由程序化 new EditText 拼装，这里改为 TextInputLayout + TextInputEditText，
+     获得与设置页其它表单一致的外描边框、浮动标签与密码可见性切换。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/space_xl"
+    android:paddingEnd="@dimen/space_xl">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/webDavUrlLayout"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/webdav_server_url"
+        app:boxCornerRadiusBottomEnd="@dimen/radius_sm"
+        app:boxCornerRadiusBottomStart="@dimen/radius_sm"
+        app:boxCornerRadiusTopEnd="@dimen/radius_sm"
+        app:boxCornerRadiusTopStart="@dimen/radius_sm">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/webDavUrl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textUri"
+            android:maxLines="1"
+            android:textSize="@dimen/text_body" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:id="@+id/webDavHttpWarning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/space_xs"
+        android:layout_marginTop="@dimen/space_xs"
+        android:text="@string/webdav_http_warning"
+        android:textAppearance="@style/TextAppearance.RadioDroid.Caption"
+        android:visibility="gone" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/webDavDirectoryLayout"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_sm"
+        android:hint="@string/webdav_directory"
+        app:boxCornerRadiusBottomEnd="@dimen/radius_sm"
+        app:boxCornerRadiusBottomStart="@dimen/radius_sm"
+        app:boxCornerRadiusTopEnd="@dimen/radius_sm"
+        app:boxCornerRadiusTopStart="@dimen/radius_sm">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/webDavDirectory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:maxLines="1"
+            android:textSize="@dimen/text_body" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/webDavUsernameLayout"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_sm"
+        android:hint="@string/webdav_username"
+        app:boxCornerRadiusBottomEnd="@dimen/radius_sm"
+        app:boxCornerRadiusBottomStart="@dimen/radius_sm"
+        app:boxCornerRadiusTopEnd="@dimen/radius_sm"
+        app:boxCornerRadiusTopStart="@dimen/radius_sm">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/webDavUsername"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:maxLines="1"
+            android:textSize="@dimen/text_body" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/webDavPasswordLayout"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_sm"
+        android:hint="@string/webdav_password"
+        app:boxCornerRadiusBottomEnd="@dimen/radius_sm"
+        app:boxCornerRadiusBottomStart="@dimen/radius_sm"
+        app:boxCornerRadiusTopEnd="@dimen/radius_sm"
+        app:boxCornerRadiusTopStart="@dimen/radius_sm"
+        app:endIconMode="password_toggle">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/webDavPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPassword"
+            android:maxLines="1"
+            android:textSize="@dimen/text_body" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+</LinearLayout>

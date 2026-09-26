@@ -339,6 +339,8 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 - **触摸目标**：操作按钮触摸区域统一 ≥48dp，修正部分 24–36dp 的偏小点击区
 - **动效**：列表卡片按下有轻微抬升与微缩反馈，迷你播放条与全屏播放器切换补 150ms 淡入淡出；过渡统一控制在 200ms 以内，并尊重系统「关闭动画」设置
 - **状态反馈**：列表空态与错误态改为居中的矢量图标 + 主文案 + 操作按钮，搜索类列表补居中加载态，加载态与空态互斥，避免结果返回前误闪
+- **空态覆盖**：录音、曲目历史、闹钟等列表统一空态样式（居中矢量图标 + 提示文案）；全屏播放器内分页的空态按剩余可视高度居中，不再被裁切
+- **表单统一**：WebDAV 服务器配置弹窗改用 Material `TextInputLayout` 外描边表单（浮动标签、密码可见性切换），与设置页其它表单外观一致
 
 #### 均衡器
 
@@ -700,6 +702,8 @@ A full visual pass over the original interface, leaving page structure, navigati
 - **Touch targets**: action button touch areas unified to ≥48dp (was as small as 24–36dp in places)
 - **Motion**: a subtle press lift/scale on list cards and a 150ms crossfade when switching between the mini player and the full-screen player; all transitions stay under 200ms and respect the system "animations off" setting
 - **State feedback**: empty and error states now show a centered vector icon with primary text and an action button; search lists gained a centered loading state that is mutually exclusive with the empty state to avoid flashing
+- **Empty-state coverage**: recordings, song history and alarms share one empty-state style (centered vector icon + caption); empty states inside the full-screen player's pager are centered within the remaining visible height instead of being clipped
+- **Unified forms**: the WebDAV server configuration dialog now uses Material `TextInputLayout` outlined fields (floating label, password visibility toggle), matching the other settings forms
 
 #### ️ Other Features
 

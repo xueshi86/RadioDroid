@@ -538,4 +538,8 @@ L\'app si riavvierà automaticamente per caricare la nuova base dati.</string>
     <string name="error_database_corrupted">La base dati importata non può essere letta correttamente, il file potrebbe essere danneggiato</string>
     <!-- 列表加载态文案（UI 美化 Phase 7） -->
     <string name="state_loading">Caricamento…</string>
+    <string name="empty_recordings">Nessuna registrazione</string>
+    <string name="empty_song_history">Nessuno storico dei brani</string>
+    <string name="empty_alarms">Nessuna sveglia</string>
+    <string name="multi_search_no_results">Nessuna stazione corrisponde ai criteri</string>
 </resources>

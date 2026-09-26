@@ -854,4 +854,7 @@
     <string name="recording_not_available">当前音频流不支持录音</string>
 <!-- 列表加载态文案（UI 美化 Phase 7） -->
     <string name="state_loading">加载中…</string>
+    <string name="empty_recordings">暂无录音</string>
+    <string name="empty_song_history">暂无播放记录</string>
+    <string name="empty_alarms">暂无闹钟</string>
 </resources>

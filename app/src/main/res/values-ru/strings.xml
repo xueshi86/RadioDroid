@@ -877,4 +877,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="pref_lyrics_netease_summary">Неофициальный публичный API, используется как резервный источник после LRCLIB и LrcAPI. По умолчанию включено.</string>
 <!-- 列表加载态文案（UI 美化 Phase 7） -->
     <string name="state_loading">Загрузка…</string>
+    <string name="empty_recordings">Записей пока нет</string>
+    <string name="empty_song_history">История песен пока пуста</string>
+    <string name="empty_alarms">Будильники не заданы</string>
 </resources>

@@ -459,4 +459,8 @@ Die App wird automatisch neu gestartet, um die neue Datenbank zu laden.</string>
     <string name="error_database_corrupted">Die importierte Datenbank kann nicht richtig gelesen werden, die Datei ist möglicherweise beschädigt</string>
     <!-- 列表加载态文案（UI 美化 Phase 7） -->
     <string name="state_loading">Wird geladen…</string>
+    <string name="empty_recordings">Noch keine Aufnahmen</string>
+    <string name="empty_song_history">Noch kein Titelverlauf</string>
+    <string name="empty_alarms">Noch keine Wecker</string>
+    <string name="multi_search_no_results">Keine Stationen gefunden, die den Kriterien entsprechen</string>
 </resources>

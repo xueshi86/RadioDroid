@@ -355,4 +355,8 @@
     <string name="error_database_corrupted">Η εισαγόμενη βάση δεδομένων δεν μπορεί να διαβαστεί σωστά, το αρχείο μπορεί να είναι κατεστραμμένο</string>
     <!-- 列表加载态文案（UI 美化 Phase 7） -->
     <string name="state_loading">Φόρτωση…</string>
+    <string name="empty_recordings">Δεν υπάρχουν εγγραφές</string>
+    <string name="empty_song_history">Δεν υπάρχει ιστορικό τραγουδιών</string>
+    <string name="empty_alarms">Δεν υπάρχουν ξυπνητήρια</string>
+    <string name="multi_search_no_results">Δεν βρέθηκαν σταθμοί που να ταιριάζουν με τα κριτήρια</string>
 </resources>

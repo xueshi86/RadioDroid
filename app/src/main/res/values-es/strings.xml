@@ -869,4 +869,7 @@ Antes de la operación se guarda una copia de sus emisoras favoritas actuales en
     <string name="pref_lyrics_netease_summary">API pública no oficial, se usa como fuente alternativa después de LRCLIB y LrcAPI. Activada de forma predeterminada.</string>
 <!-- 列表加载态文案（UI 美化 Phase 7） -->
     <string name="state_loading">Cargando…</string>
+    <string name="empty_recordings">Aún no hay grabaciones</string>
+    <string name="empty_song_history">Aún no hay historial de canciones</string>
+    <string name="empty_alarms">Aún no hay alarmas</string>
 </resources>

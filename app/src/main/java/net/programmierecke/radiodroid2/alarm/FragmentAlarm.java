@@ -31,6 +31,7 @@ public class FragmentAlarm extends Fragment implements TimePickerDialog.OnTimeSe
     private RadioAlarmManager ram;
     private ItemAdapterRadioAlarm adapterRadioAlarm;
     private ListView lvAlarms;
+    private View emptyAlarms;
     private Observer alarmsObserver;
 
     public FragmentAlarm() {
@@ -45,6 +46,7 @@ public class FragmentAlarm extends Fragment implements TimePickerDialog.OnTimeSe
 
         adapterRadioAlarm = new ItemAdapterRadioAlarm(getActivity());
         lvAlarms = view.findViewById(R.id.listViewAlarms);
+        emptyAlarms = view.findViewById(R.id.emptyAlarms);
         lvAlarms.setAdapter(adapterRadioAlarm);
         lvAlarms.setClickable(true);
         lvAlarms.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -80,6 +82,10 @@ public class FragmentAlarm extends Fragment implements TimePickerDialog.OnTimeSe
     private void RefreshListAndView() {
         adapterRadioAlarm.clear();
         adapterRadioAlarm.addAll(ram.getList());
+        // 闹钟空态（UI 美化）：无闹钟时显示居中空态
+        if (emptyAlarms != null) {
+            emptyAlarms.setVisibility(adapterRadioAlarm.getCount() == 0 ? View.VISIBLE : View.GONE);
+        }
     }
 
     DataRadioStationAlarm clickedAlarm = null;

@@ -1454,19 +1454,16 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             existing = new WebDavSettingsStore(requireContext()).load();
         } catch (WebDavException ignored) {
         }
-        LinearLayout layout = new LinearLayout(requireContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        int padding = (int) (24 * getResources().getDisplayMetrics().density);
-        layout.setPadding(padding, 0, padding, 0);
-        EditText url = new EditText(requireContext());
-        url.setHint(R.string.webdav_server_url);
-        url.setSingleLine(true);
-        final android.widget.TextView httpWarning = new android.widget.TextView(requireContext());
-        httpWarning.setText(R.string.webdav_http_warning);
+        // UI 美化 Phase 5 遗留补齐：改用 dialog_webdav_config.xml 的 TextInputLayout 表单，
+        // 替代原先程序化 new EditText 拼装的布局，外观与设置页其它表单保持一致。
+        View form = android.view.LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_webdav_config, null, false);
+        final EditText url = form.findViewById(R.id.webDavUrl);
+        final EditText directory = form.findViewById(R.id.webDavDirectory);
+        final EditText username = form.findViewById(R.id.webDavUsername);
+        final EditText password = form.findViewById(R.id.webDavPassword);
+        final android.widget.TextView httpWarning = form.findViewById(R.id.webDavHttpWarning);
         httpWarning.setTextColor(statusColor(STATUS_ERROR));
-        int warningPadding = (int) (4 * getResources().getDisplayMetrics().density);
-        httpWarning.setPadding(0, warningPadding, 0, 0);
-        httpWarning.setVisibility(android.view.View.GONE);
         url.addTextChangedListener(new android.text.TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -1483,27 +1480,12 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             }
         });
         url.setText(existing == null ? "" : existing.getUrl());
-        EditText directory = new EditText(requireContext());
-        directory.setHint(R.string.webdav_directory);
-        directory.setSingleLine(true);
         directory.setText(existing == null ? "" : existing.getDirectory());
-        EditText username = new EditText(requireContext());
-        username.setHint(R.string.webdav_username);
-        username.setSingleLine(true);
         username.setText(existing == null ? "" : existing.getUsername());
-        EditText password = new EditText(requireContext());
-        password.setHint(R.string.webdav_password);
-        password.setSingleLine(true);
-        password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        layout.addView(url);
-        layout.addView(httpWarning);
-        layout.addView(directory);
-        layout.addView(username);
-        layout.addView(password);
         final WebDavSettings savedSettings = existing;
         androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
                 .setTitle(R.string.webdav_configure)
-                .setView(layout)
+                .setView(form)
                 .setNegativeButton(R.string.webdav_delete, (d, which) -> {
                     new WebDavSettingsStore(requireContext()).delete();
                     ++webDavCheckVersion;

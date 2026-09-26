@@ -299,6 +299,25 @@ public class FragmentPlayerFull extends Fragment {
         llmHistory.setOrientation(RecyclerView.VERTICAL);
         historyAndRecordsPagerAdapter.recyclerViewSongHistory.setLayoutManager(llmHistory);
 
+        // 曲目历史空态（UI 美化）：跟随适配器条目数切换居中空态
+        trackHistoryAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                updateEmptyState(historyAndRecordsPagerAdapter.emptySongHistory, historyAndRecordsPagerAdapter.recyclerViewSongHistory);
+            }
+
+            @Override
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                updateEmptyState(historyAndRecordsPagerAdapter.emptySongHistory, historyAndRecordsPagerAdapter.recyclerViewSongHistory);
+            }
+
+            @Override
+            public void onItemRangeRemoved(int positionStart, int itemCount) {
+                updateEmptyState(historyAndRecordsPagerAdapter.emptySongHistory, historyAndRecordsPagerAdapter.recyclerViewSongHistory);
+            }
+        });
+        updateEmptyState(historyAndRecordsPagerAdapter.emptySongHistory, historyAndRecordsPagerAdapter.recyclerViewSongHistory);
+
         trackHistoryViewModel = ViewModelProviders.of(this).get(TrackHistoryViewModel.class);
         trackHistoryViewModel.getStationHistoryPaged().observe(getViewLifecycleOwner(), new Observer<PagedList<TrackHistoryEntry>>() {
             @Override
@@ -316,10 +335,21 @@ public class FragmentPlayerFull extends Fragment {
         recordingsAdapter = new RecordingsAdapter(requireContext(), recordingsManager);
         recordingsAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             public void onItemRangeInserted(int positionStart, int itemCount) {
+                updateEmptyState(historyAndRecordsPagerAdapter.emptyRecordings, historyAndRecordsPagerAdapter.recyclerViewRecordings);
                 final LinearLayoutManager lm = (LinearLayoutManager) historyAndRecordsPagerAdapter.recyclerViewRecordings.getLayoutManager();
                 if (lm.findFirstVisibleItemPosition() < 2) {
                     historyAndRecordsPagerAdapter.recyclerViewRecordings.scrollToPosition(0);
                 }
+            }
+
+            @Override
+            public void onChanged() {
+                updateEmptyState(historyAndRecordsPagerAdapter.emptyRecordings, historyAndRecordsPagerAdapter.recyclerViewRecordings);
+            }
+
+            @Override
+            public void onItemRangeRemoved(int positionStart, int itemCount) {
+                updateEmptyState(historyAndRecordsPagerAdapter.emptyRecordings, historyAndRecordsPagerAdapter.recyclerViewRecordings);
             }
         });
 
@@ -329,13 +359,19 @@ public class FragmentPlayerFull extends Fragment {
         llmRecordings.setOrientation(RecyclerView.VERTICAL);
         historyAndRecordsPagerAdapter.recyclerViewRecordings.setLayoutManager(llmRecordings);
 
-        // The scrollable part of the player should have the height of its parent but
-        // we only can do this at the runtime.
+        // 录音空态（UI 美化）：跟随适配器条目数切换居中空态
+        updateEmptyState(historyAndRecordsPagerAdapter.emptyRecordings, historyAndRecordsPagerAdapter.recyclerViewRecordings);
+
+        // 分页列表（本台曲目 / 曲目历史 / 录音）应占据其上方内容之外的剩余可视高度，
+        // 只能在运行时确定：取上方内容底部到可视区底部的距离。
+        // 若剩余空间不足（如横屏），退化为与可视区等高，由外层滚动查看，保持原有行为。
         ViewTreeObserver viewTreeObserver = pagerHistoryAndRecordings.getViewTreeObserver();
         if (viewTreeObserver.isAlive()) {
             viewTreeObserver.addOnGlobalLayoutListener(() -> {
                 ViewGroup.LayoutParams layoutParams = pagerHistoryAndRecordings.getLayoutParams();
-                final int newHeight = scrollViewContent.getHeight();
+                final int visibleHeight = scrollViewContent.getHeight();
+                final int available = visibleHeight - pagerHistoryAndRecordings.getTop();
+                final int newHeight = available > 0 ? available : visibleHeight;
                 if (newHeight != layoutParams.height) {
                     layoutParams.height = newHeight;
                     pagerHistoryAndRecordings.setLayoutParams(layoutParams);
@@ -1026,6 +1062,17 @@ public class FragmentPlayerFull extends Fragment {
         }
     }
 
+    /**
+     * 录音 / 曲目历史空态（UI 美化）：适配器无条目时显示居中空态，否则隐藏。
+     * 只切换空态自身可见性，不改动列表可见性与数据。
+     */
+    private void updateEmptyState(View emptyView, RecyclerView list) {
+        if (emptyView == null || list == null || list.getAdapter() == null) {
+            return;
+        }
+        emptyView.setVisibility(list.getAdapter().getItemCount() == 0 ? View.VISIBLE : View.GONE);
+    }
+
     private class HistoryAndRecordsPagerAdapter extends PagerAdapter {
         private ViewGroup layoutCurrentStationHistory;
         private ViewGroup layoutSongHistory;
@@ -1038,6 +1085,9 @@ public class FragmentPlayerFull extends Fragment {
         RecyclerView recyclerViewCurrentStationHistory;
         RecyclerView recyclerViewSongHistory;
         RecyclerView recyclerViewRecordings;
+
+        View emptySongHistory;
+        View emptyRecordings;
 
         ImageView imageViewCurrentPlayingIcon;
         TextView textViewCurrentTrack;
@@ -1055,6 +1105,9 @@ public class FragmentPlayerFull extends Fragment {
             recyclerViewCurrentStationHistory = layoutCurrentStationHistory.findViewById(R.id.recyclerViewCurrentStationHistory);
             recyclerViewSongHistory = layoutSongHistory.findViewById(R.id.recyclerViewSongHistory);
             recyclerViewRecordings = layoutRecordings.findViewById(R.id.recyclerViewRecordings);
+
+            emptySongHistory = layoutSongHistory.findViewById(R.id.emptySongHistory);
+            emptyRecordings = layoutRecordings.findViewById(R.id.emptyRecordings);
 
             layoutCurrentPlaying = layoutCurrentStationHistory.findViewById(R.id.layoutCurrentPlaying);
             imageViewCurrentPlayingIcon = layoutCurrentStationHistory.findViewById(R.id.imageViewCurrentPlayingIcon);

@@ -542,4 +542,8 @@ L\'application redémarrera automatiquement pour charger la nouvelle base.</stri
     <string name="error_database_corrupted">La base de données importée ne peut pas être lue correctement, le fichier est peut-être corrompu</string>
     <!-- 列表加载态文案（UI 美化 Phase 7） -->
     <string name="state_loading">Chargement…</string>
+    <string name="empty_recordings">Aucun enregistrement</string>
+    <string name="empty_song_history">Aucun historique de titres</string>
+    <string name="empty_alarms">Aucune alarme</string>
+    <string name="multi_search_no_results">Aucune station ne correspond aux critères</string>
 </resources>
