@@ -793,7 +793,26 @@
     <string name="webdav_restore_summary">从 WebDAV 恢复数据</string>
     <string name="webdav_favourites">收藏电台</string>
     <string name="webdav_database">本地数据库</string>
-    <string name="webdav_both">两者</string>
+    <string name="webdav_settings">应用设置</string>
+    <string name="webdav_all">全部</string>
+    <string name="webdav_settings_restart_prompt">是否重启应用以应用已恢复的设置（主题、语言、布局等）？</string>
+
+    <string name="settings_backup_group_title">应用设置备份</string>
+    <string name="export_settings_title">导出设置</string>
+    <string name="export_settings_summary">将应用的全部设置导出为备份文件</string>
+    <string name="import_settings_title">导入设置</string>
+    <string name="import_settings_summary">从备份文件导入应用的全部设置</string>
+    <string name="settings_export_in_progress">正在导出设置…</string>
+    <string name="settings_export_success">已将 %2$d 项设置导出到 %1$s</string>
+    <string name="settings_export_failed">导出设置失败：%1$s</string>
+    <string name="settings_import_message">是否从备份文件导入应用的全部设置？\n\n当前设置将被覆盖，导入后需重启应用才能生效。</string>
+    <string name="settings_import_in_progress">正在导入设置…</string>
+    <string name="settings_import_success">已导入 %1$d 项设置</string>
+    <string name="settings_import_failed">导入设置失败：%1$s</string>
+    <string name="settings_import_invalid">设置备份文件无效：%1$s</string>
+    <string name="settings_import_restart_prompt">是否立即重启应用以应用导入的设置（主题、语言、布局等）？</string>
+    <string name="settings_import_restart_now">立即重启</string>
+    <string name="settings_import_restart_later">稍后</string>
     <string name="webdav_connectivity_checking">%1$s · 连通性：检测中</string>
     <string name="webdav_connectivity_ok">%1$s · 连通性：正常</string>
     <string name="webdav_connectivity_failed">%1$s · 连通性：失败</string>

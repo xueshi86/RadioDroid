@@ -812,7 +812,26 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="webdav_restore_summary">Restaurar datos desde WebDAV</string>
     <string name="webdav_favourites">Emisoras favoritas</string>
     <string name="webdav_database">Base de datos local</string>
-    <string name="webdav_both">Ambos</string>
+    <string name="webdav_settings">Ajustes de la aplicación</string>
+    <string name="webdav_all">Todo</string>
+    <string name="webdav_settings_restart_prompt">¿Reiniciar la aplicación para aplicar los ajustes restaurados (tema, idioma, diseño, etc.)?</string>
+
+    <string name="settings_backup_group_title">Copia de seguridad de ajustes</string>
+    <string name="export_settings_title">Exportar ajustes</string>
+    <string name="export_settings_summary">Exportar todos los ajustes de la aplicación a un archivo de copia de seguridad</string>
+    <string name="import_settings_title">Importar ajustes</string>
+    <string name="import_settings_summary">Importar todos los ajustes de la aplicación desde un archivo de copia de seguridad</string>
+    <string name="settings_export_in_progress">Exportando ajustes…</string>
+    <string name="settings_export_success">Se exportaron %2$d ajustes a %1$s</string>
+    <string name="settings_export_failed">No se pudieron exportar los ajustes: %1$s</string>
+    <string name="settings_import_message">¿Importar todos los ajustes de la aplicación desde el archivo de copia de seguridad?\n\nLos ajustes actuales se sobrescribirán. Reinicie la aplicación después para aplicarlos.</string>
+    <string name="settings_import_in_progress">Importando ajustes…</string>
+    <string name="settings_import_success">Se importaron %1$d ajustes</string>
+    <string name="settings_import_failed">No se pudieron importar los ajustes: %1$s</string>
+    <string name="settings_import_invalid">Archivo de copia de seguridad de ajustes no válido: %1$s</string>
+    <string name="settings_import_restart_prompt">¿Reiniciar la aplicación ahora para aplicar los ajustes importados (tema, idioma, diseño, etc.)?</string>
+    <string name="settings_import_restart_now">Reiniciar ahora</string>
+    <string name="settings_import_restart_later">Más tarde</string>
     <string name="webdav_connectivity_checking">%1$s · Comprobando conexión</string>
     <string name="webdav_connectivity_ok">%1$s · Conexión correcta</string>
     <string name="webdav_connectivity_failed">%1$s · Error de conexión</string>

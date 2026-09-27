@@ -6,10 +6,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
 import net.programmierecke.radiodroid2.BuildConfig;
+import net.programmierecke.radiodroid2.RadioDroidApp;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
 
 import java.util.ArrayList;
@@ -344,6 +347,25 @@ public class RadioAlarmManager {
             return alarm.station;
         }
         return null;
+    }
+
+    /**
+     * 设置被外部覆盖后（导入设置备份 / WebDAV 恢复设置）重新加载并注册闹钟。
+     *
+     * <p>恢复后的闹钟只写入 SharedPreferences，若不再注册到系统 AlarmManager 就不会响；
+     * 而本应用的注册时机只有开机广播和"某个闹钟响后"，因此需要在此显式补一次。</p>
+     *
+     * <p>在主线程执行：{@link #resetAllAlarms()} 可能触发 {@link #save()} 并通知观察者，
+     * 避免在工作线程触碰界面。</p>
+     */
+    public static void reregisterAll(Context context) {
+        final Context appContext = context.getApplicationContext();
+        new Handler(Looper.getMainLooper()).post(() -> {
+            RadioAlarmManager manager = ((RadioDroidApp) appContext).getAlarmManager();
+            if (manager == null) return;
+            manager.load();
+            manager.resetAllAlarms();
+        });
     }
 
     /**

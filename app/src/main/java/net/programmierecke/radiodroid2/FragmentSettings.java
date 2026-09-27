@@ -71,6 +71,8 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import net.programmierecke.radiodroid2.alarm.RadioAlarmManager;
+import net.programmierecke.radiodroid2.backup.SettingsBackupHelper;
 import net.programmierecke.radiodroid2.interfaces.IApplicationSelected;
 import net.programmierecke.radiodroid2.proxy.ProxySettingsDialog;
 import net.programmierecke.radiodroid2.database.RadioStationRepository;
@@ -100,10 +102,16 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
 
     private static final int PERM_REQ_STORAGE_DB_IMPORT = 3;
     private static final int PERM_REQ_STORAGE_DB_EXPORT = 4;
+    private static final int PERM_REQ_STORAGE_SETTINGS_IMPORT = 5;
+    private static final int PERM_REQ_STORAGE_SETTINGS_EXPORT = 6;
+    private static final String TAG_SETTINGS_EXPORT_DIALOG = "settings_export";
+    private static final String TAG_SETTINGS_IMPORT_DIALOG = "settings_import";
 
     private DatabaseUpdateProgressDialog updateDialog;
     private ActivityResultLauncher<String[]> filePickerLauncher;
     private ActivityResultLauncher<Intent> exportFileLauncher;
+    private ActivityResultLauncher<Intent> exportSettingsLauncher;
+    private ActivityResultLauncher<String[]> importSettingsLauncher;
     private BroadcastReceiver timerFinishedReceiver;
     private BroadcastReceiver databaseUpdatedReceiver;
     private ActivityResultLauncher<String> bluetoothPermissionLauncher;
@@ -314,6 +322,29 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     if (uri != null) {
                         exportDatabaseToUri(uri);
                     }
+                }
+            }
+        );
+
+        // 设置备份文件导出选择器（与数据库导出同款 CreateDocument 模式）
+        exportSettingsLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == android.app.Activity.RESULT_OK && result.getData() != null) {
+                    Uri uri = result.getData().getData();
+                    if (uri != null) {
+                        exportSettingsToUri(uri);
+                    }
+                }
+            }
+        );
+
+        // 设置备份文件导入选择器（OpenDocument，不做 MIME 过滤，与数据库导入一致）
+        importSettingsLauncher = registerForActivityResult(
+            new ActivityResultContracts.OpenDocument(),
+            uri -> {
+                if (uri != null) {
+                    importSettings(uri);
                 }
             }
         );
@@ -1164,6 +1195,184 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             showWebDavOperationDialog(true);
             return true;
         });
+        // 「应用设置备份」分组：本机单独导入/导出全部设置（与 WebDAV 无关）
+        Preference exportSettingsPref = findPreference("export_settings");
+        if (exportSettingsPref != null) {
+            exportSettingsPref.setOnPreferenceClickListener(preference -> {
+                startSettingsExport();
+                return true;
+            });
+        }
+        Preference importSettingsPref = findPreference("import_settings");
+        if (importSettingsPref != null) {
+            importSettingsPref.setOnPreferenceClickListener(preference -> {
+                confirmSettingsImport();
+                return true;
+            });
+        }
+    }
+
+    // ==================== 本机应用设置导入 / 导出（复用 SettingsBackupHelper） ====================
+
+    private void startSettingsExport() {
+        if (!isActivityUsable()) return;
+        String defaultFileName = "RadioDroid_Settings_"
+                + new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date())
+                + "_" + SettingsBackupHelper.countExportableKeys(requireContext())
+                + "." + SettingsBackupHelper.FILE_EXTENSION;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("application/json");
+                intent.putExtra(Intent.EXTRA_TITLE, defaultFileName);
+                exportSettingsLauncher.launch(intent);
+            } catch (Exception e) {
+                Log.e(TAG, "Error launching settings export dialog", e);
+                Toast.makeText(requireContext(), getString(R.string.settings_export_failed, String.valueOf(e.getMessage())), Toast.LENGTH_LONG).show();
+            }
+        } else if (Utils.verifyStoragePermissions(this, PERM_REQ_STORAGE_SETTINGS_EXPORT)) {
+            showSettingsSaveFileDialog();
+        }
+    }
+
+    private void confirmSettingsImport() {
+        if (!isActivityUsable()) return;
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
+                .setTitle(R.string.import_settings_title)
+                .setMessage(R.string.settings_import_message)
+                .setPositiveButton(R.string.import_settings_title, (dialog, which) -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                        importSettingsLauncher.launch(new String[]{"*/*"});
+                    } else if (Utils.verifyStoragePermissions(FragmentSettings.this, PERM_REQ_STORAGE_SETTINGS_IMPORT)) {
+                        showSettingsOpenFileDialog();
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void exportSettingsToUri(Uri uri) {
+        if (uri == null || !isAdded() || getContext() == null) return;
+        final Context context = requireContext().getApplicationContext();
+        final Activity activity = getActivity();
+        if (activity == null) return;
+        androidx.appcompat.app.AlertDialog progressDialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
+                .setTitle(R.string.export_settings_title)
+                .setMessage(R.string.settings_export_in_progress)
+                .create();
+        progressDialog.show();
+        new Thread(() -> {
+            int count = 0;
+            Exception failure = null;
+            try {
+                java.io.OutputStream output = context.getContentResolver().openOutputStream(uri);
+                if (output == null) throw new IOException("Unable to open output stream");
+                try {
+                    count = SettingsBackupHelper.export(context, output);
+                } finally {
+                    output.close();
+                }
+            } catch (Exception e) {
+                failure = e;
+            }
+            final int exportedCount = count;
+            final Exception error = failure;
+            activity.runOnUiThread(() -> {
+                if (progressDialog.isShowing()) progressDialog.dismiss();
+                if (!isAdded()) return;
+                if (error == null) {
+                    showSimpleDialog(R.string.export_settings_title,
+                            getString(R.string.settings_export_success, getDisplayPathFromUri(uri), exportedCount));
+                } else {
+                    showSimpleDialog(R.string.export_settings_title,
+                            getString(R.string.settings_export_failed, String.valueOf(error.getMessage())));
+                }
+            });
+        }, "SettingsExport").start();
+    }
+
+    private void importSettings(Uri uri) {
+        if (uri == null || !isAdded() || getContext() == null) return;
+        final Context context = requireContext().getApplicationContext();
+        final Activity activity = getActivity();
+        if (activity == null) return;
+        androidx.appcompat.app.AlertDialog progressDialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
+                .setTitle(R.string.import_settings_title)
+                .setMessage(R.string.settings_import_in_progress)
+                .create();
+        progressDialog.show();
+        new Thread(() -> {
+            int count = 0;
+            Exception failure = null;
+            try {
+                java.io.InputStream input = context.getContentResolver().openInputStream(uri);
+                if (input == null) throw new IOException("Unable to open input stream");
+                try {
+                    count = SettingsBackupHelper.importFrom(context, input);
+                    // 闹钟已随设置写入本地，但只注册在开机/响铃后，这里补一次注册
+                    RadioAlarmManager.reregisterAll(context);
+                } finally {
+                    input.close();
+                }
+            } catch (Exception e) {
+                failure = e;
+            }
+            final int importedCount = count;
+            final Exception error = failure;
+            activity.runOnUiThread(() -> {
+                if (progressDialog.isShowing()) progressDialog.dismiss();
+                if (!isAdded()) return;
+                if (error == null) {
+                    showSettingsImportRestartDialog(importedCount);
+                } else {
+                    boolean invalid = error instanceof IOException;
+                    showSimpleDialog(R.string.import_settings_title,
+                            getString(invalid ? R.string.settings_import_invalid : R.string.settings_import_failed, String.valueOf(error.getMessage())));
+                }
+            });
+        }, "SettingsImport").start();
+    }
+
+    // 导入成功：提示并让用户选择是否立即重启，使主题/语言/紧凑模式等全部设置生效
+    private void showSettingsImportRestartDialog(int count) {
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
+                .setTitle(R.string.import_settings_title)
+                .setMessage(getString(R.string.settings_import_success, count) + "\n\n" + getString(R.string.settings_import_restart_prompt))
+                .setPositiveButton(R.string.settings_import_restart_now, (dialog, which) -> {
+                    Activity activity = getActivity();
+                    if (activity != null) activity.recreate();
+                })
+                .setNegativeButton(R.string.settings_import_restart_later, null)
+                .show();
+    }
+
+    private void showSimpleDialog(int titleRes, String message) {
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
+                .setTitle(titleRes)
+                .setMessage(message)
+                .setPositiveButton(R.string.action_ok, null)
+                .show();
+    }
+
+    private void showSettingsSaveFileDialog() {
+        SaveFileDialog dialog = new SaveFileDialog();
+        Bundle args = new Bundle();
+        args.putString(FileDialog.EXTENSION, SettingsBackupHelper.FILE_EXTENSION);
+        args.putSerializable(FileDialog.START_DIRECTORY, Environment.getExternalStorageDirectory());
+        dialog.setArguments(args);
+        dialog.setStyle(DialogFragment.STYLE_NO_TITLE, Utils.getAlertDialogThemeResId(requireContext()));
+        dialog.show(getChildFragmentManager(), TAG_SETTINGS_EXPORT_DIALOG);
+    }
+
+    private void showSettingsOpenFileDialog() {
+        OpenFileDialog dialog = new OpenFileDialog();
+        Bundle args = new Bundle();
+        args.putString(FileDialog.EXTENSION, SettingsBackupHelper.FILE_EXTENSION);
+        args.putSerializable(FileDialog.START_DIRECTORY, Environment.getExternalStorageDirectory());
+        dialog.setArguments(args);
+        dialog.setStyle(DialogFragment.STYLE_NO_TITLE, Utils.getAlertDialogThemeResId(requireContext()));
+        dialog.show(getChildFragmentManager(), TAG_SETTINGS_IMPORT_DIALOG);
     }
 
     private void refreshWebDavSummary() {
@@ -1300,30 +1509,58 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         SharedPreferences preferences = requireContext().getSharedPreferences(WebDavBackupWorker.RESULT_PREFS, Context.MODE_PRIVATE);
         String fav = preferences.getString("fav", null);
         String db = preferences.getString("db", null);
+        String settingsStatus = preferences.getString("settings", null);
         // 不再自动检查待确认的数据库恢复：该状态只在用户主动进入"恢复"流程时提示，
         // 避免备份操作或打开本页面时弹出与当前操作无关的数据库替换确认弹窗
-        if (fav == null && db == null) return;
+        if (fav == null && db == null && settingsStatus == null) return;
         boolean restore = preferences.getBoolean("restore", false);
+        boolean settingsRestored = restore && "success".equals(settingsStatus);
         preferences.edit().clear().apply();
 
         // 数据库恢复需要前台确认：先弹"是否用备份文件替换本地数据库"确认弹窗，
-        // 替换完成后统一呈现收藏/数据库分项结果的恢复结果弹窗（不先弹"等待确认"结果弹窗）。
+        // 替换完成后统一呈现收藏/数据库/设置分项结果的恢复结果弹窗（不先弹"等待确认"结果弹窗）。
         if ("pending".equals(db)) {
-            checkPendingWebDavDatabaseRestore(fav, restore);
+            checkPendingWebDavDatabaseRestore(fav, settingsStatus, restore, settingsRestored);
             return;
         }
 
+        showWebDavResultDialog(restore, buildWebDavMessage(fav, db, settingsStatus, restore), settingsRestored);
+    }
+
+    // 按分项拼接结果文案；分项为 null 表示本次操作未包含该项
+    private String buildWebDavMessage(String favStatus, String dbStatus, String settingsStatus, boolean restore) {
         StringBuilder message = new StringBuilder();
-        if (fav != null) message.append(getString(R.string.webdav_favourites)).append(": ").append(webDavOutcomeText(fav, restore)).append('\n');
-        if (db != null) message.append(getString(R.string.webdav_database)).append(": ").append(webDavOutcomeText(db, restore));
-        showWebDavResultDialog(restore, message.toString().trim());
+        if (favStatus != null) message.append(getString(R.string.webdav_favourites)).append(": ").append(webDavOutcomeText(favStatus, restore)).append('\n');
+        if (dbStatus != null) message.append(getString(R.string.webdav_database)).append(": ").append(webDavOutcomeText(dbStatus, restore)).append('\n');
+        if (settingsStatus != null) message.append(getString(R.string.webdav_settings)).append(": ").append(webDavOutcomeText(settingsStatus, restore)).append('\n');
+        return message.toString().trim();
     }
 
     private void showWebDavResultDialog(boolean restore, String message) {
-        new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
+        showWebDavResultDialog(restore, message, false);
+    }
+
+    private void showWebDavResultDialog(boolean restore, String message, boolean settingsRestored) {
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
                 .setTitle(restore ? R.string.webdav_restore : R.string.webdav_backup)
                 .setMessage(message)
                 .setPositiveButton(android.R.string.ok, null)
+                .create();
+        // 设置项恢复成功后需重启应用，主题/语言/紧凑模式等才能全部生效
+        if (settingsRestored) dialog.setOnDismissListener(d -> promptWebDavSettingsRestart());
+        dialog.show();
+    }
+
+    private void promptWebDavSettingsRestart() {
+        if (!isActivityUsable()) return;
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
+                .setTitle(R.string.webdav_settings)
+                .setMessage(R.string.webdav_settings_restart_prompt)
+                .setNegativeButton(R.string.settings_import_restart_later, null)
+                .setPositiveButton(R.string.settings_import_restart_now, (dialog, which) -> {
+                    Activity activity = getActivity();
+                    if (activity != null) activity.recreate();
+                })
                 .show();
     }
 
@@ -1347,36 +1584,34 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         return getString(R.string.webdav_error_unknown);
     }
 
-    private void checkPendingWebDavDatabaseRestore(String favStatus, boolean restore) {
+    private void checkPendingWebDavDatabaseRestore(String favStatus, String settingsStatus, boolean restore, boolean settingsRestored) {
         if (!isActivityUsable()) return;
         SharedPreferences preferences = requireContext().getSharedPreferences("webdav_pending_restore", Context.MODE_PRIVATE);
         String path = preferences.getString("database", null);
         File file = path == null ? null : new File(path);
         if (file == null || !file.isFile()) {
             if (path != null) preferences.edit().clear().apply();
-            // 无待确认的数据库：若本次还有收藏分项结果，直接呈现其结果弹窗
-            if (favStatus != null) showWebDavResultDialog(restore, getString(R.string.webdav_favourites) + ": " + webDavOutcomeText(favStatus, restore));
+            // 无待确认的数据库：若本次还有其它分项结果，直接呈现其结果弹窗
+            String message = buildWebDavMessage(favStatus, null, settingsStatus, restore);
+            if (message.length() > 0) showWebDavResultDialog(restore, message, settingsRestored);
             return;
         }
         new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
                 .setTitle(R.string.webdav_restore)
                 .setMessage(R.string.webdav_database_restore_confirm)
-                .setNegativeButton(android.R.string.cancel, (dialog, which) -> showPendingWebDavCanceledResult(favStatus, restore))
-                .setPositiveButton(R.string.webdav_database_replace, (dialog, which) -> applyWebDavDatabaseRestore(file, preferences, favStatus, restore))
-                .setOnCancelListener(dialog -> showPendingWebDavCanceledResult(favStatus, restore))
+                .setNegativeButton(android.R.string.cancel, (dialog, which) -> showPendingWebDavCanceledResult(favStatus, settingsStatus, restore, settingsRestored))
+                .setPositiveButton(R.string.webdav_database_replace, (dialog, which) -> applyWebDavDatabaseRestore(file, preferences, favStatus, settingsStatus, restore, settingsRestored))
+                .setOnCancelListener(dialog -> showPendingWebDavCanceledResult(favStatus, settingsStatus, restore, settingsRestored))
                 .show();
     }
 
     // 用户取消数据库替换：保留待确认状态以便稍后重新确认，并如实反馈"已取消"结果
-    private void showPendingWebDavCanceledResult(String favStatus, boolean restore) {
+    private void showPendingWebDavCanceledResult(String favStatus, String settingsStatus, boolean restore, boolean settingsRestored) {
         if (!isActivityUsable()) return;
-        StringBuilder message = new StringBuilder();
-        if (favStatus != null) message.append(getString(R.string.webdav_favourites)).append(": ").append(webDavOutcomeText(favStatus, restore)).append('\n');
-        message.append(getString(R.string.webdav_database)).append(": ").append(webDavOutcomeText("canceled", restore));
-        showWebDavResultDialog(restore, message.toString().trim());
+        showWebDavResultDialog(restore, buildWebDavMessage(favStatus, "canceled", settingsStatus, restore), settingsRestored);
     }
 
-    private void applyWebDavDatabaseRestore(File importedFile, SharedPreferences pending, String favStatus, boolean restore) {
+    private void applyWebDavDatabaseRestore(File importedFile, SharedPreferences pending, String favStatus, String settingsStatus, boolean restore, boolean settingsRestored) {
         final Context context = requireContext().getApplicationContext();
         final Activity activity = getActivity();
         if (activity == null) return;
@@ -1423,10 +1658,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 } else {
                     dbOutcome = "failed";
                 }
-                StringBuilder message = new StringBuilder();
-                if (favStatus != null) message.append(getString(R.string.webdav_favourites)).append(": ").append(webDavOutcomeText(favStatus, restore)).append('\n');
-                message.append(getString(R.string.webdav_database)).append(": ").append(webDavOutcomeText(dbOutcome, restore));
-                showWebDavResultDialog(restore, message.toString().trim());
+                showWebDavResultDialog(restore, buildWebDavMessage(favStatus, dbOutcome, settingsStatus, restore), settingsRestored);
             });
         }, "WebDavDatabaseRestore").start();
     }
@@ -1513,7 +1745,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         if (!isActivityUsable()) return;
         // 仅当用户主动进入恢复流程时，才提示上次未完成的数据库替换
         if (restore && showPendingWebDavDatabaseRestoreIfAny()) return;
-        String[] options = {getString(R.string.webdav_favourites), getString(R.string.webdav_database), getString(R.string.webdav_both)};
+        String[] options = {getString(R.string.webdav_favourites), getString(R.string.webdav_database), getString(R.string.webdav_settings), getString(R.string.webdav_all)};
         new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
                 .setTitle(restore ? R.string.webdav_restore : R.string.webdav_backup)
                 .setItems(options, (dialog, which) -> {
@@ -1524,8 +1756,14 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                         showWebDavConfigurationDialog();
                         return;
                     }
-                    WebDavBackupType type = which == 0 ? WebDavBackupType.FAVOURITES : which == 1 ? WebDavBackupType.DATABASE : WebDavBackupType.BOTH;
-                    if (restore && type != WebDavBackupType.DATABASE) {
+                    WebDavBackupType type;
+                    switch (which) {
+                        case 0: type = WebDavBackupType.FAVOURITES; break;
+                        case 1: type = WebDavBackupType.DATABASE; break;
+                        case 2: type = WebDavBackupType.SETTINGS; break;
+                        default: type = WebDavBackupType.ALL; break;
+                    }
+                    if (restore && (type == WebDavBackupType.FAVOURITES || type == WebDavBackupType.ALL)) {
                         // 收藏恢复默认覆盖本地列表，必须先让用户选择覆盖/合并
                         showWebDavFavouritesRestoreDialog(type);
                         return;
@@ -1555,7 +1793,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 .setMessage(R.string.webdav_pending_database_restore_confirm)
                 .setNegativeButton(android.R.string.cancel, (dialog, which) -> discardPendingRestore.run())
                 .setOnCancelListener(dialog -> discardPendingRestore.run())
-                .setPositiveButton(R.string.webdav_database_replace, (dialog, which) -> applyWebDavDatabaseRestore(file, preferences, null, true))
+                .setPositiveButton(R.string.webdav_database_replace, (dialog, which) -> applyWebDavDatabaseRestore(file, preferences, null, null, true, false))
                 .show();
         return true;
     }
@@ -2131,7 +2369,11 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         if (!isAdded() || getContext() == null) {
             return;
         }
-        if (dialog instanceof OpenFileDialog) {
+        if (TAG_SETTINGS_EXPORT_DIALOG.equals(dialog.getTag())) {
+            exportSettingsToUri(Uri.fromFile(file));
+        } else if (TAG_SETTINGS_IMPORT_DIALOG.equals(dialog.getTag())) {
+            importSettings(Uri.fromFile(file));
+        } else if (dialog instanceof OpenFileDialog) {
             importDatabase(Uri.fromFile(file));
         } else if (dialog instanceof SaveFileDialog) {
             exportDatabaseToUri(Uri.fromFile(file));
@@ -2150,6 +2392,16 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     showDatabaseOpenFileDialog();
                 } else {
                     showDatabaseSaveFileDialog();
+                }
+            } else {
+                Toast.makeText(requireContext(), R.string.error_permission_denied, Toast.LENGTH_LONG).show();
+            }
+        } else if (requestCode == PERM_REQ_STORAGE_SETTINGS_IMPORT || requestCode == PERM_REQ_STORAGE_SETTINGS_EXPORT) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (requestCode == PERM_REQ_STORAGE_SETTINGS_IMPORT) {
+                    showSettingsOpenFileDialog();
+                } else {
+                    showSettingsSaveFileDialog();
                 }
             } else {
                 Toast.makeText(requireContext(), R.string.error_permission_denied, Toast.LENGTH_LONG).show();

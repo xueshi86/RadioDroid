@@ -820,7 +820,26 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="webdav_restore_summary">Восстановить данные из WebDAV</string>
     <string name="webdav_favourites">Избранные станции</string>
     <string name="webdav_database">Локальная база данных</string>
-    <string name="webdav_both">Оба</string>
+    <string name="webdav_settings">Настройки приложения</string>
+    <string name="webdav_all">Всё</string>
+    <string name="webdav_settings_restart_prompt">Перезапустить приложение, чтобы применить восстановленные настройки (тема, язык, оформление и т. д.)?</string>
+
+    <string name="settings_backup_group_title">Резервная копия настроек</string>
+    <string name="export_settings_title">Экспорт настроек</string>
+    <string name="export_settings_summary">Экспортировать все настройки приложения в файл резервной копии</string>
+    <string name="import_settings_title">Импорт настроек</string>
+    <string name="import_settings_summary">Импортировать все настройки приложения из файла резервной копии</string>
+    <string name="settings_export_in_progress">Экспорт настроек…</string>
+    <string name="settings_export_success">Экспортировано настроек: %2$d в %1$s</string>
+    <string name="settings_export_failed">Не удалось экспортировать настройки: %1$s</string>
+    <string name="settings_import_message">Импортировать все настройки приложения из файла резервной копии?\n\nТекущие настройки будут перезаписаны. После импорта приложение нужно перезапустить.</string>
+    <string name="settings_import_in_progress">Импорт настроек…</string>
+    <string name="settings_import_success">Импортировано настроек: %1$d</string>
+    <string name="settings_import_failed">Не удалось импортировать настройки: %1$s</string>
+    <string name="settings_import_invalid">Недопустимый файл резервной копии настроек: %1$s</string>
+    <string name="settings_import_restart_prompt">Перезапустить приложение сейчас, чтобы применить импортированные настройки (тема, язык, оформление и т. д.)?</string>
+    <string name="settings_import_restart_now">Перезапустить</string>
+    <string name="settings_import_restart_later">Позже</string>
     <string name="webdav_connectivity_checking">%1$s · Проверка соединения</string>
     <string name="webdav_connectivity_ok">%1$s · Соединение успешно</string>
     <string name="webdav_connectivity_failed">%1$s · Ошибка соединения</string>

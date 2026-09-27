@@ -469,7 +469,26 @@
     <string name="webdav_restore_summary">Ripristina i dati da WebDAV</string>
     <string name="webdav_favourites">Stazioni preferite</string>
     <string name="webdav_database">Database locale</string>
-    <string name="webdav_both">Entrambi</string>
+    <string name="webdav_settings">Impostazioni dell\'app</string>
+    <string name="webdav_all">Tutto</string>
+    <string name="webdav_settings_restart_prompt">Riavviare l\'app per applicare le impostazioni ripristinate (tema, lingua, layout, ecc.)?</string>
+
+    <string name="settings_backup_group_title">Backup delle impostazioni</string>
+    <string name="export_settings_title">Esporta impostazioni</string>
+    <string name="export_settings_summary">Esporta tutte le impostazioni dell\'app in un file di backup</string>
+    <string name="import_settings_title">Importa impostazioni</string>
+    <string name="import_settings_summary">Importa tutte le impostazioni dell\'app da un file di backup</string>
+    <string name="settings_export_in_progress">Esportazione delle impostazioni…</string>
+    <string name="settings_export_success">%2$d impostazioni esportate in %1$s</string>
+    <string name="settings_export_failed">Impossibile esportare le impostazioni: %1$s</string>
+    <string name="settings_import_message">Importare tutte le impostazioni dell\'app dal file di backup?\n\nLe impostazioni attuali verranno sovrascritte. Riavvia l\'app dopo per applicarle.</string>
+    <string name="settings_import_in_progress">Importazione delle impostazioni…</string>
+    <string name="settings_import_success">%1$d impostazioni importate</string>
+    <string name="settings_import_failed">Impossibile importare le impostazioni: %1$s</string>
+    <string name="settings_import_invalid">File di backup delle impostazioni non valido: %1$s</string>
+    <string name="settings_import_restart_prompt">Riavviare l\'app ora per applicare le impostazioni importate (tema, lingua, layout, ecc.)?</string>
+    <string name="settings_import_restart_now">Riavvia ora</string>
+    <string name="settings_import_restart_later">Più tardi</string>
     <string name="webdav_connectivity_checking">%1$s · Verifica connessione</string>
     <string name="webdav_connectivity_ok">%1$s · Connessione riuscita</string>
     <string name="webdav_connectivity_failed">%1$s · Connessione fallita</string>

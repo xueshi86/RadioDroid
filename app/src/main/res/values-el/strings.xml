@@ -286,7 +286,26 @@
     <string name="webdav_restore_summary">Επαναφορά δεδομένων από WebDAV</string>
     <string name="webdav_favourites">Αγαπημένοι σταθμοί</string>
     <string name="webdav_database">Τοπική βάση δεδομένων</string>
-    <string name="webdav_both">Και τα δύο</string>
+    <string name="webdav_settings">Ρυθμίσεις εφαρμογής</string>
+    <string name="webdav_all">Όλα</string>
+    <string name="webdav_settings_restart_prompt">Επανεκκίνηση της εφαρμογής για εφαρμογή των επαναφερθέντων ρυθμίσεων (θέμα, γλώσσα, διάταξη κ.λπ.);</string>
+
+    <string name="settings_backup_group_title">Αντίγραφο ασφαλείας ρυθμίσεων</string>
+    <string name="export_settings_title">Εξαγωγή ρυθμίσεων</string>
+    <string name="export_settings_summary">Εξαγωγή όλων των ρυθμίσεων της εφαρμογής σε αρχείο αντιγράφου ασφαλείας</string>
+    <string name="import_settings_title">Εισαγωγή ρυθμίσεων</string>
+    <string name="import_settings_summary">Εισαγωγή όλων των ρυθμίσεων της εφαρμογής από αρχείο αντιγράφου ασφαλείας</string>
+    <string name="settings_export_in_progress">Εξαγωγή ρυθμίσεων…</string>
+    <string name="settings_export_success">Εξήχθησαν %2$d ρυθμίσεις στο %1$s</string>
+    <string name="settings_export_failed">Αποτυχία εξαγωγής ρυθμίσεων: %1$s</string>
+    <string name="settings_import_message">Εισαγωγή όλων των ρυθμίσεων της εφαρμογής από το αρχείο αντιγράφου ασφαλείας;\n\nΟι τρέχουσες ρυθμίσεις θα αντικατασταθούν. Επανεκκινήστε την εφαρμογή μετά για να εφαρμοστούν.</string>
+    <string name="settings_import_in_progress">Εισαγωγή ρυθμίσεων…</string>
+    <string name="settings_import_success">Εισήχθησαν %1$d ρυθμίσεις</string>
+    <string name="settings_import_failed">Αποτυχία εισαγωγής ρυθμίσεων: %1$s</string>
+    <string name="settings_import_invalid">Μη έγκυρο αρχείο αντιγράφου ασφαλείας ρυθμίσεων: %1$s</string>
+    <string name="settings_import_restart_prompt">Επανεκκίνηση της εφαρμογής τώρα για εφαρμογή των εισαχθέντων ρυθμίσεων (θέμα, γλώσσα, διάταξη κ.λπ.);</string>
+    <string name="settings_import_restart_now">Επανεκκίνηση τώρα</string>
+    <string name="settings_import_restart_later">Αργότερα</string>
     <string name="webdav_connectivity_checking">%1$s · Έλεγχος σύνδεσης</string>
     <string name="webdav_connectivity_ok">%1$s · Η σύνδεση είναι εντάξει</string>
     <string name="webdav_connectivity_failed">%1$s · Αποτυχία σύνδεσης</string>

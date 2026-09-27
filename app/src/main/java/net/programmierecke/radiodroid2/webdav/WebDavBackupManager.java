@@ -8,9 +8,12 @@ import android.util.Log;
 
 import net.programmierecke.radiodroid2.FavouriteManager;
 import net.programmierecke.radiodroid2.RadioDroidApp;
+import net.programmierecke.radiodroid2.alarm.RadioAlarmManager;
+import net.programmierecke.radiodroid2.backup.SettingsBackupHelper;
 import net.programmierecke.radiodroid2.database.RadioStationRepository;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,6 +28,7 @@ public final class WebDavBackupManager {
     private static final String TAG = "WebDavBackupManager";
     public static final String FAVOURITES_FILE = "favourites.m3u";
     public static final String DATABASE_FILE = "radio_droid_database.db";
+    public static final String SETTINGS_FILE = "settings.json";
     public static final String LOCAL_FAVOURITES_SNAPSHOT = "favourites_local_backup.m3u";
     private static final String PENDING_PREFS = "webdav_pending_restore";
     private final Context context;
@@ -79,6 +83,40 @@ public final class WebDavBackupManager {
             Log.d(TAG, "snapshotFavouritesLocally: saved " + snapshot.getAbsolutePath());
         } catch (Exception e) {
             Log.w(TAG, "Local favourites snapshot failed, continuing restore", e);
+        }
+    }
+
+    // 设置备份/恢复复用 SettingsBackupHelper，与本机「导出/导入设置」生成的文件格式完全一致
+    public void backupSettings() throws Exception {
+        File file = File.createTempFile("settings_", ".json", temporaryDirectory());
+        try {
+            BufferedOutputStream output = new BufferedOutputStream(new FileOutputStream(file));
+            try {
+                SettingsBackupHelper.export(context, output);
+            } finally {
+                output.close();
+            }
+            client.upload(SETTINGS_FILE, file);
+        } finally {
+            file.delete();
+        }
+    }
+
+    public void restoreSettings() throws Exception {
+        File file = client.download(SETTINGS_FILE, temporaryDirectory());
+        try {
+            FileInputStream input = new FileInputStream(file);
+            try {
+                SettingsBackupHelper.importFrom(context, input);
+                // 闹钟已随设置写入本地，但只注册在开机/响铃后，这里补一次注册
+                RadioAlarmManager.reregisterAll(context);
+            } finally {
+                input.close();
+            }
+        } catch (IOException e) {
+            throw new WebDavException(WebDavException.Kind.INVALID_DATA, "Settings file is invalid", e);
+        } finally {
+            file.delete();
         }
     }
 

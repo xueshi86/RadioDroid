@@ -157,7 +157,7 @@ public final class WebDavClient {
     }
 
     private String fileUrl(String name) throws WebDavException {
-        if (!"favourites.m3u".equals(name) && !"radio_droid_database.db".equals(name)) throw new WebDavException(WebDavException.Kind.INVALID_DATA, "Invalid remote file");
+        if (!"favourites.m3u".equals(name) && !"radio_droid_database.db".equals(name) && !"settings.json".equals(name)) throw new WebDavException(WebDavException.Kind.INVALID_DATA, "Invalid remote file");
         return settings.getBaseUrl() + name;
     }
 

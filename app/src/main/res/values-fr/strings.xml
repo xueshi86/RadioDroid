@@ -473,7 +473,26 @@
     <string name="webdav_restore_summary">Restaurer les données depuis WebDAV</string>
     <string name="webdav_favourites">Stations favorites</string>
     <string name="webdav_database">Base de données locale</string>
-    <string name="webdav_both">Les deux</string>
+    <string name="webdav_settings">Paramètres de l\'application</string>
+    <string name="webdav_all">Tout</string>
+    <string name="webdav_settings_restart_prompt">Redémarrer l\'application pour appliquer les paramètres restaurés (thème, langue, disposition, etc.) ?</string>
+
+    <string name="settings_backup_group_title">Sauvegarde des paramètres</string>
+    <string name="export_settings_title">Exporter les paramètres</string>
+    <string name="export_settings_summary">Exporter tous les paramètres de l\'application dans un fichier de sauvegarde</string>
+    <string name="import_settings_title">Importer les paramètres</string>
+    <string name="import_settings_summary">Importer tous les paramètres de l\'application depuis un fichier de sauvegarde</string>
+    <string name="settings_export_in_progress">Exportation des paramètres…</string>
+    <string name="settings_export_success">%2$d paramètres exportés vers %1$s</string>
+    <string name="settings_export_failed">Échec de l\'exportation des paramètres : %1$s</string>
+    <string name="settings_import_message">Importer tous les paramètres de l\'application depuis le fichier de sauvegarde ?\n\nLes paramètres actuels seront écrasés. Redémarrez l\'application ensuite pour les appliquer.</string>
+    <string name="settings_import_in_progress">Importation des paramètres…</string>
+    <string name="settings_import_success">%1$d paramètres importés</string>
+    <string name="settings_import_failed">Échec de l\'importation des paramètres : %1$s</string>
+    <string name="settings_import_invalid">Fichier de sauvegarde des paramètres non valide : %1$s</string>
+    <string name="settings_import_restart_prompt">Redémarrer l\'application maintenant pour appliquer les paramètres importés (thème, langue, disposition, etc.) ?</string>
+    <string name="settings_import_restart_now">Redémarrer</string>
+    <string name="settings_import_restart_later">Plus tard</string>
     <string name="webdav_connectivity_checking">%1$s · Vérification de la connexion</string>
     <string name="webdav_connectivity_ok">%1$s · Connexion réussie</string>
     <string name="webdav_connectivity_failed">%1$s · Échec de la connexion</string>

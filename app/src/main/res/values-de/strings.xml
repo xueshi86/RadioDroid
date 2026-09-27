@@ -390,7 +390,26 @@
     <string name="webdav_restore_summary">Daten von WebDAV wiederherstellen</string>
     <string name="webdav_favourites">Favoriten</string>
     <string name="webdav_database">Lokale Datenbank</string>
-    <string name="webdav_both">Beides</string>
+    <string name="webdav_settings">App-Einstellungen</string>
+    <string name="webdav_all">Alles</string>
+    <string name="webdav_settings_restart_prompt">App neu starten, um die wiederhergestellten Einstellungen (Design, Sprache, Layout usw.) anzuwenden?</string>
+
+    <string name="settings_backup_group_title">Sicherung der App-Einstellungen</string>
+    <string name="export_settings_title">Einstellungen exportieren</string>
+    <string name="export_settings_summary">Alle App-Einstellungen in eine Sicherungsdatei exportieren</string>
+    <string name="import_settings_title">Einstellungen importieren</string>
+    <string name="import_settings_summary">Alle App-Einstellungen aus einer Sicherungsdatei importieren</string>
+    <string name="settings_export_in_progress">Einstellungen werden exportiert…</string>
+    <string name="settings_export_success">%2$d Einstellungen nach %1$s exportiert</string>
+    <string name="settings_export_failed">Einstellungen konnten nicht exportiert werden: %1$s</string>
+    <string name="settings_import_message">Alle App-Einstellungen aus der Sicherungsdatei importieren?\n\nDie aktuellen Einstellungen werden überschrieben. Danach muss die App neu gestartet werden.</string>
+    <string name="settings_import_in_progress">Einstellungen werden importiert…</string>
+    <string name="settings_import_success">%1$d Einstellungen importiert</string>
+    <string name="settings_import_failed">Einstellungen konnten nicht importiert werden: %1$s</string>
+    <string name="settings_import_invalid">Ungültige Sicherungsdatei für Einstellungen: %1$s</string>
+    <string name="settings_import_restart_prompt">App jetzt neu starten, um die importierten Einstellungen (Design, Sprache, Layout usw.) anzuwenden?</string>
+    <string name="settings_import_restart_now">Jetzt neu starten</string>
+    <string name="settings_import_restart_later">Später</string>
     <string name="webdav_connectivity_checking">%1$s · Verbindung wird geprüft</string>
     <string name="webdav_connectivity_ok">%1$s · Verbindung OK</string>
     <string name="webdav_connectivity_failed">%1$s · Verbindung fehlgeschlagen</string>

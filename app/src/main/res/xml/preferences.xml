@@ -81,6 +81,22 @@
             android:title="@string/webdav_restore"
             android:summary="@string/webdav_restore_summary" />
 
+        <PreferenceCategory
+            android:title="@string/settings_backup_group_title"
+            search:ignore="true">
+
+            <Preference
+                android:key="export_settings"
+                android:title="@string/export_settings_title"
+                android:summary="@string/export_settings_summary" />
+
+            <Preference
+                android:key="import_settings"
+                android:title="@string/import_settings_title"
+                android:summary="@string/import_settings_summary" />
+
+        </PreferenceCategory>
+
     </PreferenceScreen>
 
     <PreferenceScreen android:title="@string/settings_appearance"

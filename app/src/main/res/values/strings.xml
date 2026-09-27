@@ -196,7 +196,26 @@
     <string name="webdav_restore_summary">Restore data from WebDAV</string>
     <string name="webdav_favourites">Favourite stations</string>
     <string name="webdav_database">Local database</string>
-    <string name="webdav_both">Both</string>
+    <string name="webdav_settings">App settings</string>
+    <string name="webdav_all">All</string>
+    <string name="webdav_settings_restart_prompt">Restart the app to apply the restored settings (theme, language, layout, etc.)?</string>
+
+    <string name="settings_backup_group_title">App Settings Backup</string>
+    <string name="export_settings_title">Export Settings</string>
+    <string name="export_settings_summary">Export all app settings to a backup file</string>
+    <string name="import_settings_title">Import Settings</string>
+    <string name="import_settings_summary">Import all app settings from a backup file</string>
+    <string name="settings_export_in_progress">Exporting settings…</string>
+    <string name="settings_export_success">Exported %2$d settings to %1$s</string>
+    <string name="settings_export_failed">Failed to export settings: %1$s</string>
+    <string name="settings_import_message">Import all app settings from the backup file?\n\nCurrent settings will be overwritten. Restart the app afterwards to apply them.</string>
+    <string name="settings_import_in_progress">Importing settings…</string>
+    <string name="settings_import_success">Imported %1$d settings</string>
+    <string name="settings_import_failed">Failed to import settings: %1$s</string>
+    <string name="settings_import_invalid">Invalid settings backup file: %1$s</string>
+    <string name="settings_import_restart_prompt">Restart the app now to apply the imported settings (theme, language, layout, etc.)?</string>
+    <string name="settings_import_restart_now">Restart now</string>
+    <string name="settings_import_restart_later">Later</string>
     <string name="webdav_connectivity_checking">%1$s · Connectivity: checking</string>
     <string name="webdav_connectivity_ok">%1$s · Connectivity: OK</string>
     <string name="webdav_connectivity_failed">%1$s · Connectivity: failed</string>
