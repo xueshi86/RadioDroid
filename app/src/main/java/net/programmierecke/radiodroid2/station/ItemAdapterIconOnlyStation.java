@@ -104,8 +104,9 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
                 holder.imageViewIcon.setBackgroundColor(getContext().getResources().getColor(android.R.color.white));
             }
             if (useCircularIcons) {
-                holder.transparentImageView.setVisibility(View.VISIBLE);
-                holder.imageViewIcon.getLayoutParams().height = holder.imageViewIcon.getLayoutParams().width;
+                Utils.applyCircularIcon(holder.imageViewIcon, holder.transparentImageView);
+            } else {
+                Utils.clearCircularIcon(holder.imageViewIcon, holder.transparentImageView);
             }
         }
 
@@ -124,6 +125,13 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
             // 还原默认标题颜色，避免 ViewHolder 复用后残留上一首的强调色
             holder.textViewTitle.setTextColor(((StationViewHolder) holder).defaultTitleColors);
             holder.textViewTitle.setTypeface(null, Typeface.NORMAL);
+        }
+
+        // 圆形图标下高亮蒙层也要跟着裁成圆形，否则蒙层会在圆形图标四周露出方形色块
+        if (useCircularIcons) {
+            Utils.applyCircularIcon(holder.playingOverlay, null);
+        } else {
+            Utils.clearCircularIcon(holder.playingOverlay, null);
         }
 
         holder.textViewTitle.setText(station.Name);

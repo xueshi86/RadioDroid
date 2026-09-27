@@ -260,17 +260,21 @@ public class FragmentPlayerSmall extends Fragment {
     }
 
     private void setupStationIcon() {
-        boolean useCircularIcons = PreferenceManager.getDefaultSharedPreferences(requireContext().getApplicationContext()).getBoolean("circular_icons", false);
-        if (useCircularIcons) {
-            if (Utils.isDarkTheme(requireContext())) {
-                imageViewIcon.setBackgroundColor(requireContext().getResources().getColor(R.color.windowBackgroundDark));
-            } else {
-                imageViewIcon.setBackgroundColor(requireContext().getResources().getColor(android.R.color.white));
-            }
+        boolean useCircularIcons = Utils.useCircularIcons(requireContext());
+        if (Utils.isDarkTheme(requireContext())) {
+            imageViewIcon.setBackgroundColor(requireContext().getResources().getColor(R.color.windowBackgroundDark));
+        } else {
+            imageViewIcon.setBackgroundColor(requireContext().getResources().getColor(android.R.color.white));
         }
 
         ImageView transparentCircle = requireView().findViewById(R.id.transparentCircle);
-        transparentCircle.setVisibility(useCircularIcons ? View.VISIBLE : View.GONE);
+        // 圆形图标优先用 Outline 真裁剪（背景与位图一起裁成圆形，不依赖容器底色，故不会出现方框色差）；
+        // 低版本回退到「透明圆环遮罩」方案。
+        if (useCircularIcons) {
+            Utils.applyCircularIcon(imageViewIcon, transparentCircle);
+        } else {
+            Utils.clearCircularIcon(imageViewIcon, transparentCircle);
+        }
     }
 
     private void fullUpdate() {

@@ -14,6 +14,7 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Outline;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
@@ -25,7 +26,10 @@ import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.View;
+import android.view.ViewOutlineProvider;
 import android.webkit.MimeTypeMap;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -486,8 +490,8 @@ public class Utils {
     // ================= 预设配色（Issue #50） =================
 
     public static final String PREF_THEME_PRESET = "theme_preset";
-    /** 默认预设：经典蓝（与改动前的配色一致） */
-    public static final String THEME_PRESET_DEFAULT = "classic_blue";
+    /** 默认预设：湖光青（全新安装时的默认配色方案） */
+    public static final String THEME_PRESET_DEFAULT = "lake_teal";
 
     /**
      * 读取当前配色预设。返回的是与语言无关的稳定标识（见 @array/theme_preset_values），
@@ -588,6 +592,46 @@ public class Utils {
     public static boolean useCircularIcons(final Context context) {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         return sharedPref.getBoolean("circular_icons", false);
+    }
+
+    private static final ViewOutlineProvider CIRCLE_OUTLINE_PROVIDER = new ViewOutlineProvider() {
+        @Override
+        public void getOutline(View view, Outline outline) {
+            outline.setOval(0, 0, view.getWidth(), view.getHeight());
+        }
+    };
+
+    /**
+     * 圆形图标：API 21+ 直接把图标裁剪成圆形（背景与位图一起被裁掉，不受所在容器底色影响）；
+     * 低版本回退到「透明圆环遮罩」方案（遮罩颜色按所在容器底色着色，可能存在微小色差）。
+     */
+    public static void applyCircularIcon(final ImageView imageView, final ImageView maskView) {
+        if (imageView == null) {
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (maskView != null) {
+                maskView.setVisibility(View.GONE);
+            }
+            imageView.setOutlineProvider(CIRCLE_OUTLINE_PROVIDER);
+            imageView.setClipToOutline(true);
+        } else if (maskView != null) {
+            maskView.setVisibility(View.VISIBLE);
+        }
+        imageView.invalidate();
+    }
+
+    /** 关闭圆形图标：取消圆形裁剪并隐藏遮罩（条目复用时必须调用，否则会残留上一个条目的圆形外观）。 */
+    public static void clearCircularIcon(final ImageView imageView, final ImageView maskView) {
+        if (maskView != null) {
+            maskView.setVisibility(View.GONE);
+        }
+        if (imageView != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                imageView.setClipToOutline(false);
+            }
+            imageView.invalidate();
+        }
     }
 
     // Storage Permissions

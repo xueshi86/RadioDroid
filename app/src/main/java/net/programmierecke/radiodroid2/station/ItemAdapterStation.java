@@ -338,8 +338,9 @@ public class ItemAdapterStation
                     holder.imageViewIcon.setBackgroundColor(getContext().getResources().getColor(android.R.color.white));
                 }
                 if (useCircularIcons) {
-                    holder.transparentImageView.setVisibility(View.VISIBLE);
-                    holder.imageViewIcon.getLayoutParams().height = holder.imageViewIcon.getLayoutParams().width;
+                    Utils.applyCircularIcon(holder.imageViewIcon, holder.transparentImageView);
+                } else {
+                    Utils.clearCircularIcon(holder.imageViewIcon, holder.transparentImageView);
                 }
             }
 
@@ -414,6 +415,13 @@ public class ItemAdapterStation
             holder.textViewTitle.setTypeface(null, Typeface.NORMAL);
             holder.frameLayout.setBackground(null);
             holder.playingOverlay.setVisibility(View.GONE);
+        }
+
+        // 圆形图标下高亮蒙层也要跟着裁成圆形，否则蒙层会在圆形图标四周露出方形色块
+        if (useCircularIcons) {
+            Utils.applyCircularIcon(holder.playingOverlay, null);
+        } else {
+            Utils.clearCircularIcon(holder.playingOverlay, null);
         }
 
         holder.textViewShortDescription.setText(station.getShortDetails(getContext()));
@@ -613,22 +621,17 @@ public class ItemAdapterStation
     }
 
     void setupIcon(boolean useCircularIcons, ImageView imageView, ImageView transparentImageView) {
-        if (useCircularIcons) {
-            transparentImageView.setVisibility(View.VISIBLE);
-            imageView.getLayoutParams().height = imageView.getLayoutParams().height = imageView.getLayoutParams().width;
-            if (Utils.isDarkTheme(getContext())) {
-                imageView.setBackgroundColor(getContext().getResources().getColor(R.color.windowBackgroundDark));
-            } else {
-                imageView.setBackgroundColor(getContext().getResources().getColor(android.R.color.white));
-            }
+        if (Utils.isDarkTheme(getContext())) {
+            imageView.setBackgroundColor(getContext().getResources().getColor(R.color.windowBackgroundDark));
         } else {
-            // 非圆形图标模式下必须隐藏圆形遮罩，否则视图复用时可能残留上一个圆形绑定的遮罩
-            transparentImageView.setVisibility(View.GONE);
-            if (Utils.isDarkTheme(getContext())) {
-                imageView.setBackgroundColor(getContext().getResources().getColor(R.color.windowBackgroundDark));
-            } else {
-                imageView.setBackgroundColor(getContext().getResources().getColor(android.R.color.white));
-            }
+            imageView.setBackgroundColor(getContext().getResources().getColor(android.R.color.white));
+        }
+        // 圆形图标优先用 Outline 真裁剪（背景与位图一起裁成圆形，不依赖容器底色，故不会出现方框色差）；
+        // 低版本回退到「透明圆环遮罩」方案。非圆形时必须清除裁剪，否则视图复用时残留圆形外观。
+        if (useCircularIcons) {
+            Utils.applyCircularIcon(imageView, transparentImageView);
+        } else {
+            Utils.clearCircularIcon(imageView, transparentImageView);
         }
     }
 
