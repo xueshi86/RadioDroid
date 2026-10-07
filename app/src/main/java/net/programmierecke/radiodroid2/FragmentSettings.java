@@ -50,6 +50,7 @@ import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 import androidx.preference.Preference.OnPreferenceClickListener;
 import androidx.preference.PreferenceScreen;
+import androidx.preference.SwitchPreferenceCompat;
 
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial;
 import com.mikepenz.iconics.typeface.library.googlematerial.GoogleMaterial;
@@ -77,6 +78,7 @@ import net.programmierecke.radiodroid2.interfaces.IApplicationSelected;
 import net.programmierecke.radiodroid2.proxy.ProxySettingsDialog;
 import net.programmierecke.radiodroid2.database.RadioStationRepository;
 import net.programmierecke.radiodroid2.lyrics.LyricsRepository;
+import net.programmierecke.radiodroid2.players.exoplayer.OffloadSupportDetector;
 import net.programmierecke.radiodroid2.service.DatabaseUpdateManager;
 import net.programmierecke.radiodroid2.service.DatabaseUpdateWorker;
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
@@ -413,6 +415,16 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     return true;
                 }
             });
+
+            // 音频卸载为实验性功能：仅在设备支持时允许开启并展示副作用说明，否则显示为禁用状态
+            SwitchPreferenceCompat offloadPref = findPreference("settings_audio_offload");
+            if (offloadPref != null) {
+                boolean offloadSupported = OffloadSupportDetector.isSupported(getContext());
+                offloadPref.setEnabled(offloadSupported);
+                offloadPref.setSummary(offloadSupported
+                        ? R.string.settings_audio_offload_summary_supported
+                        : R.string.settings_audio_offload_summary_unsupported);
+            }
         } else if (s.equals("pref_category_lyrics")) {
             setupLyricsSourceMode();
         } else if (s.equals("pref_category_interaction")) {

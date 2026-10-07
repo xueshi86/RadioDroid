@@ -556,4 +556,9 @@ L\'app si riavvierà automaticamente per caricare la nuova base dati.</string>
     <string name="empty_song_history">Nessuno storico dei brani</string>
     <string name="empty_alarms">Nessuna sveglia</string>
     <string name="multi_search_no_results">Nessuna stazione corrisponde ai criteri</string>
+    <string name="settings_hardware_decoder_first_title">Preferisci decodificatore hardware</string>
+    <string name="settings_hardware_decoder_first_summary">Preferisci i decodificatori audio hardware per ridurre l\'uso della CPU. Se l\'inizializzazione non riesce, si torna automaticamente alla decodifica software; disattivando l\'opzione viene ripristinato l\'ordine predefinito del sistema.</string>
+    <string name="settings_audio_offload_title">Offload audio (sperimentale)</string>
+    <string name="settings_audio_offload_summary_supported">Questo dispositivo supporta l\'offload audio: la decodifica viene gestita dal DSP, riducendo sensibilmente il consumo di batteria e CPU. Equalizzatore e altri effetti audio non funzioneranno quando è attivo.</string>
+    <string name="settings_audio_offload_summary_unsupported">L\'offload audio non è supportato su questo dispositivo (richiede Android 10 o versioni successive e hardware compatibile).</string>
 </resources>

@@ -1,6 +1,7 @@
 package net.programmierecke.radiodroid2.players.exoplayer;
 
 
+import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -18,6 +19,7 @@ import androidx.annotation.Nullable;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackException;
@@ -60,6 +62,9 @@ import okhttp3.OkHttpClient;
 public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSourceListener, Player.Listener {
 
     final private String TAG = "ExoPlayerWrapper";
+
+    /** 低内存机型（老/入门设备）最大缓冲上限（毫秒），仅压缩上限以免 OOM，不影响最小缓冲 */
+    private static final int LOW_RAM_MAX_BUFFER_MS = 15000;
 
     private ExoPlayer player;
     private PlayListener stateListener;
@@ -174,18 +179,56 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         minBufferMs = strategy.minBufferMs;
         maxBufferMs = strategy.maxBufferMs;
 
+        // 低内存机型（老/入门设备）适配：仅压缩缓冲上限以降低内存占用与 OOM 风险，
+        // 且不低于该策略自身的最小缓冲（如 EXTREME 的 min 为 30 秒），保证参数合法、
+        // 不削弱策略本身的抗抖动能力。普通设备保持原有基准不变。
+        int effectiveMaxBufferMs = maxBufferMs;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            ActivityManager activityManager =
+                    (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+            if (activityManager != null && activityManager.isLowRamDevice()
+                    && maxBufferMs > LOW_RAM_MAX_BUFFER_MS) {
+                effectiveMaxBufferMs = Math.max(minBufferMs, LOW_RAM_MAX_BUFFER_MS);
+                Log.i(TAG, "Low RAM device: max buffer reduced from " + maxBufferMs
+                        + "ms to " + effectiveMaxBufferMs + "ms");
+            }
+        }
+
         DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
                 .setBufferDurationsMs(
                         minBufferMs,
-                        maxBufferMs,
+                        effectiveMaxBufferMs,
                         bufferForPlaybackMs,
                         bufferForPlaybackAfterRebufferMs
                 )
                 .build();
 
-        player = new ExoPlayer.Builder(context)
-                .setLoadControl(loadControl)
-                .build();
+        // 解码优化（均可回退到历史行为）：
+        //  - 硬解优先：默认开启，硬件解码器排前，初始化失败由 ExoPlayer 内建 fallback 自动换下一个候选；
+        //  - 音频卸载：实验性开关，默认关闭，仅 Android 10+ 且用户手动开启时启用。
+        // 两者任一关闭时不注入自定义 RenderersFactory，播放器行为与历史版本完全一致。
+        SharedPreferences prefsBuild =
+                PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());
+        boolean hardwareFirst = prefsBuild.getBoolean("settings_hardware_decoder_first", true);
+        boolean audioOffload = prefsBuild.getBoolean("settings_audio_offload", false)
+                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
+
+        ExoPlayer.Builder playerBuilder = new ExoPlayer.Builder(context)
+                .setLoadControl(loadControl);
+        if (hardwareFirst || audioOffload) {
+            DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(context);
+            if (hardwareFirst) {
+                renderersFactory.setMediaCodecSelector(new HardwareFirstMediaCodecSelector());
+                renderersFactory.setEnableDecoderFallback(true);
+            }
+            if (audioOffload) {
+                renderersFactory.setEnableAudioOffload(true);
+            }
+            playerBuilder.setRenderersFactory(renderersFactory);
+            Log.i(TAG, "Decoder config: hardwareFirst=" + hardwareFirst
+                    + ", audioOffload=" + audioOffload);
+        }
+        player = playerBuilder.build();
         // 启动阶段静音，避免 AudioTrack 初始化爆音；真正音量由 PlayerService 在 Playing 后设置
         player.setVolume(0f);
         // 闹钟与普通播放统一走 USAGE_MEDIA → STREAM_MUSIC，保证扬声器/有线/蓝牙都受系统媒体音量控制

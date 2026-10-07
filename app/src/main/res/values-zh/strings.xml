@@ -871,4 +871,9 @@
     <string name="empty_recordings">暂无录音</string>
     <string name="empty_song_history">暂无播放记录</string>
     <string name="empty_alarms">暂无闹钟</string>
+    <string name="settings_hardware_decoder_first_title">优先使用硬件解码器</string>
+    <string name="settings_hardware_decoder_first_summary">优先选择硬件音频解码器以降低 CPU 占用，失败时自动回退软件解码；关闭后使用系统默认的解码器选择顺序。</string>
+    <string name="settings_audio_offload_title">音频卸载（实验性）</string>
+    <string name="settings_audio_offload_summary_supported">本机支持音频卸载：解码交由 DSP 处理，可显著降低播放耗电与 CPU 占用。开启后均衡器等音效功能将不可用。</string>
+    <string name="settings_audio_offload_summary_unsupported">本机不支持音频卸载（需 Android 10 及以上且设备硬件支持）。</string>
 </resources>

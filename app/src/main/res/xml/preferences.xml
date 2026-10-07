@@ -390,6 +390,18 @@
             android:summary="@string/settings_sleep_timer_desc"
             search:summary=""
             android:title="@string/settings_sleep_timer" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="settings_hardware_decoder_first"
+            android:title="@string/settings_hardware_decoder_first_title"
+            android:summary="@string/settings_hardware_decoder_first_summary" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="settings_audio_offload"
+            android:title="@string/settings_audio_offload_title"
+            android:summary="@string/settings_audio_offload_summary_unsupported" />
     </PreferenceScreen>
 
     <PreferenceScreen android:title="@string/pref_lyrics_category"

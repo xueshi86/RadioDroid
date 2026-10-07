@@ -886,4 +886,9 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="empty_recordings">Aún no hay grabaciones</string>
     <string name="empty_song_history">Aún no hay historial de canciones</string>
     <string name="empty_alarms">Aún no hay alarmas</string>
+    <string name="settings_hardware_decoder_first_title">Preferir decodificador por hardware</string>
+    <string name="settings_hardware_decoder_first_summary">Preferir decodificadores de audio por hardware para reducir el uso de CPU. Si falla la inicialización, se vuelve automáticamente a la decodificación por software; al desactivarlo se restaura el orden predeterminado del sistema.</string>
+    <string name="settings_audio_offload_title">Descarga de audio (experimental)</string>
+    <string name="settings_audio_offload_summary_supported">Este dispositivo admite la descarga de audio: la decodificación la realiza el DSP, lo que puede reducir notablemente el consumo de batería y de CPU. El ecualizador y otros efectos de audio no funcionarán mientras esté activada.</string>
+    <string name="settings_audio_offload_summary_unsupported">Este dispositivo no admite la descarga de audio (requiere Android 10 o superior y hardware compatible).</string>
 </resources>

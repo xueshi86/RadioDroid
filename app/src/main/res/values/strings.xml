@@ -885,4 +885,9 @@ The app will automatically restart to load the new database.</string>
     <string name="empty_recordings">No recordings yet</string>
     <string name="empty_song_history">No song history yet</string>
     <string name="empty_alarms">No alarms yet</string>
+    <string name="settings_hardware_decoder_first_title">Prefer hardware decoder</string>
+    <string name="settings_hardware_decoder_first_summary">Prefer hardware audio decoders to reduce CPU usage. Automatically falls back to software decoding if initialization fails; turning this off restores the system default decoder order.</string>
+    <string name="settings_audio_offload_title">Audio offload (experimental)</string>
+    <string name="settings_audio_offload_summary_supported">This device supports audio offload: decoding is handled by the DSP, which can greatly reduce battery and CPU usage. Equalizer and other audio effects will not work while it is enabled.</string>
+    <string name="settings_audio_offload_summary_unsupported">Audio offload is not supported on this device (requires Android 10 or newer and compatible hardware).</string>
 </resources>

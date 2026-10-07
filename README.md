@@ -245,6 +245,14 @@
 
 同时支持：外部播放器调用、MPD（Music Player Daemon）协议、Chromecast 投屏（仅 Play 版）。
 
+#### 播放性能优化（硬件解码 / 音频卸载）
+
+为降低播放时的 CPU 占用与耗电，播放器提供以下可选优化（均在「设置 → 播放器」中）：
+
+- **优先使用硬件解码器**（默认开启）：优先选用设备硬件音频解码器；若硬件解码器初始化失败，自动回退软件解码，保证正常播放。关闭后恢复系统默认的解码器选择顺序。
+- **音频卸载（实验性，默认关闭）**：应用会自动检测本机是否支持音频卸载（需 Android 10 及以上且设备硬件支持）。支持时可手动开启，把解码交由 DSP 处理，可显著降低播放耗电与 CPU 占用；开启后均衡器等音效不可用。设备不支持时该开关显示为禁用。
+- **低内存机型自适应缓冲**：在低内存（老/入门）设备上自动把最大缓冲上限压缩至 15 秒，降低内存占用与 OOM 风险，最小缓冲与播放稳定性不受影响；普通设备保持既有缓冲基准不变。
+
 #### 音量指数级控制
 
 播放器提供「音量映射增强」开关（在「设置 → 播放器」中），用于在指数级音量控制和默认线性音量控制之间切换。
@@ -590,6 +598,14 @@ Dual-engine playback:
 - LastFM API for supplementary track artwork
 
 Also supports: external player, MPD protocol, Chromecast (Play variant only).
+
+#### Playback Performance Optimizations (Hardware Decoding / Audio Offload)
+
+To reduce CPU usage and battery drain during playback, the player offers the following optional optimizations (all in **Settings → Player**):
+
+- **Prefer hardware decoder** (on by default): Prefers the device hardware audio decoder. If hardware decoder initialization fails, playback automatically falls back to software decoding so it always keeps working. Turning it off restores the system default decoder order.
+- **Audio offload (experimental, off by default)**: The app automatically detects whether the device supports audio offload (requires Android 10 or newer and compatible hardware). When supported, you can enable it manually to hand decoding over to the DSP, greatly reducing battery and CPU usage; the equalizer and other audio effects will not work while enabled. The toggle is disabled on unsupported devices.
+- **Adaptive buffering on low-RAM devices**: On low-memory (old/entry-level) devices the maximum buffer is automatically capped at 15 seconds to reduce memory usage and OOM risk, without affecting the minimum buffer or playback stability. Regular devices keep their existing buffering baseline.
 
 #### Exponential Volume Control
 
