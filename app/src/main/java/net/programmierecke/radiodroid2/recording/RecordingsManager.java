@@ -2,6 +2,7 @@ package net.programmierecke.radiodroid2.recording;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
@@ -16,9 +17,12 @@ import net.programmierecke.radiodroid2.R;
 import net.programmierecke.radiodroid2.Utils;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -36,8 +40,18 @@ import java.util.Observable;
  */
 public class RecordingsManager {
     private final static String TAG = "Recordings";
+
+    /** 旧录音目录（公共音乐目录）一次性迁移完成的标记 */
+    private final static String PREF_LEGACY_MIGRATION_DONE = "recordings_legacy_migration_done";
+
+    private final Context appContext;
+
     private DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
     private DateFormat timeFormatter = new SimpleDateFormat("HH-mm", Locale.US);
+
+    public RecordingsManager(@NonNull Context context) {
+        this.appContext = context.getApplicationContext();
+    }
 
     private class RecordingsObservable extends Observable {
         @Override
@@ -152,7 +166,7 @@ public class RecordingsManager {
 
             //TODO: check available disk space here
 
-            String filePath = RecordingsManager.getRecordDir() + "/" + info.getFileName();
+            String filePath = getRecordDir() + "/" + info.getFileName();
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "Starting recording to: " + filePath);
             }
@@ -197,15 +211,134 @@ public class RecordingsManager {
         return savedRecordingsObservable;
     }
 
-    public static String getRecordDir() {
-        String pathRecordings = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC) + "/Recordings";
-        File folder = new File(pathRecordings);
+    public String getRecordDir() {
+        File dir = appContext.getExternalFilesDir(Environment.DIRECTORY_MUSIC);
+        if (dir == null) {
+            // 外部存储不可用时的兜底，保证录音仍可写入
+            dir = appContext.getFilesDir();
+        }
+        File folder = new File(dir, "Recordings");
         if (!folder.exists()) {
             if (!folder.mkdirs()) {
-                Log.e(TAG, "could not create dir:" + pathRecordings);
+                Log.e(TAG, "could not create dir:" + folder.getAbsolutePath());
             }
         }
-        return pathRecordings;
+        return folder.getAbsolutePath();
+    }
+
+    /**
+     * 将旧版公共音乐目录（Music/Recordings）中的录音一次性迁移到应用专属目录。
+     * 受分区存储限制时旧文件可能无法读取或移动，此时保持原样、不阻断流程。
+     * 通过 SharedPreferences 标记保证只执行一次。
+     */
+    public void migrateLegacyRecordings() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(appContext);
+        if (prefs.getBoolean(PREF_LEGACY_MIGRATION_DONE, false)) {
+            return;
+        }
+
+        try {
+            File legacyDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "Recordings");
+            File newDir = new File(getRecordDir());
+
+            if (legacyDir.exists() && !legacyDir.getAbsolutePath().equals(newDir.getAbsolutePath())) {
+                File[] files = legacyDir.listFiles();
+                if (files != null) {
+                    for (File f : files) {
+                        if (!f.isFile()) {
+                            continue;
+                        }
+                        File target = new File(newDir, f.getName());
+                        if (target.exists()) {
+                            continue;
+                        }
+                        if (f.renameTo(target)) {
+                            Log.i(TAG, "Migrated recording: " + f.getName());
+                        } else {
+                            Log.w(TAG, "Could not migrate recording, left in place: " + f.getName());
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Legacy recordings migration failed: " + e.getMessage(), e);
+        }
+
+        prefs.edit().putBoolean(PREF_LEGACY_MIGRATION_DONE, true).apply();
+    }
+
+    /**
+     * 将指定录音拷贝到用户通过系统文件选择器（SAF）指定的位置。
+     * 拷贝在后台线程执行，避免大文件阻塞界面。
+     */
+    public void exportRecordingToUri(@NonNull Context context, @NonNull DataRecording recording, @NonNull Uri targetUri) {
+        File source = new File(getRecordDir(), recording.Name);
+        if (!source.exists()) {
+            showRecordingMessage(context, R.string.recording_file_not_found, Toast.LENGTH_SHORT);
+            return;
+        }
+
+        new Thread(() -> {
+            boolean success = false;
+            try (InputStream in = new FileInputStream(source);
+                 OutputStream out = context.getContentResolver().openOutputStream(targetUri)) {
+                if (out != null) {
+                    byte[] buffer = new byte[8192];
+                    int read;
+                    while ((read = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, read);
+                    }
+                    out.flush();
+                    success = true;
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to export recording " + recording.Name + ": " + e.getMessage(), e);
+            }
+
+            showRecordingMessage(context,
+                    success ? R.string.recording_export_success : R.string.recording_export_failed,
+                    success ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG);
+        }).start();
+    }
+
+    /**
+     * API 19 以下没有系统文件选择器（SAF）时的导出兜底：
+     * 将录音拷贝到公共音乐目录，使文件管理器可见。
+     */
+    public void exportRecordingToPublicDir(@NonNull Context context, @NonNull DataRecording recording) {
+        File source = new File(getRecordDir(), recording.Name);
+        if (!source.exists()) {
+            showRecordingMessage(context, R.string.recording_file_not_found, Toast.LENGTH_SHORT);
+            return;
+        }
+
+        File targetDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "Recordings");
+        if (!targetDir.exists() && !targetDir.mkdirs()) {
+            Log.e(TAG, "Could not create export dir: " + targetDir.getAbsolutePath());
+        }
+        File target = new File(targetDir, recording.Name);
+
+        new Thread(() -> {
+            boolean success = false;
+            try (InputStream in = new FileInputStream(source);
+                 OutputStream out = new FileOutputStream(target)) {
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                }
+                out.flush();
+                success = true;
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to export recording " + recording.Name + ": " + e.getMessage(), e);
+            }
+
+            if (success) {
+                showRecordingMessage(context, R.string.recording_export_success, Toast.LENGTH_SHORT);
+            } else {
+                showRecordingMessage(context, R.string.recording_export_failed, Toast.LENGTH_LONG);
+            }
+        }).start();
     }
 
     public void updateRecordingsList() {

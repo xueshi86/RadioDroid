@@ -5,7 +5,11 @@
     <string name="language_french">Γαλλικά</string>
     <string name="language_italian">Ιταλικά</string>
     <string name="language_greek">Ελληνικά</string>
-    <string name="recording_start_failed">Αδυναμία έναρξης ηχογράφησης. Ελέγξτε την πρόσβαση στον χώρο αποθήκευσης και δοκιμάστε ξανά.</string>
+    <string name="recording_export">Εξαγωγή</string>
+    <string name="recording_export_success">Η ηχογράφηση εξήχθη</string>
+    <string name="recording_export_failed">Αποτυχία εξαγωγής της ηχογράφησης</string>
+    <string name="recording_share_error">Αδυναμία κοινής χρήσης της ηχογράφησης</string>
+    <string name="recording_start_failed">Αδυναμία έναρξης ηχογράφησης. Δοκιμάστε ξανά.</string>
     <string name="recording_write_failed">Η ηχογράφηση σταμάτησε επειδή δεν ήταν δυνατή η εγγραφή του αρχείου.</string>
     <string name="recording_not_available">Η ηχογράφηση δεν είναι διαθέσιμη για αυτήν τη ροή</string>
     <string name="detail_name">Όνομα</string>
@@ -194,7 +198,6 @@
     <string name="error_play_stream">Αδυναμία αναπαραγωγής της ροής</string>
     <string name="error_stream_reconnect_timeout">Αδυναμία επανασύνδεσης στη ροή: λήξη του χρόνου</string>
 
-    <string name="error_record_needs_write">Απαιτείται άδεια εγγραφής για την ηχογράφηση.</string>
     <string name="error_grant_audiofocus">Το αίτημα εστίασης στον ήχο δεν παραχωρήθηκε από το σύστημα.</string>
 
     <string name="error_no_equalizer_found">Δεν βρέθηκε εφαρμογή ισοστάθμισης.</string>

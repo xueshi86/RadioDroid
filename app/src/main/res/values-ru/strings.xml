@@ -416,7 +416,6 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="warning_no_network_trying_resume">Нет сетевого подключения. Попытка возобновления при восстановлении соединения.</string>
     <string name="giving_up_resume">放弃尝试恢复播放</string>
 
-    <string name="error_record_needs_write">Необходимо разрешение на запись для записи</string>
     <string name="error_grant_audiofocus">Запрос на аудио фокус не был предоставлен системой</string>
 
     <string name="error_no_equalizer_found">Не найдено приложение эквалайзера</string>
@@ -476,7 +475,6 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
 
     <string name="image_button_disable">Отключить</string>
     <string name="image_button_record">Записать</string>
-    <string name="image_button_record_request_permission">Запросить разрешения для записи</string>
     <string name="image_button_recordings">Записи</string>
     <string name="image_button_delete">Удалить</string>
     <string name="image_button_more">Больше</string>
@@ -717,7 +715,11 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="recording_delete_failed">Не удалось удалить запись</string>
     <string name="recording_file_not_found">Файл записи не найден</string>
     <string name="recording_play_error">Не удалось воспроизвести запись</string>
-    <string name="recording_start_failed">Не удалось начать запись. Проверьте доступ к хранилищу и повторите попытку.</string>
+    <string name="recording_export">Экспорт</string>
+    <string name="recording_export_success">Запись экспортирована</string>
+    <string name="recording_export_failed">Не удалось экспортировать запись</string>
+    <string name="recording_share_error">Не удалось поделиться записью</string>
+    <string name="recording_start_failed">Не удалось начать запись. Повторите попытку.</string>
     <string name="recording_write_failed">Запись остановлена, поскольку файл невозможно записать.</string>
     <string name="recording_not_available">Для этого потока запись недоступна</string>
     <string name="recording_details">Подробности</string>

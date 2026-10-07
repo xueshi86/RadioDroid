@@ -157,7 +157,6 @@
     <string name="error_play_stream">Yayın oynatılamıyor</string>
     <string name="error_stream_reconnect_timeout">Yayına yeniden bağlanılamıyor: zaman aşımı.</string>
 
-    <string name="error_record_needs_write">Kayıt için yazma izni gerekiyor!</string>
     <string name="error_grant_audiofocus">Ses odağı isteği sistem tarafından onaylanmadı.</string>
 
     <string name="error_no_equalizer_found">Ekolayzır uygulaması bulunmadı!</string>
@@ -176,7 +175,6 @@
 
     <string name="image_button_disable">Devre dışı</string>
     <string name="image_button_record">Kayıt</string>
-    <string name="image_button_record_request_permission">Kayıt için izinleri iste</string>
     <string name="image_button_recordings">Kayıtlar</string>
     <string name="image_button_delete">Sil</string>
     <string name="image_button_more">Daha çok</string>

@@ -162,7 +162,6 @@
     <string name="error_play_stream">Az adatfolyam nem játszható le</string>
     <string name="error_stream_reconnect_timeout">Nem lehet visszakapcsolódni az adatfolyamhoz: időtúllépés.</string>
 
-    <string name="error_record_needs_write">Írási engedély szükséges a rögzítéshez!</string>
     <string name="error_grant_audiofocus">A hangfókusz kérést nem teljesítette a rendszer.</string>
 
     <string name="error_no_equalizer_found">Nem található hangerőszabályzó alkalmazás!</string>
@@ -181,7 +180,6 @@
 
     <string name="image_button_disable">Letiltás</string>
     <string name="image_button_record">Rögzítés</string>
-    <string name="image_button_record_request_permission">Engedélykérés a rögzítéshez</string>
     <string name="image_button_recordings">Rögzítések</string>
     <string name="image_button_delete">Törlés</string>
     <string name="image_button_more">Több</string>

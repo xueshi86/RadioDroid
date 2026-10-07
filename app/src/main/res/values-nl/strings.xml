@@ -170,7 +170,6 @@
     <string name="error_play_stream">De stream kan niet worden afgespeeld</string>
     <string name="error_stream_reconnect_timeout">Opnieuw verbinden mislukt: time-out.</string>
 
-    <string name="error_record_needs_write">Schrijfmachtiging is benodigd voor opnames!</string>
     <string name="error_grant_audiofocus">Audiofocus-machtiging is niet verleend.</string>
 
     <string name="error_no_equalizer_found">Geen equalizer-app gevonden!</string>
@@ -189,7 +188,6 @@
 
     <string name="image_button_disable">Uitgeschakeld</string>
     <string name="image_button_record">Opnemen</string>
-    <string name="image_button_record_request_permission">Machtigingen voor opnemen verlenen</string>
     <string name="image_button_recordings">Opnames</string>
     <string name="image_button_delete">Verwijderen</string>
     <string name="image_button_more">Meer</string>

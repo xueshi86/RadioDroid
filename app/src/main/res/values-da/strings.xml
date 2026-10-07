@@ -234,7 +234,6 @@
     <string name="warning_no_network_trying_resume">Ingen netværk forbindelse. Genoptager når forbindelse er tilbage.</string>
     <string name="giving_up_resume">Forsøg på genoptage afspilning afvist</string>
 
-    <string name="error_record_needs_write">Behøver skrive tilladelse for optagning</string>
     <string name="error_grant_audiofocus">Anmode om lyd fokus blev ikke tildelt af systemet</string>
 
     <string name="error_no_equalizer_found">Intet equalizer program fundet</string>
@@ -259,7 +258,6 @@
 
     <string name="image_button_disable">Deaktivere</string>
     <string name="image_button_record">Optage</string>
-    <string name="image_button_record_request_permission">Anmode tilladelse for optagning</string>
     <string name="image_button_recordings">Optagelser</string>
     <string name="image_button_delete">Slette</string>
     <string name="image_button_more">Mere</string>

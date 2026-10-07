@@ -88,6 +88,12 @@ public class IcyDataSource implements HttpDataSource {
     int remainingUntilMetadata = Integer.MAX_VALUE;
     private boolean opened;
 
+    /**
+     * 当前请求是否为 HLS 播放列表（.m3u8）。播放列表是文本内容，不属于音频数据，
+     * 必须排除在录音字节流之外，否则会把 m3u8 文本混入录音文件导致其损坏。
+     */
+    private boolean isPlaylistRequest;
+
     ShoutcastInfo shoutcastInfo;
     private StreamLiveInfo streamLiveInfo;
 
@@ -145,6 +151,10 @@ public class IcyDataSource implements HttpDataSource {
 
         final String type = contentType == null ? getMimeType(dataSpec.uri.toString(), "audio/mpeg") : contentType.toString().toLowerCase();
 
+        // 判定是否为 HLS 播放列表请求：优先看 Content-Type，兜底看 URI 的 .m3u8 后缀
+        // （部分服务器会用 application/octet-stream 等类型返回播放列表）
+        isPlaylistRequest = type.contains("mpegurl") || isM3u8Uri(dataSpec.uri);
+
         if (dataSourceListener != null) {
             dataSourceListener.onDataSourceContentType(type);
         }
@@ -159,7 +169,7 @@ public class IcyDataSource implements HttpDataSource {
         dataSourceListener.onDataSourceConnected();
         transferListener.onTransferStart(this, dataSpec, true);
 
-        if (type.equals("application/vnd.apple.mpegurl") || type.equals("application/x-mpegurl")) {
+        if (isPlaylistRequest) {
             return responseBody.contentLength();
         } else {
             // try to get shoutcast information from stream connection
@@ -368,9 +378,20 @@ public class IcyDataSource implements HttpDataSource {
             throw new HttpDataSourceException(e, dataSpec, HttpDataSourceException.TYPE_READ);
         }
 
-        sendToDataSourceListenersWithoutMetadata(buffer, offset, bytesRead);
+        // HLS 播放列表为文本，转发给录音监听器会污染录音文件，故直接跳过
+        if (!isPlaylistRequest) {
+            sendToDataSourceListenersWithoutMetadata(buffer, offset, bytesRead);
+        }
 
         return bytesRead;
+    }
+
+    private static boolean isM3u8Uri(Uri uri) {
+        if (uri == null) {
+            return false;
+        }
+        String path = uri.getPath();
+        return path != null && path.toLowerCase().endsWith(".m3u8");
     }
 
     @Override

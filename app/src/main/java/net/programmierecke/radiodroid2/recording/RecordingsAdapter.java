@@ -45,6 +45,15 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
     private Handler seekHandler = new Handler(Looper.getMainLooper());
     private Runnable seekUpdateRunnable;
 
+    private OnExportRequestedListener exportRequestedListener;
+
+    /**
+     * 导出需要宿主（Fragment/Activity）拉起系统文件选择器并接收结果，故由宿主实现。
+     */
+    public interface OnExportRequestedListener {
+        void onExportRequested(DataRecording recording);
+    }
+
     class RecordingItemViewHolder extends RecyclerView.ViewHolder {
         final ViewGroup viewRoot;
         final TextView textViewTitle;
@@ -62,6 +71,10 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
     public RecordingsAdapter(@NonNull Context context, @NonNull RecordingsManager recordingsManager) {
         this.context = context;
         this.recordingsManager = recordingsManager;
+    }
+
+    public void setOnExportRequestedListener(OnExportRequestedListener listener) {
+        this.exportRequestedListener = listener;
     }
 
     public void releasePlayer() {
@@ -127,7 +140,7 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
     }
 
     private void playRecordingInApp(DataRecording recording) {
-        String path = RecordingsManager.getRecordDir() + "/" + recording.Name;
+        String path = recordingsManager.getRecordDir() + "/" + recording.Name;
         File file = new File(path);
         if (!file.exists()) {
             Toast.makeText(context, R.string.recording_file_not_found, Toast.LENGTH_SHORT).show();
@@ -293,7 +306,7 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
     }
 
     private void playRecordingExternal(DataRecording recording) {
-        String path = RecordingsManager.getRecordDir() + "/" + recording.Name;
+        String path = recordingsManager.getRecordDir() + "/" + recording.Name;
 
         File file = new File(path);
         if (!file.exists()) {
@@ -318,6 +331,8 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
     private void showContextMenu(DataRecording recording, int position) {
         String[] items = {
                 context.getString(R.string.recording_play_external),
+                context.getString(R.string.recording_export),
+                context.getString(R.string.detail_share),
                 context.getString(R.string.recording_details),
                 context.getString(R.string.action_delete)
         };
@@ -329,9 +344,17 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
                             playRecordingExternal(recording);
                             break;
                         case 1:
-                            showDetailsDialog(recording);
+                            if (exportRequestedListener != null) {
+                                exportRequestedListener.onExportRequested(recording);
+                            }
                             break;
                         case 2:
+                            shareRecording(recording);
+                            break;
+                        case 3:
+                            showDetailsDialog(recording);
+                            break;
+                        case 4:
                             confirmDelete(recording);
                             break;
                     }
@@ -340,8 +363,31 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
                 .show();
     }
 
+    private void shareRecording(DataRecording recording) {
+        String path = recordingsManager.getRecordDir() + "/" + recording.Name;
+        File file = new File(path);
+        if (!file.exists()) {
+            Toast.makeText(context, R.string.recording_file_not_found, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Uri fileUri = FileProvider.getUriForFile(context, context.getPackageName() + ".fileprovider", file);
+
+        Intent i = new Intent(Intent.ACTION_SEND);
+        i.setType("audio/*");
+        i.putExtra(Intent.EXTRA_STREAM, fileUri);
+        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        try {
+            context.startActivity(Intent.createChooser(i, context.getString(R.string.detail_share)));
+        } catch (Exception e) {
+            Log.e(TAG, "Error sharing recording: " + e.getMessage());
+            Toast.makeText(context, R.string.recording_share_error, Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void showDetailsDialog(DataRecording recording) {
-        String path = RecordingsManager.getRecordDir() + "/" + recording.Name;
+        String path = recordingsManager.getRecordDir() + "/" + recording.Name;
         File file = new File(path);
 
         StringBuilder info = new StringBuilder();
@@ -426,7 +472,7 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
     }
 
     private void deleteRecording(DataRecording recording) {
-        String path = RecordingsManager.getRecordDir() + "/" + recording.Name;
+        String path = recordingsManager.getRecordDir() + "/" + recording.Name;
         File file = new File(path);
         boolean deleted = false;
         if (file.exists()) {

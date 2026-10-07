@@ -480,6 +480,18 @@ public class PlayerServiceUtil {
                     @Override
                     public void onSuccess() {
                         Log.d(TAG, "Network load SUCCESS: " + stationUuid + " url=" + iconUrl);
+                        if (!isHolderBoundTo(holder, stationUuid)) {
+                            // 条目已被复用给别的电台，丢弃本次结果，避免写错缓存/显示错图
+                            return;
+                        }
+                        Bitmap displayed = getHolderBitmap(holder);
+                        if (displayed != null && isTruncatedBitmap(displayed)) {
+                            // 截断下载的半截黑图不显示也不缓存，直接尝试下一个回退 URL
+                            Log.w(TAG, "Network load returned truncated bitmap, discarding: " + stationUuid + " url=" + iconUrl);
+                            holder.setImageDrawable(placeholder);
+                            tryFallbackUrls(holder, urls, 1, placeholder, targetPxSize, maxPxSize, homePageUrl, stationUuid);
+                            return;
+                        }
                         if (stationUuid != null && !stationUuid.isEmpty()) {
                             saveIconToCacheFromView(holder, stationUuid);
                             StationIconCache cache = StationIconCache.getInstance(mainContext);
@@ -529,6 +541,18 @@ public class PlayerServiceUtil {
                     @Override
                     public void onSuccess() {
                         Log.d(TAG, "Fallback[" + startIndex + "] SUCCESS: " + stationUuid + " url=" + url);
+                        if (!isHolderBoundTo(holder, stationUuid)) {
+                            // 条目已被复用给别的电台，丢弃本次结果
+                            return;
+                        }
+                        Bitmap displayed = getHolderBitmap(holder);
+                        if (displayed != null && isTruncatedBitmap(displayed)) {
+                            // 截断下载的半截黑图不显示也不缓存，继续尝试下一个回退 URL
+                            Log.w(TAG, "Fallback[" + startIndex + "] returned truncated bitmap, discarding: " + stationUuid + " url=" + url);
+                            holder.setImageDrawable(placeholder);
+                            tryFallbackUrls(holder, urls, startIndex + 1, placeholder, targetPxSize, maxPxSize, homePageUrl, stationUuid);
+                            return;
+                        }
                         if (stationUuid != null && !stationUuid.isEmpty()) {
                             saveIconToCacheFromView(holder, stationUuid);
                             StationIconCache.getInstance(mainContext).markAsFallback(stationUuid);
@@ -825,41 +849,43 @@ public class PlayerServiceUtil {
 
     /**
      * 检测位图是否可能为截断下载导致的半截黑图。
-     *
-     * 判断逻辑：扫描位图底部 1/4 区域的像素，如果超过 80% 为纯黑色（0xFF000000），
-     * 则认为该位图很可能是下载不完整导致的损坏图标。
+     * 实现统一收敛到 {@link StationIconCache#isTruncated(Bitmap)}。
      *
      * @param bitmap 待检测的位图
      * @return true 表示位图可能已损坏（半截黑图）
      */
     private static boolean isTruncatedBitmap(Bitmap bitmap) {
-        if (bitmap == null || bitmap.getWidth() <= 0 || bitmap.getHeight() <= 0) {
+        return StationIconCache.isTruncated(bitmap);
+    }
+
+    /**
+     * 取出 ImageView 当前显示的 Bitmap（供下载完成后的截断校验使用）。
+     * 非 BitmapDrawable（如 Picasso 包装类型）时回退为绘制转换。
+     */
+    private static Bitmap getHolderBitmap(final ImageView holder) {
+        if (holder == null) {
+            return null;
+        }
+        Drawable drawable = holder.getDrawable();
+        if (drawable == null) {
+            return null;
+        }
+        Bitmap bitmap = (drawable instanceof android.graphics.drawable.BitmapDrawable)
+                ? ((android.graphics.drawable.BitmapDrawable) drawable).getBitmap()
+                : drawableToBitmap(drawable);
+        return (bitmap != null && !bitmap.isRecycled()) ? bitmap : null;
+    }
+
+    /**
+     * 判断 ImageView 当前是否仍绑定到指定电台（RecyclerView 复用后 tag 会指向别的电台）。
+     * stationUuid 为空或视图未登记 tag 时不做限制。
+     */
+    private static boolean isHolderBoundTo(final ImageView holder, final String stationUuid) {
+        if (holder == null || stationUuid == null || stationUuid.isEmpty()) {
             return true;
         }
-        int width = bitmap.getWidth();
-        int height = bitmap.getHeight();
-        // 扫描底部 1/4 区域
-        int startY = height * 3 / 4;
-        int endY = height;
-        int totalPixels = width * (endY - startY);
-        int blackPixels = 0;
-        int[] pixels = new int[width];
-        for (int y = startY; y < endY; y++) {
-            bitmap.getPixels(pixels, 0, width, 0, y, width, 1);
-            for (int px : pixels) {
-                // 纯黑色：alpha=FF, R=G=B=0
-                if (px == 0xFF000000) {
-                    blackPixels++;
-                }
-            }
-        }
-        float blackRatio = (float) blackPixels / totalPixels;
-        if (blackRatio > 0.8f) {
-            Log.w(TAG, "Detected truncated bitmap: " + width + "x" + height
-                    + " bottomQuarterBlackRatio=" + String.format("%.2f", blackRatio));
-            return true;
-        }
-        return false;
+        Object tag = holder.getTag(R.id.tag_station_uuid);
+        return tag == null || tag.equals(stationUuid);
     }
 
     /**
@@ -872,6 +898,11 @@ public class PlayerServiceUtil {
      * @param stationUuid 电台UUID
      */
     private static void saveIconToCacheFromView(final ImageView holder, final String stationUuid) {
+        if (!isHolderBoundTo(holder, stationUuid)) {
+            // 视图已被复用给别的电台：此时取到的是别的电台的图，绝不能按本电台写缓存
+            Log.w(TAG, "saveIconToCacheFromView: view rebound to another station, skipping for " + stationUuid);
+            return;
+        }
         try {
             Drawable drawable = holder.getDrawable();
             Log.d(TAG, "saveIconToCacheFromView: " + stationUuid + " drawable=" + (drawable != null ? drawable.getClass().getSimpleName() : "null"));

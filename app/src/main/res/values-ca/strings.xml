@@ -176,7 +176,6 @@
     <string name="error_stream_reconnect_timeout">No es pot tornar a connectar al flux de dades: timeout</string>
     <string name="giving_up_resume">No s\'ha pogut reprendre la reproducció</string>
 
-    <string name="error_record_needs_write">Necessiteu permís d\'escriptura per gravar</string>
     <string name="error_grant_audiofocus">El sistema no ha donat reposta a la sol·licitud d\'àudio</string>
 
     <string name="error_no_equalizer_found">No s\'ha trobat cap aplicació d\'equalització</string>
@@ -195,7 +194,6 @@
 
     <string name="image_button_disable">Inhabilitar</string>
     <string name="image_button_record">Enregistrar</string>
-    <string name="image_button_record_request_permission">Sol·liciteu permisos per a la gravació</string>
     <string name="image_button_recordings">Enregistraments</string>
     <string name="image_button_delete">Suprimir</string>
     <string name="image_button_more">Més</string>

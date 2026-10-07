@@ -384,7 +384,7 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 - **内置歌词**：曲目详情「查看歌词」打开内置歌词面板，来源按 LRCLIB → LrcAPI → 网易云音乐依次降级尝试，支持自定义/自建实例地址与本地缓存；详见「内置歌词」章节
 - **睡眠定时器**：SeekBar 设置分钟数，终点自动停止播放，保存默认值
 - **闹钟**：支持设置指定时间自动播放指定电台。闹钟默认仅生效一次，如需每天重复请在闹钟编辑界面开启「重复」开关。点闹钟页工具条「+」直接进入闹钟设置界面（电台、时间、音量渐增等设置项齐全），在界面内点时间按钮选择时间；点「取消」不会留下未确认的闹钟
-- **录音功能**：录制当前播放的电台流为音频文件
+- **录音功能**：录制当前播放的电台流为音频文件，无需存储权限；录音可在列表长按「导出」到自选位置或「分享」到其它应用
 - **电台详情展开**：点击展开按钮显示网站访问、分享、添加闹钟等操作
 - **趋势图标**：电台列表显示点击量趋势（上升/下降/持平）
 - **国家图标**：电台列表显示所属国家的国旗图标
@@ -738,7 +738,7 @@ A full visual pass over the original interface, leaving page structure, navigati
 - **Built-in Lyrics**: "View lyrics" opens a built-in lyrics panel; sources are tried in fallback order LRCLIB → LrcAPI → NetEase Cloud Music, with custom/self-hosted instance URLs and local caching supported — see the "Built-in Lyrics" section for details
 - **Sleep Timer**: SeekBar dialog, auto-stops playback, saves default
 - **Alarm**: Schedule a station to play at a specified time. Alarms are one-time by default; enable the "repeat" toggle in the alarm editor for daily recurrence
-- **Recording**: Record live radio streams to audio files
+- **Recording**: Record live radio streams to audio files without storage permissions; long-press a recording to export it to a chosen location or share it to other apps
 - **Station Detail Expansion**: Website visit, share, alarm
 - **Trend Icons**: Click trend indicators (rising/falling/flat)
 - **Country Flags**: Flag icons per station in list view

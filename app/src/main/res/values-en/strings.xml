@@ -285,7 +285,6 @@
     <string name="warning_no_network_trying_resume">No network connection. Trying to resume when connection is back.</string>
     <string name="giving_up_resume">Giving up attempt to resume playback</string>
 
-    <string name="error_record_needs_write">Need write permission for recording</string>
     <string name="error_record_not_playing">Start playback before recording</string>
     <string name="error_permission_denied">Permission denied</string>
     <string name="error_grant_audiofocus">Request for audio focus was not granted by the system</string>
@@ -350,10 +349,13 @@
 
     <string name="image_button_disable">Disable</string>
     <string name="image_button_record">Record</string>
-    <string name="image_button_record_request_permission">Request permissions for recording</string>
     <string name="image_button_recordings">Recordings</string>
     <string name="recording_play_error">Unable to play recording</string>
-    <string name="recording_start_failed">Unable to start recording. Check storage access and try again.</string>
+    <string name="recording_export">Export</string>
+    <string name="recording_export_success">Recording exported</string>
+    <string name="recording_export_failed">Failed to export recording</string>
+    <string name="recording_share_error">Unable to share recording</string>
+    <string name="recording_start_failed">Unable to start recording. Please try again.</string>
     <string name="recording_write_failed">Recording stopped because the file could not be written.</string>
     <string name="recording_not_available">Recording is not available for this stream</string>
     <string name="recording_details">Details</string>

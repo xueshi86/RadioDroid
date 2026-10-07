@@ -38,6 +38,8 @@ public class StationIconCache {
     private static final String ICONURL_RETRY_SUFFIX = ".iconurl_retry";
     private static final long SEMI_PERMANENT_TTL_MS = 7L * 24 * 60 * 60 * 1000; // 7天
     private static final long ICONURL_RETRY_INTERVAL_MS = 4L * 60 * 60 * 1000; // 4小时
+    /** 判定「截断填充黑」的近黑阈值：R/G/B 各通道均不超过该值。 */
+    private static final int NEAR_BLACK_LEVEL = 40;
 
     private static StationIconCache instance;
 
@@ -168,7 +170,6 @@ public class StationIconCache {
 
     /**
      * 检测缓存文件中的位图是否为截断下载导致的半截黑图。
-     * 扫描位图底部 1/4 区域，如果超过 80% 为纯黑色像素则判定为截断。
      */
     private boolean isCachedIconTruncated(File file) {
         FileInputStream fis = null;
@@ -176,29 +177,9 @@ public class StationIconCache {
             fis = new FileInputStream(file);
             Bitmap bitmap = BitmapFactory.decodeStream(fis);
             if (bitmap == null) return true;
-
-            int width = bitmap.getWidth();
-            int height = bitmap.getHeight();
-            if (width <= 0 || height <= 0) {
-                bitmap.recycle();
-                return true;
-            }
-
-            int startY = height * 3 / 4;
-            int totalPixels = width * (height - startY);
-            int blackPixels = 0;
-            int[] pixels = new int[width];
-            for (int y = startY; y < height; y++) {
-                bitmap.getPixels(pixels, 0, width, 0, y, width, 1);
-                for (int px : pixels) {
-                    if (px == 0xFF000000) {
-                        blackPixels++;
-                    }
-                }
-            }
+            boolean truncated = isTruncated(bitmap);
             bitmap.recycle();
-            float blackRatio = (float) blackPixels / totalPixels;
-            return blackRatio > 0.8f;
+            return truncated;
         } catch (Exception e) {
             return true;
         } finally {
@@ -206,6 +187,57 @@ public class StationIconCache {
                 try { fis.close(); } catch (IOException ignored) {}
             }
         }
+    }
+
+    /**
+     * 检测位图是否为「下载截断」导致的半截黑图。
+     *
+     * 扫描底部 1/4 区域，统计**不透明近黑**像素（alpha 完全不透明且 R/G/B 均不超过 {@link #NEAR_BLACK_LEVEL}）；
+     * 若该区域超过 90% 为不透明近黑，则判定为截断损坏。
+     *
+     * 只统计「不透明」近黑：透明背景的合法 Logo（底部大片透明）不会被误判；而截断解码时填充的
+     * 黑色区域是不透明的。此前仅匹配 {@code 0xFF000000} 这一精确值，对解码填充出的近黑色
+     * （如 0xFF0A0A0A、深灰）无法识别，导致半截黑图被当作正常图标显示。
+     */
+    public static boolean isTruncated(Bitmap bitmap) {
+        if (bitmap == null || bitmap.isRecycled()) {
+            return true;
+        }
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        if (width <= 0 || height <= 0) {
+            return true;
+        }
+
+        int startY = height * 3 / 4;
+        int totalPixels = width * (height - startY);
+        if (totalPixels <= 0) {
+            return false;
+        }
+
+        int darkPixels = 0;
+        int[] pixels = new int[width];
+        for (int y = startY; y < height; y++) {
+            bitmap.getPixels(pixels, 0, width, 0, y, width, 1);
+            for (int px : pixels) {
+                int alpha = (px >>> 24) & 0xFF;
+                if (alpha != 0xFF) {
+                    continue;
+                }
+                if (((px >> 16) & 0xFF) <= NEAR_BLACK_LEVEL
+                        && ((px >> 8) & 0xFF) <= NEAR_BLACK_LEVEL
+                        && (px & 0xFF) <= NEAR_BLACK_LEVEL) {
+                    darkPixels++;
+                }
+            }
+        }
+        float darkRatio = (float) darkPixels / totalPixels;
+        if (darkRatio > 0.9f) {
+            Log.w(TAG, "Detected truncated bitmap: " + width + "x" + height
+                    + " bottomQuarterDarkRatio=" + String.format("%.2f", darkRatio));
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -246,6 +278,11 @@ public class StationIconCache {
      */
     public void saveIcon(String stationUuid, Bitmap bitmap, boolean isFavorite) {
         if (stationUuid == null || stationUuid.isEmpty() || bitmap == null) {
+            return;
+        }
+        // 截断下载的半截黑图一律不落盘，避免坏图被长期缓存并反复显示
+        if (isTruncated(bitmap)) {
+            Log.w(TAG, "saveIcon: refusing to cache truncated bitmap for " + stationUuid);
             return;
         }
         String fileName = getCacheFileName(stationUuid);

@@ -191,7 +191,6 @@
     <string name="error_stream_reconnect_timeout">Nie można ponownie połączyć się ze strumieniem: przekroczenie czasu oczekiwania</string>
     <string name="giving_up_resume">Próba wznowienia odtwarzania została zaniechana</string>
 
-    <string name="error_record_needs_write">Potrzebujesz uprawnień do zapisu dla nagrywania</string>
     <string name="error_grant_audiofocus">Żądanie dla audio focus nie zostało przyznane przez system</string>
 
     <string name="error_no_equalizer_found">Nie znaleziono aplikacji korektora graficznego</string>
@@ -210,7 +209,6 @@
 
     <string name="image_button_disable">Wyłącz</string>
     <string name="image_button_record">Nagraj</string>
-    <string name="image_button_record_request_permission">Żądanie uprawnień do nagrywania</string>
     <string name="image_button_recordings">Nagrania</string>
     <string name="image_button_delete">Usuń</string>
     <string name="image_button_more">Więcej</string>

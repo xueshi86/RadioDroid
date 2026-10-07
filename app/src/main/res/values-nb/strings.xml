@@ -239,7 +239,6 @@
   <string name="warning_no_network_trying_resume">Nettverk mangler. Gjenoppta når enheten er tilkoblet igjen.</string>
   <string name="giving_up_resume">Gir opp forsøk på å gjenoppta avspilling</string>
 	
-  <string name="error_record_needs_write">Skrivetillatelse behøves for å kunne lagre opptak</string>
   <string name="error_grant_audiofocus">Forespørsel om lydfokus ble avvist av systemet</string>
   
   <string name="error_no_equalizer_found">Fant ingen equalizer app</string>
@@ -264,7 +263,6 @@
 	  
   <string name="image_button_disable">Slå av</string>
   <string name="image_button_record">Ta opp</string>
-  <string name="image_button_record_request_permission">Be om tillatelse for opptak</string>
   <string name="image_button_recordings">Opptak</string>
   <string name="image_button_delete">Slett</string>
   <string name="image_button_more">Mer</string>

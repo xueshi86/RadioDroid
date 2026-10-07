@@ -166,7 +166,6 @@
     <string name="error_play_stream">Nie je možné prehrať stream</string>
     <string name="error_stream_reconnect_timeout">Nie je možné znovu sa pripojiť ku streamu: časový limit uplynul</string>
 
-    <string name="error_record_needs_write">Pre možnosť nahrávania je vyžadované oprávnenie na zápis!</string>
     <string name="error_grant_audiofocus">Systém odmietol žiadosť o audio fokus</string>
 
     <string name="error_no_equalizer_found">Nie je možné nájsť žiadnu aplikáciu ekvalizér!</string>
@@ -186,7 +185,6 @@
 
     <string name="image_button_disable">Zakázať</string>
     <string name="image_button_record">Nahrávať</string>
-    <string name="image_button_record_request_permission">Vyžiadať oprávnenia potrebné pre nahrávanie</string>
     <string name="image_button_recordings">Nahrávky</string>
     <string name="image_button_delete">Odstrániť</string>
     <string name="image_button_more">Viac</string>

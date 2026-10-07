@@ -22,15 +22,19 @@
     <!-- ================= 尺寸 ================= -->
     <dimen name="touch_target_min">48dp</dimen>
     <dimen name="appbar_height">56dp</dimen>
-    <!-- 标准行高（大图标模式）：图标 56dp + 三行文字（标题/详情/标签），内容约 63dp。
-         仅在原 88dp 基础上略微收紧到 80dp；60dp 是紧凑模式（小图标、不显示详情行）的高度，
-         两者需保持明显差异 -->
-    <dimen name="item_height_standard">80dp</dimen>
+    <!-- 标准行高（大图标模式）：图标 70dp + 三行文字（标题/详情/标签）。
+         行高需容纳 78dp 的高亮边框容器并留出均匀的上下留白，故取 88dp；
+         72dp 是紧凑模式（小图标、不显示详情行）的高度，两者需保持明显差异 -->
+    <dimen name="item_height_standard">88dp</dimen>
     <dimen name="item_height_compact">72dp</dimen>
-    <dimen name="icon_station_list">56dp</dimen>
-    <!-- 「正在播放」高亮边框容器：必须大于图标（icon_station_list），
-         否则边框会被图标完全盖住而看不见（边框画在容器背景上，位于子视图之下） -->
-    <dimen name="icon_station_list_frame">64dp</dimen>
+    <!-- 电台列表图标：恢复 UI 改版前（Stage 前）的 70dp，改版中被压到 56dp 显得偏小 -->
+    <dimen name="icon_station_list">70dp</dimen>
+    <!-- 「正在播放」高亮边框容器：必须大于图标（icon_station_list）并留出 4dp 描边留白，
+         否则边框会被图标盖住而看不见（边框画在容器背景上，位于子视图之下） -->
+    <dimen name="icon_station_list_frame">78dp</dimen>
+    <!-- 「本台曲目 / 曲目历史」列表里的电台小图标：与电台列表图标解耦，
+         保持改版后的 56dp，不随电台列表图标的恢复而放大 -->
+    <dimen name="icon_station_history">56dp</dimen>
     <dimen name="icon_station_grid">72dp</dimen>
     <!-- 图标模式（网格）「正在播放」高亮边框容器：必须大于图标（icon_station_grid），
          否则描边框画在容器背景上会被图标完全盖住而不可见 -->

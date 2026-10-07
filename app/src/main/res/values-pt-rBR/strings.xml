@@ -233,7 +233,6 @@
     <string name="warning_no_network_trying_resume">Nenhuma conexão da rede. Retomarei quando a conexão estiver de volta.</string>
     <string name="giving_up_resume">Desistindo da tentativa de retomar a reprodução</string>
 
-    <string name="error_record_needs_write">Precisa acessar sua memória para gravar</string>
     <string name="error_grant_audiofocus">O pedido de foco de áudio não foi concedido pelo app</string>
 
     <string name="error_no_equalizer_found">Nenhum equalizador de música encontrado</string>
@@ -257,7 +256,6 @@
 
     <string name="image_button_disable">Desativar</string>
     <string name="image_button_record">Grave</string>
-    <string name="image_button_record_request_permission">Solicitar permissões para gravação</string>
     <string name="image_button_recordings">Gravações</string>
     <string name="image_button_delete">Excluir</string>
     <string name="image_button_more">Mais</string>

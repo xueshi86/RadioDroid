@@ -247,7 +247,6 @@
     <string name="warning_no_network_trying_resume">Pas de connexion réseau. Tentative de reprise lorsque la connexion sera rétablie.</string>
     <string name="giving_up_resume">Tentative de reprise de la lecture ignorée</string>
 
-    <string name="error_record_needs_write">Droits d\'écriture requis pour l\'enregistrement !</string>
     <string name="error_grant_audiofocus">La demande de focus audio n\'a pas été accordée par le système.</string>
 
     <string name="error_no_equalizer_found">Aucun égaliseur trouvé !</string>
@@ -273,7 +272,6 @@
 
     <string name="image_button_disable">Désactiver</string>
     <string name="image_button_record">Enregistrer</string>
-    <string name="image_button_record_request_permission">Demande des autorisations pour l\'enregistrement</string>
     <string name="image_button_recordings">Enregistrements</string>
     <string name="image_button_delete">Supprimer</string>
     <string name="image_button_more">Plus</string>
@@ -428,7 +426,11 @@
     <string name="recording_delete_failed">Échec de la suppression de l\'enregistrement</string>
     <string name="recording_file_not_found">Fichier d\'enregistrement introuvable</string>
     <string name="recording_play_error">Impossible de lire l\'enregistrement</string>
-    <string name="recording_start_failed">Impossible de démarrer l\'enregistrement. Vérifiez l\'accès au stockage et réessayez.</string>
+    <string name="recording_export">Exporter</string>
+    <string name="recording_export_success">Enregistrement exporté</string>
+    <string name="recording_export_failed">Échec de l\'exportation de l\'enregistrement</string>
+    <string name="recording_share_error">Impossible de partager l\'enregistrement</string>
+    <string name="recording_start_failed">Impossible de démarrer l\'enregistrement. Réessayez.</string>
     <string name="recording_write_failed">L\'enregistrement a été arrêté car le fichier n\'a pas pu être écrit.</string>
     <string name="recording_not_available">L\'enregistrement n\'est pas disponible pour ce flux</string>
     <string name="recording_details">Détails</string>

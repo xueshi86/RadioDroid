@@ -232,7 +232,6 @@
     <string name="error_stream_reconnect_timeout">Ezin da berriro konektatu igorpenera: itxaron-denbora agortu da</string>
     <string name="giving_up_resume">Utzitako igorpena jarraitzeko saiatzen</string>
 
-    <string name="error_record_needs_write">Errorea, grabatzeko idazte baimen nahikorik ez</string>
     <string name="error_grant_audiofocus">Sistemak ez du audio erreproduzitzeko baimenik eman</string>
 
     <string name="error_no_equalizer_found">Ez da ekualizadorerik aurkitu</string>
@@ -256,7 +255,6 @@
 
     <string name="image_button_disable">Ezgaitu</string>
     <string name="image_button_record">Grabatu</string>
-    <string name="image_button_record_request_permission">Eskatu grabatzeko baimenak</string>
     <string name="image_button_recordings">Grabazioak</string>
     <string name="image_button_delete">Ezabatu</string>
     <string name="image_button_more">Gehiago</string>

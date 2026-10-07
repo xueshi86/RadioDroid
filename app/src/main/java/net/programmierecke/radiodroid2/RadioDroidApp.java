@@ -109,7 +109,7 @@ public class RadioDroidApp extends MultiDexApplication {
         historyManager = new HistoryManager(this);
         favouriteManager = new FavouriteManager(this);
         fallbackStationsManager = new FallbackStationsManager(this);
-        recordingsManager = new RecordingsManager();
+        recordingsManager = new RecordingsManager(this);
         alarmManager = new RadioAlarmManager(this);
 
         UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
@@ -131,6 +131,7 @@ public class RadioDroidApp extends MultiDexApplication {
 
         trackMetadataSearcher = new TrackMetadataSearcher(httpClient);
 
+        recordingsManager.migrateLegacyRecordings();
         recordingsManager.updateRecordingsList();
 
         maybeAutoIncrementalUpdate();

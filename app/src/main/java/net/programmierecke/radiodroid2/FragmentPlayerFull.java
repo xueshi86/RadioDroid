@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,6 +23,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.Group;
@@ -45,6 +46,7 @@ import net.programmierecke.radiodroid2.history.TrackHistoryEntry;
 import net.programmierecke.radiodroid2.history.TrackHistoryInfoDialog;
 import net.programmierecke.radiodroid2.history.TrackHistoryRepository;
 import net.programmierecke.radiodroid2.history.TrackHistoryViewModel;
+import net.programmierecke.radiodroid2.recording.DataRecording;
 import net.programmierecke.radiodroid2.recording.Recordable;
 import net.programmierecke.radiodroid2.recording.RecordingsAdapter;
 import net.programmierecke.radiodroid2.recording.RecordingsManager;
@@ -75,8 +77,6 @@ import java.util.Observable;
 
 public class FragmentPlayerFull extends Fragment {
     private final String TAG = "FragmentPlayerFull";
-
-    private final static int PERM_REQ_STORAGE_RECORD = 1001;
 
     /**
      * Fragment may be a part of another view which could be dragged/scrolled
@@ -114,7 +114,8 @@ public class FragmentPlayerFull extends Fragment {
 
     private RecordingsAdapter recordingsAdapter;
 
-    private boolean storagePermissionsDenied = false;
+    private ActivityResultLauncher<String> exportRecordingLauncher;
+    private DataRecording pendingExportRecording;
 
     private RecyclerAwareNestedScrollView scrollViewContent;
 
@@ -144,6 +145,22 @@ public class FragmentPlayerFull extends Fragment {
     private ImageButton btnNext;
     private ImageButton btnRecord;
     private ImageButton btnFavourite;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // 在 onCreate 中注册，保证同一 Fragment 实例只注册一次
+        exportRecordingLauncher = registerForActivityResult(
+                new ActivityResultContracts.CreateDocument("*/*"),
+                uri -> {
+                    DataRecording recording = pendingExportRecording;
+                    pendingExportRecording = null;
+                    if (recording != null && uri != null) {
+                        recordingsManager.exportRecordingToUri(requireContext(), recording, uri);
+                    }
+                });
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -333,6 +350,16 @@ public class FragmentPlayerFull extends Fragment {
         });
 
         recordingsAdapter = new RecordingsAdapter(requireContext(), recordingsManager);
+        recordingsAdapter.setOnExportRequestedListener(recording -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                pendingExportRecording = recording;
+                // MIME 用 "*/*"：录音扩展名随流类型变化（mp3/aac/ogg/ts 等），
+                // 固定 MIME 会导致部分文件被置灰不可选，文件类型由文件名保证。
+                exportRecordingLauncher.launch(recording.Name);
+            } else {
+                recordingsManager.exportRecordingToPublicDir(requireContext(), recording);
+            }
+        });
         recordingsAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             public void onItemRangeInserted(int positionStart, int itemCount) {
                 updateEmptyState(historyAndRecordsPagerAdapter.emptyRecordings, historyAndRecordsPagerAdapter.recyclerViewRecordings);
@@ -429,9 +456,8 @@ public class FragmentPlayerFull extends Fragment {
                 if (PlayerServiceUtil.isRecording()) {
                     PlayerServiceUtil.stopRecording();
                 } else {
-                    if (Utils.verifyStoragePermissions(FragmentPlayerFull.this, PERM_REQ_STORAGE_RECORD)) {
-                        PlayerServiceUtil.startRecording();
-                    }
+                    // 录音写入应用专属外部目录，无需存储权限
+                    PlayerServiceUtil.startRecording();
                 }
 
                 updateRunningRecording();
@@ -815,12 +841,9 @@ public class FragmentPlayerFull extends Fragment {
             if (!playing) {
                 btnRecord.setAlpha(0.5f);
                 btnRecord.setContentDescription(getResources().getString(R.string.error_record_not_playing));
-            } else if (!storagePermissionsDenied) {
-                btnRecord.setAlpha(1.0f);
-                btnRecord.setContentDescription(getResources().getString(R.string.image_button_record));
             } else {
                 btnRecord.setAlpha(1.0f);
-                btnRecord.setContentDescription(getResources().getString(R.string.image_button_record_request_permission));
+                btnRecord.setContentDescription(getResources().getString(R.string.image_button_record));
             }
         }
     }
@@ -1192,25 +1215,6 @@ public class FragmentPlayerFull extends Fragment {
 
                 fragmentPlayerFull.updateRunningRecording();
             }
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions, @NonNull int[] grantResults) {
-        // If request is cancelled, the result arrays are empty.
-        if (requestCode == PERM_REQ_STORAGE_RECORD) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                storagePermissionsDenied = false;
-                PlayerServiceUtil.startRecording();
-            } else {
-                storagePermissionsDenied = true;
-                Toast toast = Toast.makeText(getActivity(), getResources().getString(R.string.error_record_needs_write), Toast.LENGTH_SHORT);
-                toast.show();
-            }
-
-            updatePlaybackButtons(PlayerServiceUtil.isPlaying(), PlayerServiceUtil.isRecording());
-            updateRecordings();
         }
     }
 

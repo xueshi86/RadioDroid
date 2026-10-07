@@ -239,7 +239,6 @@
     <string name="warning_no_network_trying_resume">Sen conexión á rede. Intentaremos reconectar ao recuperala.</string>
     <string name="giving_up_resume">Abandonando o intento de retomar a reprodución</string>
 
-    <string name="error_record_needs_write">Precisa permiso de escritura para gravar</string>
     <string name="error_grant_audiofocus">Request for audio focus was not granted by the system</string>
 
     <string name="error_no_equalizer_found">Non se atopa app equalizador</string>
@@ -264,7 +263,6 @@
 
     <string name="image_button_disable">Desactivar</string>
     <string name="image_button_record">Gravar</string>
-    <string name="image_button_record_request_permission">Solicitar permiso de gravación</string>
     <string name="image_button_recordings">Gravacións</string>
     <string name="image_button_delete">Eliminar</string>
     <string name="image_button_more">Máis</string>

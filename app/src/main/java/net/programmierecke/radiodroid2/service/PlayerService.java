@@ -157,6 +157,8 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     private final List<Runnable> alarmFadeTasks = new java.util.ArrayList<>();
 
     private BitmapDrawable radioIcon;
+    /** 当前 radioIcon 对应的电台 UUID，用于切台时判断是否需要先替换为占位图。 */
+    private String radioIconStationUuid;
 
     private RadioPlayer radioPlayer;
 
@@ -1866,6 +1868,22 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     private void downloadRadioIcon() {
         final float px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 70, getResources().getDisplayMetrics());
 
+        if (currentStation == null) {
+            return;
+        }
+
+        // 图标为异步加载：期间用户可能已切到别的电台，回调返回时必须校验电台身份，
+        // 否则上一台的图标会覆盖当前正在播放电台的通知大图标
+        final String requestedUuid = currentStation.StationUuid;
+
+        // 切换到不同电台时，先用新电台的占位图顶掉通知栏上的旧电台图标，
+        // 避免新图标加载期间通知栏仍显示上一电台的图标
+        if (requestedUuid != null && !requestedUuid.equals(radioIconStationUuid)) {
+            radioIconStationUuid = requestedUuid;
+            radioIcon = createPlaceholderRadioIcon();
+            updateNotification();
+        }
+
         if (!currentStation.hasIcon() && TextUtils.isEmpty(currentStation.HomePageUrl)) {
             radioIcon = createPlaceholderRadioIcon();
             updateNotification();
@@ -1874,7 +1892,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
         // 优先从缓存加载
         StationIconCache iconCache = StationIconCache.getInstance(itsContext);
-        String cachedPath = iconCache.getIconPath(currentStation.StationUuid);
+        String cachedPath = requestedUuid == null ? null : iconCache.getIconPath(requestedUuid);
         if (cachedPath != null) {
             Picasso.get()
                     .load(Uri.fromFile(new java.io.File(cachedPath)))
@@ -1882,6 +1900,9 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                     .into(new Target() {
                         @Override
                         public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                            if (!isCurrentStation(requestedUuid)) {
+                                return;
+                            }
                             final boolean useCircularIcons = Utils.useCircularIcons(itsContext);
                             if (!useCircularIcons)
                                 radioIcon = new BitmapDrawable(getResources(), bitmap);
@@ -1895,6 +1916,9 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
                         @Override
                         public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+                            if (!isCurrentStation(requestedUuid)) {
+                                return;
+                            }
                             radioIcon = createPlaceholderRadioIcon();
                             updateNotification();
                         }
@@ -1926,11 +1950,15 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
             } catch (Exception ignored) {}
         }
 
-        tryLoadIconForNotification(urlsToTry, 0, px);
+        tryLoadIconForNotification(urlsToTry, 0, px, requestedUuid);
     }
 
-    private void tryLoadIconForNotification(final List<String> urls, final int index, final float px) {
+    private void tryLoadIconForNotification(final List<String> urls, final int index, final float px,
+                                            final String requestedUuid) {
         if (index >= urls.size()) {
+            if (!isCurrentStation(requestedUuid)) {
+                return;
+            }
             radioIcon = createPlaceholderRadioIcon();
             updateNotification();
             return;
@@ -1943,6 +1971,16 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                 .into(new Target() {
                     @Override
                     public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                        if (bitmap != null && StationIconCache.isTruncated(bitmap)) {
+                            // 截断下载的半截黑图：不显示也不缓存，继续下一个回退 URL
+                            Log.w(TAG, "Notification icon truncated, skipping: " + requestedUuid + " url=" + urls.get(index));
+                            tryLoadIconForNotification(urls, index + 1, px, requestedUuid);
+                            return;
+                        }
+                        if (!isCurrentStation(requestedUuid)) {
+                            // 期间已切台，丢弃结果，避免旧电台图标盖住当前电台
+                            return;
+                        }
                         final boolean useCircularIcons = Utils.useCircularIcons(itsContext);
                         if (!useCircularIcons)
                             radioIcon = new BitmapDrawable(getResources(), bitmap);
@@ -1951,21 +1989,33 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                             rb.setCircular(true);
                             radioIcon = new BitmapDrawable(getResources(), rb.getBitmap());
                         }
-                        // 保存到缓存
-                        boolean isFavorite = isStationFavorited(currentStation.StationUuid);
-                        StationIconCache.getInstance(itsContext).saveIcon(currentStation.StationUuid, bitmap, isFavorite);
+                        // 保存到缓存（用本次请求的电台，而非可能已变化的 currentStation）
+                        boolean isFavorite = isStationFavorited(requestedUuid);
+                        StationIconCache.getInstance(itsContext).saveIcon(requestedUuid, bitmap, isFavorite);
                         updateNotification();
                     }
 
                     @Override
                     public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-                        tryLoadIconForNotification(urls, index + 1, px);
+                        if (!isCurrentStation(requestedUuid)) {
+                            return;
+                        }
+                        tryLoadIconForNotification(urls, index + 1, px, requestedUuid);
                     }
 
                     @Override
                     public void onPrepareLoad(Drawable placeHolderDrawable) {
                     }
                 });
+    }
+
+    /**
+     * 判断给定电台是否仍是当前正在加载/播放的电台。
+     * 图标异步加载期间用户可能已切台，回调返回时必须据此丢弃过期结果。
+     */
+    private boolean isCurrentStation(String stationUuid) {
+        return currentStation != null && stationUuid != null
+                && stationUuid.equals(currentStation.StationUuid);
     }
 
     private boolean isStationFavorited(String stationUuid) {

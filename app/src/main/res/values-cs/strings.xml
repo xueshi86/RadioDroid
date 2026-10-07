@@ -62,8 +62,6 @@
     <string name="error_caching_stream">Problém s cache streamu</string>
     <string name="error_play_stream">Nelze přehrát stream</string>
 
-    <string name="error_record_needs_write">Pro nahrávání jsou nutná práva pro zápis!</string>
-
     <string name="player_info_status">STAV:</string>
     <string name="player_info_status_stopped">Zastaveno</string>
     <string name="player_info_status_playing">Hrající</string>

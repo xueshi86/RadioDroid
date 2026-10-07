@@ -233,7 +233,6 @@
     <string name="warning_no_network_trying_resume">Tidak ada koneksi jaringan. Mencoba melanjutkan saat koneksi kembali tersambung.</string>
     <string name="giving_up_resume">Menyerah dalam mencoba melanjutkan pemutaran</string>
 
-    <string name="error_record_needs_write">Membutuhkan izin akses penyimpanan untuk merekam</string>
     <string name="error_grant_audiofocus">Permintaan fokus audio tidak diberikan oleh sistem</string>
 
     <string name="error_no_equalizer_found">Tidak ada aplikasi equalizer yang ditemukan</string>
@@ -257,7 +256,6 @@
 
     <string name="image_button_disable">Nonaktifkan</string>
     <string name="image_button_record">Rekam</string>
-    <string name="image_button_record_request_permission">Minta izin untuk merekam</string>
     <string name="image_button_recordings">Rekaman</string>
     <string name="image_button_delete">Hapus</string>
     <string name="image_button_more">Lebih banyak</string>

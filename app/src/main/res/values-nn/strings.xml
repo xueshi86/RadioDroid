@@ -129,7 +129,6 @@
   <string name="error_caching_stream">Feil ved bufring av radiostraum</string>
   <string name="error_play_stream">Klarar ikkje spela av radiostraum</string>
   <string name="error_stream_reconnect_timeout">Klarar ikkje kopla til straum på nytt: tidsavbrot.</string>
-  <string name="error_record_needs_write">Treng skriveløyve for å kunna lagra opptak</string>
   <string name="error_grant_audiofocus">Førespurnad om lydfokus vart avvist av systemet.</string>
   <string name="error_no_equalizer_found">Fann ingen app for lydbalanse</string>
   <string name="player_info_status">Status: </string>
@@ -144,7 +143,6 @@
   <string name="station_detail_broken">UVERKSAM</string>
   <string name="image_button_disable">Slå av</string>
   <string name="image_button_record">Ta opp</string>
-  <string name="image_button_record_request_permission">Be om løyve for opptak</string>
   <string name="image_button_recordings">Opptak</string>
   <string name="image_button_delete">Slett</string>
   <string name="image_button_more">Fleire</string>

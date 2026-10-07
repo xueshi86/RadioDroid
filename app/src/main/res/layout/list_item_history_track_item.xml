@@ -9,10 +9,12 @@
     android:focusable="true"
     android:stateListAnimator="@animator/item_press_anim">
 
+    <!-- 图标尺寸即本行行高的决定因素（文字块仅约 47dp）：取 56dp，
+         使「本台曲目 / 曲目历史」行高由原来的约 50dp 提升到约 56dp -->
     <ImageView
         android:id="@+id/imageViewStationIcon"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="@dimen/icon_station_history"
+        android:layout_height="@dimen/icon_station_history"
         android:layout_gravity="center|start"
         android:layout_marginStart="@dimen/space_xs"
         android:layout_marginLeft="@dimen/space_xs"

@@ -246,7 +246,6 @@
     <string name="warning_no_network_trying_resume">Nessuna connessione di rete. Provo a riprenderla quando la connessione torna.</string>
     <string name="giving_up_resume">Abbandono il tentativo di riprendere la riproduzione</string>
 
-    <string name="error_record_needs_write">Necessito dei permessi di scrittura per registrare</string>
     <string name="error_grant_audiofocus">La richiesta dell\'audio non è stata accettata dal sistema</string>
 
     <string name="error_no_equalizer_found">Nessuna applicazione di equalizzazione</string>
@@ -271,7 +270,6 @@
 
     <string name="image_button_disable">Disabilita</string>
     <string name="image_button_record">Registra</string>
-    <string name="image_button_record_request_permission">Richiedi permesso di registrazione</string>
     <string name="image_button_recordings">Registrazioni</string>
     <string name="image_button_delete">Cancella</string>
     <string name="image_button_more">Più</string>
@@ -424,7 +422,11 @@
     <string name="recording_delete_failed">Impossibile eliminare la registrazione</string>
     <string name="recording_file_not_found">File di registrazione non trovato</string>
     <string name="recording_play_error">Impossibile riprodurre la registrazione</string>
-    <string name="recording_start_failed">Impossibile avviare la registrazione. Controlla l\'accesso allo spazio di archiviazione e riprova.</string>
+    <string name="recording_export">Esporta</string>
+    <string name="recording_export_success">Registrazione esportata</string>
+    <string name="recording_export_failed">Impossibile esportare la registrazione</string>
+    <string name="recording_share_error">Impossibile condividere la registrazione</string>
+    <string name="recording_start_failed">Impossibile avviare la registrazione. Riprova.</string>
     <string name="recording_write_failed">La registrazione è stata interrotta perché non è stato possibile scrivere il file.</string>
     <string name="recording_not_available">La registrazione non è disponibile per questo flusso</string>
     <string name="recording_details">Dettagli</string>

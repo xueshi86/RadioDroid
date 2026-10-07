@@ -278,7 +278,6 @@
     <string name="error_stream_reconnect_timeout">No se puede volver a conectar a la transmisión: tiempo de espera agotado</string>
     <string name="giving_up_resume">Intento de continuar la retransmisión abandonado</string>
 
-    <string name="error_record_needs_write">Necesito permisos de escritura para grabar</string>
     <string name="error_grant_audiofocus">La solicitud de enfoque de audio no fue otorgada por el sistema</string>
 
     <string name="error_no_equalizer_found">No se encontró la aplicación de ecualización</string>
@@ -335,7 +334,6 @@
 
     <string name="image_button_disable">Deshabilitar</string>
     <string name="image_button_record">Grabar</string>
-    <string name="image_button_record_request_permission">Solicitar permisos de grabación</string>
     <string name="image_button_recordings">Grabaciones</string>
     <string name="image_button_delete">Borrar</string>
     <string name="image_button_more">Más</string>
@@ -711,7 +709,11 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="recording_delete_failed">Error al eliminar la grabación</string>
     <string name="recording_file_not_found">Archivo de grabación no encontrado</string>
     <string name="recording_play_error">No se puede reproducir la grabación</string>
-    <string name="recording_start_failed">No se pudo iniciar la grabación. Comprueba el acceso al almacenamiento e inténtalo de nuevo.</string>
+    <string name="recording_export">Exportar</string>
+    <string name="recording_export_success">Grabación exportada</string>
+    <string name="recording_export_failed">Error al exportar la grabación</string>
+    <string name="recording_share_error">No se puede compartir la grabación</string>
+    <string name="recording_start_failed">No se pudo iniciar la grabación. Inténtalo de nuevo.</string>
     <string name="recording_write_failed">La grabación se detuvo porque no se pudo escribir el archivo.</string>
     <string name="recording_not_available">La grabación no está disponible para este flujo</string>
     <string name="recording_details">Detalles</string>

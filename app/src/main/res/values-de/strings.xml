@@ -185,7 +185,6 @@
     <string name="error_caching_stream">Es gibt ein Problem beim Zwischenspeichern.</string>
     <string name="error_play_stream">Stream-Wiedergabe schlug fehl.</string>
 
-    <string name="error_record_needs_write">Die Aufnahmefunktion benötigt Schreibberechtigung!</string>
     <string name="error_record_not_playing">Starte zuerst die Wiedergabe, bevor du aufnimmst</string>
     <string name="error_permission_denied">Berechtigung verweigert</string>
     <string name="error_grant_audiofocus">Das System gab den Audiokanal nicht frei.</string>
@@ -247,7 +246,6 @@
     <string name="icon_click_trend_stable">Beliebtheit stabil</string>
     <string name="image_button_dont_repeat">Wiederhole nicht</string>
     <string name="image_button_less">Weniger</string>
-    <string name="image_button_record_request_permission">Berechtigungen für die Aufzeichnung anfordern</string>
     <string name="image_button_recordings">Aufnahmen</string>
     <string name="image_button_repeat">Wiederholen</string>
     <string name="label_button_cancel">Abbrechen</string>
@@ -338,7 +336,11 @@
     <string name="recording_delete_failed">Aufnahme konnte nicht gelöscht werden</string>
     <string name="recording_file_not_found">Aufnahmedatei nicht gefunden</string>
     <string name="recording_play_error">Aufnahme kann nicht wiedergegeben werden</string>
-    <string name="recording_start_failed">Aufnahme konnte nicht gestartet werden. Bitte überprüfen Sie den Speicherzugriff und versuchen Sie es erneut.</string>
+    <string name="recording_export">Exportieren</string>
+    <string name="recording_export_success">Aufnahme exportiert</string>
+    <string name="recording_export_failed">Aufnahme konnte nicht exportiert werden</string>
+    <string name="recording_share_error">Aufnahme kann nicht geteilt werden</string>
+    <string name="recording_start_failed">Aufnahme konnte nicht gestartet werden. Bitte versuchen Sie es erneut.</string>
     <string name="recording_write_failed">Die Aufnahme wurde beendet, weil die Datei nicht geschrieben werden konnte.</string>
     <string name="recording_not_available">Aufnahme für diesen Stream nicht verfügbar</string>
     <string name="recording_details">Details</string>
