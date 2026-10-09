@@ -123,6 +123,9 @@
     <string name="settings_compact_style">Compact mode</string>
     <string name="settings_compact_style_desc_off">Large icon adopted with station details</string>
     <string name="settings_compact_style_desc_on">Small icon adopted without station details</string>
+    <string name="settings_station_notes">Station notes</string>
+    <string name="settings_station_notes_desc_on">Show notes in the standard station list and include them in search</string>
+    <string name="settings_station_notes_desc_off">Hide station notes and exclude them from search</string>
     <string name="settings_bottom_navigation">Bottom navigation</string>
 
     <string name="settings_interaction">Interaction</string>
@@ -327,6 +330,7 @@
     <string name="sort_by_click_count">Sort by Popularity</string>
     <string name="sort_by_votes">Sort by Votes</string>
     <string name="sort_by_recent">Sort by Recent</string>
+    <string name="sort_by_default">Default Order</string>
 
     <string name="player_info_status">Status:&#160;</string>
     <string name="player_info_status_stopped">stopped</string>
@@ -544,10 +548,32 @@
     <string name="webdav_favourites">Favourite stations</string>
     <string name="webdav_database">Local database</string>
     <string name="webdav_settings">App settings</string>
+    <string name="webdav_notes">Station notes</string>
+    <string name="note_edit_title">Station note</string>
+    <string name="note_edit_message">Add a personal note for %1$s. Notes are shown in the station list and stored only on this device.</string>
+    <string name="note_input_hint">e.g. jazz, evening listening, crystal clear</string>
+    <string name="note_action_save">Save</string>
+    <string name="note_action_clear">Clear</string>
+    <string name="note_saved_toast">Note saved</string>
+    <string name="note_cleared_toast">Note cleared</string>
+    <string name="note_add_hint">Add note</string>
+    <string name="note_export_title">Export station notes</string>
+    <string name="note_export_summary">Export all station notes to a JSON file</string>
+    <string name="note_export_empty_confirm">There are no station notes to export. Export an empty file anyway?</string>
+    <string name="note_export_empty_proceed">Export anyway</string>
+    <string name="note_export_success">Exported %2$d note(s) to %1$s</string>
+    <string name="note_export_failed">Export failed: %1$s</string>
+    <string name="note_import_title">Import station notes</string>
+    <string name="note_import_summary">Import station notes from a JSON file (merged with existing notes)</string>
+    <string name="note_import_success">Imported %1$d note(s)</string>
+    <string name="note_import_empty">The file contains no notes</string>
+    <string name="note_import_invalid">Invalid station notes file</string>
+    <string name="note_import_failed">Import failed: %1$s</string>
     <string name="webdav_all">All</string>
     <string name="webdav_settings_restart_prompt">Restart the app to apply the restored settings (theme, language, layout, etc.)?</string>
 
     <string name="settings_backup_group_title">App Settings Backup</string>
+    <string name="settings_notes_backup_group_title">Station Notes Backup</string>
     <string name="export_settings_title">Export Settings</string>
     <string name="export_settings_summary">Export all app settings to a backup file</string>
     <string name="import_settings_title">Import Settings</string>

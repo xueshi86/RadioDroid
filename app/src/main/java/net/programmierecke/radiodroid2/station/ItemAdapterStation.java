@@ -31,6 +31,7 @@ import android.view.ViewStub;
 import android.widget.*;
 
 import com.google.android.material.card.MaterialCardView;
+import com.mikepenz.iconics.IconicsColor;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.iconics.IconicsSize;
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial;
@@ -91,6 +92,7 @@ public class ItemAdapterStation
     public int playingStationPosition = -1;
 
     private FavouriteManager favouriteManager;
+    private StationNoteManager stationNoteManager;
 
     private RecyclerView snackbarRecyclerView;
 
@@ -119,6 +121,7 @@ public class ItemAdapterStation
         TextView textViewTitle;
         TextView textViewShortDescription;
         TextView textViewTags;
+        TextView textViewNote;
         ImageButton buttonMore;
 
         View viewDetails;
@@ -133,6 +136,9 @@ public class ItemAdapterStation
         ImageButton buttonEqualizerSettings;
         ImageButton buttonPlayInternalOrExternal;
         ImageButton buttonRefreshIcon;
+        TextView textNoteDetail;
+        // IconicsImageButton 继承自 IconicsImageView 而非 ImageButton，声明为 View 避免类型转换崩溃
+        View buttonEditNote;
 
         StationViewHolder(View itemView) {
             super(itemView);
@@ -149,6 +155,7 @@ public class ItemAdapterStation
             textViewTitle = itemView.findViewById(R.id.textViewTitle);
             textViewShortDescription = itemView.findViewById(R.id.textViewShortDescription);
             textViewTags = itemView.findViewById(R.id.textViewTags);
+            textViewNote = itemView.findViewById(R.id.textViewNote);
             buttonMore = itemView.findViewById(R.id.buttonMore);
             stubDetails = itemView.findViewById(R.id.stubDetails);
 
@@ -175,6 +182,7 @@ public class ItemAdapterStation
 
         RadioDroidApp radioDroidApp = (RadioDroidApp) fragmentActivity.getApplication();
         favouriteManager = radioDroidApp.getFavouriteManager();
+        stationNoteManager = radioDroidApp.getStationNoteManager();
         IntentFilter filter = new IntentFilter();
         filter.addAction(PlayerService.PLAYER_SERVICE_META_UPDATE);
         filter.addAction(DataRadioStation.RADIO_STATION_LOCAL_INFO_CHAGED);
@@ -296,6 +304,8 @@ public class ItemAdapterStation
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext().getApplicationContext());
         boolean useCircularIcons = Utils.useCircularIcons(getContext());
+        // 电台自定义备注（Issue #54）：独立存储，按 uuid 读取；紧凑/网格模式不展示
+        final String customNote = stationNoteManager.getNote(station.StationUuid);
         // 列表项根节点已是卡片：直接对 itemView 设背景色会抹掉圆角与卡片面色，改为设置卡片背景色。
         // 失效/已删除的标记底色统一走主题属性：亮色主题浅底深字，暗色主题深底浅字，避免文字与底色撞色。
         if (holder.itemView instanceof MaterialCardView) {
@@ -332,11 +342,8 @@ public class ItemAdapterStation
                 // 视图复用：同步 tag，避免图标缓存写入后按上一轮的电台刷新到错误的图片
                 holder.imageViewIcon.setTag(R.id.tag_station_uuid, station.StationUuid);
                 holder.imageViewIcon.setImageDrawable(StationPlaceholderUtils.createPlaceholderDrawable(getContext(), station.Name, station.StationUuid));
-                if (Utils.isDarkTheme(getContext())) {
-                    holder.imageViewIcon.setBackgroundColor(getContext().getResources().getColor(R.color.windowBackgroundDark));
-                } else {
-                    holder.imageViewIcon.setBackgroundColor(getContext().getResources().getColor(android.R.color.white));
-                }
+                // 占位底色跟随卡片表面色（主题属性），避免暗色下硬编码底色比卡片色更黑露出方框
+                holder.imageViewIcon.setBackgroundColor(Utils.getThemeColor(getContext(), R.attr.colorSurfaceCard));
                 if (useCircularIcons) {
                     Utils.applyCircularIcon(holder.imageViewIcon, holder.transparentImageView);
                 } else {
@@ -350,7 +357,7 @@ public class ItemAdapterStation
             if (prefs.getBoolean("compact_style", false))
                 setupCompactStyle(holder);
             else
-                setupStandardStyle(holder);
+                setupStandardStyle(holder, prefs.getBoolean("station_notes_visible", false), customNote != null);
 
             if (prefs.getBoolean("icon_click_toggles_favorite", true)) {
 
@@ -406,7 +413,8 @@ public class ItemAdapterStation
             holder.textViewTitle.setTextColor(highlightColor);
             holder.textViewTitle.setTypeface(null, Typeface.BOLD);
             holder.frameLayout.setBackground(buildPlayingBorderDrawable(highlightColor));
-            int overlayColor = Color.argb(50, Color.red(highlightColor), Color.green(highlightColor), Color.blue(highlightColor));
+            // 图标上的同色淡遮盖（约 30% 强调色）：恢复改版前“正在播放”图标的着色效果
+            int overlayColor = Color.argb(80, Color.red(highlightColor), Color.green(highlightColor), Color.blue(highlightColor));
             holder.playingOverlay.setBackgroundColor(overlayColor);
             holder.playingOverlay.setVisibility(View.VISIBLE);
         } else {
@@ -426,6 +434,15 @@ public class ItemAdapterStation
 
         holder.textViewShortDescription.setText(station.getShortDetails(getContext()));
         holder.textViewTags.setText(station.TagsAll != null ? station.TagsAll.replace(",", ", ") : "");
+
+        // 备注行内容：可见性由 setupStandard/CompactStyle 决定；
+        // 显示开关打开时无备注也保留占位（空文本），保证所有卡片高度一致
+        holder.textViewNote.setText(customNote != null ? customNote : "");
+        holder.textViewNote.setCompoundDrawablesRelativeWithIntrinsicBounds(buildNoteIcon(), null, null, null);
+        if (!shouldLoadIcons) {
+            // 无图标模式不走 setupStandard/CompactStyle：显式隐藏备注行，避免复用残留可见性
+            holder.textViewNote.setVisibility(View.GONE);
+        }
 
 
         boolean inFavourites = favouriteManager.has(station.StationUuid);
@@ -553,6 +570,27 @@ public class ItemAdapterStation
             String[] tags = station.TagsAll == null || station.TagsAll.isEmpty() ? new String[0] : station.TagsAll.split(",");
             holder.viewTags.setTags(Arrays.asList(tags));
             holder.viewTags.setTagSelectionCallback(tagSelectionCallback);
+
+            // 备注行 + 编辑入口（Issue #54）：点击整行或铅笔图标弹出编辑对话框
+            holder.textNoteDetail = holder.viewDetails.findViewById(R.id.textNoteDetail);
+            holder.buttonEditNote = holder.viewDetails.findViewById(R.id.buttonEditNote);
+            holder.textNoteDetail.setCompoundDrawablesRelativeWithIntrinsicBounds(buildNoteIcon(), null, null, null);
+            if (TextUtils.isEmpty(customNote)) {
+                holder.textNoteDetail.setText(R.string.note_add_hint);
+                // 空备注占位提示用次要色弱化，不与正文备注争夺注意力
+                holder.textNoteDetail.setTextColor(Utils.getThemeColor(getContext(), R.attr.colorTextSecondary));
+            } else {
+                holder.textNoteDetail.setText(customNote);
+                // 正文备注与 TextAppearance.RadioDroid.Note 及行首图标同用强调色
+                holder.textNoteDetail.setTextColor(Utils.getThemeColor(getContext(), R.attr.presetAccentColor));
+            }
+            View.OnClickListener editNoteListener = v -> {
+                if (isActivityUsable()) {
+                    StationNoteDialog.show(activity, station, null);
+                }
+            };
+            holder.textNoteDetail.setOnClickListener(editNoteListener);
+            holder.buttonEditNote.setOnClickListener(editNoteListener);
         }
         if (holder.viewDetails != null)
             holder.viewDetails.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
@@ -621,11 +659,10 @@ public class ItemAdapterStation
     }
 
     void setupIcon(boolean useCircularIcons, ImageView imageView, ImageView transparentImageView) {
-        if (Utils.isDarkTheme(getContext())) {
-            imageView.setBackgroundColor(getContext().getResources().getColor(R.color.windowBackgroundDark));
-        } else {
-            imageView.setBackgroundColor(getContext().getResources().getColor(android.R.color.white));
-        }
+        // 图标底色跟随卡片表面色（主题属性）：此前暗色硬编码 windowBackgroundDark(#121214)
+        // 比卡片色(#1E1E20)更黑，无图标/图标未覆盖整格时露出“黑色方框”；
+        // 浅色两值恰好同为白色掩盖了问题。改走主题属性后 8 套配色 × 亮暗自动一致
+        imageView.setBackgroundColor(Utils.getThemeColor(getContext(), R.attr.colorSurfaceCard));
         // 圆形图标优先用 Outline 真裁剪（背景与位图一起裁成圆形，不依赖容器底色，故不会出现方框色差）；
         // 低版本回退到「透明圆环遮罩」方案。非圆形时必须清除裁剪，否则视图复用时残留圆形外观。
         if (useCircularIcons) {
@@ -636,14 +673,15 @@ public class ItemAdapterStation
     }
 
     /**
-     * 构建“正在播放”高亮方框。描边宽度用 dp 换算（此前直接传 px，导致高密度屏幕上描边过细）。
+     * 构建“正在播放”高亮方框：直角（不圆角）细描边，与图标留出空隙。
+     * 描边宽度用 dp 换算：此前直接传 px（3px，高密度屏上过细），后来修正成 3dp 又偏粗，现取 2dp。
      */
     GradientDrawable buildPlayingBorderDrawable(int color) {
         float density = getContext().getResources().getDisplayMetrics().density;
         GradientDrawable borderDrawable = new GradientDrawable();
         borderDrawable.setShape(GradientDrawable.RECTANGLE);
-        borderDrawable.setCornerRadius(8 * density);
-        borderDrawable.setStroke(Math.max(1, Math.round(3 * density)), color);
+        borderDrawable.setCornerRadius(0);
+        borderDrawable.setStroke(Math.max(1, Math.round(2 * density)), color);
         borderDrawable.setColor(Color.TRANSPARENT);
         return borderDrawable;
     }
@@ -665,13 +703,19 @@ public class ItemAdapterStation
         holder.transparentImageView.getLayoutParams().height = (int) getContext().getResources().getDimension(R.dimen.compact_style_icon_height);
 
         holder.textViewShortDescription.setVisibility(View.GONE);
+        // 紧凑模式始终不显示备注行（Issue #54）
+        holder.textViewNote.setVisibility(View.GONE);
     }
 
     /**
      * 大图标模式（未勾选「紧凑模式」）：大图标 + 行高按布局默认值，并显示电台详情行。
      * 与 {@link #setupCompactStyle} 成对，保证两种模式相互切换、条目复用时外观一致。
+     *
+     * @param showNoteRow 备注显示开关（station_notes_visible）：关闭时不渲染备注行，卡片维持原高度；
+     *                    打开时所有卡片统一放下一行备注，无备注的以 INVISIBLE 占位保持高度整齐
+     * @param hasNote     当前电台是否有备注内容
      */
-    private void setupStandardStyle(final StationViewHolder holder) {
+    private void setupStandardStyle(final StationViewHolder holder, boolean showNoteRow, boolean hasNote) {
         int iconSize = (int) getContext().getResources().getDimension(R.dimen.icon_station_list);
         // 图标容器必须比图标大，否则「正在播放」高亮边框（画在容器背景上，位于子视图之下）会被图标盖住
         int frameSize = (int) getContext().getResources().getDimension(R.dimen.icon_station_list_frame);
@@ -687,6 +731,23 @@ public class ItemAdapterStation
         holder.transparentImageView.getLayoutParams().height = iconSize;
 
         holder.textViewShortDescription.setVisibility(View.VISIBLE);
+
+        if (showNoteRow) {
+            // 无备注时以 INVISIBLE 占位（与 VISIBLE 同高），保证列表高度整齐；
+            // 复用时必须双向重设，避免残留上一条目的可见状态
+            holder.textViewNote.setVisibility(hasNote ? View.VISIBLE : View.INVISIBLE);
+        } else {
+            holder.textViewNote.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * 备注行首小图标：跟随预设强调色，便于与官方标签/详情区分识别。
+     */
+    private Drawable buildNoteIcon() {
+        return new IconicsDrawable(getContext(), GoogleMaterial.Icon.gmd_description)
+                .size(IconicsSize.dp(12))
+                .color(IconicsColor.colorInt(Utils.getThemeColor(getContext(), R.attr.presetAccentColor)));
     }
 
     private void highlightCurrentStation() {

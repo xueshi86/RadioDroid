@@ -97,6 +97,23 @@
 
         </PreferenceCategory>
 
+        <!-- 电台备注独立导入/导出（Issue #54）：单独分组展示，文件与收藏/数据库/设置互不混合 -->
+        <PreferenceCategory
+            android:title="@string/settings_notes_backup_group_title"
+            search:ignore="true">
+
+            <Preference
+                android:key="export_notes"
+                android:title="@string/note_export_title"
+                android:summary="@string/note_export_summary" />
+
+            <Preference
+                android:key="import_notes"
+                android:title="@string/note_import_title"
+                android:summary="@string/note_import_summary" />
+
+        </PreferenceCategory>
+
     </PreferenceScreen>
 
     <PreferenceScreen android:title="@string/settings_appearance"
@@ -141,6 +158,15 @@
             android:summaryOff="@string/settings_compact_style_desc_off"
             android:summaryOn="@string/settings_compact_style_desc_on"
             android:title="@string/settings_compact_style" />
+
+        <!-- 电台备注显示开关（Issue #54）：只控制标准模式备注行显示与搜索匹配，
+             不影响备注的存储/导入导出；紧凑与网格模式始终不显示备注 -->
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="station_notes_visible"
+            android:summaryOff="@string/settings_station_notes_desc_off"
+            android:summaryOn="@string/settings_station_notes_desc_on"
+            android:title="@string/settings_station_notes" />
 
         <CheckBoxPreference
             android:defaultValue="true"

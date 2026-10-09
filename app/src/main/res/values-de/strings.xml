@@ -263,6 +263,9 @@
     <string name="settings_click_trend_icon_visible_on">Es werden Trendsymbole angezeigt.</string>
     <string name="settings_compact_style_desc_off">Es werden große Symbole mit den Stationsdetails angezeigt.</string>
     <string name="settings_compact_style_desc_on">Es werden kleine Symbole ohne Stationsdetails angezeigt.</string>
+    <string name="settings_station_notes">Sender-Notizen</string>
+    <string name="settings_station_notes_desc_on">Notizen in der Standard-Senderliste anzeigen und in die Suche einbeziehen</string>
+    <string name="settings_station_notes_desc_off">Sender-Notizen ausblenden und von der Suche ausschließen</string>
     <string name="settings_connect_timeout">Verbindungszeitüberschreitung</string>
     <string name="settings_milliseconds_format">%d Millisekunden</string>
 
@@ -393,10 +396,32 @@
     <string name="webdav_favourites">Favoriten</string>
     <string name="webdav_database">Lokale Datenbank</string>
     <string name="webdav_settings">App-Einstellungen</string>
+    <string name="webdav_notes">Sender-Notizen</string>
+    <string name="note_edit_title">Sender-Notiz</string>
+    <string name="note_edit_message">Notiz für %1$s hinzufügen. Notizen erscheinen in der Senderliste und werden nur auf diesem Gerät gespeichert.</string>
+    <string name="note_input_hint">z. B. Jazz, abends, glasklarer Klang</string>
+    <string name="note_action_save">Speichern</string>
+    <string name="note_action_clear">Löschen</string>
+    <string name="note_saved_toast">Notiz gespeichert</string>
+    <string name="note_cleared_toast">Notiz gelöscht</string>
+    <string name="note_add_hint">Notiz hinzufügen</string>
+    <string name="note_export_title">Sender-Notizen exportieren</string>
+    <string name="note_export_summary">Alle Sender-Notizen in eine JSON-Datei exportieren</string>
+    <string name="note_export_empty_confirm">Es gibt keine Sender-Notizen zum Exportieren. Trotzdem eine leere Datei exportieren?</string>
+    <string name="note_export_empty_proceed">Trotzdem exportieren</string>
+    <string name="note_export_success">%2$d Notiz(en) nach %1$s exportiert</string>
+    <string name="note_export_failed">Export fehlgeschlagen: %1$s</string>
+    <string name="note_import_title">Sender-Notizen importieren</string>
+    <string name="note_import_summary">Sender-Notizen aus einer JSON-Datei importieren (mit vorhandenen zusammenführen)</string>
+    <string name="note_import_success">%1$d Notiz(en) importiert</string>
+    <string name="note_import_empty">Die Datei enthält keine Notizen</string>
+    <string name="note_import_invalid">Ungültige Sender-Notizdatei</string>
+    <string name="note_import_failed">Import fehlgeschlagen: %1$s</string>
     <string name="webdav_all">Alles</string>
     <string name="webdav_settings_restart_prompt">App neu starten, um die wiederhergestellten Einstellungen (Design, Sprache, Layout usw.) anzuwenden?</string>
 
     <string name="settings_backup_group_title">Sicherung der App-Einstellungen</string>
+    <string name="settings_notes_backup_group_title">Sicherung der Sender-Notizen</string>
     <string name="export_settings_title">Einstellungen exportieren</string>
     <string name="export_settings_summary">Alle App-Einstellungen in eine Sicherungsdatei exportieren</string>
     <string name="import_settings_title">Einstellungen importieren</string>
@@ -484,4 +509,5 @@ Die App wird automatisch neu gestartet, um die neue Datenbank zu laden.</string>
     <string name="settings_audio_offload_title">Audio-Offload (experimentell)</string>
     <string name="settings_audio_offload_summary_supported">Dieses Gerät unterstützt Audio-Offload: Die Decodierung übernimmt der DSP, was Akku- und CPU-Verbrauch deutlich senken kann. Equalizer und andere Audioeffekte funktionieren dann nicht.</string>
     <string name="settings_audio_offload_summary_unsupported">Audio-Offload wird auf diesem Gerät nicht unterstützt (erfordert Android 10 oder neuer und kompatible Hardware).</string>
+    <string name="sort_by_default">Standardreihenfolge</string>
 </resources>

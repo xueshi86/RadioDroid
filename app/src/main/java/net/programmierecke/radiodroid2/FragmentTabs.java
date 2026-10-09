@@ -119,6 +119,15 @@ public class FragmentTabs extends Fragment implements IFragmentRefreshable, IFra
         if (viewPager != null && viewPagerAdapter != null) {
             int currentItem = viewPager.getCurrentItem();
             if (currentItem >= 0 && currentItem < viewPagerAdapter.mFragmentList.size()) {
+                // ViewPager 实际显示的是 FragmentManager 按标签复用的实例；
+                // FragmentTabs 视图重建后 mFragmentList 里的新实例并不会显示（无 view、无数据），
+                // 必须按 FragmentPagerAdapter 的 tag 规则取真正显示中的实例，否则
+                // 工具栏排序等操作会落在未 attach 的实例上而失效
+                String tag = "android:switcher:" + viewPager.getId() + ":" + currentItem;
+                Fragment shown = getChildFragmentManager().findFragmentByTag(tag);
+                if (shown != null) {
+                    return shown;
+                }
                 return viewPagerAdapter.mFragmentList.get(currentItem);
             }
         }

@@ -111,6 +111,9 @@
     <string name="settings_compact_style">Modalità compatta</string>
     <string name="settings_compact_style_desc_off">Adotta icone grandi per i dettagli della stazione</string>
     <string name="settings_compact_style_desc_on">Adotta icone piccole per i dettagli della stazione</string>
+    <string name="settings_station_notes">Note delle stazioni</string>
+    <string name="settings_station_notes_desc_on">Mostra le note nell\'elenco standard delle stazioni e includile nella ricerca</string>
+    <string name="settings_station_notes_desc_off">Nascondi le note delle stazioni ed escludile dalla ricerca</string>
     <string name="settings_bottom_navigation">Navigazione in basso</string>
 
     <string name="settings_interaction">Interazione</string>
@@ -472,10 +475,32 @@
     <string name="webdav_favourites">Stazioni preferite</string>
     <string name="webdav_database">Database locale</string>
     <string name="webdav_settings">Impostazioni dell\'app</string>
+    <string name="webdav_notes">Note delle stazioni</string>
+    <string name="note_edit_title">Nota della stazione</string>
+    <string name="note_edit_message">Aggiungi una nota personale per %1$s. Le note vengono mostrate nell\'elenco delle stazioni e salvate solo su questo dispositivo.</string>
+    <string name="note_input_hint">es. jazz, ascolto serale, suono cristallino</string>
+    <string name="note_action_save">Salva</string>
+    <string name="note_action_clear">Cancella</string>
+    <string name="note_saved_toast">Nota salvata</string>
+    <string name="note_cleared_toast">Nota cancellata</string>
+    <string name="note_add_hint">Aggiungi nota</string>
+    <string name="note_export_title">Esporta note delle stazioni</string>
+    <string name="note_export_summary">Esporta tutte le note delle stazioni in un file JSON</string>
+    <string name="note_export_empty_confirm">Non ci sono note delle stazioni da esportare. Esportare comunque un file vuoto?</string>
+    <string name="note_export_empty_proceed">Esporta comunque</string>
+    <string name="note_export_success">Esportate %2$d note in %1$s</string>
+    <string name="note_export_failed">Esportazione non riuscita: %1$s</string>
+    <string name="note_import_title">Importa note delle stazioni</string>
+    <string name="note_import_summary">Importa le note delle stazioni da un file JSON (combinazione con le note esistenti)</string>
+    <string name="note_import_success">Importate %1$d note</string>
+    <string name="note_import_empty">Il file non contiene note</string>
+    <string name="note_import_invalid">File delle note delle stazioni non valido</string>
+    <string name="note_import_failed">Importazione non riuscita: %1$s</string>
     <string name="webdav_all">Tutto</string>
     <string name="webdav_settings_restart_prompt">Riavviare l\'app per applicare le impostazioni ripristinate (tema, lingua, layout, ecc.)?</string>
 
     <string name="settings_backup_group_title">Backup delle impostazioni</string>
+    <string name="settings_notes_backup_group_title">Backup delle note delle stazioni</string>
     <string name="export_settings_title">Esporta impostazioni</string>
     <string name="export_settings_summary">Esporta tutte le impostazioni dell\'app in un file di backup</string>
     <string name="import_settings_title">Importa impostazioni</string>
@@ -563,4 +588,5 @@ L\'app si riavvierà automaticamente per caricare la nuova base dati.</string>
     <string name="settings_audio_offload_title">Offload audio (sperimentale)</string>
     <string name="settings_audio_offload_summary_supported">Questo dispositivo supporta l\'offload audio: la decodifica viene gestita dal DSP, riducendo sensibilmente il consumo di batteria e CPU. Equalizzatore e altri effetti audio non funzioneranno quando è attivo.</string>
     <string name="settings_audio_offload_summary_unsupported">L\'offload audio non è supportato su questo dispositivo (richiede Android 10 o versioni successive e hardware compatibile).</string>
+    <string name="sort_by_default">Ordine predefinito</string>
 </resources>

@@ -4,6 +4,7 @@ public enum WebDavBackupType {
     FAVOURITES,
     DATABASE,
     SETTINGS,
+    NOTES,
     ALL;
 
     public static WebDavBackupType fromName(String value) {

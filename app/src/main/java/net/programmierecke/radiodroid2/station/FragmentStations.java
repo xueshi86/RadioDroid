@@ -365,6 +365,15 @@ public class FragmentStations extends FragmentBase implements IFragmentSearchabl
                         ItemAdapterStation adapter = (ItemAdapterStation) rvStations.getAdapter();
                         if (adapter != null) {
                             adapter.updateList(null, filteredStationsList);
+
+                            // 备注搜索补全（Issue #54）：开关打开时追加备注命中但 DB 查询未返回的电台（异步，主线程回调）
+                            StationsFilter.appendNoteMatches(getContext(), query, filteredStationsList, appended -> {
+                                if (getContext() == null || rvStations == null || rvStations.getAdapter() == null) {
+                                    return;
+                                }
+                                filteredStationsList.addAll(appended);
+                                ((ItemAdapterStation) rvStations.getAdapter()).updateList(null, filteredStationsList);
+                            });
                         }
                         
                         // 隐藏加载状态

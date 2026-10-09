@@ -108,12 +108,18 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
     private static final int PERM_REQ_STORAGE_SETTINGS_EXPORT = 6;
     private static final String TAG_SETTINGS_EXPORT_DIALOG = "settings_export";
     private static final String TAG_SETTINGS_IMPORT_DIALOG = "settings_import";
+    private static final String TAG_NOTES_EXPORT_DIALOG = "notes_export";
+    private static final String TAG_NOTES_IMPORT_DIALOG = "notes_import";
+    private static final int PERM_REQ_STORAGE_NOTES_IMPORT = 7;
+    private static final int PERM_REQ_STORAGE_NOTES_EXPORT = 8;
 
     private DatabaseUpdateProgressDialog updateDialog;
     private ActivityResultLauncher<String[]> filePickerLauncher;
     private ActivityResultLauncher<Intent> exportFileLauncher;
     private ActivityResultLauncher<Intent> exportSettingsLauncher;
     private ActivityResultLauncher<String[]> importSettingsLauncher;
+    private ActivityResultLauncher<Intent> exportNotesLauncher;
+    private ActivityResultLauncher<String[]> importNotesLauncher;
     private BroadcastReceiver timerFinishedReceiver;
     private BroadcastReceiver databaseUpdatedReceiver;
     private ActivityResultLauncher<String> bluetoothPermissionLauncher;
@@ -347,6 +353,29 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             uri -> {
                 if (uri != null) {
                     importSettings(uri);
+                }
+            }
+        );
+
+        // 电台备注导出选择器（Issue #54）：独立文件，与设置备份同款 CreateDocument 模式
+        exportNotesLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == android.app.Activity.RESULT_OK && result.getData() != null) {
+                    Uri uri = result.getData().getData();
+                    if (uri != null) {
+                        exportNotesToUri(uri);
+                    }
+                }
+            }
+        );
+
+        // 电台备注导入选择器（OpenDocument，不做 MIME 过滤）
+        importNotesLauncher = registerForActivityResult(
+            new ActivityResultContracts.OpenDocument(),
+            uri -> {
+                if (uri != null) {
+                    importNotesFromUri(uri);
                 }
             }
         );
@@ -635,6 +664,23 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 batPref.getParent().removePreference(batPref);
             }
         }
+
+        // 紧凑模式选中时禁用「电台备注」开关（Issue #54）：紧凑/网格模式始终不显示备注行，
+        // 开关仅对标准模式生效，保持禁用态避免用户误以为设置无效
+        updateNotesVisibleEnabled();
+    }
+
+    /**
+     * 依据「紧凑模式」当前值同步「电台备注」开关的可用状态：
+     * 紧凑模式开启 → 灰色禁用；关闭 → 恢复可点。进页面与实时变更两个时机都调用。
+     */
+    private void updateNotesVisibleEnabled() {
+        androidx.preference.Preference notesPref = findPreference("station_notes_visible");
+        if (notesPref == null) {
+            return;
+        }
+        boolean compact = getPreferenceManager().getSharedPreferences().getBoolean("compact_style", false);
+        notesPref.setEnabled(!compact);
     }
 
     private void checkForAppUpdate() {
@@ -1222,6 +1268,21 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 return true;
             });
         }
+        // 电台备注独立导入/导出（Issue #54）
+        Preference exportNotesPref = findPreference("export_notes");
+        if (exportNotesPref != null) {
+            exportNotesPref.setOnPreferenceClickListener(preference -> {
+                startNotesExport();
+                return true;
+            });
+        }
+        Preference importNotesPref = findPreference("import_notes");
+        if (importNotesPref != null) {
+            importNotesPref.setOnPreferenceClickListener(preference -> {
+                startNotesImport();
+                return true;
+            });
+        }
     }
 
     // ==================== 本机应用设置导入 / 导出（复用 SettingsBackupHelper） ====================
@@ -1387,6 +1448,161 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         dialog.show(getChildFragmentManager(), TAG_SETTINGS_IMPORT_DIALOG);
     }
 
+    // ==================== 电台备注独立导入 / 导出（Issue #54） ====================
+    // 备注数据独立存放（SharedPreferences 的 station_notes 键），
+    // 文件格式 {"version":1,"notes":{uuid:note}}，与收藏/数据库/设置文件互不混合。
+
+    private void startNotesExport() {
+        if (!isActivityUsable()) return;
+        RadioDroidApp app = (RadioDroidApp) requireActivity().getApplication();
+        if (app.getStationNoteManager().isEmpty()) {
+            // 无任何备注：明确告知导出文件将为空，避免误以为备份了数据
+            new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
+                    .setTitle(R.string.note_export_title)
+                    .setMessage(R.string.note_export_empty_confirm)
+                    .setPositiveButton(R.string.note_export_empty_proceed, (dialog, which) -> launchNotesExportPicker())
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
+            return;
+        }
+        launchNotesExportPicker();
+    }
+
+    private void launchNotesExportPicker() {
+        if (!isActivityUsable()) return;
+        String defaultFileName = "RadioDroid_Notes_"
+                + new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date()) + ".json";
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("application/json");
+                intent.putExtra(Intent.EXTRA_TITLE, defaultFileName);
+                exportNotesLauncher.launch(intent);
+            } catch (Exception e) {
+                Log.e(TAG, "Error launching notes export dialog", e);
+                Toast.makeText(requireContext(), getString(R.string.note_export_failed, String.valueOf(e.getMessage())), Toast.LENGTH_LONG).show();
+            }
+        } else if (Utils.verifyStoragePermissions(this, PERM_REQ_STORAGE_NOTES_EXPORT)) {
+            showNotesSaveFileDialog();
+        }
+    }
+
+    private void startNotesImport() {
+        if (!isActivityUsable()) return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            importNotesLauncher.launch(new String[]{"*/*"});
+        } else if (Utils.verifyStoragePermissions(this, PERM_REQ_STORAGE_NOTES_IMPORT)) {
+            showNotesOpenFileDialog();
+        }
+    }
+
+    private void showNotesSaveFileDialog() {
+        SaveFileDialog dialog = new SaveFileDialog();
+        Bundle args = new Bundle();
+        args.putString(FileDialog.EXTENSION, "json");
+        args.putSerializable(FileDialog.START_DIRECTORY, Environment.getExternalStorageDirectory());
+        dialog.setArguments(args);
+        dialog.setStyle(DialogFragment.STYLE_NO_TITLE, Utils.getAlertDialogThemeResId(requireContext()));
+        dialog.show(getChildFragmentManager(), TAG_NOTES_EXPORT_DIALOG);
+    }
+
+    private void showNotesOpenFileDialog() {
+        OpenFileDialog dialog = new OpenFileDialog();
+        Bundle args = new Bundle();
+        args.putString(FileDialog.EXTENSION, "json");
+        args.putSerializable(FileDialog.START_DIRECTORY, Environment.getExternalStorageDirectory());
+        dialog.setArguments(args);
+        dialog.setStyle(DialogFragment.STYLE_NO_TITLE, Utils.getAlertDialogThemeResId(requireContext()));
+        dialog.show(getChildFragmentManager(), TAG_NOTES_IMPORT_DIALOG);
+    }
+
+    private void exportNotesToUri(Uri uri) {
+        if (uri == null || !isAdded() || getContext() == null) return;
+        final Context context = requireContext().getApplicationContext();
+        final Activity activity = getActivity();
+        if (activity == null) return;
+        new Thread(() -> {
+            Exception failure = null;
+            int count = 0;
+            try {
+                RadioDroidApp app = (RadioDroidApp) context;
+                count = app.getStationNoteManager().count();
+                java.io.OutputStream output = context.getContentResolver().openOutputStream(uri);
+                if (output == null) throw new java.io.IOException("Unable to open output stream");
+                try {
+                    output.write(app.getStationNoteManager().exportToJson().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    output.flush();
+                } finally {
+                    output.close();
+                }
+            } catch (Exception e) {
+                failure = e;
+            }
+            final Exception error = failure;
+            final int exportedCount = count;
+            activity.runOnUiThread(() -> {
+                if (!isAdded()) return;
+                if (error == null) {
+                    showSimpleDialog(R.string.note_export_title,
+                            getString(R.string.note_export_success, getDisplayPathFromUri(uri), exportedCount));
+                } else {
+                    showSimpleDialog(R.string.note_export_title,
+                            getString(R.string.note_export_failed, String.valueOf(error.getMessage())));
+                }
+            });
+        }, "NotesExport").start();
+    }
+
+    private void importNotesFromUri(Uri uri) {
+        if (uri == null || !isAdded() || getContext() == null) return;
+        final Context context = requireContext().getApplicationContext();
+        final Activity activity = getActivity();
+        if (activity == null) return;
+        new Thread(() -> {
+            Exception failure = null;
+            int count = 0;
+            try {
+                java.io.InputStream input = context.getContentResolver().openInputStream(uri);
+                if (input == null) throw new java.io.IOException("Unable to open input stream");
+                String json;
+                try {
+                    java.util.Scanner scanner = new java.util.Scanner(input, "UTF-8").useDelimiter("\\A");
+                    json = scanner.hasNext() ? scanner.next() : "";
+                } finally {
+                    input.close();
+                }
+                // 先解析后落盘：格式无效时本地备注不受影响
+                RadioDroidApp app = (RadioDroidApp) context;
+                // 空文件（0 字节）视为空集导入：合法但无数据，本地备注不变
+                count = json.trim().isEmpty() ? 0 : app.getStationNoteManager().importFromJson(json);
+            } catch (org.json.JSONException e) {
+                failure = e;
+            } catch (Exception e) {
+                failure = e;
+            }
+            final Exception error = failure;
+            final int importedCount = count;
+            activity.runOnUiThread(() -> {
+                if (!isAdded()) return;
+                if (error == null) {
+                    if (importedCount > 0) {
+                        showSimpleDialog(R.string.note_import_title,
+                                getString(R.string.note_import_success, importedCount));
+                    } else {
+                        // 空文件/无有效条目：合法但无数据，明确告知本地备注未被改动
+                        showSimpleDialog(R.string.note_import_title, getString(R.string.note_import_empty));
+                    }
+                } else if (error instanceof org.json.JSONException) {
+                    showSimpleDialog(R.string.note_import_title, getString(R.string.note_import_invalid));
+                } else {
+                    showSimpleDialog(R.string.note_import_title,
+                            getString(R.string.note_import_failed, String.valueOf(error.getMessage())));
+                }
+            });
+        }, "NotesImport").start();
+    }
+
     private void refreshWebDavSummary() {
         Preference preference = findPreference("webdav_configure");
         if (preference == null || !isAdded()) return;
@@ -1522,9 +1738,10 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         String fav = preferences.getString("fav", null);
         String db = preferences.getString("db", null);
         String settingsStatus = preferences.getString("settings", null);
+        String notesStatus = preferences.getString("notes", null);
         // 不再自动检查待确认的数据库恢复：该状态只在用户主动进入"恢复"流程时提示，
         // 避免备份操作或打开本页面时弹出与当前操作无关的数据库替换确认弹窗
-        if (fav == null && db == null && settingsStatus == null) return;
+        if (fav == null && db == null && settingsStatus == null && notesStatus == null) return;
         boolean restore = preferences.getBoolean("restore", false);
         boolean settingsRestored = restore && "success".equals(settingsStatus);
         preferences.edit().clear().apply();
@@ -1532,19 +1749,20 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         // 数据库恢复需要前台确认：先弹"是否用备份文件替换本地数据库"确认弹窗，
         // 替换完成后统一呈现收藏/数据库/设置分项结果的恢复结果弹窗（不先弹"等待确认"结果弹窗）。
         if ("pending".equals(db)) {
-            checkPendingWebDavDatabaseRestore(fav, settingsStatus, restore, settingsRestored);
+            checkPendingWebDavDatabaseRestore(fav, settingsStatus, notesStatus, restore, settingsRestored);
             return;
         }
 
-        showWebDavResultDialog(restore, buildWebDavMessage(fav, db, settingsStatus, restore), settingsRestored);
+        showWebDavResultDialog(restore, buildWebDavMessage(fav, db, settingsStatus, notesStatus, restore), settingsRestored);
     }
 
     // 按分项拼接结果文案；分项为 null 表示本次操作未包含该项
-    private String buildWebDavMessage(String favStatus, String dbStatus, String settingsStatus, boolean restore) {
+    private String buildWebDavMessage(String favStatus, String dbStatus, String settingsStatus, String notesStatus, boolean restore) {
         StringBuilder message = new StringBuilder();
         if (favStatus != null) message.append(getString(R.string.webdav_favourites)).append(": ").append(webDavOutcomeText(favStatus, restore)).append('\n');
         if (dbStatus != null) message.append(getString(R.string.webdav_database)).append(": ").append(webDavOutcomeText(dbStatus, restore)).append('\n');
         if (settingsStatus != null) message.append(getString(R.string.webdav_settings)).append(": ").append(webDavOutcomeText(settingsStatus, restore)).append('\n');
+        if (notesStatus != null) message.append(getString(R.string.webdav_notes)).append(": ").append(webDavOutcomeText(notesStatus, restore)).append('\n');
         return message.toString().trim();
     }
 
@@ -1596,7 +1814,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         return getString(R.string.webdav_error_unknown);
     }
 
-    private void checkPendingWebDavDatabaseRestore(String favStatus, String settingsStatus, boolean restore, boolean settingsRestored) {
+    private void checkPendingWebDavDatabaseRestore(String favStatus, String settingsStatus, String notesStatus, boolean restore, boolean settingsRestored) {
         if (!isActivityUsable()) return;
         SharedPreferences preferences = requireContext().getSharedPreferences("webdav_pending_restore", Context.MODE_PRIVATE);
         String path = preferences.getString("database", null);
@@ -1604,26 +1822,26 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         if (file == null || !file.isFile()) {
             if (path != null) preferences.edit().clear().apply();
             // 无待确认的数据库：若本次还有其它分项结果，直接呈现其结果弹窗
-            String message = buildWebDavMessage(favStatus, null, settingsStatus, restore);
+            String message = buildWebDavMessage(favStatus, null, settingsStatus, notesStatus, restore);
             if (message.length() > 0) showWebDavResultDialog(restore, message, settingsRestored);
             return;
         }
         new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
                 .setTitle(R.string.webdav_restore)
                 .setMessage(R.string.webdav_database_restore_confirm)
-                .setNegativeButton(android.R.string.cancel, (dialog, which) -> showPendingWebDavCanceledResult(favStatus, settingsStatus, restore, settingsRestored))
-                .setPositiveButton(R.string.webdav_database_replace, (dialog, which) -> applyWebDavDatabaseRestore(file, preferences, favStatus, settingsStatus, restore, settingsRestored))
-                .setOnCancelListener(dialog -> showPendingWebDavCanceledResult(favStatus, settingsStatus, restore, settingsRestored))
+                .setNegativeButton(android.R.string.cancel, (dialog, which) -> showPendingWebDavCanceledResult(favStatus, settingsStatus, notesStatus, restore, settingsRestored))
+                .setPositiveButton(R.string.webdav_database_replace, (dialog, which) -> applyWebDavDatabaseRestore(file, preferences, favStatus, settingsStatus, notesStatus, restore, settingsRestored))
+                .setOnCancelListener(dialog -> showPendingWebDavCanceledResult(favStatus, settingsStatus, notesStatus, restore, settingsRestored))
                 .show();
     }
 
     // 用户取消数据库替换：保留待确认状态以便稍后重新确认，并如实反馈"已取消"结果
-    private void showPendingWebDavCanceledResult(String favStatus, String settingsStatus, boolean restore, boolean settingsRestored) {
+    private void showPendingWebDavCanceledResult(String favStatus, String settingsStatus, String notesStatus, boolean restore, boolean settingsRestored) {
         if (!isActivityUsable()) return;
-        showWebDavResultDialog(restore, buildWebDavMessage(favStatus, "canceled", settingsStatus, restore), settingsRestored);
+        showWebDavResultDialog(restore, buildWebDavMessage(favStatus, "canceled", settingsStatus, notesStatus, restore), settingsRestored);
     }
 
-    private void applyWebDavDatabaseRestore(File importedFile, SharedPreferences pending, String favStatus, String settingsStatus, boolean restore, boolean settingsRestored) {
+    private void applyWebDavDatabaseRestore(File importedFile, SharedPreferences pending, String favStatus, String settingsStatus, String notesStatus, boolean restore, boolean settingsRestored) {
         final Context context = requireContext().getApplicationContext();
         final Activity activity = getActivity();
         if (activity == null) return;
@@ -1670,7 +1888,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 } else {
                     dbOutcome = "failed";
                 }
-                showWebDavResultDialog(restore, buildWebDavMessage(favStatus, dbOutcome, settingsStatus, restore), settingsRestored);
+                showWebDavResultDialog(restore, buildWebDavMessage(favStatus, dbOutcome, settingsStatus, notesStatus, restore), settingsRestored);
             });
         }, "WebDavDatabaseRestore").start();
     }
@@ -1757,7 +1975,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         if (!isActivityUsable()) return;
         // 仅当用户主动进入恢复流程时，才提示上次未完成的数据库替换
         if (restore && showPendingWebDavDatabaseRestoreIfAny()) return;
-        String[] options = {getString(R.string.webdav_favourites), getString(R.string.webdav_database), getString(R.string.webdav_settings), getString(R.string.webdav_all)};
+        String[] options = {getString(R.string.webdav_favourites), getString(R.string.webdav_database), getString(R.string.webdav_settings), getString(R.string.webdav_notes), getString(R.string.webdav_all)};
         new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
                 .setTitle(restore ? R.string.webdav_restore : R.string.webdav_backup)
                 .setItems(options, (dialog, which) -> {
@@ -1773,6 +1991,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                         case 0: type = WebDavBackupType.FAVOURITES; break;
                         case 1: type = WebDavBackupType.DATABASE; break;
                         case 2: type = WebDavBackupType.SETTINGS; break;
+                        case 3: type = WebDavBackupType.NOTES; break;
                         default: type = WebDavBackupType.ALL; break;
                     }
                     if (restore && (type == WebDavBackupType.FAVOURITES || type == WebDavBackupType.ALL)) {
@@ -1805,7 +2024,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 .setMessage(R.string.webdav_pending_database_restore_confirm)
                 .setNegativeButton(android.R.string.cancel, (dialog, which) -> discardPendingRestore.run())
                 .setOnCancelListener(dialog -> discardPendingRestore.run())
-                .setPositiveButton(R.string.webdav_database_replace, (dialog, which) -> applyWebDavDatabaseRestore(file, preferences, null, null, true, false))
+                .setPositiveButton(R.string.webdav_database_replace, (dialog, which) -> applyWebDavDatabaseRestore(file, preferences, null, null, null, true, false))
                 .show();
         return true;
     }
@@ -2140,6 +2359,10 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 newFragment.show(getActivity().getSupportFragmentManager(), "appPicker");
             }
         }
+        if (key.equals("compact_style")) {
+            // 紧凑模式切换时实时联动「电台备注」开关的禁用状态（Issue #54）
+            updateNotesVisibleEnabled();
+        }
         if (key.equals("theme_name") || key.equals(Utils.PREF_THEME_PRESET) || key.equals("circular_icons") || key.equals("bottom_navigation")) {
             if (key.equals("circular_icons"))
                 ((RadioDroidApp) getActivity().getApplication()).getFavouriteManager().updateShortcuts();
@@ -2385,6 +2608,10 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             exportSettingsToUri(Uri.fromFile(file));
         } else if (TAG_SETTINGS_IMPORT_DIALOG.equals(dialog.getTag())) {
             importSettings(Uri.fromFile(file));
+        } else if (TAG_NOTES_EXPORT_DIALOG.equals(dialog.getTag())) {
+            exportNotesToUri(Uri.fromFile(file));
+        } else if (TAG_NOTES_IMPORT_DIALOG.equals(dialog.getTag())) {
+            importNotesFromUri(Uri.fromFile(file));
         } else if (dialog instanceof OpenFileDialog) {
             importDatabase(Uri.fromFile(file));
         } else if (dialog instanceof SaveFileDialog) {
@@ -2414,6 +2641,16 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     showSettingsOpenFileDialog();
                 } else {
                     showSettingsSaveFileDialog();
+                }
+            } else {
+                Toast.makeText(requireContext(), R.string.error_permission_denied, Toast.LENGTH_LONG).show();
+            }
+        } else if (requestCode == PERM_REQ_STORAGE_NOTES_IMPORT || requestCode == PERM_REQ_STORAGE_NOTES_EXPORT) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (requestCode == PERM_REQ_STORAGE_NOTES_IMPORT) {
+                    showNotesOpenFileDialog();
+                } else {
+                    showNotesSaveFileDialog();
                 }
             } else {
                 Toast.makeText(requireContext(), R.string.error_permission_denied, Toast.LENGTH_LONG).show();

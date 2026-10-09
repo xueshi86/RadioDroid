@@ -69,6 +69,16 @@ public class IcyDataSource implements HttpDataSource {
         void onDataSourceBytesRead(byte[] buffer, int offset, int length);
 
         void onDataSourceContentType(String contentType);
+
+        /**
+         * 每次新的 HTTP 请求建立连接后调用一次（HLS 播放列表与媒体分片都会调用）。
+         * HLS 的播放列表和每个媒体分片都是独立请求，上层据此识别分片边界，
+         * 并可区分播放列表请求与媒体数据请求。
+         *
+         * @param uri               本次请求的地址
+         * @param isPlaylistRequest 是否为 HLS 播放列表请求
+         */
+        void onDataSourceRequestOpened(Uri uri, boolean isPlaylistRequest);
     }
 
     private static final String TAG = "IcyDataSource";
@@ -168,6 +178,9 @@ public class IcyDataSource implements HttpDataSource {
 
         dataSourceListener.onDataSourceConnected();
         transferListener.onTransferStart(this, dataSpec, true);
+
+        // 通知上层本次请求已建立（用于识别 HLS 分片边界与分片容器格式）
+        dataSourceListener.onDataSourceRequestOpened(dataSpec.uri, isPlaylistRequest);
 
         if (isPlaylistRequest) {
             return responseBody.contentLength();

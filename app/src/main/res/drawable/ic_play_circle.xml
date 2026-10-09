@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 播放按钮图标（实心圆盘 + 镂空三角）：采用媒体播放按钮的经典实心样式（同 Material play_circle_filled /
+     YouTube / Spotify 一脉）。此前「细描边圆环 + 实心大图形」的方案里，环与图形是两种互相较劲的视觉重量，
+     这是总觉得不协调的根源；实心样式取消圆环，三角以负形镂空呈现，圆盘与负形的重量天然平衡。
+     三角 8.25x9.5（重心正对圆心，顶点距盘缘约 4.5 空隙），圆盘外径半径 10，按钮观感大小不变 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="48dp"
     android:height="48dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
 
-    <path android:pathData="M0 0h24v24H0z" />
+    <!-- 圆盘（逆时针）与三角（顺时针）按非零环绕规则相减，三角即为镂空负形 -->
     <path
         android:fillColor="?attr/colorAccent"
-        android:pathData="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
+        android:pathData="M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM9.25 16.75V7.25L17.5 12Z" />
 </vector>

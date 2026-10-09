@@ -252,6 +252,14 @@
         <item name="android:textColor">?attr/colorTextSecondary</item>
     </style>
 
+    <!-- 电台备注文字（Issue #54）：与行首备注小图标同用强调色，形成“图标+文字”一体化
+         视觉锚点，让用户标注在灰色次要信息中一眼可辨；不用斜体，保证中英文渲染端正。
+         强调色在亮/暗主题下对比度均已达标（≥4.5:1）。空备注占位提示在代码中动态弱化。 -->
+    <style name="TextAppearance.RadioDroid.Note">
+        <item name="android:textSize">@dimen/text_caption</item>
+        <item name="android:textColor">?attr/presetAccentColor</item>
+    </style>
+
     <style name="TextAppearance.RadioDroid.Label">
         <item name="android:textSize">@dimen/text_label</item>
         <item name="android:textStyle">bold</item>

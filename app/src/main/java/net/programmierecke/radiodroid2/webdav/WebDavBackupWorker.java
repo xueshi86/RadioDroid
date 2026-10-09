@@ -47,6 +47,7 @@ public final class WebDavBackupWorker extends Worker {
         boolean favRequested = type == WebDavBackupType.FAVOURITES || type == WebDavBackupType.ALL;
         boolean dbRequested = type == WebDavBackupType.DATABASE || type == WebDavBackupType.ALL;
         boolean settingsRequested = type == WebDavBackupType.SETTINGS || type == WebDavBackupType.ALL;
+        boolean notesRequested = type == WebDavBackupType.NOTES || type == WebDavBackupType.ALL;
 
         WebDavSettings settings;
         String configurationError = null;
@@ -59,7 +60,7 @@ public final class WebDavBackupWorker extends Worker {
         if (settings == null) {
             // 配置错误只归属本次实际请求的分项，避免仅备份设置时被误报为"本地数据库"错误
             String error = configurationError == null ? ERROR_CONFIGURATION : configurationError;
-            persistResult(favRequested ? error : null, dbRequested ? error : null, settingsRequested ? error : null, restore);
+            persistResult(favRequested ? error : null, dbRequested ? error : null, settingsRequested ? error : null, notesRequested ? error : null, restore);
             return Result.failure();
         }
 
@@ -68,6 +69,7 @@ public final class WebDavBackupWorker extends Worker {
         String favStatus = null;
         String dbStatus = null;
         String settingsStatus = null;
+        String notesStatus = null;
         boolean retryable = false;
 
         if (favRequested) {
@@ -110,9 +112,21 @@ public final class WebDavBackupWorker extends Worker {
             }
         }
 
+        if (notesRequested) {
+            try {
+                if (restore) manager.restoreNotes();
+                else manager.backupNotes();
+                notesStatus = STATUS_SUCCESS;
+            } catch (Exception e) {
+                Log.e(TAG, "Notes operation failed: restore=" + restore, e);
+                notesStatus = errorCode(e);
+                retryable = retryable || isNetworkError(e);
+            }
+        }
+
         if (retryable && getRunAttemptCount() < MAX_ATTEMPTS) return Result.retry();
-        persistResult(favStatus, dbStatus, settingsStatus, restore);
-        if (isError(favStatus) || isError(dbStatus) || isError(settingsStatus)) return Result.failure();
+        persistResult(favStatus, dbStatus, settingsStatus, notesStatus, restore);
+        if (isError(favStatus) || isError(dbStatus) || isError(settingsStatus) || isError(notesStatus)) return Result.failure();
         return Result.success();
     }
 
@@ -142,12 +156,13 @@ public final class WebDavBackupWorker extends Worker {
         return e instanceof WebDavException && ((WebDavException) e).getKind() == WebDavException.Kind.NETWORK;
     }
 
-    private void persistResult(String favStatus, String dbStatus, String settingsStatus, boolean restore) {
-        if (favStatus == null && dbStatus == null && settingsStatus == null) return;
+    private void persistResult(String favStatus, String dbStatus, String settingsStatus, String notesStatus, boolean restore) {
+        if (favStatus == null && dbStatus == null && settingsStatus == null && notesStatus == null) return;
         SharedPreferences.Editor editor = getApplicationContext().getSharedPreferences(RESULT_PREFS, Context.MODE_PRIVATE).edit().putBoolean("restore", restore);
         if (favStatus != null) editor.putString("fav", favStatus);
         if (dbStatus != null) editor.putString("db", dbStatus);
         if (settingsStatus != null) editor.putString("settings", settingsStatus);
+        if (notesStatus != null) editor.putString("notes", notesStatus);
         editor.apply();
     }
 }

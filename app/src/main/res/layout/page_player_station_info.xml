@@ -28,4 +28,41 @@
         app:tagHeight="25sp"
         app:textHorizontalPadding="@dimen/space_sm"
         app:textVerticalMargin="@dimen/space_xs" />
+
+    <!-- 电台备注行 + 编辑入口（Issue #54）：点击整行或铅笔图标弹出备注编辑对话框 -->
+    <LinearLayout
+        android:id="@+id/layoutStationNoteRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_xs"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:id="@+id/textViewStationNote"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:drawablePadding="4sp"
+            android:ellipsize="end"
+            android:lines="1"
+            android:textAppearance="@style/TextAppearance.RadioDroid.Note" />
+
+        <com.mikepenz.iconics.view.IconicsImageButton
+            android:id="@+id/buttonEditStationNote"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="@dimen/touch_target_min"
+            android:minHeight="@dimen/touch_target_min"
+            android:padding="4dp"
+            android:contentDescription="@string/note_edit_title"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="?attr/iconsInItemBackgroundColor"
+            app:iiv_icon="gmd-pencil"
+            app:iiv_padding="2dp"
+            app:iiv_size="20dp" />
+    </LinearLayout>
 </LinearLayout>

@@ -61,6 +61,7 @@ import com.rustamg.filedialogs.SaveFileDialog;
 
 import net.programmierecke.radiodroid2.alarm.FragmentAlarm;
 import net.programmierecke.radiodroid2.station.FragmentLocalStations;
+import net.programmierecke.radiodroid2.station.FragmentMultiSearch;
 import net.programmierecke.radiodroid2.FragmentStarred;
 import net.programmierecke.radiodroid2.FragmentTabs;
 import net.programmierecke.radiodroid2.cast.CastAwareActivity;
@@ -736,7 +737,9 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
             Fragment topFragment = mFragmentManager.findFragmentById(R.id.containerView);
             if (topFragment instanceof FragmentTabs) {
                 Fragment currentTab = ((FragmentTabs) topFragment).getCurrentVisibleFragment();
-                if (currentTab != null && !(currentTab instanceof FragmentLocalStations)) {
+                // 本地电台列表与多条件搜索页均支持排序
+                if (currentTab != null && !(currentTab instanceof FragmentLocalStations)
+                        && !(currentTab instanceof FragmentMultiSearch)) {
                     shouldShowSort = false;
                 }
             }
@@ -1231,6 +1234,45 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
                     .setTitle(R.string.action_sort)
                     .setSingleChoiceItems(displayOptions, checkedItem, (dialog, which) -> {
                         localFragment.setSortMode(sortModes[which]);
+                        dialog.dismiss();
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
+        } else if (currentFragment instanceof FragmentMultiSearch) {
+            // 多条件搜索页：首项为"默认排序"（数据库相关度加权序），其余与本地电台列表一致
+            final FragmentMultiSearch searchFragment = (FragmentMultiSearch) currentFragment;
+            sortModes = new int[]{
+                    FragmentMultiSearch.SORT_NONE,
+                    FragmentMultiSearch.SORT_NAME,
+                    FragmentMultiSearch.SORT_CLICK_COUNT,
+                    FragmentMultiSearch.SORT_VOTES,
+                    FragmentMultiSearch.SORT_RECENT
+            };
+            currentMode = searchFragment.getCurrentSortMode();
+            isAscending = searchFragment.isSortAscending();
+
+            String[] displayOptions = new String[sortModes.length];
+            for (int i = 0; i < sortModes.length; i++) {
+                String label = (i == 0) ? getString(R.string.sort_by_default) : sortOptions[i - 1];
+                String indicator = "";
+                if (sortModes[i] == currentMode && sortModes[i] != FragmentMultiSearch.SORT_NONE) {
+                    indicator = isAscending ? " ↑" : " ↓";
+                }
+                displayOptions[i] = label + indicator;
+            }
+
+            int checkedItem = -1;
+            for (int i = 0; i < sortModes.length; i++) {
+                if (sortModes[i] == currentMode) {
+                    checkedItem = i;
+                    break;
+                }
+            }
+
+            new AlertDialog.Builder(this, Utils.getAlertDialogThemeResId(this))
+                    .setTitle(R.string.action_sort)
+                    .setSingleChoiceItems(displayOptions, checkedItem, (dialog, which) -> {
+                        searchFragment.setSortMode(sortModes[which]);
                         dialog.dismiss();
                     })
                     .setNegativeButton(android.R.string.cancel, null)

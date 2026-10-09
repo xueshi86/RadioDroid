@@ -112,6 +112,9 @@
     <string name="settings_compact_style">Mode compact</string>
     <string name="settings_compact_style_desc_off">Grande icône adoptée avec les détails de la station</string>
     <string name="settings_compact_style_desc_on">Petite icône adoptée sans les détails de la station</string>
+    <string name="settings_station_notes">Notes des stations</string>
+    <string name="settings_station_notes_desc_on">Afficher les notes dans la liste standard des stations et les inclure dans la recherche</string>
+    <string name="settings_station_notes_desc_off">Masquer les notes des stations et les exclure de la recherche</string>
     <string name="settings_bottom_navigation">Navigation inférieure</string>
 
     <string name="settings_interaction">Interaction</string>
@@ -476,10 +479,32 @@
     <string name="webdav_favourites">Stations favorites</string>
     <string name="webdav_database">Base de données locale</string>
     <string name="webdav_settings">Paramètres de l\'application</string>
+    <string name="webdav_notes">Notes des stations</string>
+    <string name="note_edit_title">Note de la station</string>
+    <string name="note_edit_message">Ajoutez une note personnelle pour %1$s. Les notes apparaissent dans la liste des stations et ne sont enregistrées que sur cet appareil.</string>
+    <string name="note_input_hint">ex. jazz, écoute du soir, son cristallin</string>
+    <string name="note_action_save">Enregistrer</string>
+    <string name="note_action_clear">Effacer</string>
+    <string name="note_saved_toast">Note enregistrée</string>
+    <string name="note_cleared_toast">Note effacée</string>
+    <string name="note_add_hint">Ajouter une note</string>
+    <string name="note_export_title">Exporter les notes des stations</string>
+    <string name="note_export_summary">Exporter toutes les notes des stations vers un fichier JSON</string>
+    <string name="note_export_empty_confirm">Aucune note de station à exporter. Exporter quand même un fichier vide ?</string>
+    <string name="note_export_empty_proceed">Exporter quand même</string>
+    <string name="note_export_success">%2$d note(s) exportée(s) vers %1$s</string>
+    <string name="note_export_failed">Échec de l\'export : %1$s</string>
+    <string name="note_import_title">Importer les notes des stations</string>
+    <string name="note_import_summary">Importer les notes des stations depuis un fichier JSON (fusion avec les notes existantes)</string>
+    <string name="note_import_success">%1$d note(s) importée(s)</string>
+    <string name="note_import_empty">Le fichier ne contient aucune note</string>
+    <string name="note_import_invalid">Fichier de notes de stations non valide</string>
+    <string name="note_import_failed">Échec de l\'import : %1$s</string>
     <string name="webdav_all">Tout</string>
     <string name="webdav_settings_restart_prompt">Redémarrer l\'application pour appliquer les paramètres restaurés (thème, langue, disposition, etc.) ?</string>
 
     <string name="settings_backup_group_title">Sauvegarde des paramètres</string>
+    <string name="settings_notes_backup_group_title">Sauvegarde des notes des stations</string>
     <string name="export_settings_title">Exporter les paramètres</string>
     <string name="export_settings_summary">Exporter tous les paramètres de l\'application dans un fichier de sauvegarde</string>
     <string name="import_settings_title">Importer les paramètres</string>
@@ -567,4 +592,5 @@ L\'application redémarrera automatiquement pour charger la nouvelle base.</stri
     <string name="settings_audio_offload_title">Déport audio (expérimental)</string>
     <string name="settings_audio_offload_summary_supported">Cet appareil prend en charge le déport audio : le décodage est confié au DSP, ce qui peut réduire fortement la consommation de batterie et de processeur. L\'égaliseur et les autres effets audio ne fonctionneront pas tant que cette option est activée.</string>
     <string name="settings_audio_offload_summary_unsupported">Le déport audio n\'est pas pris en charge sur cet appareil (nécessite Android 10 ou version ultérieure et un matériel compatible).</string>
+    <string name="sort_by_default">Ordre par défaut</string>
 </resources>

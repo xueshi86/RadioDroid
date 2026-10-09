@@ -58,7 +58,10 @@ public final class SettingsBackupHelper {
             // 纯运行时状态
             "last_selectedMenuItem",
             "auto_check_update_last_time",
-            "record_num"
+            "record_num",
+            // 电台自定义备注（Issue #54）：独立于设置的单独数据，走 station_notes.json 专属导入导出，
+            // 不允许混入设置备份文件
+            "station_notes"
     ));
 
     private SettingsBackupHelper() {

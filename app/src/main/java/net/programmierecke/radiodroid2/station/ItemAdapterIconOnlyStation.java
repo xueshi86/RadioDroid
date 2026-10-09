@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.widget.PopupMenu;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import net.programmierecke.radiodroid2.R;
@@ -98,11 +99,10 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
             // 视图复用：同步 tag，避免图标缓存写入后按上一轮的电台刷新到错误的图片
             holder.imageViewIcon.setTag(R.id.tag_station_uuid, station.StationUuid);
             holder.imageViewIcon.setImageDrawable(StationPlaceholderUtils.createPlaceholderDrawable(getContext(), station.Name, station.StationUuid));
-            if (Utils.isDarkTheme(getContext())) {
-                holder.imageViewIcon.setBackgroundColor(getContext().getResources().getColor(R.color.windowBackgroundDark));
-            } else {
-                holder.imageViewIcon.setBackgroundColor(getContext().getResources().getColor(android.R.color.white));
-            }
+            // 网格模式图标直接放在窗口背景上（不在卡片内），底色必须与窗口背景同源
+            // （?attr/presetWindowBackground）：跟随界面背景色，亮/暗/纯黑等配色方案自动一致，
+            // 否则图标底色（卡片色）会比界面背景亮一档，露出方框感
+            holder.imageViewIcon.setBackgroundColor(Utils.getThemeColor(getContext(), R.attr.presetWindowBackground));
             if (useCircularIcons) {
                 Utils.applyCircularIcon(holder.imageViewIcon, holder.transparentImageView);
             } else {
@@ -114,7 +114,8 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
             // “正在播放”高亮色跟随预设配色（强调色）
             int highlightColor = Utils.getThemeColor(getContext(), R.attr.presetAccentColor);
             holder.frameLayout.setBackground(buildPlayingBorderDrawable(highlightColor));
-            int overlayColor = Color.argb(50, Color.red(highlightColor), Color.green(highlightColor), Color.blue(highlightColor));
+            // 图标上的同色淡遮盖（约 30% 强调色）：恢复改版前“正在播放”图标的着色效果
+            int overlayColor = Color.argb(80, Color.red(highlightColor), Color.green(highlightColor), Color.blue(highlightColor));
             holder.playingOverlay.setBackgroundColor(overlayColor);
             holder.playingOverlay.setVisibility(View.VISIBLE);
             holder.textViewTitle.setTextColor(highlightColor);
@@ -135,6 +136,22 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
         }
 
         holder.textViewTitle.setText(station.Name);
+    }
+
+    /**
+     * 网格模式重写图标底色：图标直接放在窗口背景上（不在列表卡片内），
+     * 底色必须与窗口背景同源（?attr/presetWindowBackground）。
+     * 若沿用父类的卡片表面色（colorSurfaceCard），图标未铺满时露出的底色
+     * 会比界面背景亮一档（暗色 #1E1E20 vs #121214、浅色 #FFFFFF vs #F4F5F7），形成方框感。
+     */
+    @Override
+    void setupIcon(boolean useCircularIcons, ImageView imageView, ImageView transparentImageView) {
+        imageView.setBackgroundColor(Utils.getThemeColor(getContext(), R.attr.presetWindowBackground));
+        if (useCircularIcons) {
+            Utils.applyCircularIcon(imageView, transparentImageView);
+        } else {
+            Utils.clearCircularIcon(imageView, transparentImageView);
+        }
     }
 
     public void enableItemMove(RecyclerView recyclerView) {

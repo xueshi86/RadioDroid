@@ -127,6 +127,20 @@
                         android:scrollbars="none"
                         android:textAppearance="@style/TextAppearance.RadioDroid.Caption" />
 
+                <!-- 电台自定义备注行（Issue #54）：仅标准模式且设置开关打开时显示，
+                     无备注时以 INVISIBLE 占位保证卡片高度一致；紧凑/网格模式始终不显示。
+                     样式用 Note：强调色文字与行首备注图标同色，醒目且不斜体 -->
+                <TextView
+                        android:id="@+id/textViewNote"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:drawablePadding="4sp"
+                        android:ellipsize="end"
+                        android:lines="1"
+                        android:scrollbars="none"
+                        android:textAppearance="@style/TextAppearance.RadioDroid.Note"
+                        android:visibility="gone" />
+
             </LinearLayout>
 
             <ImageButton

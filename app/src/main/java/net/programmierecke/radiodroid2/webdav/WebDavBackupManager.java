@@ -29,6 +29,7 @@ public final class WebDavBackupManager {
     public static final String FAVOURITES_FILE = "favourites.m3u";
     public static final String DATABASE_FILE = "radio_droid_database.db";
     public static final String SETTINGS_FILE = "settings.json";
+    public static final String NOTES_FILE = "station_notes.json";
     public static final String LOCAL_FAVOURITES_SNAPSHOT = "favourites_local_backup.m3u";
     private static final String PENDING_PREFS = "webdav_pending_restore";
     private final Context context;
@@ -115,6 +116,47 @@ public final class WebDavBackupManager {
             }
         } catch (IOException e) {
             throw new WebDavException(WebDavException.Kind.INVALID_DATA, "Settings file is invalid", e);
+        } finally {
+            file.delete();
+        }
+    }
+
+    // 电台备注备份/恢复复用 StationNoteManager，与本机「导出/导入备注」生成的文件格式完全一致
+    public void backupNotes() throws Exception {
+        File file = File.createTempFile("notes_", ".json", temporaryDirectory());
+        try {
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), Charset.forName("UTF-8")));
+            try {
+                writer.write(((RadioDroidApp) context).getStationNoteManager().exportToJson());
+            } finally {
+                writer.close();
+            }
+            client.upload(NOTES_FILE, file);
+        } finally {
+            file.delete();
+        }
+    }
+
+    public void restoreNotes() throws Exception {
+        File file = client.download(NOTES_FILE, temporaryDirectory());
+        try {
+            StringBuilder json = new StringBuilder();
+            InputStreamReader reader = new InputStreamReader(new FileInputStream(file), Charset.forName("UTF-8"));
+            try {
+                char[] buffer = new char[8192];
+                int count;
+                while ((count = reader.read(buffer)) != -1) json.append(buffer, 0, count);
+            } finally {
+                reader.close();
+            }
+            String content = json.toString().trim();
+            // 服务器上的备注文件为空（如上次备份时无任何备注）：视为空集成功，不动本地数据
+            if (content.isEmpty()) return;
+            try {
+                ((RadioDroidApp) context).getStationNoteManager().importFromJson(content);
+            } catch (org.json.JSONException e) {
+                throw new WebDavException(WebDavException.Kind.INVALID_DATA, "Notes file is invalid", e);
+            }
         } finally {
             file.delete();
         }

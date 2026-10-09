@@ -86,6 +86,16 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
     private boolean isPlayingFlag;
     private String streamContentType;
 
+    /** 最近一次 HLS 媒体分片（非播放列表）请求的地址与响应类型，用于推断录音文件扩展名 */
+    private String hlsSegmentUri;
+    private String hlsSegmentContentType;
+
+    /** 当前请求的首个字节是否尚未到达，用于识别 HLS 分片边界 */
+    private boolean requestFirstBytesPending;
+
+    /** HLS 录音是否正在等待分片边界（丢弃当前分片的残余部分，从下一分片起点开始录） */
+    private boolean recordingAwaitingSegmentStart;
+
     private Handler playerThreadHandler;
 
     private Context context;
@@ -529,6 +539,18 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
         totalTransferredBytes += length;
         currentPlaybackTransferredBytes += length;
 
+        // 本次请求的首个字节即为新请求（HLS 分片）的起点
+        final boolean startsNewRequest = requestFirstBytesPending;
+        requestFirstBytesPending = false;
+
+        if (recordingAwaitingSegmentStart) {
+            if (!startsNewRequest) {
+                // 仍处于开始录音时那个分片的中间：丢弃，等到下一个分片起点再录
+                return;
+            }
+            recordingAwaitingSegmentStart = false;
+        }
+
         RecordableListener listener = recordableListener;
         if (listener != null) {
             listener.onBytesAvailable(buffer, offset, length);
@@ -546,6 +568,18 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
     }
 
     @Override
+    public void onDataSourceRequestOpened(Uri uri, boolean isPlaylistRequest) {
+        // 播放列表是文本，不是音频数据；非 HLS 源为单一长请求，无分片边界概念
+        if (isPlaylistRequest || !isHls) {
+            return;
+        }
+        hlsSegmentUri = uri != null ? uri.toString() : null;
+        // streamContentType 刚由 onDataSourceContentType 更新为本次分片的响应类型
+        hlsSegmentContentType = streamContentType;
+        requestFirstBytesPending = true;
+    }
+
+    @Override
     public boolean canRecord() {
         return player != null;
     }
@@ -554,10 +588,14 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
     public void startRecording(@NonNull RecordableListener recordableListener) {
         this.recordableListener = recordableListener;
         this.recordableListenerNullLogged = false;
+        // HLS 分片是独立请求：丢弃当前分片的残余部分，从下一个分片起点开始录，
+        // 避免录音文件以残缺分片开头
+        this.recordingAwaitingSegmentStart = isHls;
     }
 
     @Override
     public void stopRecording() {
+        recordingAwaitingSegmentStart = false;
         if (recordableListener != null) {
             recordableListener.onRecordingEnded();
             recordableListener = null;
@@ -577,7 +615,7 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
     @Override
     public String getExtension() {
         if (isHls) {
-            return "ts";
+            return hlsSegmentExtension();
         }
         if (streamContentType != null) {
             String type = streamContentType.toLowerCase();
@@ -595,6 +633,53 @@ public class ExoPlayerWrapper implements PlayerWrapper, IcyDataSource.IcyDataSou
             }
         }
         return "mp3";
+    }
+
+    /**
+     * 推断 HLS 录音文件的扩展名。
+     * HLS 媒体分片的容器可能是 MPEG-TS（.ts）或 fMP4（.m4s/.mp4），不能一律按 .ts 命名，
+     * 否则 fMP4 分片的录音会因扩展名与实际容器不符而无法被部分播放器打开。
+     * 优先依据最近一次媒体分片的响应类型判断，其次依据分片地址后缀；均无法判断时回退 ts。
+     */
+    private String hlsSegmentExtension() {
+        if (hlsSegmentContentType != null) {
+            String type = hlsSegmentContentType.toLowerCase();
+            if (type.contains("mp2t")) {
+                return "ts";
+            }
+            if (type.contains("mp4") || type.contains("m4s")) {
+                return "mp4";
+            }
+            if (type.contains("aac")) {
+                return "aac";
+            }
+            if (type.contains("mpeg") || type.contains("mp3")) {
+                return "mp3";
+            }
+        }
+
+        if (hlsSegmentUri != null) {
+            String path = hlsSegmentUri.toLowerCase();
+            int queryIndex = path.indexOf('?');
+            if (queryIndex >= 0) {
+                path = path.substring(0, queryIndex);
+            }
+            if (path.endsWith(".ts")) {
+                return "ts";
+            }
+            if (path.endsWith(".m4s") || path.endsWith(".mp4") || path.endsWith(".m4v")) {
+                return "mp4";
+            }
+            if (path.endsWith(".aac")) {
+                return "aac";
+            }
+            if (path.endsWith(".mp3")) {
+                return "mp3";
+            }
+        }
+
+        // 无法判断分片容器时保持原有默认值
+        return "ts";
     }
 
     private void cancelStopTask() {

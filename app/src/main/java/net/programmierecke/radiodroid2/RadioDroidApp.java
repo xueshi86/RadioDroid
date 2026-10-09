@@ -46,6 +46,7 @@ public class RadioDroidApp extends MultiDexApplication {
 
     private HistoryManager historyManager;
     private FavouriteManager favouriteManager;
+    private net.programmierecke.radiodroid2.station.StationNoteManager stationNoteManager;
     private RecordingsManager recordingsManager;
     private FallbackStationsManager fallbackStationsManager;
     private RadioAlarmManager alarmManager;
@@ -108,6 +109,7 @@ public class RadioDroidApp extends MultiDexApplication {
 
         historyManager = new HistoryManager(this);
         favouriteManager = new FavouriteManager(this);
+        stationNoteManager = new net.programmierecke.radiodroid2.station.StationNoteManager(this);
         fallbackStationsManager = new FallbackStationsManager(this);
         recordingsManager = new RecordingsManager(this);
         alarmManager = new RadioAlarmManager(this);
@@ -241,6 +243,10 @@ public class RadioDroidApp extends MultiDexApplication {
 
     public FavouriteManager getFavouriteManager() {
         return favouriteManager;
+    }
+
+    public net.programmierecke.radiodroid2.station.StationNoteManager getStationNoteManager() {
+        return stationNoteManager;
     }
 
     public RecordingsManager getRecordingsManager() {

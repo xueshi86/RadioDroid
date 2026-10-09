@@ -261,11 +261,9 @@ public class FragmentPlayerSmall extends Fragment {
 
     private void setupStationIcon() {
         boolean useCircularIcons = Utils.useCircularIcons(requireContext());
-        if (Utils.isDarkTheme(requireContext())) {
-            imageViewIcon.setBackgroundColor(requireContext().getResources().getColor(R.color.windowBackgroundDark));
-        } else {
-            imageViewIcon.setBackgroundColor(requireContext().getResources().getColor(android.R.color.white));
-        }
+        // 封面底色跟随迷你播放器条背景（主题属性）：此前暗色硬编码 windowBackgroundDark
+        // 与播放条背景(presetPrimaryColor)不一致露出方框；浅色两值同为白色掩盖了问题
+        imageViewIcon.setBackgroundColor(Utils.getThemeColor(requireContext(), R.attr.colorPlayerBackground));
 
         ImageView transparentCircle = requireView().findViewById(R.id.transparentCircle);
         // 圆形图标优先用 Outline 真裁剪（背景与位图一起裁成圆形，不依赖容器底色，故不会出现方框色差）；

@@ -1,5 +1,7 @@
 package net.programmierecke.radiodroid2.players.exoplayer;
 
+import android.net.Uri;
+
 import androidx.annotation.Nullable;
 
 import com.google.android.exoplayer2.upstream.DataSource;
@@ -106,6 +108,11 @@ class IcyDataSourceTest {
 
         @Override
         public void onDataSourceContentType(String contentType) {
+
+        }
+
+        @Override
+        public void onDataSourceRequestOpened(Uri uri, boolean isPlaylistRequest) {
 
         }
 

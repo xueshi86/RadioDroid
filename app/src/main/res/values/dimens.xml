@@ -29,15 +29,18 @@
     <dimen name="item_height_compact">72dp</dimen>
     <!-- 电台列表图标：恢复 UI 改版前（Stage 前）的 70dp，改版中被压到 56dp 显得偏小 -->
     <dimen name="icon_station_list">70dp</dimen>
-    <!-- 「正在播放」高亮边框容器：必须大于图标（icon_station_list）并留出 4dp 描边留白，
-         否则边框会被图标盖住而看不见（边框画在容器背景上，位于子视图之下） -->
-    <dimen name="icon_station_list_frame">78dp</dimen>
+    <!-- 「正在播放」高亮边框容器：必须大于图标（icon_station_list），
+         使 2dp 描边与图标边缘之间留出约 3dp 空隙（边框画在容器背景上，位于子视图之下）；
+         80dp 同时保证方框距卡片上下边缘各 4dp，且不被 12dp 的卡片圆角切到 -->
+    <dimen name="icon_station_list_frame">80dp</dimen>
     <!-- 「本台曲目 / 曲目历史」列表里的电台小图标：与电台列表图标解耦，
          保持改版后的 56dp，不随电台列表图标的恢复而放大 -->
     <dimen name="icon_station_history">56dp</dimen>
     <dimen name="icon_station_grid">72dp</dimen>
     <!-- 图标模式（网格）「正在播放」高亮边框容器：必须大于图标（icon_station_grid），
-         否则描边框画在容器背景上会被图标完全盖住而不可见 -->
+         否则描边框画在容器背景上会被图标完全盖住而不可见。
+         受网格列宽（regular_style_icon_container_width=80dp）限制不可再放大，
+         否则在 320dp 等窄屏上会超出列宽被裁切 -->
     <dimen name="icon_station_grid_frame">80dp</dimen>
     <dimen name="icon_action">24dp</dimen>
     <dimen name="icon_action_small">20dp</dimen>

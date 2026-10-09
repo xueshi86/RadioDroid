@@ -57,7 +57,8 @@
 - 更新前自动检查网络连通性、电量（<5% 拒绝更新，<20% 警告提示）、存储空间（需 ≥50MB 内部空间）
 - 提供**数据库导入/导出**功能，换机或重装时可迁移数据，避免重复下载
 - 提供**应用设置导入/导出**：设置 →「备份和恢复」→「应用设置备份」分组内含「导出设置 / 导入设置」两项，可像导入/导出数据库一样单独操作；导出把应用全部设置（排除本地数据库状态缓存、增量更新水位及导航/计数等运行时临时项；WebDAV 账号密码因由设备绑定的 Android Keystore 加密，不参与导出）写入 JSON 备份文件，导入写回后提示重启应用，使主题、语言、紧凑模式等设置立即生效，并自动重新注册闹钟
-- 提供 **WebDAV 备份和恢复**：设置中新增「备份和恢复」子页，配置 WebDAV 服务器（服务器地址、服务器目录、账号、密码四项；密码经 Android Keystore 加密存储，HTTP 地址提示明文风险）后，可将**收藏电台**（M3U）、**离线数据库**（SQLite）与**应用设置**（JSON，远端文件名 `settings.json`）单独备份或选「全部」三者同时备份，并从远端恢复（WebDAV 的设置备份/恢复与本机导入/导出复用同一套代码）；备份文件存放于「服务器地址/服务器目录/」下（目录可留空表示根目录，不存在时上传自动逐级创建 MKCOL）；配置摘要带连通性状态灯（检测中灰色/绿色交替闪烁，成功绿色，失败红色，未配置灰色）；任务进行中在设置页显示，完成后展示收藏/数据库/设置分项结果，设置恢复成功后再提示重启应用；数据库恢复前先下载校验（SQLite 文件头、完整性、表结构）并需前台确认，点「替换」完成本地数据库替换，点「取消」则放弃本次待恢复的数据库（清除记录并删除已下载的临时文件），不会在下次恢复时反复提示，失败自动回滚保留原库
+- 提供**电台自定义备注**：可为每台电台添加一条自定义备注（如收听偏好、风格标记），备注随电台显示在列表中并可参与搜索；设置 →「界面」提供显示开关（默认关闭，开启后标准模式卡片显示备注行，紧凑/网格模式始终不显示，勾选紧凑模式时该开关自动禁用）；备注支持本机 JSON 导入/导出（设置 →「备份和恢复」→「电台备注备份」分组），不混入电台数据库与设置备份；详见「电台自定义备注」章节
+- 提供 **WebDAV 备份和恢复**：设置中新增「备份和恢复」子页，配置 WebDAV 服务器（服务器地址、服务器目录、账号、密码四项；密码经 Android Keystore 加密存储，HTTP 地址提示明文风险）后，可将**收藏电台**（M3U）、**离线数据库**（SQLite）、**应用设置**（JSON，远端文件名 `settings.json`）与**电台备注**（JSON，远端文件名 `station_notes.json`）单独备份或选「全部」四者同时备份，并从远端恢复（WebDAV 的设置备份/恢复与本机导入/导出复用同一套代码）；备份文件存放于「服务器地址/服务器目录/」下（目录可留空表示根目录，不存在时上传自动逐级创建 MKCOL）；配置摘要带连通性状态灯（检测中灰色/绿色交替闪烁，成功绿色，失败红色，未配置灰色）；任务进行中在设置页显示，完成后展示收藏/数据库/设置/备注分项结果，设置恢复成功后再提示重启应用；数据库恢复前先下载校验（SQLite 文件头、完整性、表结构）并需前台确认，点「替换」完成本地数据库替换，点「取消」则放弃本次待恢复的数据库（清除记录并删除已下载的临时文件），不会在下次恢复时反复提示，失败自动回滚保留原库
 - **镜像服务器级联容错**：最近成功的 API 服务器会被持久化，下次启动优先复用；请求失败自动级联 DNS 镜像列表与官方静态兜底服务器（de1/de2/fi1/at1），成功即回写；级联使用短超时（5s 连接），持久化服务器超过 7 天自动重新测速
 
 **优点**：
@@ -124,6 +125,8 @@
 
 四个条件可任意组合（均为可选），任意条件变更时自动触发联合查询 (`searchStationsByMultiCriteria`)。支持一键重置所有筛选条件。筛选条件区域可折叠/展开，节省屏幕空间。
 
+搜索结果支持排序：点击 Toolbar 的「排序」按钮，可按默认（相关度）、名称、热度（点击量）、投票、最近变更排序；再次选择当前排序方式可切换升 / 降序，排序偏好自动记忆。备注搜索补全命中的电台与数据库结果合并后统一参与排序。
+
 #### SQLite FTS 全文搜索引擎
 
 数据库内置 `radio_stations_fts` 表（SQLite FTS4），对电台名称、标签、国家、语言建立全文索引，支持按键词前缀检索（`MATCH 'kw*'`），并按名称前缀/词边界加权排序。`RadioStationDao` 提供按名称、标签、国家、语言的独立 FTS 快速搜索通道。全量/增量数据库更新后会自动重建 FTS 索引，保证新入库电台可被即时搜索到（修复了更新后 FTS 索引与主库失步的问题）。
@@ -140,7 +143,7 @@
 | 按投票数  | 按社区投票数排列                        |
 | 按最近变更 | 按电台信息最后更新时间排列                   |
 
-当前排序模式高亮显示 ↑（升序）/ ↓（降序）指示，点击相同模式可切换排序方向。排序偏好自动持久化保存。任意排序状态下均可长按拖拽电台调整位置：拖拽时当前显示顺序自动固化为「自定义顺序」，手动排序即时生效并持久保留，其余电台保持原排序相对顺序。
+当前排序模式高亮显示 ↑（升序）/ ↓（降序）指示，点击相同模式可切换排序方向。排序偏好自动持久化保存。任意排序状态下均可长按拖拽电台调整位置：拖拽时当前显示顺序自动固化为「自定义顺序」，手动排序即时生效并持久保留，其余电台保持原排序相对顺序。高级多条件搜索页的搜索结果同样支持排序（无「自定义顺序」项，多一项「默认排序」，即数据库相关度加权序）。
 
 #### 随机播放
 
@@ -377,6 +380,21 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 
 **注意事项**：缓冲时间越长，曲目历史记录与当前实际播放的内容可能出现时间差。因为曲目历史显示的是电台流当前的歌曲信息，而你的播放器由于较长的缓冲，实际播放的内容还在"排队"中——你可能听到的还是上一首歌，但曲目历史已经显示了下一首歌的标题。缓冲时间越长，这个时间差就越大。轻度缓冲（2.5 秒）基本不会出现此问题。
 
+#### 电台自定义备注
+
+可为每台电台添加一条**自定义备注**，标记个人收听偏好（如「爵士」「晚间听」「音质纯净」），弥补电台官方标签无法承载主观收听体验的不足。
+
+**编辑入口**：电台列表展开详情区点击「备注」行，或全屏播放器信息页的备注行；支持保存与清除，输入按实际显示宽度自动截断，不会在备注行内换行。
+
+**显示与搜索**：设置 →「界面」→「电台备注」开关（默认关闭）——开启后标准模式电台卡片统一增高显示备注行，搜索同时匹配电台备注；关闭时保持原样，搜索不匹配备注。紧凑模式与网格模式始终不显示备注（勾选「紧凑模式」时该开关自动灰色禁用）。
+
+**备注样式**：备注文字与行首备注小图标统一使用当前配色方案的强调色（随配色联动），在列表中醒目可辨；无备注时的占位提示以次要色弱化显示。
+
+**导入导出与备份**：备注以独立 JSON 文件存储（与收藏、数据库、设置互不混合）：
+
+- 本机导入/导出：设置 →「备份和恢复」→「电台备注备份」分组内「导出电台备注 / 导入电台备注」（与应用设置备份分开的独立分组）；无备注时导出前有确认提示，导入空文件为无操作并提示，格式无效时本地备注保持不变
+- WebDAV 备份/恢复：新增「电台备注」独立分项（远端文件名 `station_notes.json`），选「全部」时一并备份；恢复采用覆盖合并（远端已有的电台备注覆盖本地，本地其余备注保留）
+
 #### ️ 其他功能
 
 - **收藏电台**：支持添加/移除收藏，长按拖拽排序（任意排序状态下可用，拖拽后自动切换为自定义顺序），滑动删除，撤销操作（Snackbar），M3U 导入/导出
@@ -432,7 +450,8 @@ Core functionality is identical across both variants. The difference is the avai
 - Pre-sync checks: network connectivity, battery level (<5% blocks update, <20% warns), storage space (≥50MB internal)
 - Database export/import for migration across devices or after reinstall
 - App settings export/import: the "App Settings Backup" group under Settings → Backup and Restore provides "Export Settings / Import Settings"; export writes all app settings (excluding runtime/temporary items such as the local database status cache, the incremental-sync watermark and navigation/counter state; WebDAV credentials are not included because they are encrypted with a device-bound Android Keystore key) to a JSON backup file, and import writes them back, re-registers the restored alarms and then prompts to restart the app so that theme, language, compact mode, etc. take effect immediately
-- WebDAV backup and restore: a dedicated Settings → Backup and Restore section (four fields: server address, server directory, username, password; Basic auth, password encrypted via Android Keystore, with a plaintext warning for HTTP addresses) backs up and restores favourites (M3U), the offline database (SQLite) and app settings (JSON, remote file `settings.json`) individually, or all three at once via "All" (WebDAV settings backup/restore reuses the same code as the local export/import); backup files are stored under "server address/server directory/" (directory is optional and auto-created via MKCOL on upload); the configuration entry shows a connectivity indicator (gray/green blinking while checking, green on success, red on failure, gray when not configured); tasks show an in-progress state and report per-item results for favourites, the database and settings (a successful settings restore is followed by a restart prompt); database restores are downloaded and validated (SQLite header, integrity, schema) first and require foreground confirmation — "Replace" completes the local database replacement, while "Cancel" discards the pending database restore (clearing the record and deleting the downloaded temporary file) so it is not prompted again on the next restore — with automatic rollback to the original database on failure
+- Station notes: attach a personal note to any station (e.g. listening preferences, style tags); notes are shown in the station list and are searchable; a display toggle under Settings → Appearance (off by default) shows the note row in standard-mode cards, while compact/grid views never show notes; notes support local JSON export/import (Settings → Backup and Restore → App Settings Backup) and are kept out of the radio database and the settings backup; see the "Station Notes" section
+- WebDAV backup and restore: a dedicated Settings → Backup and Restore section (four fields: server address, server directory, username, password; Basic auth, password encrypted via Android Keystore, with a plaintext warning for HTTP addresses) backs up and restores favourites (M3U), the offline database (SQLite), app settings (JSON, remote file `settings.json`) and station notes (JSON, remote file `station_notes.json`) individually, or all four at once via "All" (WebDAV settings backup/restore reuses the same code as the local export/import); backup files are stored under "server address/server directory/" (directory is optional and auto-created via MKCOL on upload); the configuration entry shows a connectivity indicator (gray/green blinking while checking, green on success, red on failure, gray when not configured); tasks show an in-progress state and report per-item results for favourites, the database, settings and notes (a successful settings restore is followed by a restart prompt); database restores are downloaded and validated (SQLite header, integrity, schema) first and require foreground confirmation — "Replace" completes the local database replacement, while "Cancel" discards the pending database restore (clearing the record and deleting the downloaded temporary file) so it is not prompted again on the next restore — with automatic rollback to the original database on failure
 
 **Pros**:
 
@@ -493,6 +512,8 @@ Dedicated search page with four filter dimensions:
 
 All four criteria are optional and combinable. Any change triggers an automatic multi-condition query. One-tap reset for all filters. Filter area is collapsible.
 
+Search results can be sorted via the toolbar Sort button: Default (relevance), Name, Click Count, Votes, or Recent Change. Tapping the same mode again toggles ascending/descending; preferences are persisted. Note-matched stations are merged into the database results and sorted together.
+
 #### SQLite FTS Full-Text Search
 
 `radio_stations_fts` table (SQLite FTS4) indexes station name, tags, country, and language. Dedicated FTS search channels provided per field via `RadioStationDao`.
@@ -509,7 +530,7 @@ Sort options via toolbar button dialog:
 | Votes         | By community vote count                            |
 | Recent Change | By last modification timestamp                     |
 
-Current sort mode displayed with ↑ (ascending) / ↓ (descending). Tapping the same mode toggles direction. Preferences are persisted. Long-press drag to reorder works in any sort mode: dragging bakes the currently displayed order into "Custom Order", so manual reordering takes effect immediately and persists, while the remaining stations keep their sorted relative order.
+Current sort mode displayed with ↑ (ascending) / ↓ (descending). Tapping the same mode toggles direction. Preferences are persisted. Long-press drag to reorder works in any sort mode: dragging bakes the currently displayed order into "Custom Order", so manual reordering takes effect immediately and persists, while the remaining stations keep their sorted relative order. The multi-criteria search page also supports sorting (no "Custom Order" option; adds "Default Order" — the database relevance ranking).
 
 #### Shuffle Play
 
@@ -698,6 +719,19 @@ The station details page provides a **Buffer Strategy** configuration button, al
 **Why per-station?**: Different radio stations have vastly different stream server quality — some are rock-solid and benefit from light buffering for quick response, while others experience frequent interruptions and need longer buffers to play smoothly. Setting a strategy per station gives you the best balance between playback speed and stability.
 
 **Note**: Longer buffer times may cause the track history to get out of sync with what you're actually hearing. This is because the track history shows the current song from the radio stream, while your player — due to the longer buffer — is still playing content that entered the queue earlier. For example, you might still be hearing Song A, but the track history already shows Song B's title. The longer the buffer, the larger this gap becomes. Light buffer (2.5s) essentially avoids this issue.
+
+#### Station Notes
+
+Attach a **personal note** to any station to mark your listening preferences (e.g. "jazz", "evening listening", "crystal clear"), covering what the official radio-browser tags cannot express.
+
+**Editing**: tap the note row in the expanded area of a station list item, or the note row on the full-screen player info page; notes can be saved or cleared, and input is truncated by the actual display width so it never wraps inside the note row.
+
+**Display and search**: the "Station notes" toggle under Settings → Appearance (off by default) — when enabled, standard-mode station cards grow uniformly to show the note row and search matches station notes as well; when disabled, the list stays as before and search ignores notes. Compact and grid views never show notes.
+
+**Export/import and backup**: notes are stored in a standalone JSON file (kept separate from favourites, the database and settings):
+
+- Local export/import: "Export Notes / Import Notes" under Settings → Backup and Restore → App Settings Backup; exporting with no notes asks for confirmation first, importing an empty file is a no-op with a notice, and an invalid format leaves local notes untouched
+- WebDAV backup/restore: a dedicated "Station notes" item (remote file `station_notes.json`), included in "All" operations; restore merges over the local notes (remote entries override matching stations, other local notes are kept)
 
 #### ️ Multi-Language UI
 

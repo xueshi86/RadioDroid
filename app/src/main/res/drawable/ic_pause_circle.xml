@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 暂停按钮图标（实心圆盘 + 镂空双竖线）：与播放按钮同一实心样式，
+     双竖线 2.25x9.5、间距 2（角点距盘缘约 4.3 空隙，与播放三角匹配），
+     以负形镂空呈现。两种状态下圆盘轮廓完全一致、仅负形不同，播放/暂停切换时浑然一体。
+     竖线与三角的镂空负形光学尺寸匹配（最远角点到圆心距离均约 5.5~5.7），保证两态视觉重量一致 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="48dp"
     android:height="48dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
 
-    <path android:pathData="M0 0h24v24H0z" />
+    <!-- 圆盘（逆时针）与双竖线（顺时针）按非零环绕规则相减，竖线即为镂空负形 -->
     <path
         android:fillColor="?attr/colorAccent"
-        android:pathData="M9 16h2V8H9v8zm3-14C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm1-4h2V8h-2v8zz" />
+        android:pathData="M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM8.75 7.25h2.25v9.5h-2.25ZM13 7.25h2.25v9.5h-2.25Z" />
 </vector>

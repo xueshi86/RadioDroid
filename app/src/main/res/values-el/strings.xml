@@ -105,6 +105,9 @@
     <string name="theme_dark">Σκοτεινό</string>
     <string name="settings_circular_icons">Κυκλικά εικονίδια</string>
     <string name="settings_compact_style">Συμπαγής κατάσταση λειτουργίας</string>
+    <string name="settings_station_notes">Σημειώσεις σταθμών</string>
+    <string name="settings_station_notes_desc_on">Εμφάνιση σημειώσεων στην τυπική λίστα σταθμών και συμπερίληψή τους στην αναζήτηση</string>
+    <string name="settings_station_notes_desc_off">Απόκρυψη σημειώσεων σταθμών και εξαίρεσή τους από την αναζήτηση</string>
     <string name="settings_bottom_navigation">Τα χειριστήρια κάτω</string>
 
     <string name="settings_single_use_tags">Καρτέλες μονής χρήσης</string>
@@ -290,10 +293,32 @@
     <string name="webdav_favourites">Αγαπημένοι σταθμοί</string>
     <string name="webdav_database">Τοπική βάση δεδομένων</string>
     <string name="webdav_settings">Ρυθμίσεις εφαρμογής</string>
+    <string name="webdav_notes">Σημειώσεις σταθμών</string>
+    <string name="note_edit_title">Σημείωση σταθμού</string>
+    <string name="note_edit_message">Προσθέστε μια προσωπική σημείωση για τον σταθμό %1$s. Οι σημειώσεις εμφανίζονται στη λίστα σταθμών και αποθηκεύονται μόνο σε αυτή τη συσκευή.</string>
+    <string name="note_input_hint">π.χ. τζαζ, βραδινή ακρόαση, καθαρός ήχος</string>
+    <string name="note_action_save">Αποθήκευση</string>
+    <string name="note_action_clear">Καθαρισμός</string>
+    <string name="note_saved_toast">Η σημείωση αποθηκεύτηκε</string>
+    <string name="note_cleared_toast">Η σημείωση διαγράφηκε</string>
+    <string name="note_add_hint">Προσθήκη σημείωσης</string>
+    <string name="note_export_title">Εξαγωγή σημειώσεων σταθμών</string>
+    <string name="note_export_summary">Εξαγωγή όλων των σημειώσεων σταθμών σε αρχείο JSON</string>
+    <string name="note_export_empty_confirm">Δεν υπάρχουν σημειώσεις σταθμών για εξαγωγή. Εξαγωγή κενού αρχείου ούτως ή άλλως;</string>
+    <string name="note_export_empty_proceed">Εξαγωγή ούτως ή άλλως</string>
+    <string name="note_export_success">Εξήχθησαν %2$d σημειώσεις σε %1$s</string>
+    <string name="note_export_failed">Η εξαγωγή απέτυχε: %1$s</string>
+    <string name="note_import_title">Εισαγωγή σημειώσεων σταθμών</string>
+    <string name="note_import_summary">Εισαγωγή σημειώσεων σταθμών από αρχείο JSON (συγχώνευση με υπάρχουσες)</string>
+    <string name="note_import_success">Εισήχθησαν %1$d σημειώσεις</string>
+    <string name="note_import_empty">Το αρχείο δεν περιέχει σημειώσεις</string>
+    <string name="note_import_invalid">Μη έγκυρο αρχείο σημειώσεων σταθμών</string>
+    <string name="note_import_failed">Η εισαγωγή απέτυχε: %1$s</string>
     <string name="webdav_all">Όλα</string>
     <string name="webdav_settings_restart_prompt">Επανεκκίνηση της εφαρμογής για εφαρμογή των επαναφερθέντων ρυθμίσεων (θέμα, γλώσσα, διάταξη κ.λπ.);</string>
 
     <string name="settings_backup_group_title">Αντίγραφο ασφαλείας ρυθμίσεων</string>
+    <string name="settings_notes_backup_group_title">Αντίγραφο ασφαλείας σημειώσεων σταθμών</string>
     <string name="export_settings_title">Εξαγωγή ρυθμίσεων</string>
     <string name="export_settings_summary">Εξαγωγή όλων των ρυθμίσεων της εφαρμογής σε αρχείο αντιγράφου ασφαλείας</string>
     <string name="import_settings_title">Εισαγωγή ρυθμίσεων</string>
@@ -381,4 +406,5 @@
     <string name="settings_audio_offload_title">Εκφόρτωση ήχου (πειραματικό)</string>
     <string name="settings_audio_offload_summary_supported">Η συσκευή υποστηρίζει εκφόρτωση ήχου: η αποκωδικοποίηση αναλαμβάνεται από το DSP, μειώνοντας σημαντικά την κατανάλωση μπαταρίας και CPU. Ο ισοσταθμιστής και άλλα ηχητικά εφέ δεν θα λειτουργούν όσο είναι ενεργή.</string>
     <string name="settings_audio_offload_summary_unsupported">Η εκφόρτωση ήχου δεν υποστηρίζεται σε αυτή τη συσκευή (απαιτεί Android 10 ή νεότερο και συμβατό υλικό).</string>
+    <string name="sort_by_default">Προεπιλεγμένη σειρά</string>
 </resources>

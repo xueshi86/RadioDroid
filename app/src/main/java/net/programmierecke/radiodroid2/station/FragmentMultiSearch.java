@@ -1,5 +1,6 @@
 package net.programmierecke.radiodroid2.station;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
@@ -36,6 +37,8 @@ import net.programmierecke.radiodroid2.ui.SearchableListDialogFragment;
 import net.programmierecke.radiodroid2.utils.DatabaseEmptyHelper;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class FragmentMultiSearch extends FragmentBase {
@@ -44,6 +47,15 @@ public class FragmentMultiSearch extends FragmentBase {
     private static final int FILTER_TYPE_COUNTRY = 0;
     private static final int FILTER_TYPE_LANGUAGE = 1;
     private static final int FILTER_TYPE_TAG = 2;
+
+    // 结果排序模式：SORT_NONE 表示数据库默认排序（相关度加权），其余与本地电台列表一致
+    public static final int SORT_NONE = 0;
+    public static final int SORT_NAME = 1;
+    public static final int SORT_CLICK_COUNT = 2;
+    public static final int SORT_VOTES = 3;
+    public static final int SORT_RECENT = 4;
+    private static final String PREF_SORT_MODE = "search_sort_mode";
+    private static final String PREF_SORT_ASCENDING = "search_sort_ascending";
 
     private RecyclerView recyclerViewStations;
     private EditText etSearchQuery;
@@ -70,6 +82,12 @@ public class FragmentMultiSearch extends FragmentBase {
     private String selectedLanguage = "";
     private String selectedTag = "";
     private String searchQuery = "";
+
+    // 当前排序状态（持久化，与本地电台列表行为一致）
+    private int currentSortMode = SORT_NONE;
+    private boolean sortAscending = true;
+    // 最近一次搜索的原始结果（数据库序 + 备注补全），排序在其副本上进行
+    private List<DataRadioStation> lastResults = new ArrayList<>();
 
     // 选项列表（首项为"全部"）
     private List<SearchableListDialogFragment.FilterOption> countriesList = new ArrayList<>();
@@ -170,6 +188,11 @@ public class FragmentMultiSearch extends FragmentBase {
             }
 
             allLabel = getString(R.string.multi_search_all);
+
+            // 读取持久化的排序偏好
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+            currentSortMode = prefs.getInt(PREF_SORT_MODE, SORT_NONE);
+            sortAscending = prefs.getBoolean(PREF_SORT_ASCENDING, true);
 
             // 加载所有国家、语言和标签
             loadFilterOptions();
@@ -512,30 +535,102 @@ public class FragmentMultiSearch extends FragmentBase {
         }
         // 结果已回来，收起加载态后再决定展示列表还是空态
         setLoading(false);
+        lastResults = new ArrayList<>();
         if (radioStations != null && !radioStations.isEmpty()) {
             // 无效电台过滤：用户可在设置中关闭"在列表中显示无效电台"
             boolean showBroken = PreferenceManager.getDefaultSharedPreferences(getContext())
                     .getBoolean("show_broken", false);
             // 转换为DataRadioStation
-            List<DataRadioStation> dataStations = new ArrayList<>(radioStations.size());
             for (RadioStation radioStation : radioStations) {
                 if (radioStation != null) {
                     DataRadioStation dataStation = radioStation.toDataRadioStation();
                     if (dataStation != null && (showBroken || dataStation.Working)) {
-                        dataStations.add(dataStation);
+                        lastResults.add(dataStation);
                     }
                 }
             }
-
-            stationListAdapter.updateList(null, dataStations);
-            recyclerViewStations.setVisibility(View.VISIBLE);
-            getView().findViewById(R.id.layoutError).setVisibility(View.GONE);
-        } else {
-            // 没有搜索结果
-            stationListAdapter.updateList(null, new ArrayList<>());
-            recyclerViewStations.setVisibility(View.VISIBLE);
-            getView().findViewById(R.id.layoutError).setVisibility(View.VISIBLE);
         }
+
+        refreshResultList();
+
+        // 备注搜索补全（Issue #54）：开关打开时追加备注命中但 DB 查询未返回的电台（异步，主线程回调）
+        StationsFilter.appendNoteMatches(requireContext(), searchQuery, lastResults, appended -> {
+            if (getView() == null) {
+                return; // 异步回调返回时视图可能已销毁
+            }
+            lastResults.addAll(appended);
+            refreshResultList();
+        });
+    }
+
+    /**
+     * 按当前排序模式刷新结果列表（备注补全结果一并参与排序）。
+     */
+    private void refreshResultList() {
+        if (getView() == null) {
+            return;
+        }
+        List<DataRadioStation> displayList = getSortedStations();
+        stationListAdapter.updateList(null, displayList);
+        recyclerViewStations.setVisibility(View.VISIBLE);
+
+        if (displayList.isEmpty()) {
+            // 没有搜索结果
+            getView().findViewById(R.id.layoutError).setVisibility(View.VISIBLE);
+        } else {
+            getView().findViewById(R.id.layoutError).setVisibility(View.GONE);
+        }
+    }
+
+    public int getCurrentSortMode() {
+        return currentSortMode;
+    }
+
+    public boolean isSortAscending() {
+        return sortAscending;
+    }
+
+    /**
+     * 与本地电台列表一致：同模式再选一次切换升降序，否则切换模式并默认升序。
+     */
+    public void setSortMode(int mode) {
+        if (currentSortMode == mode) {
+            sortAscending = !sortAscending;
+        } else {
+            currentSortMode = mode;
+            sortAscending = true;
+        }
+        PreferenceManager.getDefaultSharedPreferences(getContext()).edit()
+                .putInt(PREF_SORT_MODE, currentSortMode)
+                .putBoolean(PREF_SORT_ASCENDING, sortAscending)
+                .apply();
+        refreshResultList();
+    }
+
+    private List<DataRadioStation> getSortedStations() {
+        List<DataRadioStation> sorted = new ArrayList<>(lastResults);
+        Comparator<DataRadioStation> comparator = null;
+        switch (currentSortMode) {
+            case SORT_NAME:
+                comparator = Comparator.comparing(s -> s.Name.toLowerCase());
+                break;
+            case SORT_CLICK_COUNT:
+                comparator = Comparator.comparingInt(s -> s.ClickCount);
+                break;
+            case SORT_VOTES:
+                comparator = Comparator.comparingInt(s -> s.Votes);
+                break;
+            case SORT_RECENT:
+                comparator = Comparator.comparing(s -> s.LastChangeTime, Comparator.nullsLast(Comparator.reverseOrder()));
+                break;
+        }
+        if (comparator != null) {
+            if (!sortAscending) {
+                comparator = comparator.reversed();
+            }
+            Collections.sort(sorted, comparator);
+        }
+        return sorted;
     }
 
     private void resetFilters() {

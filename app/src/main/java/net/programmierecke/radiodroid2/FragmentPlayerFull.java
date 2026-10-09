@@ -39,6 +39,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
+import com.mikepenz.iconics.IconicsColor;
+import com.mikepenz.iconics.IconicsSize;
+import com.mikepenz.iconics.IconicsDrawable;
+import com.mikepenz.iconics.typeface.library.googlematerial.GoogleMaterial;
 import com.squareup.picasso.Picasso;
 
 import net.programmierecke.radiodroid2.history.TrackHistoryAdapter;
@@ -56,6 +60,8 @@ import net.programmierecke.radiodroid2.service.PauseReason;
 import net.programmierecke.radiodroid2.service.PlayerService;
 import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
 import net.programmierecke.radiodroid2.station.DataRadioStation;
+import net.programmierecke.radiodroid2.station.StationNoteDialog;
+import net.programmierecke.radiodroid2.station.StationNoteManager;
 import net.programmierecke.radiodroid2.ui.StationPlaceholderUtils;
 import net.programmierecke.radiodroid2.station.StationActions;
 import net.programmierecke.radiodroid2.station.live.ShoutcastInfo;
@@ -586,6 +592,40 @@ public class FragmentPlayerFull extends Fragment {
         }
     }
 
+    /**
+     * 信息页备注行（Issue #54）：展示当前电台备注，点击整行或铅笔图标弹出编辑对话框，
+     * 保存后经回调原地刷新，无需等待下一次 fullUpdate。
+     */
+    private void updateStationNoteRow(DataRadioStation station) {
+        StationNoteManager noteManager = ((RadioDroidApp) requireActivity().getApplication()).getStationNoteManager();
+        String note = noteManager.getNote(station.StationUuid);
+
+        artAndInfoPagerAdapter.textViewStationNote.setCompoundDrawablesRelativeWithIntrinsicBounds(buildNoteIcon(), null, null, null);
+        if (TextUtils.isEmpty(note)) {
+            artAndInfoPagerAdapter.textViewStationNote.setText(R.string.note_add_hint);
+            // 空备注占位提示用次要色弱化，不与正文备注争夺注意力
+            artAndInfoPagerAdapter.textViewStationNote.setTextColor(Utils.getThemeColor(requireContext(), R.attr.colorTextSecondary));
+        } else {
+            artAndInfoPagerAdapter.textViewStationNote.setText(note);
+            // 正文备注与 TextAppearance.RadioDroid.Note 及行首图标同用强调色
+            artAndInfoPagerAdapter.textViewStationNote.setTextColor(Utils.getThemeColor(requireContext(), R.attr.presetAccentColor));
+        }
+
+        View.OnClickListener editListener = v -> StationNoteDialog.show(requireContext(), station,
+                newNote -> updateStationNoteRow(station));
+        artAndInfoPagerAdapter.layoutStationNoteRow.setOnClickListener(editListener);
+        artAndInfoPagerAdapter.buttonEditStationNote.setOnClickListener(editListener);
+    }
+
+    /**
+     * 备注行首小图标：跟随预设强调色，与列表备注行视觉一致。
+     */
+    private Drawable buildNoteIcon() {
+        return new IconicsDrawable(requireContext(), GoogleMaterial.Icon.gmd_description)
+                .size(IconicsSize.dp(12))
+                .color(IconicsColor.colorInt(Utils.getThemeColor(requireContext(), R.attr.presetAccentColor)));
+    }
+
     private void fullUpdate() {
         DataRadioStation station = Utils.getCurrentOrLastStation(requireContext());
 
@@ -672,6 +712,9 @@ public class FragmentPlayerFull extends Fragment {
             String[] tags = station.TagsAll.split(",");
             artAndInfoPagerAdapter.viewTags.setTags(Arrays.asList(tags));
             //artAndInfoPagerAdapter.viewTags.setTagSelectionCallback(tagSelectionCallback);
+
+            // 备注行（Issue #54）：展示当前电台备注并提供编辑入口
+            updateStationNoteRow(station);
         }
 
         updateAlbumArt();
@@ -1042,6 +1085,10 @@ public class FragmentPlayerFull extends Fragment {
         ImageView imageViewArt;
         TextView textViewStationDescription;
         TagsView viewTags;
+        ViewGroup layoutStationNoteRow;
+        TextView textViewStationNote;
+        // IconicsImageButton 继承自 IconicsImageView 而非 ImageButton，声明为 View 避免类型转换崩溃
+        View buttonEditStationNote;
 
         ArtAndInfoPagerAdapter(@NonNull Context context, @NonNull ViewGroup parent) {
             LayoutInflater inflater = LayoutInflater.from(context);
@@ -1055,6 +1102,9 @@ public class FragmentPlayerFull extends Fragment {
 
             textViewStationDescription = layoutStationInfo.findViewById(R.id.textViewStationDescription);
             viewTags = layoutStationInfo.findViewById(R.id.viewTags);
+            layoutStationNoteRow = (ViewGroup) layoutStationInfo.findViewById(R.id.layoutStationNoteRow);
+            textViewStationNote = (TextView) layoutStationInfo.findViewById(R.id.textViewStationNote);
+            buttonEditStationNote = layoutStationInfo.findViewById(R.id.buttonEditStationNote);
         }
 
         @NonNull
