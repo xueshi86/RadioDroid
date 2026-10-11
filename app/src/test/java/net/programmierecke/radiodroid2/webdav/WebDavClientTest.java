@@ -285,6 +285,35 @@ public class WebDavClientTest {
         expect(WebDavException.Kind.PROTOCOL, () -> client.download("favourites.m3u", tempDirectory()));
     }
 
+    @Test
+    public void uploadAllowsStationNotesFile() throws Exception {
+        File file = createTempFile("{\"version\":1,\"notes\":{}}");
+        server.enqueue(new MockResponse().setResponseCode(201));
+        client.upload("station_notes.json", file);
+        RecordedRequest request = server.takeRequest();
+        assertEquals("PUT", request.getMethod());
+        assertEquals("/dav/station_notes.json", request.getPath());
+        file.delete();
+    }
+
+    @Test
+    public void downloadAllowsStationNotesFile() throws Exception {
+        server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"version\":1,\"notes\":{}}"));
+        File target = client.download("station_notes.json", tempDirectory());
+        assertTrue(target.length() > 0);
+        RecordedRequest request = server.takeRequest();
+        assertEquals("GET", request.getMethod());
+        assertEquals("/dav/station_notes.json", request.getPath());
+        target.delete();
+    }
+
+    @Test
+    public void uploadRejectsUnknownFile() throws Exception {
+        File file = createTempFile("content");
+        expect(WebDavException.Kind.INVALID_DATA, () -> client.upload("evil.txt", file));
+        file.delete();
+    }
+
     private interface ThrowingTask {
         void run() throws Exception;
     }
