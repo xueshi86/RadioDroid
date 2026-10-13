@@ -75,6 +75,12 @@ public class RecyclerAwareNestedScrollView extends NestedScrollView {
 
     @Override
     public void onNestedPreScroll(@NonNull View target, int dx, int dy, @NonNull int[] consumed, int type) {
+        // 嵌套滚动 target 不一定是 RecyclerView（如全屏播放器 Info 页的内嵌 NestedScrollView），
+        // 非列表目标直接走默认链路，交由系统嵌套滚动机制处理
+        if (!(target instanceof RecyclerView)) {
+            super.onNestedPreScroll(target, dx, dy, consumed, type);
+            return;
+        }
         final RecyclerView rv = (RecyclerView) target;
         if ((dy < 0 && isRvScrolledToTop(rv)) || (dy > 0 && !isNsvScrolledToBottom(this))) {
             // Scroll the NestedScrollView's content and record the number of pixels consumed
@@ -88,6 +94,9 @@ public class RecyclerAwareNestedScrollView extends NestedScrollView {
 
     @Override
     public boolean onNestedPreFling(View target, float velX, float velY) {
+        if (!(target instanceof RecyclerView)) {
+            return super.onNestedPreFling(target, velX, velY);
+        }
         final RecyclerView rv = (RecyclerView) target;
         if ((velY < 0 && isRvScrolledToTop(rv)) || (velY > 0 && !isNsvScrolledToBottom(this))) {
             // Fling the NestedScrollView's content and return true (so that the RecyclerView

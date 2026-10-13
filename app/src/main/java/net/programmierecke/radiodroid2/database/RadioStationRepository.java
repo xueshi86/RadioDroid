@@ -454,7 +454,9 @@ public class RadioStationRepository {
         if (fastestServer == null) {
             Log.e(TAG, "网络检查失败，无法获取服务器信息");
             callback.onError(context.getString(R.string.error_list_update));
-            throw new RuntimeException("网络检查失败，无法获取服务器信息");
+            // 异常消息会经 DatabaseUpdateWorker 透出到进度提示，必须用本地化字符串，
+            // 不能硬编码中文，否则外语用户会看到"本地化文案 + 中文异常"的混杂提示（Issue #53）
+            throw new RuntimeException(context.getString(R.string.error_list_update));
         }
         
         RadioDroidApp radioDroidApp = (RadioDroidApp) context.getApplicationContext();

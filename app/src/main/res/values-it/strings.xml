@@ -589,4 +589,13 @@ L\'app si riavvierà automaticamente per caricare la nuova base dati.</string>
     <string name="settings_audio_offload_summary_supported">Questo dispositivo supporta l\'offload audio: la decodifica viene gestita dal DSP, riducendo sensibilmente il consumo di batteria e CPU. Equalizzatore e altri effetti audio non funzioneranno quando è attivo.</string>
     <string name="settings_audio_offload_summary_unsupported">L\'offload audio non è supportato su questo dispositivo (richiede Android 10 o versioni successive e hardware compatibile).</string>
     <string name="sort_by_default">Ordine predefinito</string>
+
+    <!-- v1.12: Messaggi localizzati in caso di errore dell\'aggiornamento del database (Issue #53) -->
+    <string name="update_failed">Aggiornamento non riuscito</string>
+    <string name="update_failed_message">Aggiornamento non riuscito: %s</string>
+    <string name="update_failed_network">Aggiornamento non riuscito: errore di connessione di rete. Verificare la rete e riprovare.</string>
+    <string name="update_failed_storage">Aggiornamento non riuscito: spazio di archiviazione insufficiente. Liberare spazio e riprovare.</string>
+    <string name="update_failed_db_migration">Aggiornamento non riuscito: versione del database incompatibile. Il database locale verrà ricostruito al prossimo aggiornamento.</string>
+    <string name="error_network_unavailable">Connessione di rete non disponibile, verificare le impostazioni di rete</string>
+    <string name="error_network_check_failed">Verifica della rete non riuscita</string>
 </resources>

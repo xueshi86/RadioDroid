@@ -1,68 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- 根节点改为 NestedScrollView（Issue #53）：Info 页嵌在固定高度的「封面/信息」ViewPager 中，
+     此前为不可滚动的 LinearLayout，标签较多的电台会把内容（含备注行）挤出页面底部被裁剪，
+     用户滚动到页面尽头也看不到「添加备注」入口；改为可滚动页面后任何信息量都能完整到达。 -->
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="@dimen/space_lg">
+    android:fillViewport="true">
 
-    <TextView
-        android:id="@+id/textViewStationDescription"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:drawablePadding="@dimen/space_xs"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:minLines="1"
-        android:textColor="?attr/colorTextPrimary"
-        android:textAppearance="@style/TextAppearance.RadioDroid.Body" />
-
-    <net.programmierecke.radiodroid2.views.TagsView
-        android:id="@+id/viewTags"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:lineSpacingMultiplier="1"
-        android:textSize="@dimen/text_title"
-        app:cornerRadius="@dimen/radius_sm"
-        app:tagBackgroundColor="?attr/tagBackgroundColor"
-        app:tagHeight="25sp"
-        app:textHorizontalPadding="@dimen/space_sm"
-        app:textVerticalMargin="@dimen/space_xs" />
-
-    <!-- 电台备注行 + 编辑入口（Issue #54）：点击整行或铅笔图标弹出备注编辑对话框 -->
     <LinearLayout
-        android:id="@+id/layoutStationNoteRow"
+        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/space_xs"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true">
+        android:padding="@dimen/space_lg">
 
         <TextView
-            android:id="@+id/textViewStationNote"
-            android:layout_width="0dp"
+            android:id="@+id/textViewStationDescription"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:drawablePadding="4sp"
+            android:drawablePadding="@dimen/space_xs"
             android:ellipsize="end"
-            android:lines="1"
-            android:textAppearance="@style/TextAppearance.RadioDroid.Note" />
+            android:maxLines="1"
+            android:minLines="1"
+            android:textColor="?attr/colorTextPrimary"
+            android:textAppearance="@style/TextAppearance.RadioDroid.Body" />
 
-        <com.mikepenz.iconics.view.IconicsImageButton
-            android:id="@+id/buttonEditStationNote"
-            android:layout_width="wrap_content"
+        <net.programmierecke.radiodroid2.views.TagsView
+            android:id="@+id/viewTags"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minWidth="@dimen/touch_target_min"
-            android:minHeight="@dimen/touch_target_min"
-            android:padding="4dp"
-            android:contentDescription="@string/note_edit_title"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            app:tint="?attr/iconsInItemBackgroundColor"
-            app:iiv_icon="gmd-pencil"
-            app:iiv_padding="2dp"
-            app:iiv_size="20dp" />
+            android:lineSpacingMultiplier="1"
+            android:textSize="@dimen/text_title"
+            app:cornerRadius="@dimen/radius_sm"
+            app:tagBackgroundColor="?attr/tagBackgroundColor"
+            app:tagHeight="25sp"
+            app:textHorizontalPadding="@dimen/space_sm"
+            app:textVerticalMargin="@dimen/space_xs" />
+
+        <!-- 电台备注行 + 编辑入口（Issue #54）：点击整行或铅笔图标弹出备注编辑对话框 -->
+        <LinearLayout
+            android:id="@+id/layoutStationNoteRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_xs"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:id="@+id/textViewStationNote"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:drawablePadding="4sp"
+                android:ellipsize="end"
+                android:lines="1"
+                android:textAppearance="@style/TextAppearance.RadioDroid.Note" />
+
+            <com.mikepenz.iconics.view.IconicsImageButton
+                android:id="@+id/buttonEditStationNote"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="@dimen/touch_target_min"
+                android:minHeight="@dimen/touch_target_min"
+                android:padding="4dp"
+                android:contentDescription="@string/note_edit_title"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="?attr/iconsInItemBackgroundColor"
+                app:iiv_icon="gmd-pencil"
+                app:iiv_padding="2dp"
+                app:iiv_size="20dp" />
+        </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+</androidx.core.widget.NestedScrollView>

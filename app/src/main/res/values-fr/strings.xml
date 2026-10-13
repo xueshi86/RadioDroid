@@ -593,4 +593,13 @@ L\'application redémarrera automatiquement pour charger la nouvelle base.</stri
     <string name="settings_audio_offload_summary_supported">Cet appareil prend en charge le déport audio : le décodage est confié au DSP, ce qui peut réduire fortement la consommation de batterie et de processeur. L\'égaliseur et les autres effets audio ne fonctionneront pas tant que cette option est activée.</string>
     <string name="settings_audio_offload_summary_unsupported">Le déport audio n\'est pas pris en charge sur cet appareil (nécessite Android 10 ou version ultérieure et un matériel compatible).</string>
     <string name="sort_by_default">Ordre par défaut</string>
+
+    <!-- v1.12 : Messages localisés en cas d\'échec de la mise à jour de la base de données (Issue #53) -->
+    <string name="update_failed">Échec de la mise à jour</string>
+    <string name="update_failed_message">Échec de la mise à jour : %s</string>
+    <string name="update_failed_network">Échec de la mise à jour : erreur de connexion réseau. Vérifiez votre réseau et réessayez.</string>
+    <string name="update_failed_storage">Échec de la mise à jour : espace de stockage insuffisant. Libérez de l\'espace et réessayez.</string>
+    <string name="update_failed_db_migration">Échec de la mise à jour : version de base de données incompatible. La base locale sera reconstruite lors de la prochaine mise à jour.</string>
+    <string name="error_network_unavailable">Connexion réseau indisponible, veuillez vérifier les paramètres réseau</string>
+    <string name="error_network_check_failed">Échec de la vérification du réseau</string>
 </resources>

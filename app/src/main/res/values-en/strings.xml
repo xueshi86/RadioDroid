@@ -664,4 +664,13 @@ The app will automatically restart to load the new database.</string>
     <string name="settings_audio_offload_title">Audio offload (experimental)</string>
     <string name="settings_audio_offload_summary_supported">This device supports audio offload: decoding is handled by the DSP, which can greatly reduce battery and CPU usage. Equalizer and other audio effects will not work while it is enabled.</string>
     <string name="settings_audio_offload_summary_unsupported">Audio offload is not supported on this device (requires Android 10 or newer and compatible hardware).</string>
+
+    <!-- v1.12: Localized database update failure messages (Issue #53) -->
+    <string name="update_failed">Update Failed</string>
+    <string name="update_failed_message">Update failed: %s</string>
+    <string name="update_failed_network">Update failed: Network connection error. Please check your network and try again.</string>
+    <string name="update_failed_storage">Update failed: Insufficient storage space. Please free up space and try again.</string>
+    <string name="update_failed_db_migration">Update failed: Database version incompatible. The local database will be rebuilt on next update.</string>
+    <string name="error_network_unavailable">Network connection unavailable, please check network settings</string>
+    <string name="error_network_check_failed">Network check failed</string>
 </resources>

@@ -407,4 +407,13 @@
     <string name="settings_audio_offload_summary_supported">Η συσκευή υποστηρίζει εκφόρτωση ήχου: η αποκωδικοποίηση αναλαμβάνεται από το DSP, μειώνοντας σημαντικά την κατανάλωση μπαταρίας και CPU. Ο ισοσταθμιστής και άλλα ηχητικά εφέ δεν θα λειτουργούν όσο είναι ενεργή.</string>
     <string name="settings_audio_offload_summary_unsupported">Η εκφόρτωση ήχου δεν υποστηρίζεται σε αυτή τη συσκευή (απαιτεί Android 10 ή νεότερο και συμβατό υλικό).</string>
     <string name="sort_by_default">Προεπιλεγμένη σειρά</string>
+
+    <!-- v1.12: Τοπικοποιημένα μηνύματα αποτυχίας ενημέρωσης της βάσης δεδομένων (Issue #53) -->
+    <string name="update_failed">Η ενημέρωση απέτυχε</string>
+    <string name="update_failed_message">Η ενημέρωση απέτυχε: %s</string>
+    <string name="update_failed_network">Η ενημέρωση απέτυχε: σφάλμα σύνδεσης δικτύου. Ελέγξτε το δίκτυό σας και δοκιμάστε ξανά.</string>
+    <string name="update_failed_storage">Η ενημέρωση απέτυχε: ανεπαρκής χώρος αποθήκευσης. Ελευθερώστε χώρο και δοκιμάστε ξανά.</string>
+    <string name="update_failed_db_migration">Η ενημέρωση απέτυχε: μη συμβατή έκδοση βάσης δεδομένων. Η τοπική βάση δεδομένων θα αναδομηθεί στην επόμενη ενημέρωση.</string>
+    <string name="error_network_unavailable">Η σύνδεση δικτύου δεν είναι διαθέσιμη, ελέγξτε τις ρυθμίσεις δικτύου</string>
+    <string name="error_network_check_failed">Ο έλεγχος δικτύου απέτυχε</string>
 </resources>

@@ -510,4 +510,13 @@ Die App wird automatisch neu gestartet, um die neue Datenbank zu laden.</string>
     <string name="settings_audio_offload_summary_supported">Dieses Gerät unterstützt Audio-Offload: Die Decodierung übernimmt der DSP, was Akku- und CPU-Verbrauch deutlich senken kann. Equalizer und andere Audioeffekte funktionieren dann nicht.</string>
     <string name="settings_audio_offload_summary_unsupported">Audio-Offload wird auf diesem Gerät nicht unterstützt (erfordert Android 10 oder neuer und kompatible Hardware).</string>
     <string name="sort_by_default">Standardreihenfolge</string>
+
+    <!-- v1.12: Lokalisierte Meldungen bei fehlgeschlagenem Datenbank-Update (Issue #53) -->
+    <string name="update_failed">Aktualisierung fehlgeschlagen</string>
+    <string name="update_failed_message">Aktualisierung fehlgeschlagen: %s</string>
+    <string name="update_failed_network">Aktualisierung fehlgeschlagen: Netzwerkverbindungsfehler. Bitte überprüfen Sie Ihr Netzwerk und versuchen Sie es erneut.</string>
+    <string name="update_failed_storage">Aktualisierung fehlgeschlagen: Nicht genügend Speicherplatz. Bitte geben Sie Speicherplatz frei und versuchen Sie es erneut.</string>
+    <string name="update_failed_db_migration">Aktualisierung fehlgeschlagen: Inkompatible Datenbankversion. Die lokale Datenbank wird beim nächsten Update neu aufgebaut.</string>
+    <string name="error_network_unavailable">Keine Netzwerkverbindung verfügbar, bitte Netzwerkeinstellungen überprüfen</string>
+    <string name="error_network_check_failed">Netzwerkprüfung fehlgeschlagen</string>
 </resources>

@@ -200,8 +200,8 @@ public class DatabaseUpdateWorker extends Worker implements RadioStationReposito
                     if (detail != null && detail.contains(cancelledText)) {
                         userMessage = cancelledText;
                     } else {
-                        userMessage = getApplicationContext().getString(R.string.update_failed)
-                                + (detail != null && !detail.isEmpty() ? (": " + detail) : "");
+                        // 统一走关键字映射（网络/存储等），避免把原始异常消息直接透给用户
+                        userMessage = getUserFriendlyErrorMessage(e);
                     }
                     prefs.edit()
                             .putBoolean(KEY_IS_UPDATING, false)
