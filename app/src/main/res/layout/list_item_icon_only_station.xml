@@ -46,6 +46,7 @@
             android:scaleType="fitCenter" />
     </FrameLayout>
 
+    <!-- 固定 2 行高度（UI 审查 P1-3）：1 行与 2 行标签混排时每格文字区等高、纵向基线对齐 -->
     <TextView
         android:id="@+id/textViewStationName"
         android:layout_width="match_parent"
@@ -54,6 +55,7 @@
         android:textSize="@dimen/text_label"
         android:textColor="?attr/colorTextSecondary"
         android:gravity="center"
+        android:lines="2"
         android:maxLines="2"
         android:ellipsize="end" />
 </LinearLayout>

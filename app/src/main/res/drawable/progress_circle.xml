@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 中性灰渐变兜底（UI 审查 P2-2 跳色清理）：API 21+ 上被 layout_main.xml 的
+     android:indeterminateTint 白色覆盖，仅 API<21 降级设备可见本文件原色，
+     改灰色避免透出旧血统蓝色；真正的主题强调色由代码/属性 tint 负责。 -->
 <rotate xmlns:android="http://schemas.android.com/apk/res/android"
     android:fromDegrees="0"
     android:toDegrees="360"
@@ -11,8 +14,8 @@
         android:useLevel="false">
         <gradient
             android:type="sweep"
-            android:startColor="@color/colorPrimary"
-            android:endColor="@color/colorAccent"
+            android:startColor="#9E9E9E"
+            android:endColor="#424242"
             android:angle="0" />
     </shape>
 </rotate>

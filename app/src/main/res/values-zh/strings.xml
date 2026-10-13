@@ -14,6 +14,15 @@
     <string name="detail_pause">暂停</string>
     <string name="detail_stop">停止</string>
     <string name="detail_share">分享</string>
+    <!-- 展开卡片操作行短标签（UI 审查 P1-1）：图标下方的可读文字 -->
+    <string name="action_label_website">主页</string>
+    <string name="action_label_share">分享</string>
+    <string name="action_label_favorite">收藏</string>
+    <string name="action_label_alarm">闹钟</string>
+    <string name="action_label_buffer">缓冲</string>
+    <string name="action_label_equalizer">均衡器</string>
+    <string name="action_label_relay">转播</string>
+    <string name="action_label_refresh">刷新</string>
     <string name="detail_play_in_radiodroid">使用睿卓播放</string>
 
     <string name="action_links">链接</string>
@@ -147,6 +156,10 @@
     <string name="settings_station_notes_desc_on">在标准模式电台列表显示备注，搜索时匹配备注</string>
     <string name="settings_station_notes_desc_off">不显示电台备注，搜索时不匹配备注</string>
     <string name="settings_bottom_navigation">底部导航</string>
+    <string name="settings_bottom_navigation_summary">关闭后将改用侧边抽屉导航</string>
+    <!-- 收藏夹空态（UI 审查 P0-3） -->
+    <string name="empty_starred_title">还没有收藏的电台</string>
+    <string name="empty_starred_hint">在电台列表点按星标即可收藏，收藏的电台会出现在这里</string>
     <string name="settings_toolbar_buttons_category">工具栏按钮</string>
     <string name="settings_toolbar_show_search">搜索</string>
     <string name="settings_toolbar_show_sort">排序</string>

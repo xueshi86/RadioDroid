@@ -98,6 +98,7 @@
                 app:layout_constraintTop_toBottomOf="@+id/textViewGeneralInfo">
 
                 <androidx.viewpager.widget.PagerTabStrip
+                    android:id="@+id/tabStripArtAndInfo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="top" />
@@ -259,6 +260,7 @@
                 app:layout_constraintTop_toBottomOf="@+id/divider2">
 
                 <androidx.viewpager.widget.PagerTabStrip
+                    android:id="@+id/tabStripHistoryAndRecordings"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="top" />

@@ -14,6 +14,15 @@
     <string name="detail_pause">Pause</string>
     <string name="detail_stop">Arrêter</string>
     <string name="detail_share">Partager</string>
+    <!-- Libellés courts des actions (revue UI P1-1) : texte lisible sous les icônes -->
+    <string name="action_label_website">Accueil</string>
+    <string name="action_label_share">Partager</string>
+    <string name="action_label_favorite">Favori</string>
+    <string name="action_label_alarm">Alarme</string>
+    <string name="action_label_buffer">Tampon</string>
+    <string name="action_label_equalizer">Égaliseur</string>
+    <string name="action_label_relay">Ouvrir</string>
+    <string name="action_label_refresh">Actualiser</string>
     <string name="detail_play_in_radiodroid">Lire avec RadioDroid</string>
 
     <string name="action_links">Liens</string>
@@ -116,6 +125,10 @@
     <string name="settings_station_notes_desc_on">Afficher les notes dans la liste standard des stations et les inclure dans la recherche</string>
     <string name="settings_station_notes_desc_off">Masquer les notes des stations et les exclure de la recherche</string>
     <string name="settings_bottom_navigation">Navigation inférieure</string>
+    <string name="settings_bottom_navigation_summary">Une fois désactivée, la navigation bascule sur le menu latéral</string>
+    <!-- État vide des favoris (revue UI P0-3) -->
+    <string name="empty_starred_title">Aucune station favorite</string>
+    <string name="empty_starred_hint">Touchez l\'étoile d\'une station pour l\'ajouter ici</string>
 
     <string name="settings_interaction">Interaction</string>
     <string name="settings_single_use_tags">Montrer les tags uniques</string>

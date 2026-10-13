@@ -12,6 +12,15 @@
     <string name="detail_pause">Пауза</string>
     <string name="detail_stop">Стоп</string>
     <string name="detail_share">Поделиться</string>
+    <!-- Краткие подписи под кнопками раскрытой карточки (UI-обзор P1-1) -->
+    <string name="action_label_website">Главная</string>
+    <string name="action_label_share">Поделиться</string>
+    <string name="action_label_favorite">В избранное</string>
+    <string name="action_label_alarm">Будильник</string>
+    <string name="action_label_buffer">Буфер</string>
+    <string name="action_label_equalizer">Эквалайзер</string>
+    <string name="action_label_relay">Открыть</string>
+    <string name="action_label_refresh">Обновить</string>
     <string name="detail_play_in_radiodroid">Воспроизвести в RadioDroid</string>
 
     <string name="action_links">Ссылки</string>
@@ -238,6 +247,10 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="settings_station_notes_desc_on">Показывать заметки в стандартном списке станций и учитывать их в поиске</string>
     <string name="settings_station_notes_desc_off">Скрывать заметки о станциях и не учитывать их в поиске</string>
     <string name="settings_bottom_navigation">Нижняя навигация</string>
+    <string name="settings_bottom_navigation_summary">После отключения используется боковая выдвижная панель</string>
+    <!-- Пустое состояние списка избранного (UI-обзор P0-3) -->
+    <string name="empty_starred_title">Пока нет избранных станций</string>
+    <string name="empty_starred_hint">Нажмите звезду у станции, чтобы добавить её сюда</string>
     <string name="settings_toolbar_buttons_category">Кнопки панели инструментов</string>
     <string name="settings_toolbar_show_search">Поиск</string>
     <string name="settings_toolbar_show_sort">Сортировка</string>

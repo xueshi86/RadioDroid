@@ -137,6 +137,10 @@ public class ItemAdapterStation
         ImageButton buttonPlayInternalOrExternal;
         ImageButton buttonRefreshIcon;
         TextView textNoteDetail;
+        // 图标按钮的垂直容器（图标+短标签，UI 审查 P1-1）：
+        // 动态隐藏按钮时需作用于容器，避免图标隐藏后留下孤儿标签
+        View wrapperBookmark;
+        View wrapperEqualizer;
         // IconicsImageButton 继承自 IconicsImageView 而非 ImageButton，声明为 View 避免类型转换崩溃
         View buttonEditNote;
 
@@ -490,6 +494,8 @@ public class ItemAdapterStation
             holder.buttonEqualizerSettings = holder.viewDetails.findViewById(R.id.buttonEqualizerSettings);
             holder.buttonPlayInternalOrExternal = holder.viewDetails.findViewById(R.id.buttonPlayInRadioDroid);
             holder.buttonRefreshIcon = holder.viewDetails.findViewById(R.id.buttonRefreshIcon);
+            holder.wrapperBookmark = holder.viewDetails.findViewById(R.id.wrapperBookmark);
+            holder.wrapperEqualizer = holder.viewDetails.findViewById(R.id.wrapperEqualizer);
 
             holder.buttonVisitWebsite.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -508,10 +514,10 @@ public class ItemAdapterStation
 
             if (favouriteManager.has(station.StationUuid)) {
                 // favorite stations should only be removed in the favorites view
-                holder.buttonBookmark.setVisibility(View.GONE);
+                holder.wrapperBookmark.setVisibility(View.GONE);
             } else {
                 // 视图复用时可能残留上一轮的隐藏状态，需显式恢复显示
-                holder.buttonBookmark.setVisibility(View.VISIBLE);
+                holder.wrapperBookmark.setVisibility(View.VISIBLE);
                 holder.buttonBookmark.setOnClickListener(view -> {
                     StationActions.markAsFavourite(getContext(), station);
                     int position1 = holder.getAdapterPosition();
@@ -541,7 +547,8 @@ public class ItemAdapterStation
                 }
             });
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                holder.buttonEqualizerSettings.setVisibility(View.GONE);
+                // 同一设备 SDK 恒定，仅 GONE 不会引发复用错乱；隐藏容器连同标签一起收起
+                holder.wrapperEqualizer.setVisibility(View.GONE);
             }
 
             holder.buttonAddAlarm.setOnClickListener(new View.OnClickListener() {

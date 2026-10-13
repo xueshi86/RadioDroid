@@ -62,39 +62,82 @@
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-        <com.mikepenz.iconics.view.IconicsImageButton
-                android:id="@+id/buttonVisitWebsite"
+        <!-- 操作图标 + 短标签（UI 审查 P1-1）：每个按钮包垂直容器，图标下方加可读文字；
+             需要动态隐藏的按钮（收藏/均衡器）由 adapter 控制容器可见性，避免留下孤儿标签 -->
+        <LinearLayout
+                android:id="@+id/wrapperWebsite"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:minWidth="@dimen/touch_target_min"
-                android:minHeight="@dimen/touch_target_min"
-                android:padding="4dp"
-                android:contentDescription="@string/detail_visit_website"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                app:tint="?attr/iconsInItemBackgroundColor"
-                app:iiv_icon="gmd-home"
-                app:iiv_padding="2dp"
-                app:iiv_size="24dp"/>
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
 
-        <ImageButton
-            android:id="@+id/buttonShare"
+            <com.mikepenz.iconics.view.IconicsImageButton
+                    android:id="@+id/buttonVisitWebsite"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="@dimen/touch_target_min"
+                    android:minHeight="@dimen/touch_target_min"
+                    android:padding="4dp"
+                    android:contentDescription="@string/detail_visit_website"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    app:tint="?attr/iconsInItemBackgroundColor"
+                    app:iiv_icon="gmd-home"
+                    app:iiv_padding="2dp"
+                    app:iiv_size="24dp"/>
+
+            <TextView
+                    style="@style/TextAppearance.RadioDroid.Label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorTextSecondary"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="@string/action_label_website" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/wrapperShare"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:minWidth="@dimen/touch_target_min"
-            android:minHeight="@dimen/touch_target_min"
-            android:padding="4dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/detail_share"
-            app:srcCompat="@drawable/ic_share_24dp"
-            app:tint="?attr/iconsInItemBackgroundColor" />
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
 
-        <ImageButton
-                android:id="@+id/buttonBookmark"
-                android:layout_width="0dp"
+            <ImageButton
+                android:id="@+id/buttonShare"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:minWidth="@dimen/touch_target_min"
+                android:minHeight="@dimen/touch_target_min"
+                android:padding="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/detail_share"
+                app:srcCompat="@drawable/ic_share_24dp"
+                app:tint="?attr/iconsInItemBackgroundColor" />
+
+            <TextView
+                style="@style/TextAppearance.RadioDroid.Label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorTextSecondary"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/action_label_share" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/wrapperBookmark"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <ImageButton
+                android:id="@+id/buttonBookmark"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:minWidth="@dimen/touch_target_min"
                 android:minHeight="@dimen/touch_target_min"
                 android:padding="4dp"
@@ -103,24 +146,58 @@
                 app:tint="?attr/iconsInItemBackgroundColor"
                 app:srcCompat="@drawable/ic_star_border_black_24dp" />
 
-        <ImageButton
-                android:id="@+id/buttonAddAlarm"
-                android:layout_width="0dp"
+            <TextView
+                style="@style/TextAppearance.RadioDroid.Label"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:minWidth="@dimen/touch_target_min"
-                android:minHeight="@dimen/touch_target_min"
-                android:padding="4dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/description_btn_setup_alarm"
-                app:tint="?attr/iconsInItemBackgroundColor"
-                app:srcCompat="@drawable/ic_add_alarm_black_24dp" />
+                android:textColor="?attr/colorTextSecondary"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/action_label_favorite" />
+        </LinearLayout>
 
-        <ImageButton
-                android:id="@+id/buttonBufferSettings"
+        <LinearLayout
+                android:id="@+id/wrapperAlarm"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+            <ImageButton
+                    android:id="@+id/buttonAddAlarm"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="@dimen/touch_target_min"
+                    android:minHeight="@dimen/touch_target_min"
+                    android:padding="4dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/description_btn_setup_alarm"
+                    app:tint="?attr/iconsInItemBackgroundColor"
+                    app:srcCompat="@drawable/ic_add_alarm_black_24dp" />
+
+            <TextView
+                    style="@style/TextAppearance.RadioDroid.Label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorTextSecondary"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="@string/action_label_alarm" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/wrapperBuffer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <ImageButton
+                android:id="@+id/buttonBufferSettings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:minWidth="@dimen/touch_target_min"
                 android:minHeight="@dimen/touch_target_min"
                 android:padding="4dp"
@@ -129,11 +206,28 @@
                 app:tint="?attr/iconsInItemBackgroundColor"
                 app:srcCompat="@drawable/ic_buffer_settings_24dp" />
 
-        <ImageButton
-                android:id="@+id/buttonEqualizerSettings"
-                android:layout_width="0dp"
+            <TextView
+                style="@style/TextAppearance.RadioDroid.Label"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:textColor="?attr/colorTextSecondary"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/action_label_buffer" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/wrapperEqualizer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <ImageButton
+                android:id="@+id/buttonEqualizerSettings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:minWidth="@dimen/touch_target_min"
                 android:minHeight="@dimen/touch_target_min"
                 android:padding="4dp"
@@ -142,24 +236,58 @@
                 app:tint="?attr/iconsInItemBackgroundColor"
                 app:srcCompat="@drawable/ic_equalizer_24dp" />
 
-        <ImageButton
-            android:id="@+id/buttonPlayInRadioDroid"
+            <TextView
+                style="@style/TextAppearance.RadioDroid.Label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorTextSecondary"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/action_label_equalizer" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/wrapperRelay"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:minWidth="@dimen/touch_target_min"
-            android:minHeight="@dimen/touch_target_min"
-            android:padding="4dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/detail_play_in_radiodroid"
-            app:tint="?attr/iconsInItemBackgroundColor"
-            app:srcCompat="@drawable/ic_play_in_radiodroid" />
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
 
-        <ImageButton
-                android:id="@+id/buttonRefreshIcon"
-                android:layout_width="0dp"
+            <ImageButton
+                android:id="@+id/buttonPlayInRadioDroid"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:minWidth="@dimen/touch_target_min"
+                android:minHeight="@dimen/touch_target_min"
+                android:padding="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/detail_play_in_radiodroid"
+                app:tint="?attr/iconsInItemBackgroundColor"
+                app:srcCompat="@drawable/ic_play_in_radiodroid" />
+
+            <TextView
+                style="@style/TextAppearance.RadioDroid.Label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorTextSecondary"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/action_label_relay" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/wrapperRefresh"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <ImageButton
+                android:id="@+id/buttonRefreshIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:minWidth="@dimen/touch_target_min"
                 android:minHeight="@dimen/touch_target_min"
                 android:padding="4dp"
@@ -167,6 +295,16 @@
                 android:contentDescription="@string/context_menu_refresh_icon"
                 app:tint="?attr/iconsInItemBackgroundColor"
                 app:srcCompat="@drawable/ic_refresh_black_24dp" />
+
+            <TextView
+                style="@style/TextAppearance.RadioDroid.Label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorTextSecondary"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/action_label_refresh" />
+        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>

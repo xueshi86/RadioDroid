@@ -37,6 +37,7 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.PagerAdapter;
+import androidx.viewpager.widget.PagerTabStrip;
 import androidx.viewpager.widget.ViewPager;
 
 import com.mikepenz.iconics.IconicsColor;
@@ -244,6 +245,10 @@ public class FragmentPlayerFull extends Fragment {
         artAndInfoPagerAdapter = new ArtAndInfoPagerAdapter(requireContext(), pagerArtAndInfo);
         pagerArtAndInfo.setAdapter(artAndInfoPagerAdapter);
 
+        // 页签对比度修复（UI 审查 P0-1）：PagerTabStrip 默认取框架 textColorSecondary，
+        // 暗色主题下未选中页签对比度过低；显式改用主题主文字色 + 非当前页透明度 + 强调色下划线
+        stylePagerTabStrip(view.findViewById(R.id.tabStripArtAndInfo));
+
         /* A hack to make horizontal ViewPager play nice with vertical ScrollView
          * Credits to https://stackoverflow.com/a/16224484/1741638
          */
@@ -300,6 +305,7 @@ public class FragmentPlayerFull extends Fragment {
         historyAndRecordsPagerAdapter = new HistoryAndRecordsPagerAdapter(requireContext(), pagerHistoryAndRecordings);
         pagerHistoryAndRecordings.setAdapter(historyAndRecordsPagerAdapter);
         pagerHistoryAndRecordings.setCurrentItem(0, false);
+        stylePagerTabStrip(view.findViewById(R.id.tabStripHistoryAndRecordings));
 
         // "本台曲目"顶部的正在播放头也可点击，与历史列表条目一致弹出曲目详情（含歌词入口）
         historyAndRecordsPagerAdapter.layoutCurrentPlaying.setOnClickListener(v -> showCurrentTrackInfoDialog());
@@ -914,7 +920,12 @@ public class FragmentPlayerFull extends Fragment {
     private void updateAlbumArt() {
         DataRadioStation station = PlayerServiceUtil.getCurrentStation();
         if (station == null) {
-            return;
+            // 未播放时回退到最后播放的电台（UI 审查 P0-2）：同屏标题、顶栏图标、曲目历史
+            // 均取 getCurrentOrLastStation()，封面独用 getCurrentStation() 会在未播放时整页空白
+            station = Utils.getCurrentOrLastStation(requireContext());
+            if (station == null) {
+                return;
+            }
         }
 
         final StreamLiveInfo liveInfo = PlayerServiceUtil.getMetadataLive();
@@ -1278,5 +1289,19 @@ public class FragmentPlayerFull extends Fragment {
 
     private void loadStationIconWithFallback(final ImageView target, final String iconUrl, final String homePageUrl, final String stationUuid, final String stationName) {
         PlayerServiceUtil.getStationIcon(target, iconUrl, homePageUrl, stationUuid, stationName);
+    }
+
+    /**
+     * 页签对比度修复（UI 审查 P0-1）：PagerTabStrip 未选中页签默认取框架 textColorSecondary，
+     * 主主题未定制该值导致暗色下对比度过低。改为：当前页签用主文字色、非当前页签在主文字色上
+     * 叠加透明度（视觉接近次要色），下划线用主题的强调亮色（colorTabUnderline → presetAccentBright）。
+     */
+    private void stylePagerTabStrip(final PagerTabStrip strip) {
+        if (strip == null) {
+            return;
+        }
+        strip.setTextColor(Utils.getThemeColor(requireContext(), R.attr.colorTextPrimary));
+        strip.setNonPrimaryAlpha(0.62f);
+        strip.setTabIndicatorColor(Utils.getThemeColor(requireContext(), R.attr.colorTabUnderline));
     }
 }

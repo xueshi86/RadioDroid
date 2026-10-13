@@ -44,6 +44,7 @@ public class FragmentStarred extends Fragment implements IAdapterRefreshable, Ob
 
     private RecyclerView rvStations;
     private FloatingActionButton fabScrollToTop;
+    private View layoutEmptyStarred;
 
     private FavouriteManager favouriteManager;
     private int currentSortMode = SORT_NONE;
@@ -112,6 +113,19 @@ public class FragmentStarred extends Fragment implements IAdapterRefreshable, Ob
         }
 
         adapter.updateList(this, stations);
+        updateEmptyState(stations == null || stations.isEmpty());
+    }
+
+    /**
+     * 空态视图（UI 审查 P0-3）：无收藏时显示引导文案，避免静默空白。
+     */
+    private void updateEmptyState(boolean empty) {
+        if (layoutEmptyStarred != null) {
+            layoutEmptyStarred.setVisibility(empty ? View.VISIBLE : View.GONE);
+        }
+        if (fabScrollToTop != null && empty) {
+            fabScrollToTop.setVisibility(View.GONE);
+        }
     }
 
     private List<DataRadioStation> getSortedStations() {
@@ -165,6 +179,7 @@ public class FragmentStarred extends Fragment implements IAdapterRefreshable, Ob
         View view = inflater.inflate(R.layout.fragment_stations_starred, container, false);
         rvStations = (RecyclerView) view.findViewById(R.id.recyclerViewStations);
         fabScrollToTop = view.findViewById(R.id.fabScrollToTop);
+        layoutEmptyStarred = view.findViewById(R.id.layoutEmptyStarred);
         rvStations.setAdapter(null);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
@@ -279,6 +294,7 @@ public class FragmentStarred extends Fragment implements IAdapterRefreshable, Ob
         }
         rvStations = null;
         fabScrollToTop = null;
+        layoutEmptyStarred = null;
     }
 
     @Override

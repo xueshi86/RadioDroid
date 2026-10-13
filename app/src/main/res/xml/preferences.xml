@@ -171,6 +171,7 @@
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="bottom_navigation"
+            android:summary="@string/settings_bottom_navigation_summary"
             android:title="@string/settings_bottom_navigation" />
 
         <PreferenceCategory

@@ -50,16 +50,11 @@
     <!-- ================= 旧血统颜色（逐步废弃） =================
          以下色值属于 fork 前的旧配色，不再跟随预设配色。
          页面与样式不应再直接引用它们；仅在尚未改造完成的角落保留，改造完成后删除。 -->
-    <color name="colorPrimary">#125688</color>
     <color name="colorPrimaryDark">#232325</color>
     <color name="textColorPrimary">#FFFFFF</color>
     <color name="navigationBarColor">#000000</color>
-    <color name="colorAccent">#1d6293</color>
-    <color name="colorAccentDark">#1d6293</color>
-    <!-- 暗色主题对话框主色：比 colorAccentDark 更亮，保证暗色背景上文字/滑块清晰可见 -->
+    <!-- 暗色主题对话框主色：比强调色更亮，保证暗色背景上文字/滑块清晰可见 -->
     <color name="colorAlertPrimaryDark">#64B5F6</color>
-    <color name="colorTabUnderline">#e0347f</color>
-    <color name="colorTabUnderlineDark">@color/colorAccentDark</color>
     <color name="colorStationSwipeBackground">#ff4081</color>
 
     <color name="colorPlayerBackground">#ffffff</color>
@@ -127,19 +122,6 @@
     <color name="preset_pure_black_window_dark">#000000</color>
     <color name="preset_pure_black_surface_dark">#0E0E0E</color>
 
-    <color name="menuTextColorSelected">@color/colorPrimary</color>
-    <color name="menuTextColorSelectedDark">@android:color/white</color>
-    <color name="menuTextColorDefault">@android:color/black</color>
-    <color name="menuTextColorDefaultDark">@android:color/white</color>
-
-    <color name="menuBottomTextColorSelected">@android:color/white</color>
-    <color name="menuBottomTextColorSelectedDark">@android:color/white</color>
-    <color name="menuBottomTextColorDefault">#e1e1e1</color>
-    <color name="menuBottomTextColorDefaultDark">#d7d7d7</color>
-    <color name="menuBottomBackgroundColor">@color/colorAccent</color>
-    <color name="menuBottomBackgroundColorDark">#1a1a1b</color>
-
-
     <color name="iconsInItemBackgroundColor">@android:color/black</color>
     <color name="iconsInItemBackgroundColorDark">@android:color/white</color>
 
@@ -160,7 +142,4 @@
 
 
     <color name="startRecordingColor">#ff3333</color>
-
-    <color name="snackBarButtonColor">#D500F9</color>
-    <color name="snackBarButtonColorDark">@color/snackBarButtonColor</color>
 </resources>

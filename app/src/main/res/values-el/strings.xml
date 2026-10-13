@@ -21,6 +21,15 @@
     <string name="detail_pause">Παύση</string>
     <string name="detail_stop">Διακοπή</string>
     <string name="detail_share">Κοινή Χρήση</string>
+    <!-- Σύντομες ετικέτες ενεργειών (UI review P1-1): ευανάγνωστο κείμενο κάτω από τα εικονίδια -->
+    <string name="action_label_website">Αρχική</string>
+    <string name="action_label_share">Κοινοποίηση</string>
+    <string name="action_label_favorite">Αγαπημένο</string>
+    <string name="action_label_alarm">Ξυπνητήρι</string>
+    <string name="action_label_buffer">Buffer</string>
+    <string name="action_label_equalizer">Ισοστάθμιση</string>
+    <string name="action_label_relay">Άνοιγμα</string>
+    <string name="action_label_refresh">Ανανέωση</string>
 
     <string name="action_local">Τοπικοί</string>
     <string name="action_pause">Παύση</string>
@@ -109,6 +118,10 @@
     <string name="settings_station_notes_desc_on">Εμφάνιση σημειώσεων στην τυπική λίστα σταθμών και συμπερίληψή τους στην αναζήτηση</string>
     <string name="settings_station_notes_desc_off">Απόκρυψη σημειώσεων σταθμών και εξαίρεσή τους από την αναζήτηση</string>
     <string name="settings_bottom_navigation">Τα χειριστήρια κάτω</string>
+    <string name="settings_bottom_navigation_summary">Αν απενεργοποιηθεί, χρησιμοποιείται το πλευρικό μενού</string>
+    <!-- Κενή κατάσταση αγαπημένων (UI review P0-3) -->
+    <string name="empty_starred_title">Δεν υπάρχουν αγαπημένοι σταθμοί</string>
+    <string name="empty_starred_hint">Πατήστε το αστέρι ενός σταθμού για να προστεθεί εδώ</string>
 
     <string name="settings_single_use_tags">Καρτέλες μονής χρήσης</string>
     <string name="settings_single_use_tags_desc_off">Οι καρτέλες μοναδικής χρήσης δεν θα εμφανίζονται</string>

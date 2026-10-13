@@ -18,6 +18,43 @@
             android:layout_height="match_parent"
             android:scrollbars="vertical" />
 
+        <!-- 空态视图（UI 审查 P0-3）：无收藏时不再静默空白，给出明确状态与引导 -->
+        <LinearLayout
+            android:id="@+id/layoutEmptyStarred"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="@dimen/space_lg"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:contentDescription="@null"
+                app:srcCompat="@drawable/ic_star_border_black_24dp"
+                app:tint="?attr/colorTextTertiary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_md"
+                android:text="@string/empty_starred_title"
+                android:textAppearance="@style/TextAppearance.RadioDroid.Title"
+                android:textColor="?attr/colorTextSecondary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:gravity="center"
+                android:maxWidth="280dp"
+                android:text="@string/empty_starred_hint"
+                android:textAppearance="@style/TextAppearance.RadioDroid.Caption"
+                android:textColor="?attr/colorTextTertiary" />
+        </LinearLayout>
+
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fabScrollToTop"
             android:layout_width="wrap_content"

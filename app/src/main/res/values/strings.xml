@@ -14,6 +14,15 @@
     <string name="detail_pause">Pause</string>
     <string name="detail_stop">Stop</string>
     <string name="detail_share">Share</string>
+    <!-- Expanded card action labels (UI review P1-1): readable text under icons -->
+    <string name="action_label_website">Home</string>
+    <string name="action_label_share">Share</string>
+    <string name="action_label_favorite">Favorite</string>
+    <string name="action_label_alarm">Alarm</string>
+    <string name="action_label_buffer">Buffer</string>
+    <string name="action_label_equalizer">Equalizer</string>
+    <string name="action_label_relay">Open</string>
+    <string name="action_label_refresh">Refresh</string>
     <string name="detail_play_in_radiodroid">Play in RadioDroid</string>
 
     <string name="action_links">Links</string>
@@ -335,6 +344,10 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="settings_station_notes_desc_on">Show notes in the standard station list and include them in search</string>
     <string name="settings_station_notes_desc_off">Hide station notes and exclude them from search</string>
     <string name="settings_bottom_navigation">Bottom navigation</string>
+    <string name="settings_bottom_navigation_summary">When disabled, navigation falls back to the side drawer</string>
+    <!-- Empty state of the favorites list (UI review P0-3) -->
+    <string name="empty_starred_title">No favorites yet</string>
+    <string name="empty_starred_hint">Tap the star on any station to add it here</string>
     <string name="settings_toolbar_buttons_category">Toolbar buttons</string>
     <string name="settings_toolbar_show_search">Search</string>
     <string name="settings_toolbar_show_sort">Sort</string>

@@ -47,6 +47,15 @@
 
     <string name="about_text">Diese App basiert auf dem freien Internetradio-Stationsverzeichnis https://www.radio-browser.info .\n\nDas Stationsverzeichnis funktioniert nach dem Wiki-Prinzip: jeder, auch Du, kann mithelfen, es aktuell zu halten.\n\nKontakt:\nsegler_alex@web.de\n\nSourcecode und Bugtracker:\nhttps://github.com/segler-alex/RadioDroid/issues\n\nIch freue mich immer über Mails mit Verbesserungsvorschlägen. Falls Du sonst irgendwie helfen willst: es gibt immer Bugs zu fixen :). Wenn Du Dein grafisches Talent einbringen möchtest, wäre ich besonders dankbar, speziell für schönere Icons, Hintergründe oder auch ein insgesamt besseres Design.\n\nDiese App wurde mit der GPLv3 https://www.gnu.org/licenses/gpl-3.0.html lizenziert.</string>
     <string name="detail_star">Als Favorit setzen</string>
+    <!-- Kurze Aktionsbeschriftungen (UI-Review P1-1): lesbare Texte unter den Symbolen -->
+    <string name="action_label_website">Startseite</string>
+    <string name="action_label_share">Teilen</string>
+    <string name="action_label_favorite">Favorit</string>
+    <string name="action_label_alarm">Wecker</string>
+    <string name="action_label_buffer">Puffer</string>
+    <string name="action_label_equalizer">Equalizer</string>
+    <string name="action_label_relay">Öffnen</string>
+    <string name="action_label_refresh">Aktualisieren</string>
     <string name="detail_unstar">Als Favorit löschen</string>
     <string name="progress_loading">Lade...</string>
 
@@ -258,6 +267,10 @@
     <string name="settings_alarm_external_desc_off">Den Alarm mit RadioDroid abspielen.</string>
     <string name="settings_alarm_external_desc_on">Den Alarm mit einer externen Standard-App abspielen.</string>
     <string name="settings_bottom_navigation">Navigation unten</string>
+    <string name="settings_bottom_navigation_summary">Bei Deaktivierung wird die seitliche Navigationsschublade verwendet</string>
+    <!-- Leerer Zustand der Favoritenliste (UI-Review P0-3) -->
+    <string name="empty_starred_title">Noch keine Favoriten</string>
+    <string name="empty_starred_hint">Tippe auf den Stern einer Station, um sie hier zu sammeln</string>
     <string name="settings_click_trend_icon_visible">Trendsymbolanzeige</string>
     <string name="settings_click_trend_icon_visible_off">Es werden keine Trendsymbole angezeigt.</string>
     <string name="settings_click_trend_icon_visible_on">Es werden Trendsymbole angezeigt.</string>
