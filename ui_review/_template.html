@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RadioDroid UI 界面审查报告</title>
+<style>
+  :root {
+    --ink: #1a1a1a; --ink2: #555; --ink3: #888;
+    --paper: #f6f7f8; --card: #ffffff; --line: #e3e5e8;
+    --accent: #00695c; --accent2: #80cbc4;
+    --p0: #c62828; --p1: #e65100; --p2: #546e7a;
+    --ok: #2e7d32;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", "Microsoft YaHei", -apple-system, sans-serif; background: var(--paper); color: var(--ink); line-height: 1.75; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 24px 80px; }
+  header.hero { background: linear-gradient(135deg, #10201d 0%, #1d3532 60%, #24504a 100%); color: #fff; border-radius: 16px; padding: 40px 40px 32px; margin-bottom: 28px; }
+  header.hero h1 { font-size: 30px; letter-spacing: .5px; }
+  header.hero .sub { color: #b2dfdb; margin-top: 8px; font-size: 14px; }
+  header.hero .meta { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px; font-size: 13px; color: #cfd8dc; }
+  header.hero .meta span { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); border-radius: 8px; padding: 4px 12px; }
+  h2 { font-size: 22px; margin: 44px 0 16px; padding-left: 12px; border-left: 4px solid var(--accent); }
+  h3 { font-size: 16px; margin: 24px 0 10px; }
+  p { margin-bottom: 10px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 22px 24px; margin-bottom: 16px; }
+  /* 评分条 */
+  .scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px 28px; }
+  .score .row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 4px; }
+  .score .bar { height: 8px; background: #eceff1; border-radius: 4px; overflow: hidden; }
+  .score .bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), #26a69a); }
+  .score .bar i.low { background: linear-gradient(90deg, #c62828, #ef5350); }
+  .score .bar i.mid { background: linear-gradient(90deg, #e65100, #fb8c00); }
+  .overall { text-align: center; }
+  .overall .num { font-size: 52px; font-weight: 700; color: var(--accent); line-height: 1.1; }
+  .overall .num small { font-size: 20px; color: var(--ink3); }
+  /* 列表 */
+  ul.clean { list-style: none; }
+  ul.clean li { padding: 8px 0 8px 28px; position: relative; border-bottom: 1px dashed var(--line); }
+  ul.clean li:last-child { border-bottom: none; }
+  ul.clean li::before { content: "✓"; position: absolute; left: 4px; color: var(--ok); font-weight: 700; }
+  ul.clean.plus li::before { content: "＋"; color: var(--accent); }
+  /* 问题卡 */
+  .issue { border-left: 4px solid var(--p2); }
+  .issue.p0 { border-left-color: var(--p0); }
+  .issue.p1 { border-left-color: var(--p1); }
+  .issue .tag { display: inline-block; font-size: 12px; font-weight: 700; border-radius: 6px; padding: 1px 10px; margin-right: 8px; color: #fff; }
+  .issue.p0 .tag { background: var(--p0); }
+  .issue.p1 .tag { background: var(--p1); }
+  .issue.p2 .tag { background: var(--p2); }
+  .issue h3 { margin-top: 0; display: flex; align-items: center; flex-wrap: wrap; }
+  .issue .evi { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
+  .issue .evi figure { flex: 0 0 150px; }
+  .issue .evi img { width: 100%; height: 300px; object-fit: contain; background: #1e1e20; border-radius: 8px; border: 1px solid var(--line); }
+  .issue .evi figcaption { font-size: 12px; color: var(--ink3); text-align: center; margin-top: 4px; }
+  .fix { margin-top: 10px; background: #f1f8f6; border: 1px solid #cfe8e3; border-radius: 8px; padding: 10px 14px; font-size: 14px; }
+  .fix b { color: var(--accent); }
+  /* 逐屏 */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 16px; }
+  .shot { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+  .shot img { width: 100%; height: 420px; object-fit: contain; background: #1e1e20; border-radius: 8px; }
+  .shot .t { font-weight: 600; font-size: 14px; margin-top: 8px; }
+  .shot .d { font-size: 12px; color: var(--ink3); }
+  .shot .d em { color: var(--p0); font-style: normal; }
+  .shot .d i { color: var(--ok); font-style: normal; }
+  /* 路线图表 */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: #eef2f1; font-size: 13px; color: var(--ink2); }
+  td .pri { font-weight: 700; }
+  td .pri.p0 { color: var(--p0); } td .pri.p1 { color: var(--p1); } td .pri.p2 { color: var(--p2); }
+  code { background: #eef1f2; border-radius: 4px; padding: 1px 6px; font-size: 13px; font-family: Consolas, monospace; color: #37474f; }
+  /* 概念图 */
+  .concepts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+  .concepts figure img { width: 100%; border-radius: 12px; border: 1px solid var(--line); }
+  .concepts figcaption { font-size: 13px; color: var(--ink2); margin-top: 8px; }
+  .note { background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; padding: 12px 16px; font-size: 14px; margin: 12px 0; }
+  footer { margin-top: 48px; text-align: center; color: var(--ink3); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>RadioDroid UI 界面审查报告</h1>
+  <div class="sub">基于 redesign-existing-projects 审计方法论 · imagegen-frontend-mobile 概念演绎</div>
+  <div class="meta">
+    <span>审查对象：v1.12（versionCode 121）</span>
+    <span>真机：2607d84e · 暗色主题 · 湖光青预设</span>
+    <span>截图 14 屏 · XML 静态审查 · 概念图 2 张</span>
+    <span>日期：2026-10-11</span>
+  </div>
+</header>
+
+<h2>一、总评</h2>
+<div class="card">
+  <p>RadioDroid 的 UI <b>设计系统成熟度远高于一般 fork 项目</b>：统一的设计令牌（间距 / 圆角 / 字阶）、颜色角色化、8 套配色预设 + 亮暗双主题对比度调校，均有据可循且执行一致。主要短板不在「风格」，而在<b>状态设计（空态 / 错误 / 占位几乎缺席，最典型为未播放时的空白封面页）</b>、<b>可发现性（操作图标无文字标签）</b>、<b>个别对比度细节</b>与<b>遗留色彩清理</b>。</p>
+  <div class="scores" style="margin-top:18px;">
+    <div class="score"><div class="row"><span>设计系统与令牌</span><b>9.0</b></div><div class="bar"><i style="width:90%"></i></div></div>
+    <div class="score"><div class="row"><span>主题与配色灵活性</span><b>9.0</b></div><div class="bar"><i style="width:90%"></i></div></div>
+    <div class="score"><div class="row"><span>视觉一致性</span><b>8.5</b></div><div class="bar"><i style="width:85%"></i></div></div>
+    <div class="score"><div class="row"><span>信息架构</span><b>7.0</b></div><div class="bar"><i style="width:70%"></i></div></div>
+    <div class="score"><div class="row"><span>对比度与可读性</span><b>6.5</b></div><div class="bar"><i class="mid" style="width:65%"></i></div></div>
+    <div class="score"><div class="row"><span>可发现性 / 导航</span><b>7.0</b></div><div class="bar"><i style="width:70%"></i></div></div>
+    <div class="score"><div class="row"><span>状态设计（空/错/载）</span><b>5.5</b></div><div class="bar"><i class="mid" style="width:55%"></i></div></div>
+    <div class="score overall"><div class="row" style="justify-content:center"><span>综合</span></div><div class="num">7.6<small> / 10</small></div></div>
+  </div>
+</div>
+
+<h2>二、界面优点</h2>
+<div class="card">
+  <ul class="clean">
+    <li><b>完整的设计令牌体系</b> — <code>dimens.xml</code> 以 4dp 基准统管间距、4 档圆角、7 级字阶 + display 大数字；布局不再散写 dp/sp，全局一致性有制度保障。</li>
+    <li><b>颜色角色化 + 8 套预设</b> — 每套预设仅「主色 + 强调色」两个槽位，其余全部派生；换肤成本极低且不会出现配色漂移（<code>attrs_theme.xml</code> + <code>ThemePreset.*</code> 覆盖式叠加）。</li>
+    <li><b>三层表面体系清晰</b> — 窗口 <code>#121214</code> &lt; 卡片 <code>#1E1E20</code> &lt; 弹层 <code>#26262A</code>（暗色），列表卡片、底栏、对话框的浮起层次一眼可辨。</li>
+    <li><b>文字三层色 + 双主题对比度调校</b> — Primary / Secondary / Tertiary 分工明确；电台备注强调色、失效/删除底色、状态点绿均按两主题分别调值（备注文字 ≥ 4.5:1）。</li>
+    <li><b>触摸目标规范</b> — <code>touch_target_min 48dp</code>，工具栏按钮统一 <code>ToolbarActionButton</code> 最小宽度。</li>
+    <li><b>无图标电台动态占位色板</b> — Material 500 系 7 色轮转，网格 / 列表在缺图场景下依旧活泼有序，是很多同类应用做不到的细节。</li>
+    <li><b>「正在播放」高亮与备注锚点有品牌记忆点</b> — 直角 2dp 描边方框 + 约 31% 同色遮盖、备注「图标 + 强调色文字」一体化，识别性强。</li>
+    <li><b>设置页信息架构清楚</b> — 13 个分类平铺 + 顶部搜索，分组标题走 Label 字阶 + 强调色，扫读效率高。</li>
+  </ul>
+</div>
+
+<h2>三、问题清单</h2>
+
+<h3>P0 · 可用性（建议立即处理）</h3>
+
+<div class="card issue p0">
+  <h3><span class="tag">P0-1</span>播放器两组 Tab 未选中态对比度过低，几乎不可读</h3>
+  <p>全屏播放器顶部「专辑封面 / 信息」与中部「本台曲目 / 曲目历史 / 录音」的未选中项文字压在深色表面上，暗色主题下目测对比度 &lt; 2:1（WCAG 底线 4.5:1），新用户难以发现还有其他页签。<b>代码根源已核实：</b>两组页签均为 ViewPager1 自带的 <code>PagerTabStrip</code>（layout_player_full.xml #L100、#L261），其未选中文字色取框架 <code>textColorSecondary</code>，主主题未定制该值，在当前主题组合下解析出过暗的颜色；该老组件也无法像 TabLayout 那样用 XML 属性定制页签文字色。</p>
+  <div class="evi">
+    <figure><img src="{{IMG:ui_player_art2}}" alt="播放器封面页"><figcaption>「信息」页签右侧几乎隐形</figcaption></figure>
+    <figure><img src="{{IMG:ui_player_info}}" alt="播放器信息页"><figcaption>未选中「专辑封面」过暗</figcaption></figure>
+  </div>
+  <div class="fix"><b>建议：</b>首选将两组 <code>PagerTabStrip</code> 替换为 <code>TabLayout</code>（未选中文字 <code>?attr/colorTextSecondary</code>，暗色 #A8A8A8 对比度约 7:1，选中态强调色 + 短下划线，与电台主页子页签一致）；若暂不替换，可在代码中对 PagerTabStrip 显式 <code>setTextColor</code> + <code>setNonPrimaryAlpha</code> 修正。</div>
+</div>
+
+<div class="card issue p1">
+  <h3><span class="tag">P0-2</span>未播放时封面页整页空白（真机复现，根因已定位，降级 P1）</h3>
+  <p><b>定性确认：</b>占位与加载链路本身完全正常——点击播放后封面立即加载（KIIS 图标秒出）。真正的缺口在<b>未播放状态</b>：<code>FragmentPlayerFull.updateAlbumArt()</code>（#L914-918）开头 <code>PlayerServiceUtil.getCurrentStation()</code> 为 null（未在播）时直接 return，封面 ImageView 保持 XML 初始空态，无任何占位；而同屏的电台标题、顶栏图标、曲目历史均用 <code>Utils.getCurrentOrLastStation()</code>（取最后播放电台）照常显示——<b>同一屏「有信息、无封面」</b>，行为不一致。此发现来自用户观察「封面播放时才出现」，真机复现完全吻合。</p>
+  <div class="evi">
+    <figure><img src="{{IMG:ui_check_art_notplaying}}" alt="未播放时空白封面页"><figcaption>未播放：标题 / 顶栏图标 / 曲目历史正常，仅封面空白</figcaption></figure>
+    <figure><img src="{{IMG:ui_check_art_playing}}" alt="播放后封面正常"><figcaption>点击播放后：封面立即正常加载，链路无恙</figcaption></figure>
+  </div>
+  <div class="fix"><b>建议：</b>① station == null 时回退 <code>getCurrentOrLastStation()</code> 加载最后播放电台的图标（与标题 / 历史行为对齐，改动一行）；② 或为未播放态设计「暂无播放」空态（矢量唱片纹样 + 文案，见概念图 B），避免整页深色空白。</div>
+</div>
+
+<div class="card issue p2" style="border-left-color: var(--p2);">
+  <h3><span class="tag" style="background: var(--p2);">P0-3</span>收藏列表三态视图缺失（当日整页空白未能复现，降级 P2）</h3>
+  <p>「列表无 loading / error / empty 状态视图」属实：无论将来再遇到数据为空还是装载异常，用户都只会看到静默空白。但<b>审查当日踩中的整页空白异常，真机 5 个场景均未复现</b>：冷启动连拍、快速切换页签、全屏播放器进出、屏幕旋转、日常操作。代码核实：收藏数据在 <code>StationSaveManager</code> 构造时<b>同步装载</b>（SharedPreferences 同步读 JSON），不存在异步空窗；<code>RefreshListGui</code> 有 adapter 空保护，<code>onResume</code> 还有二次刷新。当日异常无法归因到现有代码路径，疑似截图落在转场中间帧或设备偶发状态（如低内存进程恢复），不再按 P0 计。</p>
+  <div class="evi">
+    <figure><img src="{{IMG:ui_starred_empty}}" alt="异常空白页"><figcaption>审查当日偶发的空白画面（5 场景未能复现）</figcaption></figure>
+  </div>
+  <div class="fix"><b>建议：</b>仍建议接入三态视图：空态插画 + 「去发现电台」引导、错误横幅 + 点击重试、骨架屏——不为复现已知 bug，而为杜绝「静默空白」这类不可诊断的状态。</div>
+</div>
+
+<div class="card issue p0" style="border-left-color: var(--p2);">
+  <h3><span class="tag" style="background: var(--p2);">更正</span>P0-4 原判断不成立：抽屉是「底部导航」的配套备选导航</h3>
+  <p><b>原判断「抽屉无可达入口、形同虚设」系误读。</b>代码核实（ActivityMain.java #L234-248）：导航模式受设置项「外观 → 底部导航」开关控制——开启底栏时隐藏抽屉（<code>NavigationView</code> GONE + 宽度 0），关闭底栏时才安装 <code>ActionBarDrawerToggle</code>、显示顶栏汉堡并隐藏底栏。两者是互斥的二选一导航，当前真机开启底栏故抽屉不可见，<b>属设计意图而非缺陷</b>。</p>
+  <div class="fix"><b>保留的轻微建议：</b>① 可在该设置项的摘要文案中说明「关闭后改用侧边抽屉导航」，避免用户关闭底栏后找不到导航入口；② 若未来确认不再维护抽屉模式，可再评估移除，但当前不建议。</div>
+</div>
+
+<h3>P1 · 可理解性</h3>
+
+<div class="card issue p1">
+  <h3><span class="tag">P1-1</span>展开卡片 8 个操作图标全部无文字标签</h3>
+  <p>电台卡片展开后的操作行（主页 / 分享 / 收藏 / 闹钟 / 缓冲 / 均衡器 / 转播 / 刷新，共 8 个，部分随电台状态显示）为裸图标——<code>stub_list_item_station_details.xml</code> 中全部为 ImageButton，仅有无障碍 <code>contentDescription</code>，无任何可见文字。其中数个图标语义多义（表盘、滑块），只能靠试错学习。</p>
+  <div class="evi">
+    <figure><img src="{{IMG:ui_station_expanded}}" alt="展开的卡片"><figcaption>图标行无任何可见文字说明</figcaption></figure>
+  </div>
+  <div class="fix"><b>建议：</b>图标下方补 11sp <code>TextAppearance.RadioDroid.Label</code> 小标签（8 语言同步）；若嫌行高增加，可改为长按弹底部动作表（带文字）。概念图 A 采用标签方案。</div>
+</div>
+
+<div class="card issue p1">
+  <h3><span class="tag">P1-2</span>全屏播放器双 Tab 行嵌套，认知负担偏高</h3>
+  <p>顶部「专辑封面 / 信息」+ 中部「本台曲目 / 曲目历史 / 录音」两组页签上下堆叠（分别属于 <code>pagerArtAndInfo</code> 与 <code>pagerHistoryAndRecordings</code> 两个 ViewPager），且滚动时行为不同，用户需要理解两套导航。播放器本应是沉浸界面，此处结构感最弱。</p>
+  <div class="evi">
+    <figure><img src="{{IMG:ui_player_info}}" alt="双tab行"><figcaption>上下两组页签分属两个区域</figcaption></figure>
+  </div>
+  <div class="fix"><b>建议：</b>合并为单行四段分段控件「封面 | 信息 | 曲目 | 历史」（见概念图 B），录音入口移入曲目页工具栏；「正在播放 / 台名」常驻顶部不随页签滚动。</div>
+</div>
+
+<div class="card issue p1" style="border-left-color: var(--p2);">
+  <h3><span class="tag" style="background: var(--p2);">P1-3 · 降级</span>网格标签混排导致列基线不齐（原判断部分误读）</h3>
+  <p><b>部分误读更正：</b><code>list_item_icon_only_station.xml</code> 中标签已设置 <code>maxLines="2"</code> + <code>ellipsize="end"</code>，不存在原报告所述「换行 2~3 行」；图标-文字间距实为 4dp（<code>space_xs</code>），也不算偏大。真实残留问题只有一项：<b>1 行与 2 行标签的条目混排时行高不一，网格纵向基线不齐</b>（gravity=center 居中加剧了观感跳动）。严重度由 P1 降为 P2。</p>
+  <div class="evi">
+    <figure><img src="{{IMG:ui_starred_grid}}" alt="网格模式"><figcaption>标签均 ≤2 行，但行高混排致基线不齐</figcaption></figure>
+  </div>
+  <div class="fix"><b>建议：</b>标签 TextView 固定高度 = 2 行 Caption（<code>minLines=2</code> 或固定高度），使每格文字区等高、基线对齐。</div>
+</div>
+
+<h3>P2 · 质感打磨</h3>
+
+<div class="card issue p2">
+  <h3><span class="tag">P2-1</span>列表卡片垂直间距过小（2dp），密度偏挤</h3>
+  <p>电台卡片上下间距仅 <code>space_xxs 2dp</code>，卡片自身已无描边无投影，间距过小时「浮起感」消失，列表呈一整块；与设置页的大留白形成节奏断层。</p>
+  <div class="evi">
+    <figure><img src="{{IMG:ui_starred_list}}" alt="收藏列表"><figcaption>卡片几乎贴在一起</figcaption></figure>
+  </div>
+  <div class="fix"><b>建议：</b>卡片间距提升至 <code>space_sm 8dp</code>（改动一个令牌引用），列表呼吸感与卡片层次兼得。</div>
+</div>
+
+<div class="card issue p2">
+  <h3><span class="tag">P2-2</span>「旧血统颜色」清理未完成：仍有真实引用点跳出预设体系</h3>
+  <p><b>核实后的准确结论：</b>跳色风险集中在 2 个仍有引用的 drawable——<code>icon_button_ripple.xml</code> 与 <code>progress_circle.xml</code> 均引用 <code>@color/colorAccent</code>（#1d6293 固定蓝），不随 8 套预设联动。而原报告举例的 <code>snackBarButtonColor #D500F9</code> 与 <code>colorTabUnderline #e0347f</code> 经全库检索<b>并无实际引用</b>（theme 属性 <code>colorTabUnderline</code> 已被样式重定向到预设色，同名色值是死代码），原表述有误导性。</p>
+  <div class="fix"><b>建议：</b>① 将上述 2 个 drawable 改走 <code>?attr/presetAccentColor</code> 系属性；② 删除无引用的死色值（snackBarButtonColor、colorTabUnderline 等），让「预设 2 槽位派生一切」成为唯一事实。</div>
+</div>
+
+<div class="card issue p2">
+  <h3><span class="tag">P2-3</span>字重只有 Regular / Bold 两档，层级过渡生硬</h3>
+  <p>全项目 <code>textStyle</code> 仅有 normal 与 bold；标题直接从 400 跳 700，缺少 Medium(500) / SemiBold(600) 的中间层级，卡片标题、分段标题的重量感区分度低。</p>
+  <div class="evi">
+    <figure><img src="{{IMG:ui_settings_main}}" alt="设置页字重"><figcaption>标题与正文仅靠颜色区分重量</figcaption></figure>
+  </div>
+  <div class="fix"><b>建议：</b>在 <code>TextAppearance.RadioDroid.Title / TitleLarge</code> 使用 <code>fontFamily="sans-serif-medium"</code>（500），Bold 仅保留给 Display / Headline 大字；无需引入字体文件即可提升层级质感。</div>
+</div>
+
+<div class="card issue p2">
+  <h3><span class="tag">P2-4</span>迷你播放器与底栏的层次关系可再优化</h3>
+  <p>迷你播放条（强调色底）与底栏（卡片面底）之间靠 1dp 分隔线区分，强调色大面积贴底略突兀；播放按钮浅色圆盘在深色播放条上对比强烈但缺过渡（无投影/描边），略显「漂浮」。此条涉及既有确认设计，仅作可选微调。</p>
+  <div class="fix"><b>建议：</b>可选：给播放圆盘加 8%~12% 同色投影或 1dp 深色描边增强「落定感」；迷你条与底栏可尝试统一为卡片面上叠小圆角悬浮条的现代播放器形态（大改，需单独评审）。</div>
+</div>
+
+<h2>四、逐屏点评</h2>
+<div class="grid">
+  <div class="shot"><img src="{{IMG:ui_station_local}}" alt=""><div class="t">电台 · 本地列表</div><div class="d"><i>＋</i> 占位图标色板活泼 <em>－</em> 卡片间距 2dp 过挤（抽屉隐藏属底栏开关的正常设计，非缺陷）</div></div>
+  <div class="shot"><img src="{{IMG:ui_starred_list}}" alt=""><div class="t">收藏列表</div><div class="d"><i>＋</i> 信息密度合理、星标醒目 <em>－</em> 同上间距问题；标题截断无省略规范感</div></div>
+  <div class="shot"><img src="{{IMG:ui_station_expanded}}" alt=""><div class="t">展开的卡片详情</div><div class="d"><i>＋</i> 标签 chips、备注锚点清晰 <em>－</em> 8 个操作图标无可见文字标签</div></div>
+  <div class="shot"><img src="{{IMG:ui_starred_grid}}" alt=""><div class="t">网格图标模式</div><div class="d"><i>＋</i> 占位色板阵列观感好、标签已限 2 行 <em>－</em> 行高混排致基线不齐</div></div>
+  <div class="shot"><img src="{{IMG:ui_player_info}}" alt=""><div class="t">播放器 · 信息页</div><div class="d"><i>＋</i> 标签 chips 排布整齐 <em>－</em> 未选中页签过暗（PagerTabStrip）；双 Tab 行嵌套</div></div>
+  <div class="shot"><img src="{{IMG:ui_check_art_notplaying}}" alt=""><div class="t">播放器 · 封面页</div><div class="d"><em>－</em> 未播放时整页空白（根因已定位：updateAlbumArt 对 null 电台直接跳过），播放后正常</div></div>
+  <div class="shot"><img src="{{IMG:ui_player_history}}" alt=""><div class="t">播放器 · 曲目历史</div><div class="d"><i>＋</i> 时间戳右对齐、行高舒适 <em>－</em> 时间与标题基线微不齐</div></div>
+  <div class="shot"><img src="{{IMG:ui_history_tab}}" alt=""><div class="t">历史页</div><div class="d"><i>＋</i> 工具栏功能明确 <em>－</em> 清空按钮无二次确认样式提示（红态不可见）</div></div>
+  <div class="shot"><img src="{{IMG:ui_alarm_list}}" alt=""><div class="t">闹钟列表</div><div class="d"><i>＋</i> 时间大字层级清晰 <em>－</em> 大片空白区未利用（可加插画空态/次屏信息）</div></div>
+  <div class="shot"><img src="{{IMG:ui_alarm_editor}}" alt=""><div class="t">闹钟编辑对话框</div><div class="d"><i>＋</i> 滑块三段式直观、大时间显示出色 <em>－</em> 标题「编辑闹钟」与台名层级可再拉开</div></div>
+  <div class="shot"><img src="{{IMG:ui_settings_main}}" alt=""><div class="t">设置主页</div><div class="d"><i>＋</i> 搜索 + 13 分类平铺，扫读效率高 <em>－</em> 字重单一，分组重量感弱</div></div>
+  <div class="shot"><img src="{{IMG:ui_settings_appearance}}" alt=""><div class="t">外观设置</div><div class="d"><i>＋</i> 开关 / 分组规范 <em>－</em> 「紧凑模式」禁用联动时缺少视觉解释文案</div></div>
+  <div class="shot"><img src="{{IMG:ui_theme_presets}}" alt=""><div class="t">配色方案对话框</div><div class="d"><i>＋</i> 色卡缩略图直观，8 套预设一目了然 <em>－</em> 对话框内边距与列表页风格略脱节</div></div>
+  <div class="shot"><img src="{{IMG:ui_settings_backup}}" alt=""><div class="t">备份和恢复</div><div class="d"><i>＋</i> WebDAV 状态点（绿 = 正常）反馈到位 <em>－</em> 四个入口全文字，可加小图标辅助扫读</div></div>
+</div>
+
+<h2>五、优化路线图</h2>
+<div class="card">
+<table>
+  <tr><th style="width:70px">优先级</th><th>改动</th><th style="width:40%">涉及位置</th><th style="width:120px">成本</th></tr>
+  <tr><td><span class="pri p0">P0</span></td><td>Tab 页签改 TabLayout 或对 PagerTabStrip 显式设色，修复未选中对比度</td><td>layout_player_full.xml（两处 PagerTabStrip）</td><td>低～中</td></tr>
+  <tr><td><span class="pri p1">P1</span></td><td>未播放时封面回退最后播放电台图标（getCurrentOrLastStation）或显示空态占位</td><td>FragmentPlayerFull.updateAlbumArt()</td><td>低（根因已定位）</td></tr>
+  <tr><td><span class="pri p2">P2</span></td><td>收藏列表接入三态视图（空态 / 错误 / 骨架屏），杜绝静默空白</td><td>FragmentStarred 状态视图</td><td>低</td></tr>
+  <tr><td><span class="pri p2">P2</span></td><td>设置项「底部导航」摘要补充说明：关闭后改用侧边抽屉导航</td><td>preferences.xml + 8 语言</td><td>极低</td></tr>
+  <tr><td><span class="pri p1">P1</span></td><td>展开操作图标加 11sp 文字标签（8 语言）</td><td>stub_list_item_station_details.xml</td><td>中</td></tr>
+  <tr><td><span class="pri p1">P1</span></td><td>播放器双 Tab 行合并为单行四段分段</td><td>layout_player_full.xml</td><td>中偏高（需回归测试）</td></tr>
+  <tr><td><span class="pri p2">P2</span></td><td>网格标签固定 2 行高使基线对齐（原 P1 降级）</td><td>list_item_icon_only_station.xml</td><td>极低</td></tr>
+  <tr><td><span class="pri p2">P2</span></td><td>卡片间距 2dp → 8dp</td><td>list_item_station.xml margin</td><td>极低</td></tr>
+  <tr><td><span class="pri p2">P2</span></td><td>icon_button_ripple / progress_circle 改走预设强调色；删除无引用死色值</td><td>2 个 drawable + colors.xml</td><td>低</td></tr>
+  <tr><td><span class="pri p2">P2</span></td><td>标题字重补 sans-serif-medium（500）</td><td>styles.xml TextAppearance.*</td><td>极低</td></tr>
+  <tr><td><span class="pri p2">P2</span></td><td>播放圆盘投影 / 描边微调（可选）</td><td>播放按钮 drawable</td><td>低</td></tr>
+</table>
+</div>
+
+<h2>六、改造概念图（imagegen-frontend-mobile）</h2>
+<p class="note">概念图沿用应用现有设计基因（暗色 + 湖光青强调色 + 12dp 圆角卡片），仅针对上述 P0/P1 问题做演绎，不代表最终视觉稿；其中 AI 生成文字可能存在个别错字，以方案描述为准。</p>
+<div class="concepts">
+  <figure>
+    <img src="{{IMG:concept_station_list}}" alt="列表改造概念">
+    <figcaption><b>概念 A · 收藏列表</b> — 对应 P1-1 / P2-1：展开卡片的操作行增加 11sp 文字标签（主页 / 分享 / 定时 / 均衡器 / 转播），标签 chips 与备注锚点保留；卡片间距放宽，底部迷你播放器与底栏融合为一个层次。</figcaption>
+  </figure>
+  <figure>
+    <img src="{{IMG:concept_player_full}}" alt="播放器改造概念">
+    <figcaption><b>概念 B · 全屏播放器</b> — 对应 P0-2（未播放空封面态）/ P1-2：双 Tab 行合并为单行「封面 | 信息 | 曲目 | 历史」分段控件，未选中项使用高对比浅灰；无封面时显示矢量唱片纹样 + 「暂无封面」占位；72dp 播放圆盘保持既有确认尺寸。</figcaption>
+  </figure>
+</div>
+
+<h2>七、审查边界说明</h2>
+<div class="card">
+  <p>以下为已由用户确认的既有设计决策，本报告<b>不</b>将其列为问题、不建议推翻：</p>
+  <ul class="clean">
+    <li>「正在播放」高亮：直角方框、2dp 描边、图标间隙 3dp、约 31% 同色遮盖。</li>
+    <li>大图标模式电台图标 70dp / 行高 88dp；网格图标 72dp；播放器行内小图标 56dp。</li>
+    <li>全屏播放器播放 / 暂停按钮 72dp；迷你播放器按钮随行高。</li>
+    <li>电台备注文字：强调色、Caption 字号、无斜体。</li>
+    <li>暗色主题强调色整体上调一档（300→200 / 200→100）的既有调值。</li>
+  </ul>
+  <p style="margin-top:8px; color:var(--ink2); font-size:13px;">方法说明：真机截图经 adb 采集（设备 2607d84e，1440×3200）；静态审查覆盖 styles.xml / colors.xml / dimens.xml / layout_main.xml / list_item_station.xml；审计维度（排版层级、色彩与表面、布局、交互状态、组件模式、图标）参照 redesign-existing-projects 方法论，并适配至 Android / Material 语境。</p>
+</div>
+
+<h2>八、复核更正记录（2026-10-13）</h2>
+<div class="card">
+  <p>应用户要求对报告全部问题逐条对照代码复核，更正如下：</p>
+  <ul class="clean">
+    <li><b>P0-4 撤销</b> — 「抽屉无可达入口」系误读：抽屉是「底部导航」开关关闭时的备选导航（ActivityMain.java #L234-248），开启底栏时隐藏属设计意图，非缺陷；仅保留设置项文案说明的建议。可发现性评分 6.0 → 7.0，综合 7.2 → 7.4。</li>
+    <li><b>P0-2 改写</b> — 占位机制在代码中完整存在（StationPlaceholderUtils / Picasso placeholder / 应用图标兜底），「未设计占位」不成立；但实测有图标的电台封面页仍空白，定性改为「占位链路未生效的疑似 bug，待真机复现」。</li>
+    <li><b>P1-3 降级</b> — 网格标签已限 <code>maxLines=2</code>，不存在「2~3 行」；间距实为 4dp。仅保留「行高混排致基线不齐」，严重度 P1 → P2。</li>
+    <li><b>P0-3 精化</b> — 收藏列表确无三态视图属实；但顶栏 progressBarLoading 存在（服务数据库更新），「全应用零加载反馈」表述修正；异常根因待日志确认。</li>
+    <li><b>P2-2 举例修正</b> — 品红 snackBarButtonColor 与玫粉 colorTabUnderline 无实际引用（死值）；真实跳色点是 icon_button_ripple.xml / progress_circle.xml 引用固定 #1d6293。</li>
+    <li><b>P1-1 数字修正</b> — 操作按钮实为 8 个（布局中），截图可见 7 个；「无可见文字标签」结论不变。</li>
+    <li><b>二次复核（2026-10-13 真机）· P0-2 根因定位，降级 P1</b> — 依据用户观察「封面播放时才出现」真机复现确认：占位链路正常（播放后图标秒出），缺口在<b>未播放态</b>——<code>updateAlbumArt()</code> 对 <code>getCurrentStation()==null</code> 直接 return，而同屏标题 / 顶栏图标 / 曲目历史用 <code>getCurrentOrLastStation()</code> 照常显示，形成「有信息、无封面」不一致。修复方向明确（回退最后播放电台或空态占位）。</li>
+    <li><b>二次复核（2026-10-13 真机）· P0-3 降级 P2</b> — 当日整页空白在冷启动连拍、快速切页签、播放器进出、屏幕旋转、日常操作 5 场景均未复现；收藏数据为同步装载（<code>StationSaveManager</code> 构造时同步读 SharedPreferences），无异步空窗，且 <code>RefreshListGui</code> 有空保护 + <code>onResume</code> 双刷新，无法归因到现有代码路径。三态视图建议保留，严重度降为 P2。状态设计 4.5 → 5.5，综合 7.4 → 7.6。</li>
+  </ul>
+</div>
+
+<footer>RadioDroid UI Review · 2026-10-11 发布 · 2026-10-13 代码复核 + 真机复核更正 · 本报告自包含全部图片，可直接归档或分享</footer>
+</div>
+</body>
+</html>
