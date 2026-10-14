@@ -139,6 +139,12 @@ public class RecyclerAwareNestedScrollView extends NestedScrollView {
             return;
         }
         final RecyclerView rv = (RecyclerView) target;
+        // 列表自身还能朝该方向滚动时同样必须就地终止：下拖（dy<0）回滚列表时若走 super，
+        // pre-scroll 会被继续向上转发，BottomSheet 把列表回滚误判为外层下拉而收起播放器，
+        // 导致列表"只能上拖、不能下拖"，永远滚不回顶部查看最新插入的条目。
+        if (dy < 0 && !isRvScrolledToTop(rv)) {
+            return;
+        }
         if ((dy < 0 && isRvScrolledToTop(rv)) || (dy > 0 && !isNsvScrolledToBottom(this))) {
             // Scroll the NestedScrollView's content and record the number of pixels consumed
             // (so that the RecyclerView will know not to perform the scroll as well).
@@ -157,6 +163,10 @@ public class RecyclerAwareNestedScrollView extends NestedScrollView {
             return false;
         }
         final RecyclerView rv = (RecyclerView) target;
+        // 列表自身还能向下滚动（不在顶部）时，下甩必须留给列表自己，就地不消费不转发
+        if (velY < 0 && !isRvScrolledToTop(rv)) {
+            return false;
+        }
         if ((velY < 0 && isRvScrolledToTop(rv)) || (velY > 0 && !isNsvScrolledToBottom(this))) {
             // Fling the NestedScrollView's content and return true (so that the RecyclerView
             // will know not to perform the fling as well).

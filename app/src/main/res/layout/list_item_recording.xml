@@ -15,6 +15,8 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/space_lg"
         android:layout_marginEnd="@dimen/space_lg"
+        android:ellipsize="end"
+        android:maxLines="1"
         android:textAppearance="@style/TextAppearance.RadioDroid.Title"
         android:textStyle="bold" />
 

@@ -255,7 +255,7 @@
   <string name="tab_player_art">Albumgrafikk</string>
   <string name="tab_player_station_info">Stasjoninfo</string>
   <string name="tab_player_history">Sporhistorikk</string>
-  <string name="tab_player_recordings">Opptak</string>
+  <string name="tab_player_recordings">Opptaksliste</string>
 
   <string name="station_detail_bitrate">%1$1d kbps</string>
   <string name="station_detail_broken">BRUTT</string>

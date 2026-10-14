@@ -35,7 +35,7 @@
   <string name="nav_item_history">Spelelogg</string>
   <string name="nav_item_settings">Innstillingar</string>
   <string name="nav_item_alarm">Varsling</string>
-  <string name="tab_player_recordings">Opptak</string>
+  <string name="tab_player_recordings">Opptaksliste</string>
   <string name="about_text">Denne appen brukar radiokanaloversikta på\nhttps://www.radio-browser.info/\nAlle kan leggja til nye radiokanalar eller oppdatera informasjonen om kanalar som finst frå før. Nettsida fungerer som ein wiki om radiokanalar som tilbyr strauming over nettet.\n\nTa kontakt:\nsegler_alex\@web.de\n\nMeld frå om feil:\nhttps://github.com/segler-alex/RadioDroid/issues\n\nViss du likar dette programmet og ønskjer å hjelpa til, ta gjerne kontakt med meg på e-post. Eg treng verkeleg nokon med designkompetanse for å gjera appen finare. :) Kanskje nokon som kan teikna ikon, bilete osv. Men òg programmerarar som kan retta feil eller leggja til ny funksjonalitet.\nForslag til nye funksjonar vert òg sette pris på!\n\nDenne appen er fri programvare tilgjengeleg under GPLv3-lisensen:\nhttps://www.gnu.org/licenses/gpl-3.0.html</string>
   <string name="about_version">Versjon: %1$s</string>
   <string name="detail_star">Merk som favoritt</string>

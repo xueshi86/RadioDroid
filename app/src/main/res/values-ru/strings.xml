@@ -483,7 +483,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="tab_player_station_info">О станции</string>
     <string name="tab_player_current_history">Треки станции</string>
     <string name="tab_player_history">История треков</string>
-    <string name="tab_player_recordings">Записи</string>
+    <string name="tab_player_recordings">Список записей</string>
 
     <string name="station_detail_bitrate">%1$1d кбит/с</string>
     <string name="station_detail_broken">НЕРАБОЧАЯ</string>

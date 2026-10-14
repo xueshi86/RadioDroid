@@ -429,7 +429,7 @@
     <string name="tab_player_station_info">电台信息</string>
     <string name="tab_player_current_history">本台曲目</string>
     <string name="tab_player_history">曲目历史</string>
-    <string name="tab_player_recordings">录音</string>
+    <string name="tab_player_recordings">录音列表</string>
 
     <string name="station_detail_bitrate">%1$1d kbps</string>
     <string name="station_detail_broken">损坏</string>

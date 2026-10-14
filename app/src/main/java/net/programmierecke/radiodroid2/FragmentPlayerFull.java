@@ -126,9 +126,9 @@ public class FragmentPlayerFull extends Fragment {
 
     private RecyclerAwareNestedScrollView scrollViewContent;
 
-    // 「电台信息」面板与其内部控件（原 ArtAndInfoPagerAdapter 字段上移为 Fragment 字段）：
-    // pane 与历史 pager 互斥显示，高度由代码按剩余可视空间计算
-    private ViewGroup stationInfoPane;
+    // 「电台信息」页视图（作为四页内容 pager 的第 0 页，由 HistoryAndRecordsPagerAdapter 管理）：
+    // 字段从原 ArtAndInfoPagerAdapter 上移为 Fragment 字段
+    private ViewGroup stationInfoPage;
     private ImageView imageViewArt;
     private TextView textViewStationDescription;
     private TagsView viewTags;
@@ -158,7 +158,8 @@ public class FragmentPlayerFull extends Fragment {
     private TextView textViewRecordingSize;
     private TextView textViewRecordingName;
 
-    private ViewPager pagerHistoryAndRecordings;
+    // 内容 pager（电台信息 / 本台曲目 / 曲目历史 / 录音列表四页，支持横滑翻页）
+    private ViewPager pagerContent;
     private HistoryAndRecordsPagerAdapter historyAndRecordsPagerAdapter;
 
     private TrackHistoryViewModel trackHistoryViewModel;
@@ -257,36 +258,35 @@ public class FragmentPlayerFull extends Fragment {
 
         scrollViewContent = view.findViewById(R.id.scrollViewContent);
 
-        // 「电台信息」pane：填充信息页（大尺寸图标卡 + 可滚动信息区 + 播放状态块），
+        // 「电台信息」页：inflate 后作为内容 pager 的第 0 页（不预先 attach，由 adapter 管理），
         // 取代原先被合并的「专辑封面 / 信息」两个 ViewPager 页
-        stationInfoPane = view.findViewById(R.id.stationInfoPane);
-        blockRecording = view.findViewById(R.id.blockRecording);
-        inflater.inflate(R.layout.page_player_station_info, stationInfoPane, true);
-        imageViewArt = view.findViewById(R.id.imageViewArt);
-        textViewStationDescription = view.findViewById(R.id.textViewStationDescription);
-        viewTags = view.findViewById(R.id.viewTags);
-        layoutStationNoteRow = view.findViewById(R.id.layoutStationNoteRow);
-        textViewStationNote = view.findViewById(R.id.textViewStationNote);
-        buttonEditStationNote = view.findViewById(R.id.buttonEditStationNote);
+        stationInfoPage = (ViewGroup) inflater.inflate(R.layout.page_player_station_info, (ViewGroup) view, false);
+        imageViewArt = stationInfoPage.findViewById(R.id.imageViewArt);
+        textViewStationDescription = stationInfoPage.findViewById(R.id.textViewStationDescription);
+        viewTags = stationInfoPage.findViewById(R.id.viewTags);
+        layoutStationNoteRow = stationInfoPage.findViewById(R.id.layoutStationNoteRow);
+        textViewStationNote = stationInfoPage.findViewById(R.id.textViewStationNote);
+        buttonEditStationNote = stationInfoPage.findViewById(R.id.buttonEditStationNote);
 
+        // 播放状态块（本次/累计收听、缓冲、流量）位于信息页布局内；电台标题行在主布局
         textViewGeneralInfo = view.findViewById(R.id.textViewGeneralInfo);
-        textViewTotalPlayTime = view.findViewById(R.id.textViewTotalPlayTime);
-        textViewCurrentPlayTime = view.findViewById(R.id.textViewCurrentPlayTime);
-        textViewNetworkUsageInfo = view.findViewById(R.id.textViewNetworkUsageInfo);
-        textViewTimeCached = view.findViewById(R.id.textViewTimeCached);
+        textViewTotalPlayTime = stationInfoPage.findViewById(R.id.textViewTotalPlayTime);
+        textViewCurrentPlayTime = stationInfoPage.findViewById(R.id.textViewCurrentPlayTime);
+        textViewNetworkUsageInfo = stationInfoPage.findViewById(R.id.textViewNetworkUsageInfo);
+        textViewTimeCached = stationInfoPage.findViewById(R.id.textViewTimeCached);
 
         imageViewConnectionTypeFull = view.findViewById(R.id.imageViewConnectionTypeFull);
 
+        blockRecording = view.findViewById(R.id.blockRecording);
         imgRecordingIcon = view.findViewById(R.id.imgRecordingIcon);
         textViewRecordingSize = view.findViewById(R.id.textViewRecordingSize);
         textViewRecordingName = view.findViewById(R.id.textViewRecordingName);
 
-        pagerHistoryAndRecordings = view.findViewById(R.id.pagerHistoryAndRecordings);
-        historyAndRecordsPagerAdapter = new HistoryAndRecordsPagerAdapter(requireContext(), pagerHistoryAndRecordings);
-        pagerHistoryAndRecordings.setAdapter(historyAndRecordsPagerAdapter);
-        pagerHistoryAndRecordings.setCurrentItem(0, false);
+        pagerContent = view.findViewById(R.id.pagerContent);
+        historyAndRecordsPagerAdapter = new HistoryAndRecordsPagerAdapter(requireContext(), pagerContent, stationInfoPage);
+        pagerContent.setAdapter(historyAndRecordsPagerAdapter);
 
-        // 单行五段分段控件（UI 审查 P1-2）：取代原先两行 PagerTabStrip，五个页面全部保留
+        // 单行四段分段控件（UI 审查 P1-2）：取代原先两行 PagerTabStrip，四个页面全部保留
         setupSegmentTabs(view);
 
         // "本台曲目"顶部的正在播放头也可点击，与历史列表条目一致弹出曲目详情（含歌词入口）
@@ -898,7 +898,7 @@ public class FragmentPlayerFull extends Fragment {
     /**
      * 录音状态块显隐（UI 审查 P1-2 后续）：「录音状态栏只在电台信息和录音界面显示」——
      * 当前段为「电台信息」或「录音」且确有录音进行中时可见，其余情况隐藏。
-     * 显隐变化会触发外层全局布局回调，pane / pager 高度随之自动重算。
+     * 显隐变化会触发外层全局布局回调，内容 pager 高度随之自动重算。
      */
     private void updateRecordingRowVisibility() {
         if (segmentTabs == null || blockRecording == null) {
@@ -907,34 +907,6 @@ public class FragmentPlayerFull extends Fragment {
         final int position = segmentTabs.getSelectedTabPosition();
         final boolean pageShowsRecording = position == 0 || position == 3;
         blockRecording.setVisibility(pageShowsRecording && recordingRowActive ? View.VISIBLE : View.GONE);
-    }
-
-    /**
-     * 按剩余可视空间设置当前可见内容槽（「电台信息」pane 或历史 pager）的高度：
-     * 可视高度 − 槽顶部偏移 −（可见时的）录音状态块高度。分段切换、录音状态块显隐
-     * 等布局变化都会触发全局布局回调，本方法幂等收敛。
-     */
-    private void applyContentHeights() {
-        if (scrollViewContent == null || stationInfoPane == null || pagerHistoryAndRecordings == null) {
-            return;
-        }
-        final int visibleHeight = scrollViewContent.getHeight();
-        if (visibleHeight == 0) {
-            return;
-        }
-        final View slot = stationInfoPane.getVisibility() == View.VISIBLE ? stationInfoPane
-                : (pagerHistoryAndRecordings.getVisibility() == View.VISIBLE ? pagerHistoryAndRecordings : null);
-        if (slot == null) {
-            return;
-        }
-        final int recordingExtra = blockRecording.getVisibility() == View.VISIBLE ? blockRecording.getHeight() : 0;
-        final int available = visibleHeight - slot.getTop() - recordingExtra;
-        final int newHeight = available > 0 ? available : visibleHeight;
-        ViewGroup.LayoutParams layoutParams = slot.getLayoutParams();
-        if (newHeight != layoutParams.height) {
-            layoutParams.height = newHeight;
-            slot.setLayoutParams(layoutParams);
-        }
     }
 
     private void updateAlbumArt() {
@@ -1119,13 +1091,12 @@ public class FragmentPlayerFull extends Fragment {
     }
 
     private class HistoryAndRecordsPagerAdapter extends PagerAdapter {
+        private ViewGroup layoutStationInfo;
         private ViewGroup layoutCurrentStationHistory;
         private ViewGroup layoutSongHistory;
         private ViewGroup layoutRecordings;
 
         ViewGroup layoutCurrentPlaying;
-
-        private String[] titles;
 
         RecyclerView recyclerViewCurrentStationHistory;
         RecyclerView recyclerViewSongHistory;
@@ -1138,14 +1109,15 @@ public class FragmentPlayerFull extends Fragment {
         TextView textViewCurrentTrack;
         TextView textViewCurrentArtist;
 
-        HistoryAndRecordsPagerAdapter(@NonNull Context context, @NonNull ViewGroup parent) {
+        HistoryAndRecordsPagerAdapter(@NonNull Context context, @NonNull ViewGroup parent, @NonNull ViewGroup stationInfoPage) {
             LayoutInflater inflater = LayoutInflater.from(context);
 
+            // 第 0 页「电台信息」（大尺寸图标卡 + 可滚动信息区 + 播放状态块）由 Fragment 预先
+            // inflate 后传入，使 Fragment 可直接持有其内部控件引用；其余三页在此 inflate
+            layoutStationInfo = stationInfoPage;
             layoutCurrentStationHistory = (ViewGroup) inflater.inflate(R.layout.page_player_current_history, parent, false);
             layoutSongHistory = (ViewGroup) inflater.inflate(R.layout.page_player_history, parent, false);
             layoutRecordings = (ViewGroup) inflater.inflate(R.layout.page_player_recordings, parent, false);
-
-            titles = new String[]{getResources().getString(R.string.tab_player_current_history), getResources().getString(R.string.tab_player_history), getResources().getString(R.string.tab_player_recordings)};
 
             recyclerViewCurrentStationHistory = layoutCurrentStationHistory.findViewById(R.id.recyclerViewCurrentStationHistory);
             recyclerViewSongHistory = layoutSongHistory.findViewById(R.id.recyclerViewSongHistory);
@@ -1163,15 +1135,19 @@ public class FragmentPlayerFull extends Fragment {
         @NonNull
         @Override
         public Object instantiateItem(@NonNull ViewGroup collection, int position) {
-            if (position == 0) {
-                collection.addView(layoutCurrentStationHistory);
-                return layoutCurrentStationHistory;
-            } else if (position == 1) {
-                collection.addView(layoutSongHistory);
-                return layoutSongHistory;
-            } else {
-                collection.addView(layoutRecordings);
-                return layoutRecordings;
+            switch (position) {
+                case 0:
+                    collection.addView(layoutStationInfo);
+                    return layoutStationInfo;
+                case 1:
+                    collection.addView(layoutCurrentStationHistory);
+                    return layoutCurrentStationHistory;
+                case 2:
+                    collection.addView(layoutSongHistory);
+                    return layoutSongHistory;
+                default:
+                    collection.addView(layoutRecordings);
+                    return layoutRecordings;
             }
         }
 
@@ -1182,18 +1158,12 @@ public class FragmentPlayerFull extends Fragment {
 
         @Override
         public int getCount() {
-            return 3;
+            return 4;
         }
 
         @Override
         public boolean isViewFromObject(@NonNull View view, @NonNull Object object) {
             return view == object;
-        }
-
-        @Nullable
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return titles[position];
         }
     }
 
@@ -1252,9 +1222,9 @@ public class FragmentPlayerFull extends Fragment {
 
     /**
      * 单行四段分段控件（UI 审查 P1-2 及后续调整）：合并原先两行 PagerTabStrip，
-     * 「电台信息 | 本台曲目 | 曲目历史 | 录音」四页全部保留——「电台信息」页合并了
-     * 原专辑封面与信息两页内容（大尺寸图标 + 可滚动信息区），其余三段驱动历史 pager；
-     * 切换时信息 pane 与历史 pager 互斥显示，录音状态块仅随「电台信息 / 录音」显示。
+     * 「电台信息 | 本台曲目 | 曲目历史 | 录音列表」四页全部承载于单个内容 pager
+     * （「电台信息」页合并了原专辑封面与信息两页内容），点击分段翻页、横滑翻页
+     * 同步分段高亮，双向联动；录音状态块仅随「电台信息 / 录音列表」显示。
      * 胶囊背景用当前主题强调色（配色方案联动），胶囊文字
      * 按 WCAG 亮度自动取黑/白（与项目既有「色块取字色」规则一致）；未选中段用次要文字色。
      */
@@ -1292,7 +1262,8 @@ public class FragmentPlayerFull extends Fragment {
             @Override
             public void onTabSelected(@NonNull TabLayout.Tab tab) {
                 updateSegmentStyles(tab.getPosition());
-                syncSegment(tab.getPosition());
+                // 点击分段 → 翻页（同位置时 setCurrentItem 为无操作）
+                pagerContent.setCurrentItem(tab.getPosition(), false);
             }
 
             @Override
@@ -1304,41 +1275,47 @@ public class FragmentPlayerFull extends Fragment {
             }
         });
 
-        // 历史 pager 内横滑翻页 → 同步分段高亮（selectTab 会再次走 onTabSelected，
-        // 但 syncSegment 幂等，不会形成循环）；电台信息页为单页无翻页，无需监听
-        pagerHistoryAndRecordings.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+        // 内容 pager 横滑翻页 → 同步分段高亮与录音状态块显隐
+        // （selectTab 已选中时为静默操作，onTabSelected 不再触发，不会形成循环）
+        pagerContent.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
-                TabLayout.Tab tab = segmentTabs.getTabAt(position + 1);
-                if (tab != null && segmentTabs.getSelectedTabPosition() != position + 1) {
+                TabLayout.Tab tab = segmentTabs.getTabAt(position);
+                if (tab != null && segmentTabs.getSelectedTabPosition() != position) {
                     segmentTabs.selectTab(tab);
                 }
+                updateRecordingRowVisibility();
             }
         });
 
-        // 初始态：电台信息段选中，历史 pager 隐藏（由 syncSegment 统一设置，保持单一来源）
-        stationInfoPane.setVisibility(View.VISIBLE);
-        pagerHistoryAndRecordings.setVisibility(View.GONE);
+        // 初始态：选中第一段「电台信息」（同位置 setCurrentItem 无回调，需手动同步录音状态块）
         TabLayout.Tab first = segmentTabs.getTabAt(0);
         if (first != null) {
             segmentTabs.selectTab(first);
         }
+        updateRecordingRowVisibility();
     }
 
     /**
-     * 分段切换：段 0「电台信息」显示信息 pane（播放状态块随页显示）；
-     * 段 1-3 显示历史 pager 并翻到对应页。
+     * 按剩余可视空间设置内容 pager 的高度：
+     * 可视高度 − pager 顶部偏移 −（可见时的）录音状态块高度。录音状态块显隐等布局
+     * 变化都会触发全局布局回调，本方法幂等收敛。
      */
-    private void syncSegment(int position) {
-        boolean infoSide = position == 0;
-        stationInfoPane.setVisibility(infoSide ? View.VISIBLE : View.GONE);
-        pagerHistoryAndRecordings.setVisibility(infoSide ? View.GONE : View.VISIBLE);
-        updateRecordingRowVisibility();
-        if (!infoSide) {
-            int page = position - 1;
-            if (pagerHistoryAndRecordings.getCurrentItem() != page) {
-                pagerHistoryAndRecordings.setCurrentItem(page, false);
-            }
+    private void applyContentHeights() {
+        if (scrollViewContent == null || pagerContent == null) {
+            return;
+        }
+        final int visibleHeight = scrollViewContent.getHeight();
+        if (visibleHeight == 0) {
+            return;
+        }
+        final int recordingExtra = blockRecording.getVisibility() == View.VISIBLE ? blockRecording.getHeight() : 0;
+        final int available = visibleHeight - pagerContent.getTop() - recordingExtra;
+        final int newHeight = available > 0 ? available : visibleHeight;
+        ViewGroup.LayoutParams layoutParams = pagerContent.getLayoutParams();
+        if (newHeight != layoutParams.height) {
+            layoutParams.height = newHeight;
+            pagerContent.setLayoutParams(layoutParams);
         }
     }
 

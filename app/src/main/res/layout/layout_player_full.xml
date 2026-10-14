@@ -83,23 +83,17 @@
                 app:tabPaddingTop="3dp"
                 app:tabRippleColor="@android:color/transparent" />
 
-            <!-- 「电台信息」面板：填充 page_player_station_info（大尺寸图标卡 + 可滚动
-                 信息区 + 播放状态块），与历史 pager 互斥显示；高度由代码按剩余可视空间计算 -->
-            <FrameLayout
-                android:id="@+id/stationInfoPane"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone" />
-
-            <!-- 分页列表（本台曲目 / 曲目历史 / 录音）：高度由代码按剩余可视空间计算 -->
+            <!-- 内容 pager（电台信息 / 本台曲目 / 曲目历史 / 录音列表四页，支持横滑翻页）：
+                 高度由代码按剩余可视空间计算 -->
             <androidx.viewpager.widget.ViewPager
-                android:id="@+id/pagerHistoryAndRecordings"
+                android:id="@+id/pagerContent"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone" />
+                android:layout_height="wrap_content" />
 
             <!-- 录音状态块（UI 审查 P1-2 后续）：「录音状态栏只在电台信息和录音界面显示」——
-                 分隔线 + 录音图标/大小/文件名，堆叠在当前可见内容槽下方，显隐由代码控制 -->
+                 分隔线 + 录音点图标 + 文件名/大小两行，垂直节奏与录音列表条目一致
+                 （上下 padding + Title 文件名 + Caption 大小），堆叠在内容 pager 下方，
+                 显隐由代码按当前段与录音状态控制 -->
             <LinearLayout
                 android:id="@+id/blockRecording"
                 android:layout_width="match_parent"
@@ -111,7 +105,6 @@
                     android:id="@+id/divider1"
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/divider_thickness"
-                    android:layout_marginTop="@dimen/space_sm"
                     android:background="?attr/colorPlayerShadow" />
 
                 <LinearLayout
@@ -119,40 +112,46 @@
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:paddingBottom="@dimen/space_sm">
+                    android:paddingTop="@dimen/space_md"
+                    android:paddingBottom="@dimen/space_md">
 
                     <ImageView
                         android:id="@+id/imgRecordingIcon"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:layout_marginLeft="8dp"
+                        android:layout_marginStart="@dimen/space_lg"
+                        android:layout_marginLeft="@dimen/space_lg"
+                        android:layout_marginEnd="@dimen/space_sm"
+                        android:layout_marginRight="@dimen/space_sm"
                         app:srcCompat="@drawable/ic_start_recording"
                         tools:ignore="ContentDescription" />
 
-                    <TextView
-                        android:id="@+id/textViewRecordingSize"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/space_sm"
-                        android:layout_marginLeft="@dimen/space_sm"
-                        android:minWidth="75dp"
-                        android:textColor="?attr/colorTextSecondary"
-                        android:textSize="@dimen/text_body_small"
-                        tools:text="2.5 mb" />
-
-                    <TextView
-                        android:id="@+id/textViewRecordingName"
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="@dimen/space_sm"
-                        android:layout_marginLeft="@dimen/space_sm"
-                        android:layout_marginEnd="@dimen/space_sm"
-                        android:layout_marginRight="@dimen/space_sm"
-                        android:textColor="?attr/colorTextPrimary"
-                        android:textSize="@dimen/text_body_small"
-                        tools:text="recording name.mp3" />
+                        android:layout_marginEnd="@dimen/space_lg"
+                        android:layout_marginRight="@dimen/space_lg"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/textViewRecordingName"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:textAppearance="@style/TextAppearance.RadioDroid.Title"
+                            android:textStyle="bold"
+                            tools:text="recording name.mp3" />
+
+                        <TextView
+                            android:id="@+id/textViewRecordingSize"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:maxLines="1"
+                            android:textAppearance="@style/TextAppearance.RadioDroid.Caption"
+                            tools:text="2.5 mb" />
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
 

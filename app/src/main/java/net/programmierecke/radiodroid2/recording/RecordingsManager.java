@@ -166,7 +166,24 @@ public class RecordingsManager {
 
             //TODO: check available disk space here
 
-            String filePath = getRecordDir() + "/" + info.getFileName();
+            // 文件名中的 {time} 仅精确到分钟：同一分钟内重复录制同曲目会产生同名文件，
+            // FileOutputStream 会静默截断覆盖旧录音，导致录音列表条目数不增反丢。
+            // 检测到同名文件时在扩展名前追加序号（_1、_2…）保证每次录音独立成文件。
+            File recordFile = new File(getRecordDir(), info.getFileName());
+            if (recordFile.exists()) {
+                final String rawName = info.getFileName();
+                final int dotIndex = rawName.lastIndexOf('.');
+                final String stem = dotIndex >= 0 ? rawName.substring(0, dotIndex) : rawName;
+                final String extension = dotIndex >= 0 ? rawName.substring(dotIndex) : "";
+                int suffix = 1;
+                do {
+                    recordFile = new File(getRecordDir(), String.format("%s_%d%s", stem, suffix, extension));
+                    suffix++;
+                } while (recordFile.exists());
+                info.setFileName(recordFile.getName());
+            }
+
+            String filePath = recordFile.getPath();
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "Starting recording to: " + filePath);
             }
