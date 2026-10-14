@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 根节点改为 NestedScrollView（Issue #53）：Info 页嵌在固定高度的「封面/信息」ViewPager 中，
+<!-- 根节点改为可滚动容器（Issue #53）：Info 页嵌在固定高度的「封面/信息」ViewPager 中，
      此前为不可滚动的 LinearLayout，标签较多的电台会把内容（含备注行）挤出页面底部被裁剪，
-     用户滚动到页面尽头也看不到「添加备注」入口；改为可滚动页面后任何信息量都能完整到达。 -->
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+     用户滚动到页面尽头也看不到「添加备注」入口；改为可滚动页面后任何信息量都能完整到达。
+     使用 RecyclerAwareNestedScrollView（而非普通 NestedScrollView）：其自带"上方有内容时
+     禁止父容器抢占手势"的防御，避免滚离顶部后向下拖动被 BottomSheet 误解析为收起播放器。 -->
+<net.programmierecke.radiodroid2.views.RecyclerAwareNestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -74,4 +76,4 @@
                 app:iiv_size="20dp" />
         </LinearLayout>
     </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+</net.programmierecke.radiodroid2.views.RecyclerAwareNestedScrollView>

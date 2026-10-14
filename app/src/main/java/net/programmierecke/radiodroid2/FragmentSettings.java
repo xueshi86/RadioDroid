@@ -2286,14 +2286,41 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
      * 组装"本地数据库状态"多行摘要：最后更新时间 + 本地电台数量 + 远程电台数量。
      * 远程数量取自 ServerStatistics（全量/增量更新与启动刷新写入）；
      * 从未获取到时回退两行版，避免显示误导性的"远程电台数量: 0"。
+     * 所有数字段统一施加 tnum（等宽数字）特性：系统字体默认使用比例数字，
+     * 窄"1"（宽度约为其他数字的一半）会让含 1 的数字段（如 61516）看起来
+     * 比纯宽数字段（如 60976）稀疏显小，用户会误读为字号不一致。
      */
-    private static String formatDatabaseStatusSummary(Context context, String updateTime, int localCount) {
+    private static CharSequence formatDatabaseStatusSummary(Context context, String updateTime, int localCount) {
         SharedPreferences stats = context.getSharedPreferences("ServerStatistics", Context.MODE_PRIVATE);
         int remoteCount = stats.getInt("stations_total", 0);
+        String text;
         if (remoteCount > 0) {
-            return context.getString(R.string.settings_local_database_status_success, updateTime, localCount, remoteCount);
+            text = context.getString(R.string.settings_local_database_status_success, updateTime, localCount, remoteCount);
+        } else {
+            text = context.getString(R.string.settings_local_database_status_success_no_remote, updateTime, localCount);
         }
-        return context.getString(R.string.settings_local_database_status_success_no_remote, updateTime, localCount);
+        SpannableString summary = new SpannableString(text);
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\d+").matcher(text);
+        while (matcher.find()) {
+            summary.setSpan(new TabularFiguresSpan(), matcher.start(), matcher.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        return summary;
+    }
+
+    /**
+     * 等宽数字（tabular figures）span：让每个数字占据相同水平宽度。
+     * 仅影响测量与绘制的字形特性，不改变字号、字重与字体族。
+     */
+    private static class TabularFiguresSpan extends android.text.style.MetricAffectingSpan {
+        @Override
+        public void updateMeasureState(@NonNull android.text.TextPaint paint) {
+            paint.setFontFeatureSettings("tnum");
+        }
+
+        @Override
+        public void updateDrawState(@NonNull android.text.TextPaint paint) {
+            paint.setFontFeatureSettings("tnum");
+        }
     }
 
     private void getStationCountAndUpdateStatus(String lastUpdateTime, RadioStationRepository repository, Preference statusPref) {
