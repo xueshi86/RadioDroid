@@ -247,7 +247,7 @@
     <string name="player_info_recorded_to">Última gravação:\n%1$s</string>
 
     <string name="tab_player_art">Arte do álbum</string>
-    <string name="tab_player_info">Info</string>
+    <string name="tab_player_station_info">Info da estação</string>
     <string name="tab_player_history">Histórico de reprodução</string>
     <string name="tab_player_recordings">Gravações</string>
 

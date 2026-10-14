@@ -248,7 +248,7 @@
     <string name="player_info_recorded_to">Sidste optagelse:\n%1$s</string>
 
     <string name="tab_player_art">Album omslag</string>
-    <string name="tab_player_info">Information</string>
+    <string name="tab_player_station_info">Station info</string>
     <string name="tab_player_history">Spor historik</string>
     <string name="tab_player_recordings">Optagelser</string>
 

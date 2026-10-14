@@ -247,7 +247,7 @@
     <string name="player_info_recorded_to">Rekaman terakhir:\n%1$s</string>
 
     <string name="tab_player_art">Kover album</string>
-    <string name="tab_player_info">Info</string>
+    <string name="tab_player_station_info">Info stasiun</string>
     <string name="tab_player_history">Riwayat trek</string>
     <string name="tab_player_recordings">Rekaman</string>
 

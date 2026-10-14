@@ -37,6 +37,7 @@
     <string name="nav_item_history">Bisher gespielt</string>
     <string name="nav_item_settings">Einstellungen</string>
     <string name="nav_item_alarm">Wecker</string>
+    <string name="tab_player_station_info">Senderinfos</string>
     <string name="tab_player_current_history">Sender-Titel</string>
     <string name="tab_player_recordings">Aufnahmen</string>
 

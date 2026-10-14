@@ -15,7 +15,6 @@ import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -29,7 +28,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.Group;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
@@ -128,8 +126,16 @@ public class FragmentPlayerFull extends Fragment {
 
     private RecyclerAwareNestedScrollView scrollViewContent;
 
-    private ViewPager pagerArtAndInfo;
-    private ArtAndInfoPagerAdapter artAndInfoPagerAdapter;
+    // 「电台信息」面板与其内部控件（原 ArtAndInfoPagerAdapter 字段上移为 Fragment 字段）：
+    // pane 与历史 pager 互斥显示，高度由代码按剩余可视空间计算
+    private ViewGroup stationInfoPane;
+    private ImageView imageViewArt;
+    private TextView textViewStationDescription;
+    private TagsView viewTags;
+    private ViewGroup layoutStationNoteRow;
+    private TextView textViewStationNote;
+    // IconicsImageButton 继承自 IconicsImageView 而非 ImageButton，声明为 View 避免类型转换崩溃
+    private View buttonEditStationNote;
 
     private TabLayout segmentTabs;
 
@@ -139,9 +145,15 @@ public class FragmentPlayerFull extends Fragment {
     private TextView textViewNetworkUsageInfo;
     private TextView textViewTimeCached;
 
+    /** 播放器「电台信息」页大图标的目标尺寸（dp），与页内图标卡高度一致 */
+    private static final int PLAYER_ART_ICON_SIZE_DP = 180;
+
     private ImageView imageViewConnectionTypeFull;
 
-    private Group groupRecordings;
+    // 录音状态块（分隔线 + 录音图标/大小/文件名）：仅「电台信息 / 录音」段且录音进行中时显示
+    private ViewGroup blockRecording;
+    /** 录音行是否有内容可显示（录音进行中），与「当前段是否属于录音行」共同决定录音块可见性 */
+    private boolean recordingRowActive;
     private ImageView imgRecordingIcon;
     private TextView textViewRecordingSize;
     private TextView textViewRecordingName;
@@ -245,48 +257,17 @@ public class FragmentPlayerFull extends Fragment {
 
         scrollViewContent = view.findViewById(R.id.scrollViewContent);
 
-        pagerArtAndInfo = view.findViewById(R.id.pagerArtAndInfo);
-        artAndInfoPagerAdapter = new ArtAndInfoPagerAdapter(requireContext(), pagerArtAndInfo);
-        pagerArtAndInfo.setAdapter(artAndInfoPagerAdapter);
-
-        /* A hack to make horizontal ViewPager play nice with vertical ScrollView
-         * Credits to https://stackoverflow.com/a/16224484/1741638
-         */
-        pagerArtAndInfo.setOnTouchListener(new View.OnTouchListener() {
-            private static final int DRAG_THRESHOLD = 30;
-            private int downX;
-            private int downY;
-
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        downX = (int) event.getRawX();
-                        downY = (int) event.getRawY();
-                        break;
-                    case MotionEvent.ACTION_MOVE:
-                        int distanceX = Math.abs((int) event.getRawX() - downX);
-                        int distanceY = Math.abs((int) event.getRawY() - downY);
-
-                        if (distanceX > distanceY && distanceX > DRAG_THRESHOLD) {
-                            pagerArtAndInfo.getParent().requestDisallowInterceptTouchEvent(true);
-                            scrollViewContent.getParent().requestDisallowInterceptTouchEvent(false);
-                            if (touchInterceptListener != null) {
-                                touchInterceptListener.requestDisallowInterceptTouchEvent(true);
-                            }
-                        }
-                        break;
-                    case MotionEvent.ACTION_UP:
-                        scrollViewContent.getParent().requestDisallowInterceptTouchEvent(false);
-                        pagerArtAndInfo.getParent().requestDisallowInterceptTouchEvent(false);
-                        if (touchInterceptListener != null) {
-                            touchInterceptListener.requestDisallowInterceptTouchEvent(false);
-                        }
-                        break;
-                }
-                return false;
-            }
-        });
+        // 「电台信息」pane：填充信息页（大尺寸图标卡 + 可滚动信息区 + 播放状态块），
+        // 取代原先被合并的「专辑封面 / 信息」两个 ViewPager 页
+        stationInfoPane = view.findViewById(R.id.stationInfoPane);
+        blockRecording = view.findViewById(R.id.blockRecording);
+        inflater.inflate(R.layout.page_player_station_info, stationInfoPane, true);
+        imageViewArt = view.findViewById(R.id.imageViewArt);
+        textViewStationDescription = view.findViewById(R.id.textViewStationDescription);
+        viewTags = view.findViewById(R.id.viewTags);
+        layoutStationNoteRow = view.findViewById(R.id.layoutStationNoteRow);
+        textViewStationNote = view.findViewById(R.id.textViewStationNote);
+        buttonEditStationNote = view.findViewById(R.id.buttonEditStationNote);
 
         textViewGeneralInfo = view.findViewById(R.id.textViewGeneralInfo);
         textViewTotalPlayTime = view.findViewById(R.id.textViewTotalPlayTime);
@@ -296,7 +277,6 @@ public class FragmentPlayerFull extends Fragment {
 
         imageViewConnectionTypeFull = view.findViewById(R.id.imageViewConnectionTypeFull);
 
-        groupRecordings = view.findViewById(R.id.group_recording_info);
         imgRecordingIcon = view.findViewById(R.id.imgRecordingIcon);
         textViewRecordingSize = view.findViewById(R.id.textViewRecordingSize);
         textViewRecordingName = view.findViewById(R.id.textViewRecordingName);
@@ -403,26 +383,12 @@ public class FragmentPlayerFull extends Fragment {
         // 录音空态（UI 美化）：跟随适配器条目数切换居中空态
         updateEmptyState(historyAndRecordsPagerAdapter.emptyRecordings, historyAndRecordsPagerAdapter.recyclerViewRecordings);
 
-        // 分页列表（本台曲目 / 曲目历史 / 录音）应占据其上方内容之外的剩余可视高度，
-        // 只能在运行时确定：取上方内容底部到可视区底部的距离。
+        // 「电台信息」pane 与分页列表（本台曲目 / 曲目历史 / 录音）应占据其上方内容
+        // 与录音状态块之外的剩余可视高度，只能在运行时确定。
         // 若剩余空间不足（如横屏），退化为与可视区等高，由外层滚动查看，保持原有行为。
-        ViewTreeObserver viewTreeObserver = pagerHistoryAndRecordings.getViewTreeObserver();
+        ViewTreeObserver viewTreeObserver = scrollViewContent.getViewTreeObserver();
         if (viewTreeObserver.isAlive()) {
-            viewTreeObserver.addOnGlobalLayoutListener(() -> {
-                // 分段控件切到封面侧时历史 pager 为 GONE，其 top 无意义，跳过；
-                // 切回可见后的下一次布局回调会以新 top 重算正确高度
-                if (pagerHistoryAndRecordings.getVisibility() != View.VISIBLE) {
-                    return;
-                }
-                ViewGroup.LayoutParams layoutParams = pagerHistoryAndRecordings.getLayoutParams();
-                final int visibleHeight = scrollViewContent.getHeight();
-                final int available = visibleHeight - pagerHistoryAndRecordings.getTop();
-                final int newHeight = available > 0 ? available : visibleHeight;
-                if (newHeight != layoutParams.height) {
-                    layoutParams.height = newHeight;
-                    pagerHistoryAndRecordings.setLayoutParams(layoutParams);
-                }
-            });
+            viewTreeObserver.addOnGlobalLayoutListener(this::applyContentHeights);
         }
 
         return view;
@@ -483,7 +449,7 @@ public class FragmentPlayerFull extends Fragment {
 
                 // 录音入口（UI 审查 P1-2）：切到单行分段控件的「录音」段，
                 // 由分段联动逻辑互斥显示历史 pager 并翻到录音页
-                TabLayout.Tab recordingsTab = segmentTabs.getTabAt(4);
+                TabLayout.Tab recordingsTab = segmentTabs.getTabAt(3);
                 if (recordingsTab != null) {
                     segmentTabs.selectTab(recordingsTab);
                 }
@@ -618,21 +584,21 @@ public class FragmentPlayerFull extends Fragment {
         StationNoteManager noteManager = ((RadioDroidApp) requireActivity().getApplication()).getStationNoteManager();
         String note = noteManager.getNote(station.StationUuid);
 
-        artAndInfoPagerAdapter.textViewStationNote.setCompoundDrawablesRelativeWithIntrinsicBounds(buildNoteIcon(), null, null, null);
+        textViewStationNote.setCompoundDrawablesRelativeWithIntrinsicBounds(buildNoteIcon(), null, null, null);
         if (TextUtils.isEmpty(note)) {
-            artAndInfoPagerAdapter.textViewStationNote.setText(R.string.note_add_hint);
+            textViewStationNote.setText(R.string.note_add_hint);
             // 空备注占位提示用次要色弱化，不与正文备注争夺注意力
-            artAndInfoPagerAdapter.textViewStationNote.setTextColor(Utils.getThemeColor(requireContext(), R.attr.colorTextSecondary));
+            textViewStationNote.setTextColor(Utils.getThemeColor(requireContext(), R.attr.colorTextSecondary));
         } else {
-            artAndInfoPagerAdapter.textViewStationNote.setText(note);
+            textViewStationNote.setText(note);
             // 正文备注与 TextAppearance.RadioDroid.Note 及行首图标同用强调色
-            artAndInfoPagerAdapter.textViewStationNote.setTextColor(Utils.getThemeColor(requireContext(), R.attr.presetAccentColor));
+            textViewStationNote.setTextColor(Utils.getThemeColor(requireContext(), R.attr.presetAccentColor));
         }
 
         View.OnClickListener editListener = v -> StationNoteDialog.show(requireContext(), station,
                 newNote -> updateStationNoteRow(station));
-        artAndInfoPagerAdapter.layoutStationNoteRow.setOnClickListener(editListener);
-        artAndInfoPagerAdapter.buttonEditStationNote.setOnClickListener(editListener);
+        layoutStationNoteRow.setOnClickListener(editListener);
+        buttonEditStationNote.setOnClickListener(editListener);
     }
 
     /**
@@ -713,23 +679,23 @@ public class FragmentPlayerFull extends Fragment {
             Drawable flag = CountryFlagsLoader.getInstance().getFlag(requireContext(), station.CountryCode);
             if (flag != null) {
                 float k = flag.getMinimumWidth() / (float) flag.getMinimumHeight();
-                float viewHeight = artAndInfoPagerAdapter.textViewStationDescription.getTextSize();
+                float viewHeight = textViewStationDescription.getTextSize();
                 flag.setBounds(0, 0, (int) (k * viewHeight), (int) viewHeight);
             }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                artAndInfoPagerAdapter.textViewStationDescription.setCompoundDrawablesRelative(flag, null, null, null);
+                textViewStationDescription.setCompoundDrawablesRelative(flag, null, null, null);
             } else {
-                artAndInfoPagerAdapter.textViewStationDescription.setCompoundDrawables(flag, null, null, null);
+                textViewStationDescription.setCompoundDrawables(flag, null, null, null);
             }
 
             // TODO: add votes/clicks/trend
 
-            artAndInfoPagerAdapter.textViewStationDescription.setText(station.getLongDetails(requireContext()));
+            textViewStationDescription.setText(station.getLongDetails(requireContext()));
 
             String[] tags = station.TagsAll.split(",");
-            artAndInfoPagerAdapter.viewTags.setTags(Arrays.asList(tags));
-            //artAndInfoPagerAdapter.viewTags.setTagSelectionCallback(tagSelectionCallback);
+            viewTags.setTags(Arrays.asList(tags));
+            //viewTags.setTagSelectionCallback(tagSelectionCallback);
 
             // 备注行（Issue #54）：展示当前电台备注并提供编辑入口
             updateStationNoteRow(station);
@@ -915,17 +881,59 @@ public class FragmentPlayerFull extends Fragment {
     }
 
     private void updateRunningRecording() {
-        if (PlayerServiceUtil.isRecording()) {
+        recordingRowActive = PlayerServiceUtil.isRecording();
+        if (recordingRowActive) {
             final Map<Recordable, RunningRecordingInfo> runningRecordings = recordingsManager.getRunningRecordings();
             final RunningRecordingInfo recordingInfo = runningRecordings.entrySet().iterator().next().getValue();
 
-            groupRecordings.setVisibility(View.VISIBLE);
             imgRecordingIcon.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.blink_recording));
             textViewRecordingSize.setText(Utils.getReadableBytes(recordingInfo.getBytesWritten()));
             textViewRecordingName.setText(recordingInfo.getFileName());
         } else {
-            groupRecordings.setVisibility(View.GONE);
             imgRecordingIcon.clearAnimation();
+        }
+        updateRecordingRowVisibility();
+    }
+
+    /**
+     * 录音状态块显隐（UI 审查 P1-2 后续）：「录音状态栏只在电台信息和录音界面显示」——
+     * 当前段为「电台信息」或「录音」且确有录音进行中时可见，其余情况隐藏。
+     * 显隐变化会触发外层全局布局回调，pane / pager 高度随之自动重算。
+     */
+    private void updateRecordingRowVisibility() {
+        if (segmentTabs == null || blockRecording == null) {
+            return;
+        }
+        final int position = segmentTabs.getSelectedTabPosition();
+        final boolean pageShowsRecording = position == 0 || position == 3;
+        blockRecording.setVisibility(pageShowsRecording && recordingRowActive ? View.VISIBLE : View.GONE);
+    }
+
+    /**
+     * 按剩余可视空间设置当前可见内容槽（「电台信息」pane 或历史 pager）的高度：
+     * 可视高度 − 槽顶部偏移 −（可见时的）录音状态块高度。分段切换、录音状态块显隐
+     * 等布局变化都会触发全局布局回调，本方法幂等收敛。
+     */
+    private void applyContentHeights() {
+        if (scrollViewContent == null || stationInfoPane == null || pagerHistoryAndRecordings == null) {
+            return;
+        }
+        final int visibleHeight = scrollViewContent.getHeight();
+        if (visibleHeight == 0) {
+            return;
+        }
+        final View slot = stationInfoPane.getVisibility() == View.VISIBLE ? stationInfoPane
+                : (pagerHistoryAndRecordings.getVisibility() == View.VISIBLE ? pagerHistoryAndRecordings : null);
+        if (slot == null) {
+            return;
+        }
+        final int recordingExtra = blockRecording.getVisibility() == View.VISIBLE ? blockRecording.getHeight() : 0;
+        final int available = visibleHeight - slot.getTop() - recordingExtra;
+        final int newHeight = available > 0 ? available : visibleHeight;
+        ViewGroup.LayoutParams layoutParams = slot.getLayoutParams();
+        if (newHeight != layoutParams.height) {
+            layoutParams.height = newHeight;
+            slot.setLayoutParams(layoutParams);
         }
     }
 
@@ -956,13 +964,13 @@ public class FragmentPlayerFull extends Fragment {
         if (TextUtils.isEmpty(liveInfo.getArtist()) || TextUtils.isEmpty(liveInfo.getTrack()) ||
                 LastFMApiKey.isEmpty()) {
             if (station.hasIcon()) {
-                loadStationIconWithFallback(artAndInfoPagerAdapter.imageViewArt, station.IconUrl, station.HomePageUrl, station.StationUuid, station.Name);
+                loadStationIconWithFallback(imageViewArt, station.IconUrl, station.HomePageUrl, station.StationUuid, station.Name, PLAYER_ART_ICON_SIZE_DP);
             } else if (!TextUtils.isEmpty(station.HomePageUrl)) {
-                loadStationIconWithFallback(artAndInfoPagerAdapter.imageViewArt, null, station.HomePageUrl, station.StationUuid, station.Name);
+                loadStationIconWithFallback(imageViewArt, null, station.HomePageUrl, station.StationUuid, station.Name, PLAYER_ART_ICON_SIZE_DP);
             } else {
                 // 同步 tag，避免图标缓存写入后按旧电台刷新到错误的图片
-                artAndInfoPagerAdapter.imageViewArt.setTag(R.id.tag_station_uuid, station.StationUuid);
-                artAndInfoPagerAdapter.imageViewArt.setImageDrawable(StationPlaceholderUtils.createPlaceholderDrawable(getContext(), station.Name, station.StationUuid));
+                imageViewArt.setTag(R.id.tag_station_uuid, station.StationUuid);
+                imageViewArt.setImageDrawable(StationPlaceholderUtils.createPlaceholderDrawable(getContext(), station.Name, station.StationUuid));
             }
             return;
         }
@@ -1047,15 +1055,15 @@ public class FragmentPlayerFull extends Fragment {
                     DataRadioStation station = Utils.getCurrentOrLastStation(fragment.requireContext());
 
                     if (station != null && station.hasIcon()) {
-                        fragment.loadStationIconWithFallback(fragment.artAndInfoPagerAdapter.imageViewArt, station.IconUrl, station.HomePageUrl, station.StationUuid, station.Name);
+                        fragment.loadStationIconWithFallback(fragment.imageViewArt, station.IconUrl, station.HomePageUrl, station.StationUuid, station.Name, PLAYER_ART_ICON_SIZE_DP);
                     } else if (station != null && !TextUtils.isEmpty(station.HomePageUrl)) {
-                        fragment.loadStationIconWithFallback(fragment.artAndInfoPagerAdapter.imageViewArt, null, station.HomePageUrl, station.StationUuid, station.Name);
+                        fragment.loadStationIconWithFallback(fragment.imageViewArt, null, station.HomePageUrl, station.StationUuid, station.Name, PLAYER_ART_ICON_SIZE_DP);
                     } else if (station != null) {
-                        fragment.artAndInfoPagerAdapter.imageViewArt.setTag(R.id.tag_station_uuid, station.StationUuid);
-                        fragment.artAndInfoPagerAdapter.imageViewArt.setImageDrawable(StationPlaceholderUtils.createPlaceholderDrawable(fragment.getContext(), station.Name, station.StationUuid));
+                        fragment.imageViewArt.setTag(R.id.tag_station_uuid, station.StationUuid);
+                        fragment.imageViewArt.setImageDrawable(StationPlaceholderUtils.createPlaceholderDrawable(fragment.getContext(), station.Name, station.StationUuid));
                     } else {
-                        fragment.artAndInfoPagerAdapter.imageViewArt.setTag(R.id.tag_station_uuid, null);
-                        fragment.artAndInfoPagerAdapter.imageViewArt.setImageResource(R.drawable.ic_launcher);
+                        fragment.imageViewArt.setTag(R.id.tag_station_uuid, null);
+                        fragment.imageViewArt.setImageResource(R.drawable.ic_launcher);
                     }
 
                     fragment.trackMetadataCallback = null;
@@ -1078,10 +1086,10 @@ public class FragmentPlayerFull extends Fragment {
 
                         if (!TextUtils.isEmpty(albumArtUrl)) {
                             // 专辑封面与电台图标无关：清除 tag，避免电台图标缓存写入后覆盖专辑封面
-                            fragment.artAndInfoPagerAdapter.imageViewArt.setTag(R.id.tag_station_uuid, null);
+                            fragment.imageViewArt.setTag(R.id.tag_station_uuid, null);
                             Picasso.get()
                                     .load(albumArtUrl)
-                                    .into(fragment.artAndInfoPagerAdapter.imageViewArt);
+                                    .into(fragment.imageViewArt);
 
                             if (!albumArtUrl.equals(trackHistoryEntry.stationIconUrl)) {
                                 fragment.trackHistoryRepository.setTrackArtUrl(trackHistoryEntry.uid, albumArtUrl);
@@ -1096,71 +1104,6 @@ public class FragmentPlayerFull extends Fragment {
                     onFailure(FailureType.UNRECOVERABLE);
                 });
             }
-        }
-    }
-
-    private class ArtAndInfoPagerAdapter extends PagerAdapter {
-        private ViewGroup layoutAlbumArt;
-        private ViewGroup layoutStationInfo;
-
-        private String[] titles;
-
-        ImageView imageViewArt;
-        TextView textViewStationDescription;
-        TagsView viewTags;
-        ViewGroup layoutStationNoteRow;
-        TextView textViewStationNote;
-        // IconicsImageButton 继承自 IconicsImageView 而非 ImageButton，声明为 View 避免类型转换崩溃
-        View buttonEditStationNote;
-
-        ArtAndInfoPagerAdapter(@NonNull Context context, @NonNull ViewGroup parent) {
-            LayoutInflater inflater = LayoutInflater.from(context);
-
-            layoutAlbumArt = (ViewGroup) inflater.inflate(R.layout.page_player_album_art, parent, false);
-            layoutStationInfo = (ViewGroup) inflater.inflate(R.layout.page_player_station_info, parent, false);
-
-            titles = new String[]{getResources().getString(R.string.tab_player_art), getResources().getString(R.string.tab_player_info)};
-
-            imageViewArt = layoutAlbumArt.findViewById(R.id.imageViewArt);
-
-            textViewStationDescription = layoutStationInfo.findViewById(R.id.textViewStationDescription);
-            viewTags = layoutStationInfo.findViewById(R.id.viewTags);
-            layoutStationNoteRow = (ViewGroup) layoutStationInfo.findViewById(R.id.layoutStationNoteRow);
-            textViewStationNote = (TextView) layoutStationInfo.findViewById(R.id.textViewStationNote);
-            buttonEditStationNote = layoutStationInfo.findViewById(R.id.buttonEditStationNote);
-        }
-
-        @NonNull
-        @Override
-        public Object instantiateItem(@NonNull ViewGroup collection, int position) {
-            if (position == 0) {
-                collection.addView(layoutAlbumArt);
-                return layoutAlbumArt;
-            } else {
-                collection.addView(layoutStationInfo);
-                return layoutStationInfo;
-            }
-        }
-
-        @Override
-        public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object view) {
-            container.removeView((View) view);
-        }
-
-        @Override
-        public int getCount() {
-            return 2;
-        }
-
-        @Override
-        public boolean isViewFromObject(@NonNull View view, @NonNull Object object) {
-            return view == object;
-        }
-
-        @Nullable
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return titles[position];
         }
     }
 
@@ -1300,16 +1243,20 @@ public class FragmentPlayerFull extends Fragment {
     }
 
     private void loadStationIconWithFallback(final ImageView target, final String iconUrl, final String homePageUrl, final String stationUuid, final String stationName) {
-        PlayerServiceUtil.getStationIcon(target, iconUrl, homePageUrl, stationUuid, stationName);
+        loadStationIconWithFallback(target, iconUrl, homePageUrl, stationUuid, stationName, 70);
+    }
+
+    private void loadStationIconWithFallback(final ImageView target, final String iconUrl, final String homePageUrl, final String stationUuid, final String stationName, final int targetSizeDp) {
+        PlayerServiceUtil.getStationIcon(target, iconUrl, homePageUrl, stationUuid, stationName, targetSizeDp);
     }
 
     /**
-     * 单行五段分段控件（UI 审查 P1-2）：合并原先两行 PagerTabStrip，
-     * 「封面 | 信息 | 曲目 | 历史 | 录音」五页全部保留——前两段驱动封面 pager，
-     * 后三段驱动历史 pager；切换时两个 pager 互斥显示，历史 pager 的剩余高度
-     * 由既有 GlobalLayout 回调按新 top 重算。
-     * 胶囊背景用当前主题强调色（配色方案联动），胶囊文字按 WCAG 亮度自动取黑/白
-     * （与项目既有「色块取字色」规则一致）；未选中段用次要文字色。
+     * 单行四段分段控件（UI 审查 P1-2 及后续调整）：合并原先两行 PagerTabStrip，
+     * 「电台信息 | 本台曲目 | 曲目历史 | 录音」四页全部保留——「电台信息」页合并了
+     * 原专辑封面与信息两页内容（大尺寸图标 + 可滚动信息区），其余三段驱动历史 pager；
+     * 切换时信息 pane 与历史 pager 互斥显示，录音状态块仅随「电台信息 / 录音」显示。
+     * 胶囊背景用当前主题强调色（配色方案联动），胶囊文字
+     * 按 WCAG 亮度自动取黑/白（与项目既有「色块取字色」规则一致）；未选中段用次要文字色。
      */
     private void setupSegmentTabs(@NonNull View view) {
         segmentTabs = view.findViewById(R.id.segmentTabs);
@@ -1323,8 +1270,7 @@ public class FragmentPlayerFull extends Fragment {
         pill.setColor(accent);
 
         String[] titles = new String[]{
-                getResources().getString(R.string.tab_player_art),
-                getResources().getString(R.string.tab_player_info),
+                getResources().getString(R.string.tab_player_station_info),
                 getResources().getString(R.string.tab_player_current_history),
                 getResources().getString(R.string.tab_player_history),
                 getResources().getString(R.string.tab_player_recordings)};
@@ -1334,7 +1280,7 @@ public class FragmentPlayerFull extends Fragment {
             label.setText(titles[i]);
             label.setGravity(android.view.Gravity.CENTER);
             label.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13);
-            // 五段均分后每段较窄，4 字标题禁止换行（换行会把胶囊撑成两行高）
+            // 四段均分后每段较窄，4 字标题禁止换行（换行会把胶囊撑成两行高）
             label.setMaxLines(1);
             label.setPadding(dp(2), dp(8), dp(2), dp(8));
             label.setBackground(i == 0 ? pill : null);
@@ -1358,29 +1304,20 @@ public class FragmentPlayerFull extends Fragment {
             }
         });
 
-        // pager 内横滑翻页 → 同步分段高亮（selectTab 会再次走 onTabSelected，
-        // 但 syncSegment 幂等，不会形成循环）
-        pagerArtAndInfo.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
-            @Override
-            public void onPageSelected(int position) {
-                TabLayout.Tab tab = segmentTabs.getTabAt(position);
-                if (tab != null && segmentTabs.getSelectedTabPosition() != position) {
-                    segmentTabs.selectTab(tab);
-                }
-            }
-        });
+        // 历史 pager 内横滑翻页 → 同步分段高亮（selectTab 会再次走 onTabSelected，
+        // 但 syncSegment 幂等，不会形成循环）；电台信息页为单页无翻页，无需监听
         pagerHistoryAndRecordings.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
-                TabLayout.Tab tab = segmentTabs.getTabAt(position + 2);
-                if (tab != null && segmentTabs.getSelectedTabPosition() != position + 2) {
+                TabLayout.Tab tab = segmentTabs.getTabAt(position + 1);
+                if (tab != null && segmentTabs.getSelectedTabPosition() != position + 1) {
                     segmentTabs.selectTab(tab);
                 }
             }
         });
 
-        // 初始态：封面段选中，历史 pager 隐藏（由 syncSegment 统一设置，保持单一来源）
-        pagerArtAndInfo.setVisibility(View.VISIBLE);
+        // 初始态：电台信息段选中，历史 pager 隐藏（由 syncSegment 统一设置，保持单一来源）
+        stationInfoPane.setVisibility(View.VISIBLE);
         pagerHistoryAndRecordings.setVisibility(View.GONE);
         TabLayout.Tab first = segmentTabs.getTabAt(0);
         if (first != null) {
@@ -1388,24 +1325,24 @@ public class FragmentPlayerFull extends Fragment {
         }
     }
 
-    /** 分段切换：前两段显示封面 pager，后三段显示历史 pager 并翻到对应页。 */
+    /**
+     * 分段切换：段 0「电台信息」显示信息 pane（播放状态块随页显示）；
+     * 段 1-3 显示历史 pager 并翻到对应页。
+     */
     private void syncSegment(int position) {
-        boolean artSide = position <= 1;
-        pagerArtAndInfo.setVisibility(artSide ? View.VISIBLE : View.GONE);
-        pagerHistoryAndRecordings.setVisibility(artSide ? View.GONE : View.VISIBLE);
-        if (artSide) {
-            if (pagerArtAndInfo.getCurrentItem() != position) {
-                pagerArtAndInfo.setCurrentItem(position, false);
-            }
-        } else {
-            int page = position - 2;
+        boolean infoSide = position == 0;
+        stationInfoPane.setVisibility(infoSide ? View.VISIBLE : View.GONE);
+        pagerHistoryAndRecordings.setVisibility(infoSide ? View.GONE : View.VISIBLE);
+        updateRecordingRowVisibility();
+        if (!infoSide) {
+            int page = position - 1;
             if (pagerHistoryAndRecordings.getCurrentItem() != page) {
                 pagerHistoryAndRecordings.setCurrentItem(page, false);
             }
         }
     }
 
-    /** 重绘五个分段的外观：选中段为强调色胶囊 + 反色文字，未选中段透明底 + 次要文字色。 */
+    /** 重绘四个分段的外观：选中段为强调色胶囊 + 反色文字，未选中段透明底 + 次要文字色。 */
     private void updateSegmentStyles(int selectedPosition) {
         final int accent = Utils.getThemeColor(requireContext(), R.attr.presetAccentColor);
         final int onAccent = contrastColorFor(accent);

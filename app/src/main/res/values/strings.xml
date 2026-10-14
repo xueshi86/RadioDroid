@@ -620,7 +620,7 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="player_info_recorded_to">Last recording:\n%1$s</string>
 
     <string name="tab_player_art">Album art</string>
-    <string name="tab_player_info">Info</string>
+    <string name="tab_player_station_info">Station info</string>
     <string name="tab_player_current_history">Station tracks</string>
     <string name="tab_player_history">Track history</string>
     <string name="tab_player_recordings">Recordings</string>

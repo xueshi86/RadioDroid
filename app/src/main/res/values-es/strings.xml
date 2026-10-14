@@ -340,7 +340,7 @@
     <string name="player_info_recorded_to">Última grabación:\n%1$s</string>
 
     <string name="tab_player_art">Arte del álbum</string>
-    <string name="tab_player_info">Info</string>
+    <string name="tab_player_station_info">Info de la emisora</string>
     <string name="tab_player_current_history">Canciones de la estación</string>
     <string name="tab_player_history">Historial</string>
     <string name="tab_player_recordings">Grabaciones</string>

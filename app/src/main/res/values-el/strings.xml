@@ -61,6 +61,7 @@
     <string name="nav_item_history">Ιστορικό</string>
     <string name="nav_item_settings">Ρυθμίσεις</string>
     <string name="nav_item_alarm">Ξυπνητήρι</string>
+    <string name="tab_player_station_info">Στοιχεία σταθμού</string>
     <string name="tab_player_current_history">Τραγούδια του σταθμού</string>
     <string name="tab_player_recordings">Ηχογραφήσεις</string>
 

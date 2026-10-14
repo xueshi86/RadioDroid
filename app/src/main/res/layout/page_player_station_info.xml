@@ -1,79 +1,184 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 根节点改为可滚动容器（Issue #53）：Info 页嵌在固定高度的「封面/信息」ViewPager 中，
-     此前为不可滚动的 LinearLayout，标签较多的电台会把内容（含备注行）挤出页面底部被裁剪，
-     用户滚动到页面尽头也看不到「添加备注」入口；改为可滚动页面后任何信息量都能完整到达。
-     使用 RecyclerAwareNestedScrollView（而非普通 NestedScrollView）：其自带"上方有内容时
-     禁止父容器抢占手势"的防御，避免滚离顶部后向下拖动被 BottomSheet 误解析为收起播放器。 -->
-<net.programmierecke.radiodroid2.views.RecyclerAwareNestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- 「电台信息」页（原「专辑封面」+「信息」两页合并）：顶部为大尺寸电台图标卡
+     （播放曲目的专辑封面也会加载到此处），下方信息区可滚动。
+     滚动容器使用 RecyclerAwareNestedScrollView（而非普通 NestedScrollView）：
+     其自带"上方有内容时禁止父容器抢占手势"的防御，避免滚离顶部后向下拖动
+     被 BottomSheet 误解析为收起播放器；标签较多的电台也可完整滚动到备注入口。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:orientation="vertical">
 
-    <LinearLayout
-        android:orientation="vertical"
+    <!-- 大尺寸电台图标卡：固定高度、其余空间留给信息区（不与信息内容抢空间）；
+         用 MaterialCardView 的圆角轮廓裁剪图标（API21+ 生效），
+         卡片自身透明、无阴影，只提供圆角裁剪能力。 -->
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="@dimen/space_lg">
+        android:layout_height="180dp"
+        android:layout_marginTop="@dimen/space_sm"
+        android:layout_marginStart="@dimen/space_lg"
+        android:layout_marginLeft="@dimen/space_lg"
+        android:layout_marginEnd="@dimen/space_lg"
+        android:layout_marginRight="@dimen/space_lg"
+        app:cardBackgroundColor="@android:color/transparent"
+        app:cardCornerRadius="@dimen/radius_cover"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp">
 
-        <TextView
-            android:id="@+id/textViewStationDescription"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:drawablePadding="@dimen/space_xs"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:minLines="1"
-            android:textColor="?attr/colorTextPrimary"
-            android:textAppearance="@style/TextAppearance.RadioDroid.Body" />
-
-        <net.programmierecke.radiodroid2.views.TagsView
-            android:id="@+id/viewTags"
+        <ImageView
+            android:id="@+id/imageViewArt"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:lineSpacingMultiplier="1"
-            android:textSize="@dimen/text_title"
-            app:cornerRadius="@dimen/radius_sm"
-            app:tagBackgroundColor="?attr/tagBackgroundColor"
-            app:tagHeight="25sp"
-            app:textHorizontalPadding="@dimen/space_sm"
-            app:textVerticalMargin="@dimen/space_xs" />
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/tab_player_station_info" />
+    </com.google.android.material.card.MaterialCardView>
 
-        <!-- 电台备注行 + 编辑入口（Issue #54）：点击整行或铅笔图标弹出备注编辑对话框 -->
+    <net.programmierecke.radiodroid2.views.RecyclerAwareNestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
         <LinearLayout
-            android:id="@+id/layoutStationNoteRow"
+            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/space_xs"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:background="?attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true">
+            android:padding="@dimen/space_lg">
 
             <TextView
-                android:id="@+id/textViewStationNote"
+                android:id="@+id/textViewStationDescription"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:drawablePadding="@dimen/space_xs"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:minLines="1"
+                android:textColor="?attr/colorTextPrimary"
+                android:textAppearance="@style/TextAppearance.RadioDroid.Body" />
+
+            <net.programmierecke.radiodroid2.views.TagsView
+                android:id="@+id/viewTags"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingMultiplier="1"
+                android:textSize="@dimen/text_title"
+                app:cornerRadius="@dimen/radius_sm"
+                app:tagBackgroundColor="?attr/tagBackgroundColor"
+                app:tagHeight="25sp"
+                app:textHorizontalPadding="@dimen/space_sm"
+                app:textVerticalMargin="@dimen/space_xs" />
+
+            <!-- 电台备注行 + 编辑入口（Issue #54）：点击整行或铅笔图标弹出备注编辑对话框 -->
+            <LinearLayout
+                android:id="@+id/layoutStationNoteRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:id="@+id/textViewStationNote"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:drawablePadding="4sp"
+                    android:ellipsize="end"
+                    android:lines="1"
+                    android:textAppearance="@style/TextAppearance.RadioDroid.Note" />
+
+                <com.mikepenz.iconics.view.IconicsImageButton
+                    android:id="@+id/buttonEditStationNote"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="@dimen/touch_target_min"
+                    android:minHeight="@dimen/touch_target_min"
+                    android:padding="4dp"
+                    android:contentDescription="@string/note_edit_title"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    app:tint="?attr/iconsInItemBackgroundColor"
+                    app:iiv_icon="gmd-pencil"
+                    app:iiv_padding="2dp"
+                    app:iiv_size="20dp" />
+            </LinearLayout>
+        </LinearLayout>
+    </net.programmierecke.radiodroid2.views.RecyclerAwareNestedScrollView>
+
+    <!-- 播放状态块（UI 审查 P1-2 后续）：本次收听/累计/缓冲/流量两行两列，位于信息区下方、
+         页面底部。状态块随本页填充进 stationInfoPane，天然只在「电台信息」段显示 -->
+    <LinearLayout
+        android:id="@+id/blockPlayStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingLeft="16dp"
+        android:paddingEnd="16dp"
+        android:paddingRight="16dp"
+        android:paddingBottom="@dimen/space_xs">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textViewCurrentPlayTime"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:drawablePadding="4sp"
                 android:ellipsize="end"
-                android:lines="1"
-                android:textAppearance="@style/TextAppearance.RadioDroid.Note" />
+                android:maxLines="1"
+                android:textSize="@dimen/text_body_small"
+                android:textColor="?attr/colorTextSecondary"
+                tools:text="Session: 3:44" />
 
-            <com.mikepenz.iconics.view.IconicsImageButton
-                android:id="@+id/buttonEditStationNote"
-                android:layout_width="wrap_content"
+            <TextView
+                android:id="@+id/textViewTotalPlayTime"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:minWidth="@dimen/touch_target_min"
-                android:minHeight="@dimen/touch_target_min"
-                android:padding="4dp"
-                android:contentDescription="@string/note_edit_title"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                app:tint="?attr/iconsInItemBackgroundColor"
-                app:iiv_icon="gmd-pencil"
-                app:iiv_padding="2dp"
-                app:iiv_size="20dp" />
+                android:layout_weight="1"
+                android:gravity="end"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textSize="@dimen/text_body_small"
+                android:textColor="?attr/colorTextSecondary"
+                tools:text="Total: 1:23:45" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textViewTimeCached"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textSize="@dimen/text_body_small"
+                android:textColor="?attr/colorTextSecondary"
+                tools:text="Buffered: 0:10" />
+
+            <TextView
+                android:id="@+id/textViewNetworkUsageInfo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textSize="@dimen/text_body_small"
+                android:textColor="?attr/colorTextSecondary"
+                tools:text="Data: 1mb" />
         </LinearLayout>
     </LinearLayout>
-</net.programmierecke.radiodroid2.views.RecyclerAwareNestedScrollView>
+</LinearLayout>

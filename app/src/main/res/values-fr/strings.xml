@@ -277,7 +277,7 @@
     <string name="player_info_recorded_to">Dernier enregistrement :\n%1$s</string>
 
     <string name="tab_player_art">Pochette d\'album</string>
-    <string name="tab_player_info">Info</string>
+    <string name="tab_player_station_info">Infos de la station</string>
     <string name="tab_player_current_history">Titres de la station</string>
     <string name="tab_player_history">Historique</string>
     <string name="tab_player_recordings">Enregistrements</string>

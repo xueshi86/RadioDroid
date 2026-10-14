@@ -276,7 +276,7 @@
     <string name="player_info_recorded_to">Ultima registrazione:\n%1$s</string>
 
     <string name="tab_player_art">Copertina</string>
-    <string name="tab_player_info">Info</string>
+    <string name="tab_player_station_info">Info stazione</string>
     <string name="tab_player_current_history">Brani della stazione</string>
     <string name="tab_player_history">Cronologia</string>
     <string name="tab_player_recordings">Registrazioni</string>

@@ -335,6 +335,11 @@ public class PlayerServiceUtil {
         getStationIcon(holder, iconUrl, homePageUrl, stationUuid, null);
     }
 
+    /** 统一加载入口（列表等常规小图标场景），目标尺寸默认 70dp。 */
+    public static void getStationIcon(final ImageView holder, final String iconUrl, final String homePageUrl, final String stationUuid, final String stationName) {
+        getStationIcon(holder, iconUrl, homePageUrl, stationUuid, stationName, 70);
+    }
+
     /**
      * 统一的电台图标加载方法。
      *
@@ -354,10 +359,13 @@ public class PlayerServiceUtil {
      * @param homePageUrl 电台主页URL（用于构建回退URL）
      * @param stationUuid 电台唯一ID，用于缓存key。为null时不使用缓存。
      * @param stationName 电台名称，用于无图标时生成动态占位符（可为null，null时回退应用图标）
+     * @param targetSizeDp 目标显示尺寸（dp）：列表小图标传 70；播放器大图区域传与图标容器
+     *                     等高的更大值——解码上限（targetSizeDp*3，封顶512px）与智能显示
+     *                     缩放都按该尺寸计算，避免大图被列表尺寸限制压小
      */
-    public static void getStationIcon(final ImageView holder, final String iconUrl, final String homePageUrl, final String stationUuid, final String stationName) {
+    public static void getStationIcon(final ImageView holder, final String iconUrl, final String homePageUrl, final String stationUuid, final String stationName, final int targetSizeDp) {
         Resources r = mainContext.getResources();
-        final float px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 70, r.getDisplayMetrics());
+        final float px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, targetSizeDp, r.getDisplayMetrics());
         final int targetPxSize = (int) px;
         final int maxPxSize = Math.min(targetPxSize * 3, 512);
         final Drawable placeholder;

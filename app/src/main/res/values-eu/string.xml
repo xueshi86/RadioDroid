@@ -246,7 +246,7 @@
     <string name="player_info_recorded_to">Azken grabazioa:\n%1$s</string>
 
     <string name="tab_player_art">Albumaren artista</string>
-    <string name="tab_player_info">Info</string>
+    <string name="tab_player_station_info">Estazioaren infoa</string>
     <string name="tab_player_history">Historiala</string>
     <string name="tab_player_recordings">Grabazioak</string>
 

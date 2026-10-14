@@ -253,7 +253,7 @@
   <string name="player_info_recorded_to">Siste opptak:\n%1$s</string>
   
   <string name="tab_player_art">Albumgrafikk</string>
-  <string name="tab_player_info">Info</string>
+  <string name="tab_player_station_info">Stasjoninfo</string>
   <string name="tab_player_history">Sporhistorikk</string>
   <string name="tab_player_recordings">Opptak</string>
 

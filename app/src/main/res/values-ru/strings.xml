@@ -480,7 +480,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
 %1$s</string>
 
     <string name="tab_player_art">Обложка альбома</string>
-    <string name="tab_player_info">Информация</string>
+    <string name="tab_player_station_info">О станции</string>
     <string name="tab_player_current_history">Треки станции</string>
     <string name="tab_player_history">История треков</string>
     <string name="tab_player_recordings">Записи</string>
