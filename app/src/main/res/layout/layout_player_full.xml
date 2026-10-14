@@ -88,6 +88,32 @@
                 app:layout_constraintTop_toTopOf="@id/textViewGeneralInfo"
                 tools:src="@drawable/ic_network_wifi" />
 
+            <!-- 单行五段分段控件（UI 审查 P1-2）：合并原先两行 PagerTabStrip，
+                 「封面 | 信息 | 曲目 | 历史 | 录音」五页全部保留（前两段驱动封面 pager、
+                 后三段驱动历史 pager）；选中胶囊背景由代码按当前主题强调色绘制，
+                 胶囊文字按 WCAG 亮度自动取黑/白，因此此处不写死任何颜色 -->
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/segmentTabs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginLeft="12dp"
+                android:layout_marginEnd="12dp"
+                android:layout_marginRight="12dp"
+                android:background="@android:color/transparent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textViewGeneralInfo"
+                app:tabBackground="@android:color/transparent"
+                app:tabGravity="fill"
+                app:tabIndicatorHeight="0dp"
+                app:tabMode="fixed"
+                app:tabPaddingBottom="3dp"
+                app:tabPaddingEnd="2dp"
+                app:tabPaddingStart="2dp"
+                app:tabPaddingTop="3dp"
+                app:tabRippleColor="@android:color/transparent" />
+
             <androidx.viewpager.widget.ViewPager
                 android:id="@+id/pagerArtAndInfo"
                 android:layout_width="match_parent"
@@ -95,14 +121,7 @@
                 app:layout_constraintBottom_toTopOf="@+id/space"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textViewGeneralInfo">
-
-                <androidx.viewpager.widget.PagerTabStrip
-                    android:id="@+id/tabStripArtAndInfo"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="top" />
-            </androidx.viewpager.widget.ViewPager>
+                app:layout_constraintTop_toBottomOf="@+id/segmentTabs" />
 
             <Space
                 android:id="@+id/space"
@@ -257,14 +276,7 @@
                 android:id="@+id/pagerHistoryAndRecordings"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                app:layout_constraintTop_toBottomOf="@+id/divider2">
-
-                <androidx.viewpager.widget.PagerTabStrip
-                    android:id="@+id/tabStripHistoryAndRecordings"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="top" />
-            </androidx.viewpager.widget.ViewPager>
+                app:layout_constraintTop_toBottomOf="@+id/divider2" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </net.programmierecke.radiodroid2.views.RecyclerAwareNestedScrollView>

@@ -5,7 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -37,9 +39,9 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.PagerAdapter;
-import androidx.viewpager.widget.PagerTabStrip;
 import androidx.viewpager.widget.ViewPager;
 
+import com.google.android.material.tabs.TabLayout;
 import com.mikepenz.iconics.IconicsColor;
 import com.mikepenz.iconics.IconicsSize;
 import com.mikepenz.iconics.IconicsDrawable;
@@ -128,6 +130,8 @@ public class FragmentPlayerFull extends Fragment {
 
     private ViewPager pagerArtAndInfo;
     private ArtAndInfoPagerAdapter artAndInfoPagerAdapter;
+
+    private TabLayout segmentTabs;
 
     private TextView textViewGeneralInfo;
     private TextView textViewTotalPlayTime;
@@ -245,10 +249,6 @@ public class FragmentPlayerFull extends Fragment {
         artAndInfoPagerAdapter = new ArtAndInfoPagerAdapter(requireContext(), pagerArtAndInfo);
         pagerArtAndInfo.setAdapter(artAndInfoPagerAdapter);
 
-        // 页签对比度修复（UI 审查 P0-1）：PagerTabStrip 默认取框架 textColorSecondary，
-        // 暗色主题下未选中页签对比度过低；显式改用主题主文字色 + 非当前页透明度 + 强调色下划线
-        stylePagerTabStrip(view.findViewById(R.id.tabStripArtAndInfo));
-
         /* A hack to make horizontal ViewPager play nice with vertical ScrollView
          * Credits to https://stackoverflow.com/a/16224484/1741638
          */
@@ -305,7 +305,9 @@ public class FragmentPlayerFull extends Fragment {
         historyAndRecordsPagerAdapter = new HistoryAndRecordsPagerAdapter(requireContext(), pagerHistoryAndRecordings);
         pagerHistoryAndRecordings.setAdapter(historyAndRecordsPagerAdapter);
         pagerHistoryAndRecordings.setCurrentItem(0, false);
-        stylePagerTabStrip(view.findViewById(R.id.tabStripHistoryAndRecordings));
+
+        // 单行五段分段控件（UI 审查 P1-2）：取代原先两行 PagerTabStrip，五个页面全部保留
+        setupSegmentTabs(view);
 
         // "本台曲目"顶部的正在播放头也可点击，与历史列表条目一致弹出曲目详情（含歌词入口）
         historyAndRecordsPagerAdapter.layoutCurrentPlaying.setOnClickListener(v -> showCurrentTrackInfoDialog());
@@ -407,6 +409,11 @@ public class FragmentPlayerFull extends Fragment {
         ViewTreeObserver viewTreeObserver = pagerHistoryAndRecordings.getViewTreeObserver();
         if (viewTreeObserver.isAlive()) {
             viewTreeObserver.addOnGlobalLayoutListener(() -> {
+                // 分段控件切到封面侧时历史 pager 为 GONE，其 top 无意义，跳过；
+                // 切回可见后的下一次布局回调会以新 top 重算正确高度
+                if (pagerHistoryAndRecordings.getVisibility() != View.VISIBLE) {
+                    return;
+                }
                 ViewGroup.LayoutParams layoutParams = pagerHistoryAndRecordings.getLayoutParams();
                 final int visibleHeight = scrollViewContent.getHeight();
                 final int available = visibleHeight - pagerHistoryAndRecordings.getTop();
@@ -474,7 +481,12 @@ public class FragmentPlayerFull extends Fragment {
 
                 updateRunningRecording();
 
-                pagerHistoryAndRecordings.setCurrentItem(2, true);
+                // 录音入口（UI 审查 P1-2）：切到单行分段控件的「录音」段，
+                // 由分段联动逻辑互斥显示历史 pager 并翻到录音页
+                TabLayout.Tab recordingsTab = segmentTabs.getTabAt(4);
+                if (recordingsTab != null) {
+                    segmentTabs.selectTab(recordingsTab);
+                }
             } else {
                 Toast.makeText(getActivity(), getResources().getString(R.string.error_record_not_playing), Toast.LENGTH_SHORT).show();
             }
@@ -1292,16 +1304,145 @@ public class FragmentPlayerFull extends Fragment {
     }
 
     /**
-     * 页签对比度修复（UI 审查 P0-1）：PagerTabStrip 未选中页签默认取框架 textColorSecondary，
-     * 主主题未定制该值导致暗色下对比度过低。改为：当前页签用主文字色、非当前页签在主文字色上
-     * 叠加透明度（视觉接近次要色），下划线用主题的强调亮色（colorTabUnderline → presetAccentBright）。
+     * 单行五段分段控件（UI 审查 P1-2）：合并原先两行 PagerTabStrip，
+     * 「封面 | 信息 | 曲目 | 历史 | 录音」五页全部保留——前两段驱动封面 pager，
+     * 后三段驱动历史 pager；切换时两个 pager 互斥显示，历史 pager 的剩余高度
+     * 由既有 GlobalLayout 回调按新 top 重算。
+     * 胶囊背景用当前主题强调色（配色方案联动），胶囊文字按 WCAG 亮度自动取黑/白
+     * （与项目既有「色块取字色」规则一致）；未选中段用次要文字色。
      */
-    private void stylePagerTabStrip(final PagerTabStrip strip) {
-        if (strip == null) {
-            return;
+    private void setupSegmentTabs(@NonNull View view) {
+        segmentTabs = view.findViewById(R.id.segmentTabs);
+
+        final int accent = Utils.getThemeColor(requireContext(), R.attr.presetAccentColor);
+        final int onAccent = contrastColorFor(accent);
+        final int secondary = Utils.getThemeColor(requireContext(), R.attr.colorTextSecondary);
+
+        GradientDrawable pill = new GradientDrawable();
+        pill.setCornerRadius(dp(12));
+        pill.setColor(accent);
+
+        String[] titles = new String[]{
+                getResources().getString(R.string.tab_player_art),
+                getResources().getString(R.string.tab_player_info),
+                getResources().getString(R.string.tab_player_current_history),
+                getResources().getString(R.string.tab_player_history),
+                getResources().getString(R.string.tab_player_recordings)};
+
+        for (int i = 0; i < titles.length; i++) {
+            TextView label = new TextView(requireContext());
+            label.setText(titles[i]);
+            label.setGravity(android.view.Gravity.CENTER);
+            label.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13);
+            // 五段均分后每段较窄，4 字标题禁止换行（换行会把胶囊撑成两行高）
+            label.setMaxLines(1);
+            label.setPadding(dp(2), dp(8), dp(2), dp(8));
+            label.setBackground(i == 0 ? pill : null);
+            label.setTextColor(i == 0 ? onAccent : secondary);
+            segmentTabs.addTab(segmentTabs.newTab().setCustomView(label));
         }
-        strip.setTextColor(Utils.getThemeColor(requireContext(), R.attr.colorTextPrimary));
-        strip.setNonPrimaryAlpha(0.62f);
-        strip.setTabIndicatorColor(Utils.getThemeColor(requireContext(), R.attr.colorTabUnderline));
+
+        segmentTabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(@NonNull TabLayout.Tab tab) {
+                updateSegmentStyles(tab.getPosition());
+                syncSegment(tab.getPosition());
+            }
+
+            @Override
+            public void onTabUnselected(@NonNull TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabReselected(@NonNull TabLayout.Tab tab) {
+            }
+        });
+
+        // pager 内横滑翻页 → 同步分段高亮（selectTab 会再次走 onTabSelected，
+        // 但 syncSegment 幂等，不会形成循环）
+        pagerArtAndInfo.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                TabLayout.Tab tab = segmentTabs.getTabAt(position);
+                if (tab != null && segmentTabs.getSelectedTabPosition() != position) {
+                    segmentTabs.selectTab(tab);
+                }
+            }
+        });
+        pagerHistoryAndRecordings.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                TabLayout.Tab tab = segmentTabs.getTabAt(position + 2);
+                if (tab != null && segmentTabs.getSelectedTabPosition() != position + 2) {
+                    segmentTabs.selectTab(tab);
+                }
+            }
+        });
+
+        // 初始态：封面段选中，历史 pager 隐藏（由 syncSegment 统一设置，保持单一来源）
+        pagerArtAndInfo.setVisibility(View.VISIBLE);
+        pagerHistoryAndRecordings.setVisibility(View.GONE);
+        TabLayout.Tab first = segmentTabs.getTabAt(0);
+        if (first != null) {
+            segmentTabs.selectTab(first);
+        }
+    }
+
+    /** 分段切换：前两段显示封面 pager，后三段显示历史 pager 并翻到对应页。 */
+    private void syncSegment(int position) {
+        boolean artSide = position <= 1;
+        pagerArtAndInfo.setVisibility(artSide ? View.VISIBLE : View.GONE);
+        pagerHistoryAndRecordings.setVisibility(artSide ? View.GONE : View.VISIBLE);
+        if (artSide) {
+            if (pagerArtAndInfo.getCurrentItem() != position) {
+                pagerArtAndInfo.setCurrentItem(position, false);
+            }
+        } else {
+            int page = position - 2;
+            if (pagerHistoryAndRecordings.getCurrentItem() != page) {
+                pagerHistoryAndRecordings.setCurrentItem(page, false);
+            }
+        }
+    }
+
+    /** 重绘五个分段的外观：选中段为强调色胶囊 + 反色文字，未选中段透明底 + 次要文字色。 */
+    private void updateSegmentStyles(int selectedPosition) {
+        final int accent = Utils.getThemeColor(requireContext(), R.attr.presetAccentColor);
+        final int onAccent = contrastColorFor(accent);
+        final int secondary = Utils.getThemeColor(requireContext(), R.attr.colorTextSecondary);
+        for (int i = 0; i < segmentTabs.getTabCount(); i++) {
+            TabLayout.Tab tab = segmentTabs.getTabAt(i);
+            if (tab == null || tab.getCustomView() == null) {
+                continue;
+            }
+            TextView label = (TextView) tab.getCustomView();
+            boolean selected = i == selectedPosition;
+            if (selected) {
+                GradientDrawable pill = new GradientDrawable();
+                pill.setCornerRadius(dp(12));
+                pill.setColor(accent);
+                label.setBackground(pill);
+                label.setTextColor(onAccent);
+            } else {
+                label.setBackground(null);
+                label.setTextColor(secondary);
+            }
+        }
+    }
+
+    /** 按 WCAG 相对亮度取黑或白（亮度大于 0.179 用黑），与项目既有「色块取字色」规则一致 */
+    private static int contrastColorFor(int color) {
+        double luminance = 0.2126 * linearize(Color.red(color) / 255.0)
+                + 0.7152 * linearize(Color.green(color) / 255.0)
+                + 0.0722 * linearize(Color.blue(color) / 255.0);
+        return luminance > 0.179 ? Color.BLACK : Color.WHITE;
+    }
+
+    private static double linearize(double channel) {
+        return channel <= 0.03928 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4);
+    }
+
+    private int dp(float value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 }
