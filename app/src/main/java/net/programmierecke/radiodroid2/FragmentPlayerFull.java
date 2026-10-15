@@ -22,6 +22,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
@@ -149,8 +150,12 @@ public class FragmentPlayerFull extends Fragment {
     // 控制条之间；前景自上而下为方形电台图标展示卡 → 电台名 → 正在播放 →
     // 元数据胶囊 → 缓冲/流量状态胶囊（挨在一起居中）→ 备注行（贴底）
     private ImageView heroBgImage;
-    /** Hero 流动层（播放时涌动）：与底层同源模糊位图，反向缓移 + 透明度渐变 */
-    private ImageView heroBgFlow;
+    /** 色斑涌动层容器（播放时屏保级动画，未播放透明显示底层模糊图标） */
+    private View heroBgBlobs;
+    /** 色斑视图（4~5 枚大型径向渐变色斑，颜色取自电台图标主色） */
+    private ImageView[] heroBlobViews;
+    /** 色斑颜色（提取自电台图标；无图标时用强调色系衍生） */
+    private final int[] blobColors = new int[BLOB_COUNT];
     private View heroLogoCard;
     /** 信息组上方弹性空隙：高度由代码计算，使信息组中心对齐 Hero 高度 55% */
     private View heroTopSpacer;
@@ -162,9 +167,12 @@ public class FragmentPlayerFull extends Fragment {
     /** 缓冲/流量状态胶囊行（信息组下沿参照，用于 55% 定位计算） */
     private View statRow;
 
-    /** 背景流动动画：播放时两层背景反向缓移（涌动），停止时冻结显示当前帧 */
+    /** 色斑数量（与布局 heroBlob1~5 对应） */
+    private static final int BLOB_COUNT = 5;
+
+    /** 背景流动动画：播放时各色斑独立游走（涌动），停止时冻结显示当前帧 */
     private AnimatorSet heroFlowAnimator;
-    /** 流动层透明度渐起/渐落动画（独立于平移，模拟 HTML 参考稿的 rise/fall） */
+    /** 色斑层透明度渐起/渐落动画（独立于游走，模拟参考稿的 rise/fall） */
     private ValueAnimator heroFlowAlphaAnimator;
 
     /** Hero 背景形态：LOGO = imageViewArt 位图放大模糊；GRADIENT = 主题色渐变兜底 */
@@ -332,7 +340,14 @@ public class FragmentPlayerFull extends Fragment {
         stationInfoPage = (ViewGroup) inflater.inflate(R.layout.page_player_station_info, (ViewGroup) view, false);
         imageViewArt = stationInfoPage.findViewById(R.id.imageViewArt);
         heroBgImage = stationInfoPage.findViewById(R.id.heroBgImage);
-        heroBgFlow = stationInfoPage.findViewById(R.id.heroBgFlow);
+        heroBgBlobs = stationInfoPage.findViewById(R.id.heroBgBlobs);
+        heroBlobViews = new ImageView[]{
+                stationInfoPage.findViewById(R.id.heroBlob1),
+                stationInfoPage.findViewById(R.id.heroBlob2),
+                stationInfoPage.findViewById(R.id.heroBlob3),
+                stationInfoPage.findViewById(R.id.heroBlob4),
+                stationInfoPage.findViewById(R.id.heroBlob5),
+        };
         heroLogoCard = stationInfoPage.findViewById(R.id.heroLogoCard);
         heroTopSpacer = stationInfoPage.findViewById(R.id.heroTopSpacer);
         heroStationName = stationInfoPage.findViewById(R.id.heroStationName);
@@ -343,14 +358,6 @@ public class FragmentPlayerFull extends Fragment {
         statRow = stationInfoPage.findViewById(R.id.statRow);
         layoutStationNoteRow = stationInfoPage.findViewById(R.id.layoutStationNoteRow);
         textViewStationNote = stationInfoPage.findViewById(R.id.textViewStationNote);
-
-        // 背景双层预先放大，为播放时的「屏保级」平移/缩放留出足量余量（避免露出
-        // 边缘）：底层 1.5 倍 → 480dp 宽屏每边余量 120dp（覆盖 X 向 ±100dp 位移），
-        // 流动层 1.55 倍 → 余量 132dp（覆盖 ±120dp 位移）
-        heroBgImage.setScaleX(1.5f);
-        heroBgImage.setScaleY(1.5f);
-        heroBgFlow.setScaleX(1.55f);
-        heroBgFlow.setScaleY(1.55f);
 
         // 电台信息页布局定位（用户指定）：
         // ① 图标中心对齐 Hero 区（分段条↔控制条）高度的 25%；
@@ -412,22 +419,15 @@ public class FragmentPlayerFull extends Fragment {
         // 顶栏电台名恒置选中态：长名超出单行宽度时走马灯循环滚动
         textViewGeneralInfo.setSelected(true);
 
-        // 状态胶囊数值使用等宽（tabular）数字，每秒刷新时数字步进不跳动（API21+ 生效）
+        // 状态胶囊样式与元数据胶囊（TagsView）完全统一：同底色、同圆角、同字号、
+        // 纯文字无描边无前导图标（用户指定），仅高度对齐 TagsView 的 24dp 行高
+        // （XML minHeight）
+        // 数值使用等宽（tabular）数字，每秒刷新时数字步进不跳动（API21+ 生效）
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             String tnum = "tnum";
             statBufferChip.setFontFeatureSettings(tnum);
             statTrafficChip.setFontFeatureSettings(tnum);
         }
-
-        // 状态胶囊行首图标：时钟（缓冲）与上下箭头（流量），白色 85% 与胶囊文字同调
-        statBufferChip.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                new IconicsDrawable(requireContext(), GoogleMaterial.Icon.gmd_access_time)
-                        .size(IconicsSize.dp(12))
-                        .color(IconicsColor.colorInt(0xD9FFFFFF)), null, null, null);
-        statTrafficChip.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                new IconicsDrawable(requireContext(), GoogleMaterial.Icon.gmd_swap_vert)
-                        .size(IconicsSize.dp(12))
-                        .color(IconicsColor.colorInt(0xD9FFFFFF)), null, null, null);
 
         // 「正在播放」行首呼吸点（强调色亮变体，圆点尺寸与间距对齐设计稿 hero-now）
         GradientDrawable nowDot = new GradientDrawable();
@@ -1173,8 +1173,9 @@ public class FragmentPlayerFull extends Fragment {
         }
         heroBgImage.setAlpha(0.6f);
         heroBgImage.setImageBitmap(blurred);
-        // 流动层与底层同源（播放时叠加反向缓移产生涌动）
-        heroBgFlow.setImageBitmap(blurred);
+        // 从原始图标提取主色生成色斑（播放时的「色块涌动」层）
+        extractBlobColors(source);
+        applyBlobDrawables();
     }
 
     /** Hero 无位图时的兜底背景：按预设强调色生成的对角渐变（亮/暗主题分别派生）。 */
@@ -1194,32 +1195,165 @@ public class FragmentPlayerFull extends Fragment {
                 GradientDrawable.Orientation.TL_BR, new int[]{startColor, accent, endColor});
         heroBgImage.setAlpha(1f);
         heroBgImage.setImageDrawable(gradient);
-        // 渐变兜底同样镜像到流动层（mutate 避免两个 ImageView 共享 bounds 状态）
-        heroBgFlow.setImageDrawable(gradient.mutate());
+        // 无图标电台：色斑退化为强调色系衍生（主体 + 亮/暗/邻近色变体）
+        extractBlobColorsFromAccent(accent);
+        applyBlobDrawables();
     }
 
     /**
-     * Hero 背景流动动画（用户参考 HTML 设计稿的 feTurbulence 涌动效果）：
-     * 播放时流动层透明度缓缓升起（模拟扭曲强度 rise），同时两层背景反向缓慢平移，
-     * 叠加干涉产生「色块涌动」感；停止时透明度缓缓落回 0（fall）后冻结平移，
-     * 底层静止显示当前背景帧。
+     * 从电台图标提取色斑主色（轻量版色板，无 Palette 依赖）：
+     * 位图降采样到 32×32 后按色相分 6 桶累积均值色，取像素最多的前 5 桶；
+     * 不足 5 色时用强调色系衍生补齐，并强制首尾色向白/黑偏移制造明暗层次。
+     */
+    private void extractBlobColors(Bitmap source) {
+        final int accent = Utils.getThemeColor(requireContext(), R.attr.presetAccentColor);
+        if (source == null || source.isRecycled() || source.getWidth() <= 0) {
+            extractBlobColorsFromAccent(accent);
+            return;
+        }
+
+        Bitmap small;
+        try {
+            small = Bitmap.createScaledBitmap(source, 32, 32, true);
+        } catch (IllegalArgumentException e) {
+            extractBlobColorsFromAccent(accent);
+            return;
+        }
+
+        // 色相 6 桶累积：sumR/G/B + 计数
+        final float[] hueBuckets = {0f, 60f, 120f, 180f, 240f, 300f};
+        final int[] sumR = new int[6], sumG = new int[6], sumB = new int[6], count = new int[6];
+        int[] pixels = new int[32 * 32];
+        small.getPixels(pixels, 0, 32, 0, 0, 32, 32);
+        for (int px : pixels) {
+            if (Color.alpha(px) < 64) {
+                continue;
+            }
+            float[] hsv = new float[3];
+            Color.colorToHSV(px, hsv);
+            int bucket = -1;
+            for (int i = 0; i < 6; i++) {
+                float next = (i == 5) ? 360f : hueBuckets[i + 1];
+                if (hsv[0] >= hueBuckets[i] && hsv[0] < next) {
+                    bucket = i;
+                    break;
+                }
+            }
+            if (bucket < 0) {
+                bucket = 0;
+            }
+            sumR[bucket] += Color.red(px);
+            sumG[bucket] += Color.green(px);
+            sumB[bucket] += Color.blue(px);
+            count[bucket]++;
+        }
+
+        // 按像素数取前 5 桶的均值色
+        Integer[] order = {0, 1, 2, 3, 4, 5};
+        java.util.Arrays.sort(order, (a, b) -> count[b] - count[a]);
+        int filled = 0;
+        for (int i = 0; i < 6 && filled < BLOB_COUNT; i++) {
+            int b = order[i];
+            if (count[b] > 0) {
+                blobColors[filled++] = Color.rgb(sumR[b] / count[b], sumG[b] / count[b], sumB[b] / count[b]);
+            }
+        }
+        // 不足时用强调色系衍生补齐（色相偏移制造差异）
+        float[] accentHsv = new float[3];
+        Color.colorToHSV(accent, accentHsv);
+        float[] hueShifts = {0f, 25f, -25f, 50f, -50f};
+        for (int i = 0; filled < BLOB_COUNT; i++) {
+            float[] hsv = {accentHsv[0] + hueShifts[i % hueShifts.length], accentHsv[1], accentHsv[2]};
+            blobColors[filled++] = Color.HSVToColor(hsv);
+        }
+
+        // 明暗层次：第 1 色向白偏移（高光斑）、第 2 色向黑偏移（深色斑）
+        blobColors[0] = ColorUtils.blendARGB(blobColors[0], Color.WHITE, 0.30f);
+        blobColors[1] = ColorUtils.blendARGB(blobColors[1], Color.BLACK, 0.30f);
+    }
+
+    /** 无图标电台的色斑取色：强调色 + 亮/暗/色相偏移衍生（保证 5 色差异明显）。 */
+    private void extractBlobColorsFromAccent(int accent) {
+        float[] hsv = new float[3];
+        Color.colorToHSV(accent, hsv);
+        blobColors[0] = ColorUtils.blendARGB(accent, Color.WHITE, 0.35f);
+        blobColors[1] = ColorUtils.blendARGB(accent, Color.BLACK, 0.35f);
+        float[] h2 = {hsv[0] + 30f, hsv[1], hsv[2]};
+        blobColors[2] = Color.HSVToColor(h2);
+        float[] h3 = {hsv[0] - 30f, hsv[1], hsv[2]};
+        blobColors[3] = Color.HSVToColor(h3);
+        blobColors[4] = accent;
+    }
+
+    /**
+     * 为每枚色斑生成 drawable（用户要求：色斑像衣服染色的不规则斑块，透过毛玻璃
+     * 看到的是模糊一片）：
+     * 每斑 = 两枚不同中心的径向渐变圆叠加（LayerDrawable），重叠后轮廓不规则；
+     * 三段长尾渐隐（中心实 → 中段半透 → 边缘全透明）模拟柔焦；
+     * API 31+ 整层再挂 RenderEffect 高斯模糊（真毛玻璃），低版本靠长尾渐隐近似。
+     */
+    private void applyBlobDrawables() {
+        if (heroBlobViews == null) {
+            return;
+        }
+        for (int i = 0; i < BLOB_COUNT; i++) {
+            final int color = blobColors[i];
+            final ImageView blobView = heroBlobViews[i];
+            int viewWidthDp = blobView.getLayoutParams().width;
+
+            // 主斑：略偏左上；副斑：偏右下且色调略深——两圆错位叠加形成不规则轮廓
+            GradientDrawable mainBlob = makeBlobGradient(color, 0.42f, 0.42f, viewWidthDp);
+            GradientDrawable subBlob = makeBlobGradient(
+                    ColorUtils.blendARGB(color, Color.BLACK, 0.14f), 0.64f, 0.63f, viewWidthDp);
+            blobView.setImageDrawable(new android.graphics.drawable.LayerDrawable(
+                    new android.graphics.drawable.Drawable[]{subBlob, mainBlob}));
+        }
+        // API 33+：色斑层整体高斯模糊（毛玻璃效果），色斑边界彻底溶开成「模糊一片」；
+        // API 31/32 无双参重载、更低版本无 RenderEffect，均靠三段长尾渐隐近似柔焦
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && heroBgBlobs != null) {
+            heroBgBlobs.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(
+                    dp(14), dp(14), android.graphics.Shader.TileMode.CLAMP));
+        }
+    }
+
+    /** 单枚径向渐变色斑：三段长尾渐隐（中心实色 → 55% 处半透 → 边缘全透明）。 */
+    private GradientDrawable makeBlobGradient(int color, float centerX, float centerY, int viewWidthDp) {
+        GradientDrawable blob = new GradientDrawable();
+        blob.setGradientType(GradientDrawable.RADIAL_GRADIENT);
+        blob.setGradientCenter(centerX, centerY);
+        blob.setColors(new int[]{
+                ColorUtils.setAlphaComponent(color, 235),
+                ColorUtils.setAlphaComponent(color, 110),
+                Color.TRANSPARENT
+        });
+        // 径向半径取 view 宽的 58%，与三段 stops 配合形成长尾柔焦
+        blob.setGradientRadius(dp(viewWidthDp) * 0.58f);
+        return blob;
+    }
+
+    /**
+     * Hero 背景流动动画（屏保级色斑涌动，用户指定）：
+     * 播放时色斑层透明度缓缓升起（rise 1.8s），5 枚取色自电台图标的大型径向渐变
+     * 色斑各自独立大幅游走 + 呼吸胀缩 + 明暗呼吸，叠加形成如屏保般清晰可感的
+     * 「色块涌动」；停止时透明度缓缓落回 0（fall 1.4s）后冻结动画，背景静止显示
+     * 底层的模糊电台图标。
      */
     private void updateHeroFlow(boolean playing) {
-        if (heroBgFlow == null || !isAdded()) {
+        if (heroBgBlobs == null || !isAdded()) {
             return;
         }
 
         // 透明度渐起/渐落（rise 1.8s / fall 1.4s，与参考稿一致）
-        float targetAlpha = playing ? 0.75f : 0f;
+        float targetAlpha = playing ? 1f : 0f;
         if (heroFlowAlphaAnimator != null && heroFlowAlphaAnimator.isRunning()) {
             heroFlowAlphaAnimator.cancel();
         }
-        heroFlowAlphaAnimator = ValueAnimator.ofFloat(heroBgFlow.getAlpha(), targetAlpha);
+        heroFlowAlphaAnimator = ValueAnimator.ofFloat(heroBgBlobs.getAlpha(), targetAlpha);
         heroFlowAlphaAnimator.setDuration(playing ? 1800 : 1400);
         heroFlowAlphaAnimator.addUpdateListener(animation ->
-                heroBgFlow.setAlpha((float) animation.getAnimatedValue()));
+                heroBgBlobs.setAlpha((float) animation.getAnimatedValue()));
         if (!playing) {
-            // 落回 0 后冻结平移：背景完全静止在当前帧
+            // 落回 0 后冻结游走：背景完全静止显示底层模糊电台图标
             heroFlowAlphaAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
                 private boolean cancelled;
 
@@ -1240,41 +1374,67 @@ public class FragmentPlayerFull extends Fragment {
 
         if (playing) {
             if (heroFlowAnimator != null) {
-                heroFlowAnimator.start(); // 复用已构建的平移动画，从冻结位置继续
+                heroFlowAnimator.start(); // 复用已构建的游走动画，从冻结位置继续
                 return;
             }
-            // 「屏保级」漂移（用户要求明显流动，参考电脑屏保的大幅缓移）：
-            // 位移幅度拉满放大余量（底层 ±100dp/±70dp，流动层 ∓120dp/∓80dp），
-            // 周期 8~14s——8 秒内背景位移超百 dp，肉眼清晰可感
-            ObjectAnimator driftBaseX = ObjectAnimator.ofFloat(heroBgImage, View.TRANSLATION_X, 0f, dp(100));
-            driftBaseX.setDuration(14000);
-            ObjectAnimator driftBaseY = ObjectAnimator.ofFloat(heroBgImage, View.TRANSLATION_Y, 0f, dp(70));
-            driftBaseY.setDuration(11000);
-            // 流动层反向缓漂（幅度更大、周期更短），与底层速度/方向错开产生明显干涉
-            ObjectAnimator driftFlowX = ObjectAnimator.ofFloat(heroBgFlow, View.TRANSLATION_X, 0f, -dp(120));
-            driftFlowX.setDuration(10000);
-            ObjectAnimator driftFlowY = ObjectAnimator.ofFloat(heroBgFlow, View.TRANSLATION_Y, 0f, -dp(80));
-            driftFlowY.setDuration(8000);
-            // 缩放呼吸（屏保式缓慢胀缩）：只向放大方向呼吸，不缩小，保证位移永不露边
-            ObjectAnimator breathBaseX = ObjectAnimator.ofFloat(heroBgImage, View.SCALE_X, 1.5f, 1.56f);
-            breathBaseX.setDuration(18000);
-            ObjectAnimator breathBaseY = ObjectAnimator.ofFloat(heroBgImage, View.SCALE_Y, 1.5f, 1.56f);
-            breathBaseY.setDuration(18000);
-            ObjectAnimator breathFlowX = ObjectAnimator.ofFloat(heroBgFlow, View.SCALE_X, 1.55f, 1.62f);
-            breathFlowX.setDuration(14000);
-            ObjectAnimator breathFlowY = ObjectAnimator.ofFloat(heroBgFlow, View.SCALE_Y, 1.55f, 1.62f);
-            breathFlowY.setDuration(14000);
-
-            heroFlowAnimator = new AnimatorSet();
-            heroFlowAnimator.playTogether(driftBaseX, driftBaseY, driftFlowX, driftFlowY,
-                    breathBaseX, breathBaseY, breathFlowX, breathFlowY);
-            for (ObjectAnimator anim : new ObjectAnimator[]{driftBaseX, driftBaseY, driftFlowX, driftFlowY,
-                    breathBaseX, breathBaseY, breathFlowX, breathFlowY}) {
-                anim.setRepeatCount(ValueAnimator.INFINITE);
-                anim.setRepeatMode(ValueAnimator.REVERSE);
-                anim.setInterpolator(new LinearInterpolator());
+            buildBlobAnimations();
+            if (heroFlowAnimator != null) {
+                heroFlowAnimator.start();
             }
-            heroFlowAnimator.start();
+        }
+    }
+
+    /**
+     * 构建色斑游走动画：每斑独立三组动画（大幅位移游走 / 缩放呼吸 / 明暗呼吸），
+     * 周期互相错开（6.5~10.5s）避免同步循环；位移幅度按 Hero 区尺寸的百分比设定
+     * （±20%~32%），缩放 X/Y 反相位呼吸（胀缩更有机），任何设备上都是肉眼清晰
+     * 可感的「屏保级」移动。
+     */
+    private void buildBlobAnimations() {
+        final int heroW = heroBgBlobs.getWidth();
+        final int heroH = heroBgBlobs.getHeight();
+        if (heroW <= 0 || heroH <= 0) {
+            return; // 尚未布局，下次 fullUpdate 再建
+        }
+
+        // 各斑参数：{ΔX 比例, ΔY 比例, 平移周期ms, 缩放min, 缩放max, 缩放周期ms, alpha min, alpha max, alpha 周期ms}
+        final float[][] specs = {
+                {+0.30f, +0.18f, 7000, 0.75f, 1.30f, 8000, 0.55f, 0.95f, 6000},
+                {-0.26f, -0.16f, 8000, 0.80f, 1.25f, 9500, 0.50f, 0.90f, 7000},
+                {+0.20f, -0.22f, 9000, 0.85f, 1.25f, 7200, 0.60f, 1.00f, 8200},
+                {-0.32f, +0.20f, 6500, 0.70f, 1.15f, 6800, 0.50f, 0.85f, 9000},
+                {+0.24f, -0.15f, 10500, 0.80f, 1.20f, 10000, 0.55f, 0.90f, 7600},
+        };
+
+        java.util.List<Animator> anims = new java.util.ArrayList<>();
+        for (int i = 0; i < BLOB_COUNT; i++) {
+            final View blob = heroBlobViews[i];
+            final float[] s = specs[i];
+            ObjectAnimator tx = ObjectAnimator.ofFloat(blob, View.TRANSLATION_X,
+                    -s[0] * heroW * 0.45f, s[0] * heroW * 0.45f);
+            tx.setDuration((long) s[2]);
+            ObjectAnimator ty = ObjectAnimator.ofFloat(blob, View.TRANSLATION_Y,
+                    -s[1] * heroH * 0.45f, s[1] * heroH * 0.45f);
+            ty.setDuration((long) (s[2] * 1.27f)); // Y 周期错开，游走轨迹不重复
+            ObjectAnimator sx = ObjectAnimator.ofFloat(blob, View.SCALE_X, s[3], s[4]);
+            sx.setDuration((long) s[5]);
+            ObjectAnimator sy = ObjectAnimator.ofFloat(blob, View.SCALE_Y, s[4], s[3]); // 与 X 反相位
+            sy.setDuration((long) s[5]);
+            ObjectAnimator al = ObjectAnimator.ofFloat(blob, View.ALPHA, s[6], s[7]);
+            al.setDuration((long) s[8]);
+            anims.add(tx);
+            anims.add(ty);
+            anims.add(sx);
+            anims.add(sy);
+            anims.add(al);
+        }
+
+        heroFlowAnimator = new AnimatorSet();
+        heroFlowAnimator.playTogether(anims);
+        for (Animator a : anims) {
+            ((ValueAnimator) a).setRepeatCount(ValueAnimator.INFINITE);
+            ((ValueAnimator) a).setRepeatMode(ValueAnimator.REVERSE);
+            ((ValueAnimator) a).setInterpolator(new LinearInterpolator());
         }
     }
 
@@ -1366,18 +1526,17 @@ public class FragmentPlayerFull extends Fragment {
 
     /**
      * 信息页主题派生样式（v4.1，全部从预设属性取值、随配色方案联动）：
-     * 缓冲/流量状态胶囊 = 白 13% 底 + 强调色 45% 细描边；
+     * 缓冲/流量状态胶囊 = 半透明白底纯胶囊（与元数据胶囊 TagsView 样式统一）；
      * 录音状态块 = 圆角半透明深底 + 强调色 28% 细描边（浮层样式）。
      */
     private void applyInfoPageThemeStyles() {
         final Context context = requireContext();
         final int accentBright = Utils.getThemeColor(context, R.attr.presetAccentBrightColor);
 
-        // 缓冲 / 流量状态胶囊：白 13% 底 + 强调色 45% 细描边（与设计稿 stat-chip 一致）
+        // 缓冲 / 流量状态胶囊：半透明白底、无描边（与元数据胶囊样式完全统一）
         if (statBufferChip != null && statTrafficChip != null) {
-            final int chipStroke = ColorUtils.setAlphaComponent(accentBright, 115);
-            statBufferChip.setBackground(makeStatChipBackground(chipStroke));
-            statTrafficChip.setBackground(makeStatChipBackground(chipStroke));
+            statBufferChip.setBackground(makeStatChipBackground());
+            statTrafficChip.setBackground(makeStatChipBackground());
         }
 
         // 录音状态块浮层底：圆角半透明深底 + 强调色 28% 细描边（主题无关的深色覆盖层）
@@ -1390,12 +1549,11 @@ public class FragmentPlayerFull extends Fragment {
         }
     }
 
-    /** 状态胶囊底形：全圆角 + 白 13% 底 + 强调色细描边 */
-    private GradientDrawable makeStatChipBackground(int strokeColor) {
+    /** 状态胶囊底形：全圆角 + 半透明白底（与元数据胶囊 TagsView 样式统一，无描边） */
+    private GradientDrawable makeStatChipBackground() {
         GradientDrawable chip = new GradientDrawable();
         chip.setCornerRadius(dp(99));
         chip.setColor(ContextCompat.getColor(requireContext(), R.color.player_hero_chip_bg));
-        chip.setStroke(dp(1), strokeColor);
         return chip;
     }
 
