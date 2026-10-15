@@ -344,12 +344,13 @@ public class FragmentPlayerFull extends Fragment {
         layoutStationNoteRow = stationInfoPage.findViewById(R.id.layoutStationNoteRow);
         textViewStationNote = stationInfoPage.findViewById(R.id.textViewStationNote);
 
-        // 背景双层预先放大，为播放时的缓慢平移留出足量余量（避免平移露出边缘；
-        // 1.3 倍 → 1440px 宽屏每边约 216px 余量，可支撑 ±140px 级别的涌动位移）
-        heroBgImage.setScaleX(1.3f);
-        heroBgImage.setScaleY(1.3f);
-        heroBgFlow.setScaleX(1.35f);
-        heroBgFlow.setScaleY(1.35f);
+        // 背景双层预先放大，为播放时的「屏保级」平移/缩放留出足量余量（避免露出
+        // 边缘）：底层 1.5 倍 → 480dp 宽屏每边余量 120dp（覆盖 X 向 ±100dp 位移），
+        // 流动层 1.55 倍 → 余量 132dp（覆盖 ±120dp 位移）
+        heroBgImage.setScaleX(1.5f);
+        heroBgImage.setScaleY(1.5f);
+        heroBgFlow.setScaleX(1.55f);
+        heroBgFlow.setScaleY(1.55f);
 
         // 电台信息页布局定位（用户指定）：
         // ① 图标中心对齐 Hero 区（分段条↔控制条）高度的 25%；
@@ -1209,7 +1210,7 @@ public class FragmentPlayerFull extends Fragment {
         }
 
         // 透明度渐起/渐落（rise 1.8s / fall 1.4s，与参考稿一致）
-        float targetAlpha = playing ? 0.65f : 0f;
+        float targetAlpha = playing ? 0.75f : 0f;
         if (heroFlowAlphaAnimator != null && heroFlowAlphaAnimator.isRunning()) {
             heroFlowAlphaAnimator.cancel();
         }
@@ -1242,22 +1243,33 @@ public class FragmentPlayerFull extends Fragment {
                 heroFlowAnimator.start(); // 复用已构建的平移动画，从冻结位置继续
                 return;
             }
-            // 底层正向缓漂：位移幅度与周期按「8 秒内可感知」调校（±140px / 24s，
-            // 用户反馈上一版 48px/42s 幅度过小看不出流动）；放大 1.3 倍的余量
-            // （每边约 216px）可完全覆盖位移，不会露出边缘
-            ObjectAnimator driftBaseX = ObjectAnimator.ofFloat(heroBgImage, View.TRANSLATION_X, 0f, dp(47));
-            driftBaseX.setDuration(24000);
-            ObjectAnimator driftBaseY = ObjectAnimator.ofFloat(heroBgImage, View.TRANSLATION_Y, 0f, dp(33));
-            driftBaseY.setDuration(19000);
+            // 「屏保级」漂移（用户要求明显流动，参考电脑屏保的大幅缓移）：
+            // 位移幅度拉满放大余量（底层 ±100dp/±70dp，流动层 ∓120dp/∓80dp），
+            // 周期 8~14s——8 秒内背景位移超百 dp，肉眼清晰可感
+            ObjectAnimator driftBaseX = ObjectAnimator.ofFloat(heroBgImage, View.TRANSLATION_X, 0f, dp(100));
+            driftBaseX.setDuration(14000);
+            ObjectAnimator driftBaseY = ObjectAnimator.ofFloat(heroBgImage, View.TRANSLATION_Y, 0f, dp(70));
+            driftBaseY.setDuration(11000);
             // 流动层反向缓漂（幅度更大、周期更短），与底层速度/方向错开产生明显干涉
-            ObjectAnimator driftFlowX = ObjectAnimator.ofFloat(heroBgFlow, View.TRANSLATION_X, 0f, -dp(60));
-            driftFlowX.setDuration(16000);
-            ObjectAnimator driftFlowY = ObjectAnimator.ofFloat(heroBgFlow, View.TRANSLATION_Y, 0f, -dp(40));
-            driftFlowY.setDuration(13000);
+            ObjectAnimator driftFlowX = ObjectAnimator.ofFloat(heroBgFlow, View.TRANSLATION_X, 0f, -dp(120));
+            driftFlowX.setDuration(10000);
+            ObjectAnimator driftFlowY = ObjectAnimator.ofFloat(heroBgFlow, View.TRANSLATION_Y, 0f, -dp(80));
+            driftFlowY.setDuration(8000);
+            // 缩放呼吸（屏保式缓慢胀缩）：只向放大方向呼吸，不缩小，保证位移永不露边
+            ObjectAnimator breathBaseX = ObjectAnimator.ofFloat(heroBgImage, View.SCALE_X, 1.5f, 1.56f);
+            breathBaseX.setDuration(18000);
+            ObjectAnimator breathBaseY = ObjectAnimator.ofFloat(heroBgImage, View.SCALE_Y, 1.5f, 1.56f);
+            breathBaseY.setDuration(18000);
+            ObjectAnimator breathFlowX = ObjectAnimator.ofFloat(heroBgFlow, View.SCALE_X, 1.55f, 1.62f);
+            breathFlowX.setDuration(14000);
+            ObjectAnimator breathFlowY = ObjectAnimator.ofFloat(heroBgFlow, View.SCALE_Y, 1.55f, 1.62f);
+            breathFlowY.setDuration(14000);
 
             heroFlowAnimator = new AnimatorSet();
-            heroFlowAnimator.playTogether(driftBaseX, driftBaseY, driftFlowX, driftFlowY);
-            for (ObjectAnimator anim : new ObjectAnimator[]{driftBaseX, driftBaseY, driftFlowX, driftFlowY}) {
+            heroFlowAnimator.playTogether(driftBaseX, driftBaseY, driftFlowX, driftFlowY,
+                    breathBaseX, breathBaseY, breathFlowX, breathFlowY);
+            for (ObjectAnimator anim : new ObjectAnimator[]{driftBaseX, driftBaseY, driftFlowX, driftFlowY,
+                    breathBaseX, breathBaseY, breathFlowX, breathFlowY}) {
                 anim.setRepeatCount(ValueAnimator.INFINITE);
                 anim.setRepeatMode(ValueAnimator.REVERSE);
                 anim.setInterpolator(new LinearInterpolator());

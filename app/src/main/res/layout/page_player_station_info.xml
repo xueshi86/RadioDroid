@@ -112,7 +112,7 @@
             android:id="@+id/heroMetaChips"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/space_sm"
+            android:layout_marginTop="@dimen/space_md"
             android:gravity="center_horizontal"
             android:lineSpacingMultiplier="1"
             android:paddingStart="@dimen/space_lg"
@@ -128,13 +128,14 @@
             app:textVerticalMargin="2dp"
             tools:text="48 kbps  AAC+  美国 · 俄勒冈  english" />
 
-        <!-- ⑤ 缓冲 + 流量状态胶囊：两枚挨在一起整组居中（底色/描边由代码按配色方案注入） -->
+        <!-- ⑤ 缓冲 + 流量状态胶囊：两枚挨在一起整组居中（底色/描边由代码按配色方案注入）；
+             信息组各行间距统一 space_md（原 space_sm 加大 50%） -->
         <LinearLayout
             android:id="@+id/statRow"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="@dimen/space_sm"
+            android:layout_marginTop="@dimen/space_md"
             android:orientation="horizontal">
 
             <TextView
@@ -191,7 +192,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="@dimen/space_sm"
+            android:layout_marginTop="@dimen/space_md"
             android:ellipsize="end"
             android:gravity="center"
             android:maxLines="1"
