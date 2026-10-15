@@ -434,9 +434,8 @@ public class FragmentPlayerSmall extends Fragment {
                 imageViewIcon.setVisibility(View.GONE);
             }
 
-            if (imageViewConnectionType != null) {
-                imageViewConnectionType.setVisibility(View.GONE);
-            }
+            // 展开态顶栏（用户要求）：⋮ 收纳按钮左侧显示连接状态图标（WiFi/流量）
+            updateConnectionTypeIcon();
         }
     }
 
@@ -445,7 +444,8 @@ public class FragmentPlayerSmall extends Fragment {
     }
 
     private void updateConnectionTypeIcon(ConnectivityChecker.ConnectionType connectionType) {
-        if (imageViewConnectionType == null || role != Role.PLAYER) {
+        // 迷你条（PLAYER）与展开态顶栏（HEADER）都显示连接状态图标
+        if (imageViewConnectionType == null || (role != Role.PLAYER && role != Role.HEADER)) {
             return;
         }
 

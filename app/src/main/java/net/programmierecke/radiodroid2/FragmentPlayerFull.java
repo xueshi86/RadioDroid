@@ -22,6 +22,10 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
+import android.view.animation.LinearInterpolator;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -145,12 +149,23 @@ public class FragmentPlayerFull extends Fragment {
     // 控制条之间；前景自上而下为方形电台图标展示卡 → 电台名 → 正在播放 →
     // 元数据胶囊 → 缓冲/流量状态胶囊（挨在一起居中）→ 备注行（贴底）
     private ImageView heroBgImage;
+    /** Hero 流动层（播放时涌动）：与底层同源模糊位图，反向缓移 + 透明度渐变 */
+    private ImageView heroBgFlow;
     private View heroLogoCard;
+    /** 信息组上方弹性空隙：高度由代码计算，使信息组中心对齐 Hero 高度 55% */
+    private View heroTopSpacer;
     private TextView heroStationName;
     private TextView heroNowPlaying;
     private TagsView heroMetaChips;
     private TextView statBufferChip;
     private TextView statTrafficChip;
+    /** 缓冲/流量状态胶囊行（信息组下沿参照，用于 55% 定位计算） */
+    private View statRow;
+
+    /** 背景流动动画：播放时两层背景反向缓移（涌动），停止时冻结显示当前帧 */
+    private AnimatorSet heroFlowAnimator;
+    /** 流动层透明度渐起/渐落动画（独立于平移，模拟 HTML 参考稿的 rise/fall） */
+    private ValueAnimator heroFlowAlphaAnimator;
 
     /** Hero 背景形态：LOGO = imageViewArt 位图放大模糊；GRADIENT = 主题色渐变兜底 */
     private enum HeroArtMode { LOGO, GRADIENT }
@@ -183,6 +198,15 @@ public class FragmentPlayerFull extends Fragment {
         if (sheetBehavior != null) {
             sheetBehavior.removeBottomSheetCallback(bottomSheetCallback);
             sheetBehavior = null;
+        }
+        // Hero 背景流动动画随视图销毁终止，避免泄漏/空指针
+        if (heroFlowAlphaAnimator != null) {
+            heroFlowAlphaAnimator.cancel();
+            heroFlowAlphaAnimator = null;
+        }
+        if (heroFlowAnimator != null) {
+            heroFlowAnimator.cancel();
+            heroFlowAnimator = null;
         }
         super.onDestroyView();
     }
@@ -308,31 +332,66 @@ public class FragmentPlayerFull extends Fragment {
         stationInfoPage = (ViewGroup) inflater.inflate(R.layout.page_player_station_info, (ViewGroup) view, false);
         imageViewArt = stationInfoPage.findViewById(R.id.imageViewArt);
         heroBgImage = stationInfoPage.findViewById(R.id.heroBgImage);
+        heroBgFlow = stationInfoPage.findViewById(R.id.heroBgFlow);
         heroLogoCard = stationInfoPage.findViewById(R.id.heroLogoCard);
+        heroTopSpacer = stationInfoPage.findViewById(R.id.heroTopSpacer);
         heroStationName = stationInfoPage.findViewById(R.id.heroStationName);
         heroNowPlaying = stationInfoPage.findViewById(R.id.heroNowPlaying);
         heroMetaChips = stationInfoPage.findViewById(R.id.heroMetaChips);
         statBufferChip = stationInfoPage.findViewById(R.id.statBufferChip);
         statTrafficChip = stationInfoPage.findViewById(R.id.statTrafficChip);
+        statRow = stationInfoPage.findViewById(R.id.statRow);
         layoutStationNoteRow = stationInfoPage.findViewById(R.id.layoutStationNoteRow);
         textViewStationNote = stationInfoPage.findViewById(R.id.textViewStationNote);
 
-        // 电台图标黄金分割定位（用户指定）：图标中心对齐 Hero 区（分段条↔控制条）高度的
-        // 0.382 黄金分割点（较小那份的端点）。Hero 高度随设备/屏幕方向变化，XML 固定边距
-        // 无法表达，改为布局回调里动态计算顶边距；图标仍在 LinearLayout 流内占位，
-        // 下方信息组的弹性居中参照（图标底↔控制条顶）不受影响。topMargin 收敛后回调
+        // 背景双层预先放大，为播放时的缓慢平移留出足量余量（避免平移露出边缘；
+        // 1.3 倍 → 1440px 宽屏每边约 216px 余量，可支撑 ±140px 级别的涌动位移）
+        heroBgImage.setScaleX(1.3f);
+        heroBgImage.setScaleY(1.3f);
+        heroBgFlow.setScaleX(1.35f);
+        heroBgFlow.setScaleY(1.35f);
+
+        // 电台信息页布局定位（用户指定）：
+        // ① 图标中心对齐 Hero 区（分段条↔控制条）高度的 25%；
+        // ② 信息组（电台名→正在播放→元数据胶囊→状态胶囊）中心对齐 Hero 高度的 55%。
+        // Hero 高度随设备/屏幕方向变化，XML 固定边距/等分权重均无法表达，改为布局
+        // 回调里动态计算：图标设 topMargin、顶部弹性 Space 设精确高度（剩余空间由
+        // 底部 weight=1 Space 吸收、备注行贴底）。topMargin/spacer 高度收敛后回调
         // 不再改值，监听自然空转，无循环布局风险。
         stationInfoPage.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
-                if (heroLogoCard == null || stationInfoPage.getHeight() <= 0 || heroLogoCard.getHeight() <= 0) {
+                final int heroHeight = stationInfoPage.getHeight();
+                if (heroLogoCard == null || heroHeight <= 0 || heroLogoCard.getHeight() <= 0) {
                     return;
                 }
-                int targetTop = Math.round(stationInfoPage.getHeight() * 0.382f) - heroLogoCard.getHeight() / 2;
-                LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) heroLogoCard.getLayoutParams();
-                if (lp != null && lp.topMargin != targetTop) {
-                    lp.topMargin = Math.max(targetTop, dp(8));
-                    heroLogoCard.setLayoutParams(lp);
+
+                // ① 图标中心 → Hero 高度 25% 处
+                int iconTop = Math.round(heroHeight * 0.25f) - heroLogoCard.getHeight() / 2;
+                LinearLayout.LayoutParams iconLp = (LinearLayout.LayoutParams) heroLogoCard.getLayoutParams();
+                if (iconLp != null && iconLp.topMargin != iconTop) {
+                    iconLp.topMargin = Math.max(iconTop, dp(8));
+                    heroLogoCard.setLayoutParams(iconLp);
+                    return; // 图标占位变化会触发下一轮回调，届时再算 spacer
+                }
+
+                // ② 信息组中心 → Hero 高度 55% 处
+                //    spacer 高度 = 目标中心 - 信息组高一半 - 图标底
+                //    组高下沿动态取：正在播放行可见时含它（组末行），隐藏时到状态胶囊
+                if (heroTopSpacer == null || heroStationName.getTop() <= 0) {
+                    return;
+                }
+                int groupBottom = heroNowPlaying != null
+                        && heroNowPlaying.getVisibility() == View.VISIBLE
+                        ? heroNowPlaying.getBottom() : statRow.getBottom();
+                int infoGroupHeight = groupBottom - heroStationName.getTop();
+                if (infoGroupHeight <= 0) {
+                    return;
+                }
+                int spacerHeight = Math.round(heroHeight * 0.55f) - infoGroupHeight / 2 - heroLogoCard.getBottom();
+                if (heroTopSpacer.getHeight() != spacerHeight && spacerHeight >= 0) {
+                    heroTopSpacer.getLayoutParams().height = spacerHeight;
+                    heroTopSpacer.setLayoutParams(heroTopSpacer.getLayoutParams());
                 }
             }
         });
@@ -349,6 +408,8 @@ public class FragmentPlayerFull extends Fragment {
 
         // 播放状态胶囊（缓冲 / 流量）位于信息页布局内；电台标题行在主布局
         textViewGeneralInfo = view.findViewById(R.id.textViewGeneralInfo);
+        // 顶栏电台名恒置选中态：长名超出单行宽度时走马灯循环滚动
+        textViewGeneralInfo.setSelected(true);
 
         // 状态胶囊数值使用等宽（tabular）数字，每秒刷新时数字步进不跳动（API21+ 生效）
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -790,29 +851,23 @@ public class FragmentPlayerFull extends Fragment {
                 displayTextForAccessibility = getString(R.string.now_playing_stream, streamTitle);
             }
 
-            // 停止/暂停后元数据仍是最后缓存的曲目文本，继续显示「正在播放」会让用户
-            // 误解电台仍在播出；未播放时无条件隐藏该行，顶栏标题回退显示电台名
-            if (!PlayerServiceUtil.isPlaying()) {
-                textViewGeneralInfo.setText(station.Name);
-                // 设置无障碍内容描述
-                textViewGeneralInfo.setContentDescription(getString(R.string.content_desc_listening_station, station.Name));
-                heroNowPlaying.setVisibility(View.GONE);
-            } else if (!TextUtils.isEmpty(displayText)) {
-                textViewGeneralInfo.setText(displayText);
-                // 设置无障碍内容描述
-                textViewGeneralInfo.setContentDescription(displayTextForAccessibility);
-                // Hero「正在播放」行：与主布局标题行同源内容，带前缀
+            // 顶栏标题行恒显电台名（用户要求恢复；长名走马灯滚动）；曲目信息由
+            // Hero「正在播放」行承担，顶栏不再重复
+            textViewGeneralInfo.setText(station.Name);
+            // 设置无障碍内容描述
+            textViewGeneralInfo.setContentDescription(getString(R.string.content_desc_listening_station, station.Name));
+
+            // 「正在播放」行置于状态胶囊下一行（信息组末尾）：播放中且有曲目时显示；
+            // 停止/暂停后元数据仍是最后缓存曲目，继续显示会让用户误解电台仍在播出，
+            // 隐藏时只影响该行自身（GONE），上方电台名与胶囊位置不动
+            if (PlayerServiceUtil.isPlaying() && !TextUtils.isEmpty(displayText)) {
                 heroNowPlaying.setText(getString(R.string.player_hero_now_playing, displayText));
                 heroNowPlaying.setVisibility(View.VISIBLE);
             } else {
-                textViewGeneralInfo.setText(station.Name);
-                // 设置无障碍内容描述
-                textViewGeneralInfo.setContentDescription(getString(R.string.content_desc_listening_station, station.Name));
-                // Hero 已有电台名，无曲目信息时隐藏「正在播放」行避免重复
                 heroNowPlaying.setVisibility(View.GONE);
             }
 
-            // Hero 电台名：电台身份的唯一大字标识（主布局标题行在信息段隐藏）
+            // Hero 电台名：电台身份的唯一大字标识（顶栏另恒显单行走马灯电台名）
             heroStationName.setText(station.Name);
 
             // Hero 元数据胶囊行：比特率 · 编码 · 地区 · 语言（空值跳过）
@@ -867,6 +922,9 @@ public class FragmentPlayerFull extends Fragment {
             statBufferChip.setText(R.string.player_stat_buffer);
             statTrafficChip.setText(R.string.player_stat_data);
         }
+
+        // Hero 背景流动动画：播放时涌动、停止时渐落静止在当前帧
+        updateHeroFlow(PlayerServiceUtil.isPlaying());
 
         timedUpdateTask.run();
 
@@ -1058,33 +1116,24 @@ public class FragmentPlayerFull extends Fragment {
     }
 
     /**
-     * 主布局通用标题行显隐（v3.1）：「电台信息」段由页内 Hero 沉浸区承担电台名与
-     * 正在播放，标题行隐藏（分段条上移）；其余三段恢复显示以提供列表上下文。
-     * 同时联动底部弹层顶栏（迷你条 Fragment）：信息段收起其电台名/封面，
-     * 避免 Hero 与顶栏同源信息重复造成杂乱。
+     * 主布局通用标题行（rowNowPlaying）恒隐藏（用户要求）：电台名只显示在展开态
+     * 顶栏（FragmentPlayerSmall HEADER，电台图标 + 电台名 + 连接图标 + ⋮ 菜单），
+     * 不再在分段条上方重复显示一行电台名。行保留在布局中（textViewGeneralInfo
+     * 等引用仍在），仅恒 GONE 不占位。
      */
     private void updateNowPlayingRowVisibility() {
-        if (rowNowPlaying == null || segmentTabs == null) {
+        if (rowNowPlaying == null) {
             return;
         }
-        final int position = segmentTabs.getSelectedTabPosition();
-        final boolean infoPage = position == 0;
-        rowNowPlaying.setVisibility(infoPage ? View.GONE : View.VISIBLE);
+        rowNowPlaying.setVisibility(View.GONE);
 
-        // 顶栏（FragmentPlayerSmall，迷你条与展开态 header 共用）：仅在「展开态 +
-        // 信息段」时收起文字与封面；收起 sheet 时 ActivityMain 会把 role 切回
-        // PLAYER 并重跑 fullUpdate，迷你条自动恢复正常显示
+        // 迷你条 header（FragmentPlayerSmall）恒展开：展开态顶栏常显电台图标 +
+        // 电台名 + 连接图标 + ⋮，不再按分段收起
         if (getActivity() != null) {
             androidx.fragment.app.Fragment headerFragment =
                     getActivity().getSupportFragmentManager().findFragmentById(R.id.fragment_player_small);
             if (headerFragment instanceof FragmentPlayerSmall) {
-                boolean sheetExpanded = false;
-                if (sheetBehavior != null) {
-                    final int state = sheetBehavior.getState();
-                    sheetExpanded = state == BottomSheetBehavior.STATE_EXPANDED
-                            || state == BottomSheetBehavior.STATE_SETTLING;
-                }
-                ((FragmentPlayerSmall) headerFragment).setHeaderContentCollapsed(infoPage && sheetExpanded);
+                ((FragmentPlayerSmall) headerFragment).setHeaderContentCollapsed(false);
             }
         }
     }
@@ -1123,6 +1172,8 @@ public class FragmentPlayerFull extends Fragment {
         }
         heroBgImage.setAlpha(0.6f);
         heroBgImage.setImageBitmap(blurred);
+        // 流动层与底层同源（播放时叠加反向缓移产生涌动）
+        heroBgFlow.setImageBitmap(blurred);
     }
 
     /** Hero 无位图时的兜底背景：按预设强调色生成的对角渐变（亮/暗主题分别派生）。 */
@@ -1142,6 +1193,84 @@ public class FragmentPlayerFull extends Fragment {
                 GradientDrawable.Orientation.TL_BR, new int[]{startColor, accent, endColor});
         heroBgImage.setAlpha(1f);
         heroBgImage.setImageDrawable(gradient);
+        // 渐变兜底同样镜像到流动层（mutate 避免两个 ImageView 共享 bounds 状态）
+        heroBgFlow.setImageDrawable(gradient.mutate());
+    }
+
+    /**
+     * Hero 背景流动动画（用户参考 HTML 设计稿的 feTurbulence 涌动效果）：
+     * 播放时流动层透明度缓缓升起（模拟扭曲强度 rise），同时两层背景反向缓慢平移，
+     * 叠加干涉产生「色块涌动」感；停止时透明度缓缓落回 0（fall）后冻结平移，
+     * 底层静止显示当前背景帧。
+     */
+    private void updateHeroFlow(boolean playing) {
+        if (heroBgFlow == null || !isAdded()) {
+            return;
+        }
+
+        // 透明度渐起/渐落（rise 1.8s / fall 1.4s，与参考稿一致）
+        float targetAlpha = playing ? 0.65f : 0f;
+        if (heroFlowAlphaAnimator != null && heroFlowAlphaAnimator.isRunning()) {
+            heroFlowAlphaAnimator.cancel();
+        }
+        heroFlowAlphaAnimator = ValueAnimator.ofFloat(heroBgFlow.getAlpha(), targetAlpha);
+        heroFlowAlphaAnimator.setDuration(playing ? 1800 : 1400);
+        heroFlowAlphaAnimator.addUpdateListener(animation ->
+                heroBgFlow.setAlpha((float) animation.getAnimatedValue()));
+        if (!playing) {
+            // 落回 0 后冻结平移：背景完全静止在当前帧
+            heroFlowAlphaAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+                private boolean cancelled;
+
+                @Override
+                public void onAnimationCancel(android.animation.Animator animation) {
+                    cancelled = true;
+                }
+
+                @Override
+                public void onAnimationEnd(android.animation.Animator animation) {
+                    if (!cancelled && !PlayerServiceUtil.isPlaying()) {
+                        stopHeroFlowDrift();
+                    }
+                }
+            });
+        }
+        heroFlowAlphaAnimator.start();
+
+        if (playing) {
+            if (heroFlowAnimator != null) {
+                heroFlowAnimator.start(); // 复用已构建的平移动画，从冻结位置继续
+                return;
+            }
+            // 底层正向缓漂：位移幅度与周期按「8 秒内可感知」调校（±140px / 24s，
+            // 用户反馈上一版 48px/42s 幅度过小看不出流动）；放大 1.3 倍的余量
+            // （每边约 216px）可完全覆盖位移，不会露出边缘
+            ObjectAnimator driftBaseX = ObjectAnimator.ofFloat(heroBgImage, View.TRANSLATION_X, 0f, dp(47));
+            driftBaseX.setDuration(24000);
+            ObjectAnimator driftBaseY = ObjectAnimator.ofFloat(heroBgImage, View.TRANSLATION_Y, 0f, dp(33));
+            driftBaseY.setDuration(19000);
+            // 流动层反向缓漂（幅度更大、周期更短），与底层速度/方向错开产生明显干涉
+            ObjectAnimator driftFlowX = ObjectAnimator.ofFloat(heroBgFlow, View.TRANSLATION_X, 0f, -dp(60));
+            driftFlowX.setDuration(16000);
+            ObjectAnimator driftFlowY = ObjectAnimator.ofFloat(heroBgFlow, View.TRANSLATION_Y, 0f, -dp(40));
+            driftFlowY.setDuration(13000);
+
+            heroFlowAnimator = new AnimatorSet();
+            heroFlowAnimator.playTogether(driftBaseX, driftBaseY, driftFlowX, driftFlowY);
+            for (ObjectAnimator anim : new ObjectAnimator[]{driftBaseX, driftBaseY, driftFlowX, driftFlowY}) {
+                anim.setRepeatCount(ValueAnimator.INFINITE);
+                anim.setRepeatMode(ValueAnimator.REVERSE);
+                anim.setInterpolator(new LinearInterpolator());
+            }
+            heroFlowAnimator.start();
+        }
+    }
+
+    /** 停止并冻结背景平移动画（保留当前 translation，画面静止在当前帧）。 */
+    private void stopHeroFlowDrift() {
+        if (heroFlowAnimator != null) {
+            heroFlowAnimator.cancel();
+        }
     }
 
     /**

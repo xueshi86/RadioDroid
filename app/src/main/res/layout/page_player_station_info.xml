@@ -4,10 +4,12 @@
      无 logo 电台用主题色渐变兜底，见 FragmentPlayerFull），上叠上下压暗 scrim。
      前景自上而下：
      ① 方形电台图标卡（92dp 白底圆角卡，代码动态定位：图标中心对齐 Hero 高度的
-        0.382 黄金分割点，见 FragmentPlayerFull 布局回调）；
-     ② 中段弹性居中（两枚 weight=1 Space）：电台名（≤3 行自适应字号居中优雅展现）→
-        正在播放行（强调色呼吸点 + 曲目）→ 码率/编码/地区/语言元数据胶囊 →
-        缓冲+流量状态胶囊（两枚挨在一起整组居中，未播放时只显示标签名）；
+        25% 处，见 FragmentPlayerFull 布局回调）；
+     ② 中段信息组（顶部 Space 高度由代码计算，组中心对齐 Hero 高度 55%）：
+        电台名（≤3 行自适应字号居中优雅展现）→
+        码率/编码/地区/语言元数据胶囊 →
+        缓冲+流量状态胶囊（两枚挨在一起整组居中，未播放时只显示标签名）→
+        正在播放行（强调色呼吸点 + 曲目，位于组末尾，未播放时隐藏只影响自身）；
      ③ 备注行贴底：轻量居中文字行，空态「添加备注」提示，点击整行弹出编辑对话框。
      固定布局无需滚动；风格标签与「本次/累计收听」已移除。 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -24,6 +26,17 @@
         android:scaleType="centerCrop"
         tools:ignore="ContentDescription" />
 
+    <!-- Hero 流动层（播放时涌动）：与底层同源模糊位图，代码注入反向缓慢平移 +
+         透明度渐起渐落，与底层相互干涉产生「色块涌动」效果；停止后透明度归 0，
+         底层静止显示当前背景帧 -->
+    <ImageView
+        android:id="@+id/heroBgFlow"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0"
+        android:scaleType="centerCrop"
+        tools:ignore="ContentDescription" />
+
     <!-- 上下压暗 scrim：保证顶部唱片区与底部备注行的白字在任意背景上可读 -->
     <View
         android:id="@+id/heroScrim"
@@ -37,8 +50,8 @@
         android:orientation="vertical">
 
         <!-- ① 电台图标展示卡（v3.1.1 方形样式）：92dp 白底圆角卡 + 白描边 + 投影，
-             顶边距 60dp 仅为初值，实际由代码按 Hero 高度黄金分割 0.382 动态定位
-             （图标中心对齐分割点，见 FragmentPlayerFull）；
+             顶边距 60dp 仅为初值，实际由代码按 Hero 高度 25% 动态定位（图标中心
+             对齐该点，见 FragmentPlayerFull）；
              图标不论原图多大一律 fitCenter 缩放进卡内（适配大小不一/无图标电台） -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/heroLogoCard"
@@ -61,14 +74,12 @@
                 android:scaleType="fitCenter" />
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 中段弹性空隙：信息组在图标与备注行之间垂直居中；marginTop 补偿底部
-             备注行占位（约 40dp），使信息组几何中心对齐「图标底 ↔ 控制条顶」的
-             中点（不补偿会整体偏下备注行高的一半） -->
+        <!-- 中段弹性空隙（顶部）：高度由代码精确计算，使信息组中心对齐 Hero 高度
+             的 55%（用户指定）；剩余空间由底部 weight=1 Space 吸收，备注行贴底 -->
         <Space
+            android:id="@+id/heroTopSpacer"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginTop="40dp"
-            android:layout_weight="1" />
+            android:layout_height="0dp" />
 
         <!-- ② 电台名：≤3 行自适应字号（20→28sp）+ 平衡折行，长名不再拥挤 -->
         <TextView
@@ -96,31 +107,7 @@
             android:textStyle="bold"
             tools:text="Whisperings: Solo Piano Radio" />
 
-        <!-- ③ 正在播放行：行首强调色呼吸点（代码注入）+ 曲目信息；
-             wrap_content 让呼吸点与居中文字一起整体居中（match_parent 会把
-             compound drawable 甩到屏幕左缘与文字分离） -->
-        <TextView
-            android:id="@+id/heroNowPlaying"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="5dp"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:maxLines="1"
-            android:paddingStart="@dimen/space_lg"
-            android:paddingLeft="@dimen/space_lg"
-            android:paddingEnd="@dimen/space_lg"
-            android:paddingRight="@dimen/space_lg"
-            android:shadowColor="@color/player_hero_text_shadow"
-            android:shadowDx="0"
-            android:shadowDy="1"
-            android:shadowRadius="6"
-            android:textColor="@color/player_hero_text_soft"
-            android:textSize="@dimen/text_body_small"
-            tools:text="正在播放：John Boswell - From This Day" />
-
-        <!-- ④ 元数据胶囊行：比特率 · 编码 · 地区 · 语言（半透明白底胶囊，流式居中换行） -->
+        <!-- ③ 元数据胶囊行：比特率 · 编码 · 地区 · 语言（半透明白底胶囊，流式居中换行） -->
         <net.programmierecke.radiodroid2.views.TagsView
             android:id="@+id/heroMetaChips"
             android:layout_width="match_parent"
@@ -194,6 +181,31 @@
                 android:textSize="@dimen/text_label"
                 tools:text="流量" />
         </LinearLayout>
+
+        <!-- ⑤ 正在播放行（置于状态胶囊下一行，隐藏时只影响自身不挤动上方内容）：
+             行首强调色呼吸点（代码注入）+ 曲目信息；wrap_content 让呼吸点与
+             居中文字一起整体居中（match_parent 会把 compound drawable 甩到
+             屏幕左缘与文字分离） -->
+        <TextView
+            android:id="@+id/heroNowPlaying"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="@dimen/space_sm"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:paddingStart="@dimen/space_lg"
+            android:paddingLeft="@dimen/space_lg"
+            android:paddingEnd="@dimen/space_lg"
+            android:paddingRight="@dimen/space_lg"
+            android:shadowColor="@color/player_hero_text_shadow"
+            android:shadowDx="0"
+            android:shadowDy="1"
+            android:shadowRadius="6"
+            android:textColor="@color/player_hero_text_soft"
+            android:textSize="@dimen/text_body_small"
+            tools:text="正在播放：John Boswell - From This Day" />
 
         <Space
             android:layout_width="match_parent"

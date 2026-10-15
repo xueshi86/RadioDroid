@@ -109,6 +109,9 @@
         app:barrierDirection="start"
         app:constraint_referenced_ids="buttonPlay,buttonMore,imageViewConnectionType" />
 
+    <!-- 连接状态图标（WiFi/流量）：PLAYER 态在播放键左侧；HEADER 态播放键 GONE，
+         塌缩锚点落到右缘，用 goneMargin 让图标右缘对齐 ⋮ 的 start（48dp 按钮 + 12dp
+         边距），确保展开态顶栏图标显示在 ⋮ 收纳按钮之前（左侧） -->
     <ImageView
         android:id="@+id/imageViewConnectionType"
         android:layout_width="@dimen/icon_action_small"
@@ -119,6 +122,8 @@
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/buttonPlay"
+        app:layout_goneMarginEnd="60dp"
+        app:layout_goneMarginRight="60dp"
         app:layout_constraintTop_toTopOf="parent"
         tools:src="@drawable/ic_network_wifi" />
 

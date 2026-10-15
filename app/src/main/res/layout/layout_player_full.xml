@@ -24,10 +24,8 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- 通用标题行（正在播放曲目 / 电台名 + 连接类型图标）：
-                 「电台信息」段由页内 Hero 沉浸区承担电台名与正在播放，本行隐藏
-                 （分段条上移）；切到其余三段时恢复显示，充当列表上下文。
-                 显隐由 FragmentPlayerFull 按当前分段控制 -->
+            <!-- 通用标题行（连接状态图标 + 恒显电台名）：长电台名单行走马灯滚动；
+                 曲目信息由「电台信息」页 Hero 的「正在播放」行承担，此处不重复 -->
             <LinearLayout
                 android:id="@+id/rowNowPlaying"
                 android:layout_width="match_parent"
@@ -35,34 +33,35 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
+                <ImageView
+                    android:id="@+id/imageViewConnectionTypeFull"
+                    android:layout_width="@dimen/icon_action_small"
+                    android:layout_height="@dimen/icon_action_small"
+                    android:layout_marginStart="@dimen/space_sm"
+                    android:layout_marginLeft="@dimen/space_sm"
+                    android:contentDescription="@string/content_desc_connection_type"
+                    android:visibility="gone"
+                    tools:src="@drawable/ic_network_wifi" />
+
                 <TextView
                     android:id="@+id/textViewGeneralInfo"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginStart="@dimen/space_sm"
-                    android:layout_marginLeft="@dimen/space_sm"
-                    android:layout_marginEnd="@dimen/space_xs"
-                    android:layout_marginRight="@dimen/space_xs"
-                    android:gravity="center_horizontal"
-                    android:maxHeight="72sp"
-                    android:minHeight="36sp"
-                    android:textAlignment="center"
-                    android:textColor="?attr/colorTextPrimary"
-                    android:autoSizeMaxTextSize="@dimen/text_headline"
-                    android:autoSizeMinTextSize="@dimen/text_body"
-                    android:autoSizeTextType="uniform"
-                    tools:text="Info" />
-
-                <ImageView
-                    android:id="@+id/imageViewConnectionTypeFull"
-                    android:layout_width="@dimen/icon_action_small"
-                    android:layout_height="@dimen/icon_action_small"
+                    android:layout_marginStart="@dimen/space_xs"
+                    android:layout_marginLeft="@dimen/space_xs"
                     android:layout_marginEnd="@dimen/space_sm"
                     android:layout_marginRight="@dimen/space_sm"
-                    android:contentDescription="@string/content_desc_connection_type"
-                    android:visibility="gone"
-                    tools:src="@drawable/ic_network_wifi" />
+                    android:ellipsize="marquee"
+                    android:marqueeRepeatLimit="marquee_forever"
+                    android:gravity="center_horizontal"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textAlignment="center"
+                    android:textColor="?attr/colorTextPrimary"
+                    android:textSize="@dimen/text_headline"
+                    android:textStyle="bold"
+                    tools:text="Info" />
             </LinearLayout>
 
             <!-- 单行四段分段控件（UI 审查 P1-2 及后续调整）：合并原先两行 PagerTabStrip，
