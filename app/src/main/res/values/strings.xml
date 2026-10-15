@@ -897,11 +897,12 @@ The app will automatically restart to load the new database.</string>
     <string name="buffer_strategy_extreme_desc">Plays after 30s buffering, suitable for moderately unstable networks; if still interrupted, consider using a proxy</string>
     <string name="buffer_strategy_apply_to_all">Apply to all stations</string>
 
-    <!-- Player full screen labels -->
-    <string name="player_total_play_time">Total: %1$s</string>
-    <string name="player_session_play_time">Session: %1$s</string>
-    <string name="player_network_usage">Data: %1$s</string>
-    <string name="player_buffer_time">Buffered: %1$s</string>
+    <!-- Player full screen station info page (v3.1 hero redesign) -->
+    <string name="player_stat_session">This session</string>
+    <string name="player_stat_total">Total time</string>
+    <string name="player_stat_buffer">Buffered</string>
+    <string name="player_stat_data">Data used</string>
+    <string name="player_hero_now_playing">Now playing: %1$s</string>
     <string name="webdav_restore_favourites_confirm">Restoring favourites will use the favourites file stored on the server.\n\n• Overwrite: the local list will match the server exactly; stations that only exist locally will be removed.\n• Merge: keep all local stations and add stations that only exist on the server.\n\nA copy of your current favourites is saved on this device before the operation.</string>
     <string name="webdav_restore_overwrite">Overwrite</string>
     <string name="webdav_restore_merge">Merge</string>

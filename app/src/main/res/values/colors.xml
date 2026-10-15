@@ -66,6 +66,14 @@
     <color name="tagBackgroundColor">#E0E0E0</color>
     <color name="tagBackgroundColorDark">#212121</color>
 
+    <!-- 全屏播放器「电台信息」页 Hero 沉浸区覆盖层：
+         压在电台图片 / 主题渐变之上的常量色（白色文字、半透明胶囊、暗化 scrim），
+         属于图像覆盖层而非配色方案色板，不随 8 套预设变化 -->
+    <color name="player_hero_scrim_end">#6B000000</color>
+    <color name="player_hero_chip_bg">#2BFFFFFF</color>
+    <color name="player_hero_text_soft">#E6FFFFFF</color>
+    <color name="player_hero_text_shadow">#59000000</color>
+
     <!-- 列表 / 详情页分隔线（中性色，不随预设变化） -->
     <color name="colorSeparator">#E3E3E5</color>
     <color name="colorSeparatorDark">#2E2E30</color>

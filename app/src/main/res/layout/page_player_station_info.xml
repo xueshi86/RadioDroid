@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 「电台信息」页（原「专辑封面」+「信息」两页合并）：顶部为大尺寸电台图标卡
-     （播放曲目的专辑封面也会加载到此处），下方信息区可滚动。
-     滚动容器使用 RecyclerAwareNestedScrollView（而非普通 NestedScrollView）：
-     其自带"上方有内容时禁止父容器抢占手势"的防御，避免滚离顶部后向下拖动
-     被 BottomSheet 误解析为收起播放器；标签较多的电台也可完整滚动到备注入口。 -->
+<!-- 「电台信息」页 v3.1（沉浸式 Hero 重排）：
+     ① Hero 沉浸区：背景 = logo 放大模糊（代码实现）或无 logo 时的主题色渐变，
+        上叠底部暗化 scrim；前景自下而上为 92dp 白描边 logo 展示卡（imageViewArt，
+        播放曲目的专辑封面也会加载到此处）+ 电台名 + 正在播放 + 半透明元数据胶囊行；
+     ② 滚动信息区：风格标签收纳盒（默认最多 3 行，超出底部渐隐 +「+N」展开胶囊）
+        + 电台备注卡（浅强调底 + 左侧强调色竖条 / 空态虚线框）；
+     ③ 播放状态 2×2 数据卡：surface 底、约 80% 宽居中、每秒刷新，固定页底不随滚动。
+     Hero 与状态卡固定，中间内容可滚动；滚动容器使用 RecyclerAwareNestedScrollView
+     （而非普通 NestedScrollView）：其自带"上方有内容时禁止父容器抢占手势"的防御，
+     避免滚离顶部后向下拖动被 BottomSheet 误解析为收起播放器（Issue #53）。 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -11,12 +16,12 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <!-- 大尺寸电台图标卡：固定高度、其余空间留给信息区（不与信息内容抢空间）；
-         用 MaterialCardView 的圆角轮廓裁剪图标（API21+ 生效），
-         卡片自身透明、无阴影，只提供圆角裁剪能力。 -->
+    <!-- ① Hero 沉浸区：MaterialCardView 仅提供圆角裁剪（API21+ 生效），
+         自身透明、无阴影、无描边；背景层与 scrim 由代码/资源填充 -->
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/heroZone"
         android:layout_width="match_parent"
-        android:layout_height="180dp"
+        android:layout_height="260dp"
         android:layout_marginTop="@dimen/space_sm"
         android:layout_marginStart="@dimen/space_lg"
         android:layout_marginLeft="@dimen/space_lg"
@@ -27,158 +32,332 @@
         app:cardElevation="0dp"
         app:strokeWidth="0dp">
 
-        <ImageView
-            android:id="@+id/imageViewArt"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="fitCenter"
-            android:contentDescription="@string/tab_player_station_info" />
+            android:layout_height="match_parent">
+
+            <!-- Hero 背景：logo 放大模糊位图（60% 不透明度由代码设置）或主题色渐变兜底 -->
+            <ImageView
+                android:id="@+id/heroBgImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                tools:ignore="ContentDescription" />
+
+            <!-- 底部暗化 scrim：保证白字在任意背景上可读 -->
+            <View
+                android:id="@+id/heroScrim"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/player_hero_scrim" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="bottom|center_horizontal"
+                android:orientation="vertical"
+                android:padding="@dimen/space_lg">
+
+                <!-- ② logo 展示卡：固定 92dp、白色画框 + 白描边 + 投影；
+                     不论原图多大一律缩放进卡内（fitCenter + 12dp 内边距） -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/heroLogoCard"
+                    android:layout_width="92dp"
+                    android:layout_height="92dp"
+                    android:layout_gravity="center_horizontal"
+                    app:cardBackgroundColor="@android:color/white"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="6dp"
+                    app:strokeColor="@android:color/white"
+                    app:strokeWidth="2dp">
+
+                    <ImageView
+                        android:id="@+id/imageViewArt"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:padding="12dp"
+                        android:scaleType="fitCenter"
+                        android:contentDescription="@string/tab_player_station_info" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- ③ 电台名 + 正在播放：白色粗体 / 白 88%，居中，单行省略 -->
+                <TextView
+                    android:id="@+id/heroStationName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_md"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:shadowColor="@color/player_hero_text_shadow"
+                    android:shadowDx="0"
+                    android:shadowDy="1"
+                    android:shadowRadius="6"
+                    android:textAppearance="@style/TextAppearance.RadioDroid.Title"
+                    android:textColor="@android:color/white"
+                    android:textSize="@dimen/text_title_large"
+                    android:textStyle="bold"
+                    tools:text="Whisperings: Solo Piano Radio" />
+
+                <TextView
+                    android:id="@+id/heroNowPlaying"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:shadowColor="@color/player_hero_text_shadow"
+                    android:shadowDx="0"
+                    android:shadowDy="1"
+                    android:shadowRadius="6"
+                    android:textColor="@color/player_hero_text_soft"
+                    android:textSize="@dimen/text_body_small"
+                    tools:text="正在播放：John Boswell - From This Day" />
+
+                <!-- ④ 元数据胶囊行：半透明白底胶囊，内容 = 比特率 · 编码 · 地区 · 语言，
+                     复用 TagsView 的流式胶囊渲染（可换行、居中） -->
+                <net.programmierecke.radiodroid2.views.TagsView
+                    android:id="@+id/heroMetaChips"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_sm"
+                    android:gravity="center_horizontal"
+                    android:lineSpacingMultiplier="1"
+                    android:textColor="@android:color/white"
+                    android:textSize="@dimen/text_label"
+                    app:cornerRadius="99dp"
+                    app:tagBackgroundColor="@color/player_hero_chip_bg"
+                    app:tagHeight="20sp"
+                    app:textHorizontalPadding="@dimen/space_sm"
+                    app:textVerticalMargin="2dp"
+                    tools:text="48 kbps  AAC+  美国 · 俄勒冈  english" />
+            </LinearLayout>
+        </FrameLayout>
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- ② 滚动信息区：标签收纳盒 + 备注卡；Hero 与下方状态卡固定不随滚动 -->
     <net.programmierecke.radiodroid2.views.RecyclerAwareNestedScrollView
+        android:id="@+id/pageInfoScroll"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:fillViewport="true">
 
         <LinearLayout
-            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="@dimen/space_lg">
+            android:orientation="vertical"
+            android:paddingStart="@dimen/space_lg"
+            android:paddingLeft="@dimen/space_lg"
+            android:paddingEnd="@dimen/space_lg"
+            android:paddingRight="@dimen/space_lg"
+            android:paddingTop="@dimen/space_md"
+            android:paddingBottom="@dimen/space_md">
 
-            <TextView
-                android:id="@+id/textViewStationDescription"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:drawablePadding="@dimen/space_xs"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:minLines="1"
-                android:textColor="?attr/colorTextPrimary"
-                android:textAppearance="@style/TextAppearance.RadioDroid.Body" />
-
+            <!-- ⑤ 风格标签（v3.1.1 用户反馈调整）：全量居中流式显示，无折叠/渐隐/「+N」
+                 胶囊（胶囊破坏沉浸感）；chip 底色/文字色由代码按强调色派生（配色方案联动） -->
             <net.programmierecke.radiodroid2.views.TagsView
                 android:id="@+id/viewTags"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
                 android:lineSpacingMultiplier="1"
-                android:textSize="@dimen/text_title"
-                app:cornerRadius="@dimen/radius_sm"
+                android:textSize="@dimen/text_caption"
+                app:cornerRadius="99dp"
                 app:tagBackgroundColor="?attr/tagBackgroundColor"
                 app:tagHeight="25sp"
                 app:textHorizontalPadding="@dimen/space_sm"
                 app:textVerticalMargin="@dimen/space_xs" />
 
-            <!-- 电台备注行 + 编辑入口（Issue #54）：点击整行或铅笔图标弹出备注编辑对话框 -->
+            <!-- ⑥ 电台备注行（Issue #54，v3.1.1 弱化）：去卡片底/竖条/虚线框，改为居中轻量
+                 文字行（空态次要色「添加备注」提示，有备注强调色正文），点击整行弹出编辑对话框 -->
             <LinearLayout
                 android:id="@+id/layoutStationNoteRow"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_xs"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="@dimen/space_sm"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
+                android:padding="@dimen/space_xs"
                 android:background="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true">
 
                 <TextView
                     android:id="@+id/textViewStationNote"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:drawablePadding="4sp"
-                    android:ellipsize="end"
-                    android:lines="1"
-                    android:textAppearance="@style/TextAppearance.RadioDroid.Note" />
-
-                <com.mikepenz.iconics.view.IconicsImageButton
-                    android:id="@+id/buttonEditStationNote"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:minWidth="@dimen/touch_target_min"
-                    android:minHeight="@dimen/touch_target_min"
-                    android:padding="4dp"
-                    android:contentDescription="@string/note_edit_title"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    app:tint="?attr/iconsInItemBackgroundColor"
-                    app:iiv_icon="gmd-pencil"
-                    app:iiv_padding="2dp"
-                    app:iiv_size="20dp" />
+                    android:drawablePadding="4sp"
+                    android:ellipsize="end"
+                    android:gravity="center_vertical"
+                    android:maxWidth="320dp"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextAppearance.RadioDroid.Note" />
             </LinearLayout>
         </LinearLayout>
     </net.programmierecke.radiodroid2.views.RecyclerAwareNestedScrollView>
 
-    <!-- 播放状态块（UI 审查 P1-2 后续）：本次收听/累计/缓冲/流量两行两列，位于信息区下方、
-         页面底部。状态块随本页填充进 stationInfoPane，天然只在「电台信息」段显示 -->
+    <!-- ⑦ 播放状态 2×2 网格（v3.1.1 用户反馈调整）：本次收听 / 累计收听 /
+         缓冲时长 / 流量，数值等宽字体 + 小标签，格内容居中；无卡片底色，
+         数值直接融入页面背景保持沉浸，仅用主题色分隔线区隔；固定页底不随滚动 -->
     <LinearLayout
         android:id="@+id/blockPlayStatus"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingStart="16dp"
-        android:paddingLeft="16dp"
-        android:paddingEnd="16dp"
-        android:paddingRight="16dp"
-        android:paddingBottom="@dimen/space_xs">
+        android:layout_marginStart="@dimen/space_2xl"
+        android:layout_marginLeft="@dimen/space_2xl"
+        android:layout_marginEnd="@dimen/space_2xl"
+        android:layout_marginRight="@dimen/space_2xl"
+        android:layout_marginBottom="@dimen/space_xs"
+        android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/textViewCurrentPlayTime"
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textSize="@dimen/text_body_small"
-                android:textColor="?attr/colorTextSecondary"
-                tools:text="Session: 3:44" />
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingTop="@dimen/space_sm"
+                android:paddingBottom="@dimen/space_sm">
 
-            <TextView
-                android:id="@+id/textViewTotalPlayTime"
+                <TextView
+                    android:id="@+id/textViewCurrentPlayTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextAppearance.RadioDroid.Title"
+                    android:textColor="?attr/colorTextPrimary"
+                    android:textStyle="bold"
+                    tools:text="05:57" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="1dp"
+                    android:text="@string/player_stat_session"
+                    android:textColor="?attr/colorTextSecondary"
+                    android:textSize="@dimen/text_label" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="@dimen/divider_thickness"
+                android:layout_height="match_parent"
+                android:background="?attr/colorPlayerShadow" />
+
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:gravity="end"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textSize="@dimen/text_body_small"
-                android:textColor="?attr/colorTextSecondary"
-                tools:text="Total: 1:23:45" />
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingTop="@dimen/space_sm"
+                android:paddingBottom="@dimen/space_sm">
+
+                <TextView
+                    android:id="@+id/textViewTotalPlayTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextAppearance.RadioDroid.Title"
+                    android:textColor="?attr/colorTextPrimary"
+                    android:textStyle="bold"
+                    tools:text="1:23:45" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="1dp"
+                    android:text="@string/player_stat_total"
+                    android:textColor="?attr/colorTextSecondary"
+                    android:textSize="@dimen/text_label" />
+            </LinearLayout>
         </LinearLayout>
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/divider_thickness"
+            android:background="?attr/colorPlayerShadow" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
             android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/textViewTimeCached"
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textSize="@dimen/text_body_small"
-                android:textColor="?attr/colorTextSecondary"
-                tools:text="Buffered: 0:10" />
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingTop="@dimen/space_sm"
+                android:paddingBottom="@dimen/space_sm">
 
-            <TextView
-                android:id="@+id/textViewNetworkUsageInfo"
+                <TextView
+                    android:id="@+id/textViewTimeCached"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextAppearance.RadioDroid.Title"
+                    android:textColor="?attr/colorTextPrimary"
+                    android:textStyle="bold"
+                    tools:text="00:10" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="1dp"
+                    android:text="@string/player_stat_buffer"
+                    android:textColor="?attr/colorTextSecondary"
+                    android:textSize="@dimen/text_label" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="@dimen/divider_thickness"
+                android:layout_height="match_parent"
+                android:background="?attr/colorPlayerShadow" />
+
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:gravity="end"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textSize="@dimen/text_body_small"
-                android:textColor="?attr/colorTextSecondary"
-                tools:text="Data: 1mb" />
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingTop="@dimen/space_sm"
+                android:paddingBottom="@dimen/space_sm">
+
+                <TextView
+                    android:id="@+id/textViewNetworkUsageInfo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextAppearance.RadioDroid.Title"
+                    android:textColor="?attr/colorTextPrimary"
+                    android:textStyle="bold"
+                    tools:text="2.1 mb" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="1dp"
+                    android:text="@string/player_stat_data"
+                    android:textColor="?attr/colorTextSecondary"
+                    android:textSize="@dimen/text_label" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

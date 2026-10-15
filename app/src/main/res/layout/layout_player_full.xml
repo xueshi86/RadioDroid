@@ -24,7 +24,12 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <!-- 通用标题行（正在播放曲目 / 电台名 + 连接类型图标）：
+                 「电台信息」段由页内 Hero 沉浸区承担电台名与正在播放，本行隐藏
+                 （分段条上移）；切到其余三段时恢复显示，充当列表上下文。
+                 显隐由 FragmentPlayerFull 按当前分段控制 -->
             <LinearLayout
+                android:id="@+id/rowNowPlaying"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
@@ -171,6 +176,10 @@
         android:paddingTop="@dimen/space_xs"
         android:paddingBottom="@dimen/space_xs">
 
+        <!-- v3.1 控制条（直播形态，v2 已确立）：仅 录音 · 播放 · 收藏 三键，
+             移除上一曲 / 下一曲。按键尺寸沿用现版本（用户确认：设计稿按键过小，
+             以现状为准）——播放 72dp、录音/收藏 48dp，图标满幅显示 -->
+
         <ImageButton
             android:id="@+id/buttonRecord"
             android:layout_width="48dp"
@@ -179,25 +188,11 @@
             android:contentDescription="@string/image_button_record"
             android:scaleType="fitXY"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/buttonPrev"
+            app:layout_constraintEnd_toStartOf="@+id/buttonPlay"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_start_recording" />
-
-        <ImageButton
-            android:id="@+id/buttonPrev"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/description_btn_skip_to_previous"
-            android:scaleType="fitXY"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/buttonPlay"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/buttonRecord"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_skip_previous_circle" />
 
         <ImageButton
             android:id="@+id/buttonPlay"
@@ -207,25 +202,10 @@
             android:contentDescription="@string/detail_play"
             android:scaleType="fitXY"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/buttonNext"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/buttonPrev"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_play_circle" />
-
-        <ImageButton
-            android:id="@+id/buttonNext"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/description_btn_skip_to_next"
-            android:scaleType="fitXY"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/buttonFavorite"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/buttonPlay"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_skip_next_circle" />
 
         <ImageButton
             android:id="@+id/buttonFavorite"
@@ -237,7 +217,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/buttonNext"
+            app:layout_constraintStart_toEndOf="@+id/buttonPlay"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_star_24dp" />
 

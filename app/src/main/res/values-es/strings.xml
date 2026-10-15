@@ -781,10 +781,11 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="buffer_strategy_apply_to_all">Aplicar a todas las estaciones</string>
 
     <!-- Player full screen labels -->
-    <string name="player_total_play_time">Total: %1$s</string>
-    <string name="player_session_play_time">Sesión: %1$s</string>
-    <string name="player_network_usage">Datos: %1$s</string>
-    <string name="player_buffer_time">En búfer: %1$s</string>
+    <string name="player_stat_session">Esta sesión</string>
+    <string name="player_stat_total">Tiempo total</string>
+    <string name="player_stat_buffer">En búfer</string>
+    <string name="player_stat_data">Datos</string>
+    <string name="player_hero_now_playing">Reproduciendo: %1$s</string>
 
     <string name="content_desc_connection_type">Tipo de red</string>
     <string name="content_desc_connection_type_wifi">Conectado mediante Wi-Fi</string>

@@ -162,6 +162,12 @@ public class TagsView extends AppCompatTextView {
         setMovementMethod(LinkMovementMethod.getInstance());
     }
 
+    public void setTagBackgroundColor(int color) {
+        // 运行时覆盖标签底色（init 时从属性读取）：
+        // 全屏播放器信息页用它把标签切换为「强调色浅底」，随配色方案联动
+        mTagBackgroundColor = color;
+    }
+
     public void setTagSelectionCallback(TagSelectionCallback tagSelectionCallback) {
         mTagSelectionCallback = tagSelectionCallback;
     }

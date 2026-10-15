@@ -605,6 +605,12 @@
 
     <string name="export_database_title">Export Main Database</string>
     <string name="webdav_restore_failed">Database restore failed; the original database was retained</string>
+    <!-- Player full screen station info page (v3.1 hero redesign) -->
+    <string name="player_stat_session">This session</string>
+    <string name="player_stat_total">Total time</string>
+    <string name="player_stat_buffer">Buffered</string>
+    <string name="player_stat_data">Data used</string>
+    <string name="player_hero_now_playing">Now playing: %1$s</string>
     <string name="webdav_restore_favourites_confirm">Restoring favourites will use the favourites file stored on the server.\n\n• Overwrite: the local list will match the server exactly; stations that only exist locally will be removed.\n• Merge: keep all local stations and add stations that only exist on the server.\n\nA copy of your current favourites is saved on this device before the operation.</string>
     <string name="webdav_restore_overwrite">Overwrite</string>
     <string name="webdav_restore_merge">Merge</string>

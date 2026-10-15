@@ -362,6 +362,12 @@
     <string name="webdav_result_pending">Σε αναμονή επιβεβαίωσης</string>
     <string name="webdav_result_canceled">Ακυρώθηκε</string>
     <string name="webdav_restore_failed">Η επαναφορά της βάσης δεδομένων απέτυχε· διατηρήθηκε η αρχική βάση δεδομένων</string>
+    <!-- Player full screen station info page (v3.1 hero redesign) -->
+    <string name="player_stat_session">Τρέχουσα ακρόαση</string>
+    <string name="player_stat_total">Συνολικά</string>
+    <string name="player_stat_buffer">Buffer</string>
+    <string name="player_stat_data">Δεδομένα</string>
+    <string name="player_hero_now_playing">Παίζει τώρα: %1$s</string>
     <string name="webdav_restore_favourites_confirm">Η επαναφορά των αγαπημένων θα χρησιμοποιήσει το αρχείο αγαπημένων που είναι αποθηκευμένο στον διακομιστή.\n\n• Αντικατάσταση: η τοπική λίστα θα αντιστοιχεί ακριβώς στον διακομιστή· οι σταθμοί που υπάρχουν μόνο τοπικά θα διαγραφούν.\n• Συγχώνευση: διατηρεί όλους τους τοπικούς σταθμούς και προσθέτει εκείνους που υπάρχουν μόνο στον διακομιστή.\n\nΠριν από τη λειτουργία αποθηκεύεται αντίγραφο των τρεχόντων αγαπημένων σε αυτή τη συσκευή.</string>
     <string name="webdav_restore_overwrite">Αντικατάσταση</string>
     <string name="webdav_restore_merge">Συγχώνευση</string>

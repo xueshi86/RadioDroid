@@ -59,6 +59,9 @@ public class FragmentPlayerSmall extends Fragment {
 
     private boolean firstPlayAttempted = false;
 
+    /** 展开态 +「电台信息」段：收起顶栏文字与封面（Hero 已承载同源信息），仅保留 ⋮ 菜单 */
+    private boolean headerContentCollapsed = false;
+
     // 持有 LifecycleCallbacks 引用，便于在 Fragment 销毁时反注册，
     // 避免 Application 永久持有 Fragment 实例导致内存泄漏
     private LifecycleCallbacks lifecycleCallbacks;
@@ -214,6 +217,21 @@ public class FragmentPlayerSmall extends Fragment {
 
     public void setRole(Role role) {
         this.role = role;
+        fullUpdate();
+    }
+
+    /**
+     * 收起/恢复展开态顶栏的电台名与封面（v3.1 沉浸式 Hero）：
+     * 「电台信息」段由页内 Hero 沉浸区承担电台名与正在播放，顶栏若再显示同源长文本
+     * 会显得杂乱且割裂。收起后顶栏仅保留右上角 ⋮ 菜单（拖拽手柄区域）；
+     * 恢复显示无需特殊处理——role 切换（收起 sheet 时回 PLAYER）与本方法的
+     * fullUpdate 重跑都会按正常逻辑重新设置所有元素可见性。
+     */
+    public void setHeaderContentCollapsed(boolean collapsed) {
+        if (headerContentCollapsed == collapsed) {
+            return;
+        }
+        headerContentCollapsed = collapsed;
         fullUpdate();
     }
 
@@ -409,7 +427,12 @@ public class FragmentPlayerSmall extends Fragment {
 
             textViewLiveInfo.setVisibility(View.GONE);
             textViewStationName.setVisibility(View.GONE);
-            textViewLiveInfoBig.setVisibility(View.VISIBLE);
+            textViewLiveInfoBig.setVisibility(headerContentCollapsed ? View.GONE : View.VISIBLE);
+
+            if (headerContentCollapsed) {
+                // Hero 沉浸态：封面一并隐藏，顶栏仅留 ⋮（上行已按图标加载逻辑设置，这里覆盖）
+                imageViewIcon.setVisibility(View.GONE);
+            }
 
             if (imageViewConnectionType != null) {
                 imageViewConnectionType.setVisibility(View.GONE);

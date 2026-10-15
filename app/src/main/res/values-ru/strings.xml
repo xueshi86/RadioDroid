@@ -758,10 +758,11 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="buffer_strategy_apply_to_all">Применить ко всем станциям</string>
 
     <!-- Player full screen labels -->
-    <string name="player_total_play_time">Всего: %1$s</string>
-    <string name="player_session_play_time">Сессия: %1$s</string>
-    <string name="player_network_usage">Трафик: %1$s</string>
-    <string name="player_buffer_time">Буфер: %1$s</string>
+    <string name="player_stat_session">За сеанс</string>
+    <string name="player_stat_total">Всего</string>
+    <string name="player_stat_buffer">Буфер</string>
+    <string name="player_stat_data">Трафик</string>
+    <string name="player_hero_now_playing">Сейчас играет: %1$s</string>
 
     <string name="detail_shortcut_requested">Запрос на добавление ярлыка на главный экран</string>
     <string name="settings_bluetooth_connect_permission">Разрешение на доступ к nearby devices</string>

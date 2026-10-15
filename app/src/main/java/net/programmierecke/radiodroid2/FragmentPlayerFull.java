@@ -5,7 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
@@ -14,7 +16,9 @@ import android.os.Handler;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.Log;
+import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -28,6 +32,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
@@ -39,6 +44,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.tabs.TabLayout;
 import com.mikepenz.iconics.IconicsColor;
 import com.mikepenz.iconics.IconicsSize;
@@ -76,9 +82,9 @@ import net.programmierecke.radiodroid2.views.TagsView;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Observable;
 
@@ -130,22 +136,63 @@ public class FragmentPlayerFull extends Fragment {
     // 字段从原 ArtAndInfoPagerAdapter 上移为 Fragment 字段
     private ViewGroup stationInfoPage;
     private ImageView imageViewArt;
-    private TextView textViewStationDescription;
     private TagsView viewTags;
     private ViewGroup layoutStationNoteRow;
     private TextView textViewStationNote;
-    // IconicsImageButton 继承自 IconicsImageView 而非 ImageButton，声明为 View 避免类型转换崩溃
-    private View buttonEditStationNote;
+
+    // 「电台信息」页 v3.1 Hero 沉浸区：背景（logo 放大模糊 / 主题渐变兜底）+ 电台名 +
+    // 正在播放 + 元数据胶囊行；标签全量居中显示、备注行居中轻量文字
+    private ImageView heroBgImage;
+    private TextView heroStationName;
+    private TextView heroNowPlaying;
+    private TagsView heroMetaChips;
+    private RecyclerAwareNestedScrollView pageInfoScroll;
+
+    /** Hero 背景形态：LOGO = imageViewArt 位图放大模糊；GRADIENT = 主题色渐变兜底 */
+    private enum HeroArtMode { LOGO, GRADIENT }
+
+    private HeroArtMode heroArtMode = HeroArtMode.GRADIENT;
+    /** 上次镜像到 Hero 背景的 imageViewArt 内容（同一 Drawable 不重复模糊） */
+    private Drawable lastMirroredDrawable;
+    /** 主题渐变兜底是否已应用到 Hero 背景（避免重复设置触发无效重绘） */
+    private boolean heroGradientApplied = false;
 
     private TabLayout segmentTabs;
 
+    /** 底部弹层行为：监听展开/收起以刷新顶栏联动；onDestroyView 反注册 */
+    @Nullable
+    private BottomSheetBehavior<View> sheetBehavior;
+
+    private final BottomSheetBehavior.BottomSheetCallback bottomSheetCallback = new BottomSheetBehavior.BottomSheetCallback() {
+        @Override
+        public void onStateChanged(@NonNull View bottomSheet, int newState) {
+            updateNowPlayingRowVisibility();
+        }
+
+        @Override
+        public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+        }
+    };
+
+    @Override
+    public void onDestroyView() {
+        if (sheetBehavior != null) {
+            sheetBehavior.removeBottomSheetCallback(bottomSheetCallback);
+            sheetBehavior = null;
+        }
+        super.onDestroyView();
+    }
+
+    // 主布局通用标题行（正在播放 / 电台名 + 连接类型图标）：
+    // 「电台信息」段由 Hero 承担身份信息，本行隐藏；其余三段恢复显示
+    private ViewGroup rowNowPlaying;
     private TextView textViewGeneralInfo;
     private TextView textViewTotalPlayTime;
     private TextView textViewCurrentPlayTime;
     private TextView textViewNetworkUsageInfo;
     private TextView textViewTimeCached;
 
-    /** 播放器「电台信息」页大图标的目标尺寸（dp），与页内图标卡高度一致 */
+    /** 播放器「电台信息」页 logo 的解码目标尺寸（dp）：供 Hero 背景模糊取图保留清晰度 */
     private static final int PLAYER_ART_ICON_SIZE_DP = 180;
 
     private ImageView imageViewConnectionTypeFull;
@@ -165,8 +212,6 @@ public class FragmentPlayerFull extends Fragment {
     private TrackHistoryViewModel trackHistoryViewModel;
 
     private ImageButton btnPlay;
-    private ImageButton btnPrev;
-    private ImageButton btnNext;
     private ImageButton btnRecord;
     private ImageButton btnFavourite;
 
@@ -262,11 +307,35 @@ public class FragmentPlayerFull extends Fragment {
         // 取代原先被合并的「专辑封面 / 信息」两个 ViewPager 页
         stationInfoPage = (ViewGroup) inflater.inflate(R.layout.page_player_station_info, (ViewGroup) view, false);
         imageViewArt = stationInfoPage.findViewById(R.id.imageViewArt);
-        textViewStationDescription = stationInfoPage.findViewById(R.id.textViewStationDescription);
+        heroBgImage = stationInfoPage.findViewById(R.id.heroBgImage);
+        heroStationName = stationInfoPage.findViewById(R.id.heroStationName);
+        heroNowPlaying = stationInfoPage.findViewById(R.id.heroNowPlaying);
+        heroMetaChips = stationInfoPage.findViewById(R.id.heroMetaChips);
+        pageInfoScroll = stationInfoPage.findViewById(R.id.pageInfoScroll);
         viewTags = stationInfoPage.findViewById(R.id.viewTags);
         layoutStationNoteRow = stationInfoPage.findViewById(R.id.layoutStationNoteRow);
         textViewStationNote = stationInfoPage.findViewById(R.id.textViewStationNote);
-        buttonEditStationNote = stationInfoPage.findViewById(R.id.buttonEditStationNote);
+
+        // Hero 背景跟随 imageViewArt 内容：在其绘制前监听位图变化（初始加载 /
+        // 图标缓存刷新 / 专辑封面替换 / 占位图都会触发绘制），统一镜像到背景层
+        imageViewArt.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                updateHeroBackgroundFromArt();
+                return true;
+            }
+        });
+
+        // 信息页主题派生样式：标签强调色浅底、渐隐层，随配色方案联动
+        applyInfoPageThemeStyles();
+
+        // 监听底部弹层状态：展开/收起会改变顶栏（FragmentPlayerSmall）的收起条件，
+        // 但不触发分段切换，需在此手动刷新联动（见 updateNowPlayingRowVisibility）
+        final View bottomSheet = requireActivity().findViewById(R.id.bottom_sheet);
+        if (bottomSheet != null) {
+            sheetBehavior = BottomSheetBehavior.from(bottomSheet);
+            sheetBehavior.addBottomSheetCallback(bottomSheetCallback);
+        }
 
         // 播放状态块（本次/累计收听、缓冲、流量）位于信息页布局内；电台标题行在主布局
         textViewGeneralInfo = view.findViewById(R.id.textViewGeneralInfo);
@@ -275,6 +344,16 @@ public class FragmentPlayerFull extends Fragment {
         textViewNetworkUsageInfo = stationInfoPage.findViewById(R.id.textViewNetworkUsageInfo);
         textViewTimeCached = stationInfoPage.findViewById(R.id.textViewTimeCached);
 
+        // 状态卡数值使用等宽（tabular）数字，每秒刷新时数字步进不跳动（API21+ 生效）
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            String tnum = "tnum";
+            textViewTotalPlayTime.setFontFeatureSettings(tnum);
+            textViewCurrentPlayTime.setFontFeatureSettings(tnum);
+            textViewNetworkUsageInfo.setFontFeatureSettings(tnum);
+            textViewTimeCached.setFontFeatureSettings(tnum);
+        }
+
+        rowNowPlaying = view.findViewById(R.id.rowNowPlaying);
         imageViewConnectionTypeFull = view.findViewById(R.id.imageViewConnectionTypeFull);
 
         blockRecording = view.findViewById(R.id.blockRecording);
@@ -293,8 +372,6 @@ public class FragmentPlayerFull extends Fragment {
         historyAndRecordsPagerAdapter.layoutCurrentPlaying.setOnClickListener(v -> showCurrentTrackInfoDialog());
 
         btnPlay = view.findViewById(R.id.buttonPlay);
-        btnPrev = view.findViewById(R.id.buttonPrev);
-        btnNext = view.findViewById(R.id.buttonNext);
         btnRecord = view.findViewById(R.id.buttonRecord);
         btnFavourite = view.findViewById(R.id.buttonFavorite);
 
@@ -433,8 +510,21 @@ public class FragmentPlayerFull extends Fragment {
             }
         });
 
-        btnPrev.setOnClickListener(view -> PlayerServiceUtil.skipToPrevious());
-        btnNext.setOnClickListener(view -> PlayerServiceUtil.skipToNext());
+        // 播放键按压缩放反馈（v3.1）：按下 scale(0.96) + 轻触感，抬起/取消回弹；
+        // 返回 false 交回默认处理，点击与涟漪行为不变
+        btnPlay.setOnTouchListener((v, event) -> {
+            switch (event.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+                    v.animate().scaleX(0.96f).scaleY(0.96f).setDuration(60).start();
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    v.animate().scaleX(1f).scaleY(1f).setDuration(120).start();
+                    break;
+            }
+            return false;
+        });
 
         btnRecord.setOnClickListener(view -> {
             if (PlayerServiceUtil.isPlaying()) {
@@ -553,6 +643,9 @@ public class FragmentPlayerFull extends Fragment {
 
     public void resetScroll() {
         scrollViewContent.scrollTo(0, 0);
+        if (pageInfoScroll != null) {
+            pageInfoScroll.scrollTo(0, 0);
+        }
         historyAndRecordsPagerAdapter.recyclerViewCurrentStationHistory.scrollToPosition(0);
         historyAndRecordsPagerAdapter.recyclerViewSongHistory.scrollToPosition(0);
         historyAndRecordsPagerAdapter.recyclerViewRecordings.scrollToPosition(0);
@@ -577,15 +670,17 @@ public class FragmentPlayerFull extends Fragment {
     }
 
     /**
-     * 信息页备注行（Issue #54）：展示当前电台备注，点击整行或铅笔图标弹出编辑对话框，
-     * 保存后经回调原地刷新，无需等待下一次 fullUpdate。
+     * 信息页备注行（Issue #54，v3.1.1 弱化）：居中轻量文字行——空态次要色「添加备注」
+     * 提示（行首备注图标），有备注时强调色正文；无卡片底/竖条/虚线框，避免破坏沉浸感。
+     * 点击整行弹出编辑对话框，保存后原地刷新。
      */
     private void updateStationNoteRow(DataRadioStation station) {
         StationNoteManager noteManager = ((RadioDroidApp) requireActivity().getApplication()).getStationNoteManager();
         String note = noteManager.getNote(station.StationUuid);
+        final boolean hasNote = !TextUtils.isEmpty(note);
 
         textViewStationNote.setCompoundDrawablesRelativeWithIntrinsicBounds(buildNoteIcon(), null, null, null);
-        if (TextUtils.isEmpty(note)) {
+        if (!hasNote) {
             textViewStationNote.setText(R.string.note_add_hint);
             // 空备注占位提示用次要色弱化，不与正文备注争夺注意力
             textViewStationNote.setTextColor(Utils.getThemeColor(requireContext(), R.attr.colorTextSecondary));
@@ -595,10 +690,8 @@ public class FragmentPlayerFull extends Fragment {
             textViewStationNote.setTextColor(Utils.getThemeColor(requireContext(), R.attr.presetAccentColor));
         }
 
-        View.OnClickListener editListener = v -> StationNoteDialog.show(requireContext(), station,
-                newNote -> updateStationNoteRow(station));
-        layoutStationNoteRow.setOnClickListener(editListener);
-        buttonEditStationNote.setOnClickListener(editListener);
+        layoutStationNoteRow.setOnClickListener(v -> StationNoteDialog.show(requireContext(), station,
+                newNote -> updateStationNoteRow(station)));
     }
 
     /**
@@ -670,32 +763,50 @@ public class FragmentPlayerFull extends Fragment {
                 textViewGeneralInfo.setText(displayText);
                 // 设置无障碍内容描述
                 textViewGeneralInfo.setContentDescription(displayTextForAccessibility);
+                // Hero「正在播放」行：与主布局标题行同源内容，带前缀
+                heroNowPlaying.setText(getString(R.string.player_hero_now_playing, displayText));
+                heroNowPlaying.setVisibility(View.VISIBLE);
             } else {
                 textViewGeneralInfo.setText(station.Name);
                 // 设置无障碍内容描述
                 textViewGeneralInfo.setContentDescription(getString(R.string.content_desc_listening_station, station.Name));
+                // Hero 已有电台名，无曲目信息时隐藏「正在播放」行避免重复
+                heroNowPlaying.setVisibility(View.GONE);
             }
 
-            Drawable flag = CountryFlagsLoader.getInstance().getFlag(requireContext(), station.CountryCode);
-            if (flag != null) {
-                float k = flag.getMinimumWidth() / (float) flag.getMinimumHeight();
-                float viewHeight = textViewStationDescription.getTextSize();
-                flag.setBounds(0, 0, (int) (k * viewHeight), (int) viewHeight);
+            // Hero 电台名：电台身份的唯一大字标识（主布局标题行在信息段隐藏）
+            heroStationName.setText(station.Name);
+
+            // Hero 元数据胶囊行：比特率 · 编码 · 地区 · 语言（空值跳过）
+            List<String> metaChips = new ArrayList<>();
+            int liveBitrate = (shoutcastInfo != null && shoutcastInfo.bitrate > 0)
+                    ? shoutcastInfo.bitrate : station.Bitrate;
+            if (liveBitrate > 0) {
+                metaChips.add(getString(R.string.station_detail_bitrate, liveBitrate));
             }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                textViewStationDescription.setCompoundDrawablesRelative(flag, null, null, null);
-            } else {
-                textViewStationDescription.setCompoundDrawables(flag, null, null, null);
+            if (!TextUtils.isEmpty(station.Codec)) {
+                metaChips.add(station.Codec);
             }
+            String regionChip = buildRegionChip(station);
+            if (!TextUtils.isEmpty(regionChip)) {
+                metaChips.add(regionChip);
+            }
+            if (!TextUtils.isEmpty(station.Language)) {
+                metaChips.add(station.Language);
+            }
+            heroMetaChips.setTags(metaChips);
 
-            // TODO: add votes/clicks/trend
+            // 电台信息页正文里不再重复比特率/编码/地区/语言（getLongDetails 已由胶囊行承担）
 
-            textViewStationDescription.setText(station.getLongDetails(requireContext()));
-
-            String[] tags = station.TagsAll.split(",");
-            viewTags.setTags(Arrays.asList(tags));
-            //viewTags.setTagSelectionCallback(tagSelectionCallback);
+            // 风格标签：过滤空标签后全量居中显示（无折叠，随滚动区完整浏览）
+            List<String> tags = new ArrayList<>();
+            for (String tag : station.TagsAll.split(",")) {
+                String trimmed = tag.trim();
+                if (!trimmed.isEmpty()) {
+                    tags.add(trimmed);
+                }
+            }
+            viewTags.setTags(tags);
 
             // 备注行（Issue #54）：展示当前电台备注并提供编辑入口
             updateStationNoteRow(station);
@@ -907,6 +1018,209 @@ public class FragmentPlayerFull extends Fragment {
         final int position = segmentTabs.getSelectedTabPosition();
         final boolean pageShowsRecording = position == 0 || position == 3;
         blockRecording.setVisibility(pageShowsRecording && recordingRowActive ? View.VISIBLE : View.GONE);
+        updateNowPlayingRowVisibility();
+    }
+
+    /**
+     * 主布局通用标题行显隐（v3.1）：「电台信息」段由页内 Hero 沉浸区承担电台名与
+     * 正在播放，标题行隐藏（分段条上移）；其余三段恢复显示以提供列表上下文。
+     * 同时联动底部弹层顶栏（迷你条 Fragment）：信息段收起其电台名/封面，
+     * 避免 Hero 与顶栏同源信息重复造成杂乱。
+     */
+    private void updateNowPlayingRowVisibility() {
+        if (rowNowPlaying == null || segmentTabs == null) {
+            return;
+        }
+        final int position = segmentTabs.getSelectedTabPosition();
+        final boolean infoPage = position == 0;
+        rowNowPlaying.setVisibility(infoPage ? View.GONE : View.VISIBLE);
+
+        // 顶栏（FragmentPlayerSmall，迷你条与展开态 header 共用）：仅在「展开态 +
+        // 信息段」时收起文字与封面；收起 sheet 时 ActivityMain 会把 role 切回
+        // PLAYER 并重跑 fullUpdate，迷你条自动恢复正常显示
+        if (getActivity() != null) {
+            androidx.fragment.app.Fragment headerFragment =
+                    getActivity().getSupportFragmentManager().findFragmentById(R.id.fragment_player_small);
+            if (headerFragment instanceof FragmentPlayerSmall) {
+                boolean sheetExpanded = false;
+                if (sheetBehavior != null) {
+                    final int state = sheetBehavior.getState();
+                    sheetExpanded = state == BottomSheetBehavior.STATE_EXPANDED
+                            || state == BottomSheetBehavior.STATE_SETTLING;
+                }
+                ((FragmentPlayerSmall) headerFragment).setHeaderContentCollapsed(infoPage && sheetExpanded);
+            }
+        }
+    }
+
+    /**
+     * Hero 背景镜像（v3.1）：与 imageViewArt 共用同一位图——imageViewArt 每次内容
+     * 变化都会触发绘制前回调，在此把当前位图缩小并轻度模糊后铺到背景层（60% 透明度）。
+     * 占位态 / 无 logo 电台改用主题色渐变兜底，保证 Hero 任何时刻都有完整背景。
+     */
+    private void updateHeroBackgroundFromArt() {
+        if (heroBgImage == null) {
+            return;
+        }
+        if (heroArtMode != HeroArtMode.LOGO || imageViewArt == null) {
+            applyHeroGradient();
+            return;
+        }
+
+        Drawable current = imageViewArt.getDrawable();
+        if (current == null || current == lastMirroredDrawable) {
+            return;
+        }
+        if (!(current instanceof BitmapDrawable)) {
+            // 占位图等非位图内容：不镜像，走主题渐变兜底
+            applyHeroGradient();
+            return;
+        }
+
+        heroGradientApplied = false;
+        lastMirroredDrawable = current;
+        Bitmap source = ((BitmapDrawable) current).getBitmap();
+        Bitmap blurred = blurHeroBitmap(source);
+        if (blurred == null) {
+            applyHeroGradient();
+            return;
+        }
+        heroBgImage.setAlpha(0.6f);
+        heroBgImage.setImageBitmap(blurred);
+    }
+
+    /** Hero 无位图时的兜底背景：按预设强调色生成的对角渐变（亮/暗主题分别派生）。 */
+    private void applyHeroGradient() {
+        if (heroGradientApplied || heroBgImage == null) {
+            return;
+        }
+        heroGradientApplied = true;
+        lastMirroredDrawable = null;
+
+        final int accent = Utils.getThemeColor(requireContext(), R.attr.presetAccentColor);
+        final boolean dark = Utils.isDarkTheme(requireContext());
+        // 亮色：800 阶主体 + 两端向黑/白微偏移制造纵深；暗色：整体压暗保持沉浸
+        final int startColor = ColorUtils.blendARGB(accent, Color.BLACK, dark ? 0.45f : 0.22f);
+        final int endColor = ColorUtils.blendARGB(accent, dark ? Color.BLACK : Color.WHITE, dark ? 0.12f : 0.22f);
+        GradientDrawable gradient = new GradientDrawable(
+                GradientDrawable.Orientation.TL_BR, new int[]{startColor, accent, endColor});
+        heroBgImage.setAlpha(1f);
+        heroBgImage.setImageDrawable(gradient);
+    }
+
+    /**
+     * Hero 背景模糊：先把源图缩到 ≤64px 宽，再做 3 次盒式模糊（近似高斯）。
+     * 输入极小，UI 线程开销可忽略；盒式模糊用滑动窗口求和，无需额外依赖。
+     */
+    @Nullable
+    private static Bitmap blurHeroBitmap(@Nullable Bitmap source) {
+        if (source == null || source.isRecycled() || source.getWidth() <= 0 || source.getHeight() <= 0) {
+            return null;
+        }
+        final int targetWidth = 64;
+        int targetHeight = Math.max(1, Math.round(source.getHeight() * (targetWidth / (float) source.getWidth())));
+        Bitmap small;
+        try {
+            small = Bitmap.createScaledBitmap(source, targetWidth, targetHeight, true);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+
+        int w = small.getWidth(), h = small.getHeight();
+        int[] pixels = new int[w * h];
+        small.getPixels(pixels, 0, w, 0, 0, w, h);
+        int[] temp = new int[pixels.length];
+        for (int pass = 0; pass < 3; pass++) {
+            boxBlurHorizontal(pixels, temp, w, h, 4);
+            boxBlurVertical(temp, pixels, w, h, 4);
+        }
+        small.setPixels(pixels, 0, w, 0, 0, w, h);
+        return small;
+    }
+
+    private static void boxBlurHorizontal(int[] src, int[] dst, int w, int h, int radius) {
+        final int div = radius * 2 + 1;
+        for (int y = 0; y < h; y++) {
+            final int rowStart = y * w;
+            int sr = 0, sg = 0, sb = 0, sa = 0;
+            for (int i = -radius; i <= radius; i++) {
+                int c = src[rowStart + Math.min(w - 1, Math.max(0, i))];
+                sa += (c >>> 24);
+                sr += (c >> 16) & 0xFF;
+                sg += (c >> 8) & 0xFF;
+                sb += c & 0xFF;
+            }
+            for (int x = 0; x < w; x++) {
+                dst[rowStart + x] = ((sa / div) << 24)
+                        | ((sr / div) << 16) | ((sg / div) << 8) | (sb / div);
+                int out = src[rowStart + Math.min(w - 1, Math.max(0, x - radius))];
+                int in = src[rowStart + Math.min(w - 1, Math.max(0, x + radius + 1))];
+                sa += (in >>> 24) - (out >>> 24);
+                sr += ((in >> 16) & 0xFF) - ((out >> 16) & 0xFF);
+                sg += ((in >> 8) & 0xFF) - ((out >> 8) & 0xFF);
+                sb += (in & 0xFF) - (out & 0xFF);
+            }
+        }
+    }
+
+    private static void boxBlurVertical(int[] src, int[] dst, int w, int h, int radius) {
+        final int div = radius * 2 + 1;
+        for (int x = 0; x < w; x++) {
+            int sr = 0, sg = 0, sb = 0, sa = 0;
+            for (int i = -radius; i <= radius; i++) {
+                int c = src[Math.min(h - 1, Math.max(0, i)) * w + x];
+                sa += (c >>> 24);
+                sr += (c >> 16) & 0xFF;
+                sg += (c >> 8) & 0xFF;
+                sb += c & 0xFF;
+            }
+            for (int y = 0; y < h; y++) {
+                dst[y * w + x] = ((sa / div) << 24)
+                        | ((sr / div) << 16) | ((sg / div) << 8) | (sb / div);
+                int out = src[Math.min(h - 1, Math.max(0, y - radius)) * w + x];
+                int in = src[Math.min(h - 1, Math.max(0, y + radius + 1)) * w + x];
+                sa += (in >>> 24) - (out >>> 24);
+                sr += ((in >> 16) & 0xFF) - ((out >> 16) & 0xFF);
+                sg += ((in >> 8) & 0xFF) - ((out >> 8) & 0xFF);
+                sb += (in & 0xFF) - (out & 0xFF);
+            }
+        }
+    }
+
+    /**
+     * 信息页主题派生样式（v3.1，全部从预设属性取值、随配色方案联动）：
+     * 标签 = 强调色浅底胶囊 + 强调色文字。
+     */
+    private void applyInfoPageThemeStyles() {
+        final Context context = requireContext();
+        final int accent = Utils.getThemeColor(context, R.attr.presetAccentColor);
+        final boolean dark = Utils.isDarkTheme(context);
+        final int accentSoft = ColorUtils.setAlphaComponent(accent, dark ? 36 : 20);
+
+        if (viewTags != null) {
+            viewTags.setTextColor(accent);
+            viewTags.setTagBackgroundColor(accentSoft);
+        }
+    }
+
+    /** 地区胶囊文案：国家显示名（· 州/省），数据缺失时回退原始码。 */
+    private String buildRegionChip(@NonNull DataRadioStation station) {
+        String country = "";
+        if (!TextUtils.isEmpty(station.CountryCode)) {
+            try {
+                country = new Locale("", station.CountryCode).getDisplayCountry();
+            } catch (Exception e) {
+                country = station.CountryCode;
+            }
+            if (TextUtils.isEmpty(country)) {
+                country = station.CountryCode;
+            }
+        }
+        String state = station.State == null ? "" : station.State.trim();
+        if (!TextUtils.isEmpty(state) && !state.equalsIgnoreCase(country)) {
+            return TextUtils.isEmpty(country) ? state : country + " · " + state;
+        }
+        return country;
     }
 
     private void updateAlbumArt() {
@@ -936,11 +1250,14 @@ public class FragmentPlayerFull extends Fragment {
         if (TextUtils.isEmpty(liveInfo.getArtist()) || TextUtils.isEmpty(liveInfo.getTrack()) ||
                 LastFMApiKey.isEmpty()) {
             if (station.hasIcon()) {
+                heroArtMode = HeroArtMode.LOGO;
                 loadStationIconWithFallback(imageViewArt, station.IconUrl, station.HomePageUrl, station.StationUuid, station.Name, PLAYER_ART_ICON_SIZE_DP);
             } else if (!TextUtils.isEmpty(station.HomePageUrl)) {
+                heroArtMode = HeroArtMode.LOGO;
                 loadStationIconWithFallback(imageViewArt, null, station.HomePageUrl, station.StationUuid, station.Name, PLAYER_ART_ICON_SIZE_DP);
             } else {
                 // 同步 tag，避免图标缓存写入后按旧电台刷新到错误的图片
+                heroArtMode = HeroArtMode.GRADIENT;
                 imageViewArt.setTag(R.id.tag_station_uuid, station.StationUuid);
                 imageViewArt.setImageDrawable(StationPlaceholderUtils.createPlaceholderDrawable(getContext(), station.Name, station.StationUuid));
             }
@@ -1027,13 +1344,18 @@ public class FragmentPlayerFull extends Fragment {
                     DataRadioStation station = Utils.getCurrentOrLastStation(fragment.requireContext());
 
                     if (station != null && station.hasIcon()) {
+                        fragment.heroArtMode = HeroArtMode.LOGO;
                         fragment.loadStationIconWithFallback(fragment.imageViewArt, station.IconUrl, station.HomePageUrl, station.StationUuid, station.Name, PLAYER_ART_ICON_SIZE_DP);
                     } else if (station != null && !TextUtils.isEmpty(station.HomePageUrl)) {
+                        fragment.heroArtMode = HeroArtMode.LOGO;
                         fragment.loadStationIconWithFallback(fragment.imageViewArt, null, station.HomePageUrl, station.StationUuid, station.Name, PLAYER_ART_ICON_SIZE_DP);
                     } else if (station != null) {
+                        fragment.heroArtMode = HeroArtMode.GRADIENT;
                         fragment.imageViewArt.setTag(R.id.tag_station_uuid, station.StationUuid);
                         fragment.imageViewArt.setImageDrawable(StationPlaceholderUtils.createPlaceholderDrawable(fragment.getContext(), station.Name, station.StationUuid));
                     } else {
+                        // 应用图标不属于电台视觉素材：Hero 背景仍用主题渐变兜底
+                        fragment.heroArtMode = HeroArtMode.GRADIENT;
                         fragment.imageViewArt.setTag(R.id.tag_station_uuid, null);
                         fragment.imageViewArt.setImageResource(R.drawable.ic_launcher);
                     }
@@ -1059,6 +1381,7 @@ public class FragmentPlayerFull extends Fragment {
                         if (!TextUtils.isEmpty(albumArtUrl)) {
                             // 专辑封面与电台图标无关：清除 tag，避免电台图标缓存写入后覆盖专辑封面
                             fragment.imageViewArt.setTag(R.id.tag_station_uuid, null);
+                            fragment.heroArtMode = HeroArtMode.LOGO;
                             Picasso.get()
                                     .load(albumArtUrl)
                                     .into(fragment.imageViewArt);
@@ -1174,30 +1497,23 @@ public class FragmentPlayerFull extends Fragment {
 
         @Override
         protected void run(FragmentPlayerFull fragmentPlayerFull) {
-            final ShoutcastInfo shoutcastInfo = PlayerServiceUtil.getShoutcastInfo();
-
+            // v3.1 状态卡：数值为纯值（等宽字体），文案标签在布局中静态配置；
+            // 比特率随 Hero 元数据胶囊行展示，不再拼接进流量值
             if (PlayerServiceUtil.isPlaying()) {
-                String networkUsageInfo = Utils.getReadableBytes(PlayerServiceUtil.getTransferredBytes());
-                if (shoutcastInfo != null && shoutcastInfo.bitrate > 0) {
-                    networkUsageInfo += " (" + shoutcastInfo.bitrate + " kbps)";
-                }
-
                 fragmentPlayerFull.textViewNetworkUsageInfo.setText(
-                        fragmentPlayerFull.getString(R.string.player_network_usage, networkUsageInfo));
+                        Utils.getReadableBytes(PlayerServiceUtil.getTransferredBytes()));
 
                 final long now = System.currentTimeMillis();
                 final long startTime = PlayerServiceUtil.getLastPlayStartTime();
                 long deltaSeconds = startTime > 0 ? ((now - startTime) / 1000) : 0;
                 deltaSeconds = Math.max(deltaSeconds, 0);
-                fragmentPlayerFull.textViewCurrentPlayTime.setText(
-                        fragmentPlayerFull.getString(R.string.player_session_play_time, DateUtils.formatElapsedTime(deltaSeconds)));
+                fragmentPlayerFull.textViewCurrentPlayTime.setText(DateUtils.formatElapsedTime(deltaSeconds));
 
                 long totalPlayTime = PlayerServiceUtil.getTotalPlayTime();
-                fragmentPlayerFull.textViewTotalPlayTime.setText(
-                        fragmentPlayerFull.getString(R.string.player_total_play_time, DateUtils.formatElapsedTime(totalPlayTime)));
+                fragmentPlayerFull.textViewTotalPlayTime.setText(DateUtils.formatElapsedTime(totalPlayTime));
 
                 fragmentPlayerFull.textViewTimeCached.setText(
-                        fragmentPlayerFull.getString(R.string.player_buffer_time, DateUtils.formatElapsedTime(PlayerServiceUtil.getBufferedSeconds())));
+                        DateUtils.formatElapsedTime(PlayerServiceUtil.getBufferedSeconds()));
 
                 fragmentPlayerFull.updateRunningRecording();
             }
