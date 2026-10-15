@@ -1,5 +1,7 @@
 package net.programmierecke.radiodroid2;
 
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -23,6 +25,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.AnimationUtils;
+import android.view.animation.LinearInterpolator;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -32,6 +35,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
@@ -78,6 +82,7 @@ import net.programmierecke.radiodroid2.station.live.metadata.TrackMetadataCallba
 import net.programmierecke.radiodroid2.station.live.metadata.TrackMetadataSearcher;
 import net.programmierecke.radiodroid2.utils.RefreshHandler;
 import net.programmierecke.radiodroid2.views.RecyclerAwareNestedScrollView;
+import net.programmierecke.radiodroid2.views.SpectrumRingView;
 import net.programmierecke.radiodroid2.views.TagsView;
 
 import java.lang.ref.WeakReference;
@@ -136,17 +141,22 @@ public class FragmentPlayerFull extends Fragment {
     // 字段从原 ArtAndInfoPagerAdapter 上移为 Fragment 字段
     private ViewGroup stationInfoPage;
     private ImageView imageViewArt;
-    private TagsView viewTags;
     private ViewGroup layoutStationNoteRow;
     private TextView textViewStationNote;
 
-    // 「电台信息」页 v3.1 Hero 沉浸区：背景（logo 放大模糊 / 主题渐变兜底）+ 电台名 +
-    // 正在播放 + 元数据胶囊行；标签全量居中显示、备注行居中轻量文字
+    // 「电台信息」页 v4.1 整页 Hero：背景（logo 放大模糊 / 主题渐变兜底）铺满分段条到
+    // 控制条之间；前景自上而下为圆形唱片（播放时旋转）+ 环绕频谱 → 电台名 → 正在播放 →
+    // 元数据胶囊 → 缓冲/流量状态胶囊（挨在一起居中）→ 备注行（贴底）
     private ImageView heroBgImage;
     private TextView heroStationName;
     private TextView heroNowPlaying;
     private TagsView heroMetaChips;
-    private RecyclerAwareNestedScrollView pageInfoScroll;
+    private SpectrumRingView spectrumRing;
+    /** 唱片卡（圆形 logo 容器）：播放时作为旋转载体 26s/圈匀速旋转 */
+    private View heroLogoCard;
+    private ObjectAnimator discAnimator;
+    private TextView statBufferChip;
+    private TextView statTrafficChip;
 
     /** Hero 背景形态：LOGO = imageViewArt 位图放大模糊；GRADIENT = 主题色渐变兜底 */
     private enum HeroArtMode { LOGO, GRADIENT }
@@ -180,6 +190,15 @@ public class FragmentPlayerFull extends Fragment {
             sheetBehavior.removeBottomSheetCallback(bottomSheetCallback);
             sheetBehavior = null;
         }
+        // 视图销毁：停掉唱片旋转与频谱动画（动画持有旧视图引用，需一并释放）
+        if (discAnimator != null) {
+            discAnimator.cancel();
+            discAnimator = null;
+        }
+        if (spectrumRing != null) {
+            spectrumRing.stop();
+            spectrumRing = null;
+        }
         super.onDestroyView();
     }
 
@@ -187,10 +206,6 @@ public class FragmentPlayerFull extends Fragment {
     // 「电台信息」段由 Hero 承担身份信息，本行隐藏；其余三段恢复显示
     private ViewGroup rowNowPlaying;
     private TextView textViewGeneralInfo;
-    private TextView textViewTotalPlayTime;
-    private TextView textViewCurrentPlayTime;
-    private TextView textViewNetworkUsageInfo;
-    private TextView textViewTimeCached;
 
     /** 播放器「电台信息」页 logo 的解码目标尺寸（dp）：供 Hero 背景模糊取图保留清晰度 */
     private static final int PLAYER_ART_ICON_SIZE_DP = 180;
@@ -311,8 +326,10 @@ public class FragmentPlayerFull extends Fragment {
         heroStationName = stationInfoPage.findViewById(R.id.heroStationName);
         heroNowPlaying = stationInfoPage.findViewById(R.id.heroNowPlaying);
         heroMetaChips = stationInfoPage.findViewById(R.id.heroMetaChips);
-        pageInfoScroll = stationInfoPage.findViewById(R.id.pageInfoScroll);
-        viewTags = stationInfoPage.findViewById(R.id.viewTags);
+        spectrumRing = stationInfoPage.findViewById(R.id.spectrumRing);
+        heroLogoCard = stationInfoPage.findViewById(R.id.heroLogoCard);
+        statBufferChip = stationInfoPage.findViewById(R.id.statBufferChip);
+        statTrafficChip = stationInfoPage.findViewById(R.id.statTrafficChip);
         layoutStationNoteRow = stationInfoPage.findViewById(R.id.layoutStationNoteRow);
         textViewStationNote = stationInfoPage.findViewById(R.id.textViewStationNote);
 
@@ -326,8 +343,33 @@ public class FragmentPlayerFull extends Fragment {
             }
         });
 
-        // 信息页主题派生样式：标签强调色浅底、渐隐层，随配色方案联动
-        applyInfoPageThemeStyles();
+        // 播放状态胶囊（缓冲 / 流量）位于信息页布局内；电台标题行在主布局
+        textViewGeneralInfo = view.findViewById(R.id.textViewGeneralInfo);
+
+        // 状态胶囊数值使用等宽（tabular）数字，每秒刷新时数字步进不跳动（API21+ 生效）
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            String tnum = "tnum";
+            statBufferChip.setFontFeatureSettings(tnum);
+            statTrafficChip.setFontFeatureSettings(tnum);
+        }
+
+        // 状态胶囊行首图标：时钟（缓冲）与上下箭头（流量），白色 85% 与胶囊文字同调
+        statBufferChip.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                new IconicsDrawable(requireContext(), GoogleMaterial.Icon.gmd_access_time)
+                        .size(IconicsSize.dp(12))
+                        .color(IconicsColor.colorInt(0xD9FFFFFF)), null, null, null);
+        statTrafficChip.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                new IconicsDrawable(requireContext(), GoogleMaterial.Icon.gmd_swap_vert)
+                        .size(IconicsSize.dp(12))
+                        .color(IconicsColor.colorInt(0xD9FFFFFF)), null, null, null);
+
+        // 「正在播放」行首呼吸点（强调色亮变体，圆点尺寸与间距对齐设计稿 hero-now）
+        GradientDrawable nowDot = new GradientDrawable();
+        nowDot.setShape(GradientDrawable.OVAL);
+        nowDot.setColor(Utils.getThemeColor(requireContext(), R.attr.presetAccentBrightColor));
+        nowDot.setSize(dp(7), dp(7));
+        heroNowPlaying.setCompoundDrawablesRelativeWithIntrinsicBounds(nowDot, null, null, null);
+        heroNowPlaying.setCompoundDrawablePadding(dp(6));
 
         // 监听底部弹层状态：展开/收起会改变顶栏（FragmentPlayerSmall）的收起条件，
         // 但不触发分段切换，需在此手动刷新联动（见 updateNowPlayingRowVisibility）
@@ -337,22 +379,6 @@ public class FragmentPlayerFull extends Fragment {
             sheetBehavior.addBottomSheetCallback(bottomSheetCallback);
         }
 
-        // 播放状态块（本次/累计收听、缓冲、流量）位于信息页布局内；电台标题行在主布局
-        textViewGeneralInfo = view.findViewById(R.id.textViewGeneralInfo);
-        textViewTotalPlayTime = stationInfoPage.findViewById(R.id.textViewTotalPlayTime);
-        textViewCurrentPlayTime = stationInfoPage.findViewById(R.id.textViewCurrentPlayTime);
-        textViewNetworkUsageInfo = stationInfoPage.findViewById(R.id.textViewNetworkUsageInfo);
-        textViewTimeCached = stationInfoPage.findViewById(R.id.textViewTimeCached);
-
-        // 状态卡数值使用等宽（tabular）数字，每秒刷新时数字步进不跳动（API21+ 生效）
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            String tnum = "tnum";
-            textViewTotalPlayTime.setFontFeatureSettings(tnum);
-            textViewCurrentPlayTime.setFontFeatureSettings(tnum);
-            textViewNetworkUsageInfo.setFontFeatureSettings(tnum);
-            textViewTimeCached.setFontFeatureSettings(tnum);
-        }
-
         rowNowPlaying = view.findViewById(R.id.rowNowPlaying);
         imageViewConnectionTypeFull = view.findViewById(R.id.imageViewConnectionTypeFull);
 
@@ -360,6 +386,9 @@ public class FragmentPlayerFull extends Fragment {
         imgRecordingIcon = view.findViewById(R.id.imgRecordingIcon);
         textViewRecordingSize = view.findViewById(R.id.textViewRecordingSize);
         textViewRecordingName = view.findViewById(R.id.textViewRecordingName);
+
+        // 信息页主题派生样式（含录音块浮层底/描边）：需在 blockRecording 赋值后调用
+        applyInfoPageThemeStyles();
 
         pagerContent = view.findViewById(R.id.pagerContent);
         historyAndRecordsPagerAdapter = new HistoryAndRecordsPagerAdapter(requireContext(), pagerContent, stationInfoPage);
@@ -643,9 +672,7 @@ public class FragmentPlayerFull extends Fragment {
 
     public void resetScroll() {
         scrollViewContent.scrollTo(0, 0);
-        if (pageInfoScroll != null) {
-            pageInfoScroll.scrollTo(0, 0);
-        }
+        // v4.1 信息页为固定布局（无滚动容器），无需重置其内部滚动位置
         historyAndRecordsPagerAdapter.recyclerViewCurrentStationHistory.scrollToPosition(0);
         historyAndRecordsPagerAdapter.recyclerViewSongHistory.scrollToPosition(0);
         historyAndRecordsPagerAdapter.recyclerViewRecordings.scrollToPosition(0);
@@ -670,8 +697,8 @@ public class FragmentPlayerFull extends Fragment {
     }
 
     /**
-     * 信息页备注行（Issue #54，v3.1.1 弱化）：居中轻量文字行——空态次要色「添加备注」
-     * 提示（行首备注图标），有备注时强调色正文；无卡片底/竖条/虚线框，避免破坏沉浸感。
+     * 信息页备注行（Issue #54，v4.1 贴底 Hero）：居中轻量文字行——空态白 62%「添加备注」
+     * 提示（行首备注图标），有备注时强调色亮变体正文；无卡片底，避免破坏沉浸感。
      * 点击整行弹出编辑对话框，保存后原地刷新。
      */
     private void updateStationNoteRow(DataRadioStation station) {
@@ -682,12 +709,12 @@ public class FragmentPlayerFull extends Fragment {
         textViewStationNote.setCompoundDrawablesRelativeWithIntrinsicBounds(buildNoteIcon(), null, null, null);
         if (!hasNote) {
             textViewStationNote.setText(R.string.note_add_hint);
-            // 空备注占位提示用次要色弱化，不与正文备注争夺注意力
-            textViewStationNote.setTextColor(Utils.getThemeColor(requireContext(), R.attr.colorTextSecondary));
+            // Hero 沉浸背景上的空态占位提示：白 62% 弱化，不与正文争夺注意力
+            textViewStationNote.setTextColor(ContextCompat.getColor(requireContext(), R.color.player_hero_text_faint));
         } else {
             textViewStationNote.setText(note);
-            // 正文备注与 TextAppearance.RadioDroid.Note 及行首图标同用强调色
-            textViewStationNote.setTextColor(Utils.getThemeColor(requireContext(), R.attr.presetAccentColor));
+            // 正文备注与行首图标同用强调色亮变体（Hero 深色底上保持可读，随配色方案联动）
+            textViewStationNote.setTextColor(Utils.getThemeColor(requireContext(), R.attr.presetAccentBrightColor));
         }
 
         layoutStationNoteRow.setOnClickListener(v -> StationNoteDialog.show(requireContext(), station,
@@ -695,12 +722,12 @@ public class FragmentPlayerFull extends Fragment {
     }
 
     /**
-     * 备注行首小图标：跟随预设强调色，与列表备注行视觉一致。
+     * 备注行首小图标：跟随预设强调色亮变体，与备注文字形成统一视觉锚点。
      */
     private Drawable buildNoteIcon() {
         return new IconicsDrawable(requireContext(), GoogleMaterial.Icon.gmd_description)
                 .size(IconicsSize.dp(12))
-                .color(IconicsColor.colorInt(Utils.getThemeColor(requireContext(), R.attr.presetAccentColor)));
+                .color(IconicsColor.colorInt(Utils.getThemeColor(requireContext(), R.attr.presetAccentBrightColor)));
     }
 
     private void fullUpdate() {
@@ -797,16 +824,7 @@ public class FragmentPlayerFull extends Fragment {
             heroMetaChips.setTags(metaChips);
 
             // 电台信息页正文里不再重复比特率/编码/地区/语言（getLongDetails 已由胶囊行承担）
-
-            // 风格标签：过滤空标签后全量居中显示（无折叠，随滚动区完整浏览）
-            List<String> tags = new ArrayList<>();
-            for (String tag : station.TagsAll.split(",")) {
-                String trimmed = tag.trim();
-                if (!trimmed.isEmpty()) {
-                    tags.add(trimmed);
-                }
-            }
-            viewTags.setTags(tags);
+            // v4.1：风格标签已按设计移除，不再展示
 
             // 备注行（Issue #54）：展示当前电台备注并提供编辑入口
             updateStationNoteRow(station);
@@ -814,23 +832,26 @@ public class FragmentPlayerFull extends Fragment {
 
         updateAlbumArt();
         updateRecordings();
-        
+
         // 直接更新播放按钮，类似于小播放器的实现
-        
+
         if (PlayerServiceUtil.isPlaying()) {
-            
+
             btnPlay.setImageResource(R.drawable.ic_pause_circle);
             btnPlay.setContentDescription(getResources().getString(R.string.detail_pause));
         } else {
-            
+
             btnPlay.setImageResource(R.drawable.ic_play_circle);
             btnPlay.setContentDescription(getResources().getString(R.string.detail_play));
         }
-        
+
         updateRecordButton(PlayerServiceUtil.isPlaying(), PlayerServiceUtil.isRecording());
         updateFavouriteButton();
 
         updateConnectionTypeIcon();
+
+        // v4.1 播放视觉：频谱环显隐 + 唱片旋转随播放状态联动
+        updatePlayerVisuals();
 
         timedUpdateTask.run();
 
@@ -1188,18 +1209,85 @@ public class FragmentPlayerFull extends Fragment {
     }
 
     /**
-     * 信息页主题派生样式（v3.1，全部从预设属性取值、随配色方案联动）：
-     * 标签 = 强调色浅底胶囊 + 强调色文字。
+     * 信息页主题派生样式（v4.1，全部从预设属性取值、随配色方案联动）：
+     * 频谱条色 = 强调色亮变体渐变；缓冲/流量状态胶囊 = 白 13% 底 + 强调色 45% 细描边；
+     * 录音状态块 = 圆角半透明深底 + 强调色 28% 细描边（浮层样式）。
      */
     private void applyInfoPageThemeStyles() {
         final Context context = requireContext();
-        final int accent = Utils.getThemeColor(context, R.attr.presetAccentColor);
-        final boolean dark = Utils.isDarkTheme(context);
-        final int accentSoft = ColorUtils.setAlphaComponent(accent, dark ? 36 : 20);
+        final int accentBright = Utils.getThemeColor(context, R.attr.presetAccentBrightColor);
 
-        if (viewTags != null) {
-            viewTags.setTextColor(accent);
-            viewTags.setTagBackgroundColor(accentSoft);
+        // 圆形频谱：条尖更亮（向白混合 40%）、条根为强调色亮变体，Hero 深色底上清晰可见
+        if (spectrumRing != null) {
+            spectrumRing.setColors(
+                    ColorUtils.blendARGB(accentBright, Color.WHITE, 0.40f),
+                    accentBright);
+        }
+
+        // 缓冲 / 流量状态胶囊：白 13% 底 + 强调色 45% 细描边（与设计稿 stat-chip 一致）
+        if (statBufferChip != null && statTrafficChip != null) {
+            final int chipStroke = ColorUtils.setAlphaComponent(accentBright, 115);
+            statBufferChip.setBackground(makeStatChipBackground(chipStroke));
+            statTrafficChip.setBackground(makeStatChipBackground(chipStroke));
+        }
+
+        // 录音状态块浮层底：圆角半透明深底 + 强调色 28% 细描边（主题无关的深色覆盖层）
+        if (blockRecording != null) {
+            GradientDrawable recBackground = new GradientDrawable();
+            recBackground.setCornerRadius(dp(10));
+            recBackground.setColor(ContextCompat.getColor(context, R.color.player_hero_rec_bg));
+            recBackground.setStroke(dp(1), ColorUtils.setAlphaComponent(accentBright, 72));
+            blockRecording.setBackground(recBackground);
+        }
+    }
+
+    /** 状态胶囊底形：全圆角 + 白 13% 底 + 强调色细描边 */
+    private GradientDrawable makeStatChipBackground(int strokeColor) {
+        GradientDrawable chip = new GradientDrawable();
+        chip.setCornerRadius(dp(99));
+        chip.setColor(ContextCompat.getColor(requireContext(), R.color.player_hero_chip_bg));
+        chip.setStroke(dp(1), strokeColor);
+        return chip;
+    }
+
+    /**
+     * v4.1 播放视觉状态：圆形频谱仅「播放中 + 信息段可见」时显示；唱片在播放中
+     * 匀速旋转、暂停即停转。分段切换与播放状态变化都会走到这里（幂等）。
+     */
+    private void updatePlayerVisuals() {
+        final boolean playing = PlayerServiceUtil.isPlaying();
+        final boolean infoPage = segmentTabs == null || segmentTabs.getSelectedTabPosition() == 0;
+        if (spectrumRing != null) {
+            spectrumRing.setSpectrumVisible(playing && infoPage);
+        }
+        if (playing) {
+            startDiscRotation();
+        } else {
+            stopDiscRotation();
+        }
+    }
+
+    /** 唱片旋转（v4.1）：26s/圈匀速旋转；从当前角度续转，避免重新开始时跳变 */
+    private void startDiscRotation() {
+        if (heroLogoCard == null) {
+            return;
+        }
+        if (discAnimator == null) {
+            discAnimator = ObjectAnimator.ofFloat(heroLogoCard, View.ROTATION, 0f, 360f);
+            discAnimator.setDuration(26000);
+            discAnimator.setInterpolator(new LinearInterpolator());
+            discAnimator.setRepeatCount(ValueAnimator.INFINITE);
+        }
+        if (!discAnimator.isRunning()) {
+            final float from = heroLogoCard.getRotation() % 360f;
+            discAnimator.setFloatValues(from, from + 360f);
+            discAnimator.start();
+        }
+    }
+
+    private void stopDiscRotation() {
+        if (discAnimator != null && discAnimator.isRunning()) {
+            discAnimator.cancel();
         }
     }
 
@@ -1491,29 +1579,21 @@ public class FragmentPlayerFull extends Fragment {
     }
 
     private static class TimedUpdateTask extends RefreshHandler.ObjectBoundRunnable<FragmentPlayerFull> {
-        TimedUpdateTask(FragmentPlayerFull obj) {
-            super(obj);
+        TimedUpdateTask(FragmentPlayerFull fragmentPlayerFull) {
+            super(fragmentPlayerFull);
         }
 
         @Override
         protected void run(FragmentPlayerFull fragmentPlayerFull) {
-            // v3.1 状态卡：数值为纯值（等宽字体），文案标签在布局中静态配置；
-            // 比特率随 Hero 元数据胶囊行展示，不再拼接进流量值
+            // v4.1 状态胶囊：缓冲 / 流量两枚挨在一起居中，文案 =「标签 + 数值」
             if (PlayerServiceUtil.isPlaying()) {
-                fragmentPlayerFull.textViewNetworkUsageInfo.setText(
-                        Utils.getReadableBytes(PlayerServiceUtil.getTransferredBytes()));
+                fragmentPlayerFull.statBufferChip.setText(
+                        fragmentPlayerFull.getString(R.string.player_stat_buffer) + " "
+                                + DateUtils.formatElapsedTime(PlayerServiceUtil.getBufferedSeconds()));
 
-                final long now = System.currentTimeMillis();
-                final long startTime = PlayerServiceUtil.getLastPlayStartTime();
-                long deltaSeconds = startTime > 0 ? ((now - startTime) / 1000) : 0;
-                deltaSeconds = Math.max(deltaSeconds, 0);
-                fragmentPlayerFull.textViewCurrentPlayTime.setText(DateUtils.formatElapsedTime(deltaSeconds));
-
-                long totalPlayTime = PlayerServiceUtil.getTotalPlayTime();
-                fragmentPlayerFull.textViewTotalPlayTime.setText(DateUtils.formatElapsedTime(totalPlayTime));
-
-                fragmentPlayerFull.textViewTimeCached.setText(
-                        DateUtils.formatElapsedTime(PlayerServiceUtil.getBufferedSeconds()));
+                fragmentPlayerFull.statTrafficChip.setText(
+                        fragmentPlayerFull.getString(R.string.player_stat_data) + " "
+                                + Utils.getReadableBytes(PlayerServiceUtil.getTransferredBytes()));
 
                 fragmentPlayerFull.updateRunningRecording();
             }
@@ -1625,7 +1705,12 @@ public class FragmentPlayerFull extends Fragment {
         if (visibleHeight == 0) {
             return;
         }
-        final int recordingExtra = blockRecording.getVisibility() == View.VISIBLE ? blockRecording.getHeight() : 0;
+        // v4.1 录音状态块为浮层样式（自带水平/底部外边距），高度需连同下边距一起扣除
+        int recordingExtra = 0;
+        if (blockRecording.getVisibility() == View.VISIBLE) {
+            ViewGroup.MarginLayoutParams recParams = (ViewGroup.MarginLayoutParams) blockRecording.getLayoutParams();
+            recordingExtra = blockRecording.getHeight() + recParams.bottomMargin;
+        }
         final int available = visibleHeight - pagerContent.getTop() - recordingExtra;
         final int newHeight = available > 0 ? available : visibleHeight;
         ViewGroup.LayoutParams layoutParams = pagerContent.getLayoutParams();
@@ -1658,6 +1743,10 @@ public class FragmentPlayerFull extends Fragment {
                 label.setTextColor(secondary);
             }
         }
+
+        // 分段切换联动播放视觉（v4.1）：离开「电台信息」段时频谱淡出，回到该段且
+        // 播放中时淡入（唱片旋转不随分段切换，仅随播放状态）
+        updatePlayerVisuals();
     }
 
     /** 按 WCAG 相对亮度取黑或白（亮度大于 0.179 用黑），与项目既有「色块取字色」规则一致 */

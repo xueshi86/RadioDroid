@@ -758,8 +758,6 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="buffer_strategy_apply_to_all">Применить ко всем станциям</string>
 
     <!-- Player full screen labels -->
-    <string name="player_stat_session">За сеанс</string>
-    <string name="player_stat_total">Всего</string>
     <string name="player_stat_buffer">Буфер</string>
     <string name="player_stat_data">Трафик</string>
     <string name="player_hero_now_playing">Сейчас играет: %1$s</string>

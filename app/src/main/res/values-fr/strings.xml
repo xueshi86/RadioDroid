@@ -548,8 +548,6 @@
     <string name="webdav_result_canceled">Annulé</string>
     <string name="webdav_restore_failed">Échec de la restauration de la base de données ; la base de données d’origine a été conservée</string>
     <!-- Player full screen station info page (v3.1 hero redesign) -->
-    <string name="player_stat_session">Cette écoute</string>
-    <string name="player_stat_total">Durée totale</string>
     <string name="player_stat_buffer">Tampon</string>
     <string name="player_stat_data">Données</string>
     <string name="player_hero_now_playing">Lecture en cours : %1$s</string>

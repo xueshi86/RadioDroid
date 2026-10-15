@@ -95,22 +95,22 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
-            <!-- 录音状态块（UI 审查 P1-2 后续）：「录音状态栏只在电台信息和录音界面显示」——
-                 分隔线 + 录音点图标 + 文件名/大小两行，垂直节奏与录音列表条目一致
-                 （上下 padding + Title 文件名 + Caption 大小），堆叠在内容 pager 下方，
-                 显隐由代码按当前段与录音状态控制 -->
+            <!-- 录音状态块（v4.1 浮层样式）：「录音状态栏只在电台信息和录音界面显示」——
+                 圆角半透明深底卡片浮于页底（背景/描边由代码按配色方案注入，见
+                 applyInfoPageThemeStyles），结构对齐录音列表条目（上下 padding +
+                 Title 文件名 + Caption 大小，文字改白色系适配深底），堆叠在内容 pager
+                 下方，显隐由代码按当前段与录音状态控制 -->
             <LinearLayout
                 android:id="@+id/blockRecording"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="8dp"
                 android:orientation="vertical"
                 android:visibility="gone">
-
-                <View
-                    android:id="@+id/divider1"
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/divider_thickness"
-                    android:background="?attr/colorPlayerShadow" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -146,6 +146,7 @@
                             android:ellipsize="end"
                             android:maxLines="1"
                             android:textAppearance="@style/TextAppearance.RadioDroid.Title"
+                            android:textColor="@color/player_hero_text_soft"
                             android:textStyle="bold"
                             tools:text="recording name.mp3" />
 
@@ -155,6 +156,7 @@
                             android:layout_height="wrap_content"
                             android:maxLines="1"
                             android:textAppearance="@style/TextAppearance.RadioDroid.Caption"
+                            android:textColor="@color/player_hero_text_dim"
                             tools:text="2.5 mb" />
                     </LinearLayout>
                 </LinearLayout>

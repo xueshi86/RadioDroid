@@ -73,6 +73,11 @@
     <color name="player_hero_chip_bg">#2BFFFFFF</color>
     <color name="player_hero_text_soft">#E6FFFFFF</color>
     <color name="player_hero_text_shadow">#59000000</color>
+    <!-- v4.1 整页 Hero 补充覆盖色：空态备注弱化 / 录音块次级文字 / 唱片描边 / 录音块深底 -->
+    <color name="player_hero_text_faint">#9EFFFFFF</color>
+    <color name="player_hero_text_dim">#B3FFFFFF</color>
+    <color name="player_hero_disc_stroke">#38FFFFFF</color>
+    <color name="player_hero_rec_bg">#B80C1814</color>
 
     <!-- 列表 / 详情页分隔线（中性色，不随预设变化） -->
     <color name="colorSeparator">#E3E3E5</color>

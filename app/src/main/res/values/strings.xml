@@ -898,8 +898,6 @@ The app will automatically restart to load the new database.</string>
     <string name="buffer_strategy_apply_to_all">Apply to all stations</string>
 
     <!-- Player full screen station info page (v3.1 hero redesign) -->
-    <string name="player_stat_session">This session</string>
-    <string name="player_stat_total">Total time</string>
     <string name="player_stat_buffer">Buffered</string>
     <string name="player_stat_data">Data used</string>
     <string name="player_hero_now_playing">Now playing: %1$s</string>

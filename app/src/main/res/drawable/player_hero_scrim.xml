@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 全屏播放器「电台信息」页 Hero 沉浸区底部暗化 scrim：
-     自上而下 透明 → 42% 黑，保证 Hero 底部的白色电台名 / 正在播放 /
-     元数据胶囊在任意背景（logo 模糊图 / 主题渐变）上可读。 -->
+<!-- 全屏播放器「电台信息」页 v4.1 整页 Hero 压暗 scrim：
+     上下两端各压暗约 50%（过渡区中部全透明），保证顶部唱片区与底部
+     电台名 / 备注行的白色文字在任意背景（logo 模糊图 / 主题渐变）上可读，
+     中部保持通透不破坏沉浸感。 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <gradient
         android:angle="270"
-        android:startColor="@android:color/transparent"
-        android:endColor="@color/player_hero_scrim_end" />
+        android:startColor="#80060E0C"
+        android:centerColor="#00000000"
+        android:endColor="#80060E0C" />
 </shape>

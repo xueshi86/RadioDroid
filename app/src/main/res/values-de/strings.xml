@@ -466,8 +466,6 @@
     <string name="webdav_result_canceled">Abgebrochen</string>
     <string name="webdav_restore_failed">Wiederherstellung der Datenbank fehlgeschlagen; die ursprüngliche Datenbank wurde beibehalten</string>
     <!-- Player full screen station info page (v3.1 hero redesign) -->
-    <string name="player_stat_session">Diese Sitzung</string>
-    <string name="player_stat_total">Gesamtzeit</string>
     <string name="player_stat_buffer">Puffer</string>
     <string name="player_stat_data">Daten</string>
     <string name="player_hero_now_playing">Wird gespielt: %1$s</string>

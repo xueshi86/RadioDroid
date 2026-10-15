@@ -765,8 +765,6 @@
     <string name="buffer_strategy_apply_to_all">应用于所有电台</string>
 
     <!-- Player full screen labels -->
-    <string name="player_stat_session">本次收听</string>
-    <string name="player_stat_total">累计收听</string>
     <string name="player_stat_buffer">缓冲时长</string>
     <string name="player_stat_data">流量</string>
     <string name="player_hero_now_playing">正在播放：%1$s</string>
