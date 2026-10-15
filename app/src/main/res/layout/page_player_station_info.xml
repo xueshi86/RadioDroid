@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 「电台信息」页 v4.1（整页 Hero + 圆形频谱唱片）：
+<!-- 「电台信息」页 v4.2（整页 Hero + 方形图标）：
      分段条之下 → 控制条之上整页为沉浸式 Hero 模糊背景（imageViewArt 位图放大模糊镜像，
      无 logo 电台用主题色渐变兜底，见 FragmentPlayerFull），上叠上下压暗 scrim。
      前景自上而下：
-     ① 圆形电台图标唱片（118dp 圆形卡，播放时 26s/圈匀速旋转）+ 外圈圆形频谱
-        （SpectrumRingView，24 根径向短条 0.85s 相位律动，仅播放中显示，停止完全隐藏）；
+     ① 方形电台图标卡（92dp 白底圆角卡，代码动态定位：图标中心对齐 Hero 高度的
+        0.382 黄金分割点，见 FragmentPlayerFull 布局回调）；
      ② 中段弹性居中（两枚 weight=1 Space）：电台名（≤3 行自适应字号居中优雅展现）→
         正在播放行（强调色呼吸点 + 曲目）→ 码率/编码/地区/语言元数据胶囊 →
-        缓冲+流量状态胶囊（两枚挨在一起整组居中）；
+        缓冲+流量状态胶囊（两枚挨在一起整组居中，未播放时只显示标签名）；
      ③ 备注行贴底：轻量居中文字行，空态「添加备注」提示，点击整行弹出编辑对话框。
-     固定布局无需滚动；风格标签与「本次/累计收听」已按 v4.1 设计移除。 -->
+     固定布局无需滚动；风格标签与「本次/累计收听」已移除。 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -36,47 +36,38 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- ① 圆形唱片 + 环绕频谱：频谱环铺满视觉区（条轨道半径 78dp），
-             唱片卡居中叠于其上 -->
-        <FrameLayout
-            android:id="@+id/heroVisual"
-            android:layout_width="212dp"
-            android:layout_height="212dp"
+        <!-- ① 电台图标展示卡（v3.1.1 方形样式）：92dp 白底圆角卡 + 白描边 + 投影，
+             顶边距 60dp 仅为初值，实际由代码按 Hero 高度黄金分割 0.382 动态定位
+             （图标中心对齐分割点，见 FragmentPlayerFull）；
+             图标不论原图多大一律 fitCenter 缩放进卡内（适配大小不一/无图标电台） -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/heroLogoCard"
+            android:layout_width="92dp"
+            android:layout_height="92dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="24dp">
+            android:layout_marginTop="60dp"
+            app:cardBackgroundColor="@android:color/white"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="6dp"
+            app:strokeColor="@android:color/white"
+            app:strokeWidth="2dp">
 
-            <net.programmierecke.radiodroid2.views.SpectrumRingView
-                android:id="@+id/spectrumRing"
+            <ImageView
+                android:id="@+id/imageViewArt"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:alpha="0"
-                tools:alpha="0.8" />
+                android:contentDescription="@string/tab_player_station_info"
+                android:padding="12dp"
+                android:scaleType="fitCenter" />
+        </com.google.android.material.card.MaterialCardView>
 
-            <!-- 唱片卡：圆形裁剪 + 1dp 半透明白描边 + 投影；播放时整体匀速旋转 -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/heroLogoCard"
-                android:layout_width="118dp"
-                android:layout_height="118dp"
-                android:layout_gravity="center"
-                app:cardBackgroundColor="@android:color/white"
-                app:cardCornerRadius="59dp"
-                app:cardElevation="8dp"
-                app:strokeColor="@color/player_hero_disc_stroke"
-                app:strokeWidth="1dp">
-
-                <ImageView
-                    android:id="@+id/imageViewArt"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:contentDescription="@string/tab_player_station_info"
-                    android:scaleType="centerCrop" />
-            </com.google.android.material.card.MaterialCardView>
-        </FrameLayout>
-
-        <!-- 中段弹性空隙：信息组在唱片与备注行之间垂直居中 -->
+        <!-- 中段弹性空隙：信息组在图标与备注行之间垂直居中；marginTop 补偿底部
+             备注行占位（约 40dp），使信息组几何中心对齐「图标底 ↔ 控制条顶」的
+             中点（不补偿会整体偏下备注行高的一半） -->
         <Space
             android:layout_width="match_parent"
             android:layout_height="0dp"
+            android:layout_marginTop="40dp"
             android:layout_weight="1" />
 
         <!-- ② 电台名：≤3 行自适应字号（20→28sp）+ 平衡折行，长名不再拥挤 -->
@@ -175,9 +166,10 @@
                 android:shadowDx="0"
                 android:shadowDy="1"
                 android:shadowRadius="4"
+                android:text="@string/player_stat_buffer"
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/text_label"
-                tools:text="缓冲 00:10" />
+                tools:text="缓冲时长" />
 
             <TextView
                 android:id="@+id/statTrafficChip"
@@ -197,9 +189,10 @@
                 android:shadowDx="0"
                 android:shadowDy="1"
                 android:shadowRadius="4"
+                android:text="@string/player_stat_data"
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/text_label"
-                tools:text="流量 1.1 MB" />
+                tools:text="流量" />
         </LinearLayout>
 
         <Space

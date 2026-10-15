@@ -102,6 +102,9 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
         final DataRecording recording = recordings.get(position);
 
         holder.textViewTitle.setText(recording.Name);
+        // 选中态触发走马灯滚动：文件名过长省略号截断时自动横向循环滚动
+        // （与「本台曲目 / 曲目历史」列表的 TrackHistoryAdapter 行为一致）
+        holder.textViewTitle.setSelected(true);
         if (recording.Time != null) {
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
             holder.textViewTime.setText(sdf.format(recording.Time));
