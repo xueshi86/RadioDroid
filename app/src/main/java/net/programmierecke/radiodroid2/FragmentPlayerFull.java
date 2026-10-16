@@ -412,12 +412,13 @@ public class FragmentPlayerFull extends Fragment {
                 stationInfoPage.findViewById(R.id.heroBlob4),
                 stationInfoPage.findViewById(R.id.heroBlob5),
         };
-        // 毛玻璃：色斑层整体高斯模糊（spec：≥80px 等效），布局时创建一次不动它
-        // （API 33+ 支持；低版本无 RenderEffect/双参重载，靠色斑长尾渐隐近似柔焦）
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            heroBgBlobs.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(
-                    80f, 80f, android.graphics.Shader.TileMode.CLAMP));
-        }
+        // 整层毛玻璃（RenderEffect）已移除：它会限制在容器尺寸的离屏 layer 里，
+        // 色斑越出容器的部分在 layer 边界被硬截——四边出现横/竖截断线（用户实测
+        // 截图踩坑，且斑越大越明显）。柔焦改由色斑自身的长尾径向渐隐叠加近似
+        // （无 blur 版观感已在低版本设备长期验证）。作为补偿，把从色斑容器到窗口
+        // 的整条祖先链裁切全部放开：色斑可一路画出容器/信息页/pager，唯一裁切
+        // 发生在窗口边界 = 屏幕物理边界（屏外，不可见）——可视区内再无截断线
+        releaseClipUpToWindow(heroBgBlobs);
         // 游走动画自愈兜底：fullUpdate 几乎总在首次布局前运行（onCreateView→init），
         // 当时 heroBgBlobs 宽高为 0，updateHeroFlow 会提前 return「下次 fullUpdate 再建」；
         // 而布局完成后若播放状态无变化（无 STATE/META 广播），就永远等不到那个
@@ -425,6 +426,25 @@ public class FragmentPlayerFull extends Fragment {
         // 停止正是这个时序。此处在每次布局完成时按当前播放状态补齐渲染与游走。
         heroBgBlobs.addOnLayoutChangeListener(
                 (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                    // 左右外扩（消灭左右竖条）：整场漂移（±2.5% 视口）会把容器
+                    // 左右边平进屏幕，露出一侧「容器外」的透明区——被截出随漂移
+                    // 交替涨落的竖条（左条最大时右条消失、反之亦然）。容器左右各
+                    // 外扩一个漂移幅度+余量后，平移极限时边缘恒在屏外。上下无需
+                    // 外扩：基底垂直渐隐与色斑垂直约束已保证上下边缘 alpha 归零。
+                    final View visParent = (View) heroBgBlobs.getParent();
+                    if (visParent != null && visParent.getWidth() > 0
+                            && heroBgBlobs.getLayoutParams()
+                                    instanceof ViewGroup.MarginLayoutParams) {
+                        ViewGroup.MarginLayoutParams mlp =
+                                (ViewGroup.MarginLayoutParams) heroBgBlobs.getLayoutParams();
+                        final int want = Math.round(visParent.getWidth() * 0.025f) + 8;
+                        if (mlp.leftMargin != -want || mlp.rightMargin != -want) {
+                            mlp.leftMargin = -want;
+                            mlp.rightMargin = -want;
+                            heroBgBlobs.setLayoutParams(mlp); // 触发 relayout 后再进本回调即收敛
+                            return;
+                        }
+                    }
                     if (heroBgBlobs.getWidth() <= 0 || heroBgBlobs.getHeight() <= 0
                             || PlayerServiceUtil.getPlayerState() != PlayState.Playing) {
                         return;
@@ -1581,15 +1601,19 @@ public class FragmentPlayerFull extends Fragment {
         }
         // 基底：主色铺满，低透明度（~43%）——压低后色斑之间的对比更强烈，
         // 均匀底色感更弱、涌动感更强
-        heroBlobBase.setBackgroundColor(darkenBase(palette.base));
+        // 基底垂直渐隐（上下各 ~14% 渐变到全透明）：纯色矩形会在信息页上下边缘
+        // 被截出恒定横线，渐隐后边缘 alpha 归零、与相邻区域无缝延续
+        heroBlobBase.setBackground(makeBaseGradient(darkenBase(palette.base)));
 
         final int shortSide = Math.min(heroBgBlobs.getWidth(), heroBgBlobs.getHeight());
         final int W = heroBgBlobs.getWidth();
         final int H = heroBgBlobs.getHeight();
 
-        // 错落锚点（相对容器比例）：四角内收 + 中部
+        // 错落锚点（相对容器比例）：四角内收 + 中部。y 取 0.36/0.64（水平仍贴角）：
+        // 色斑可见圆不得越信息页上下边（0.42×size 约束），锚点越靠边可用尺寸越小，
+        // 内移换取边缘斑保持较大面积
         final float[][] corners = {
-                {0.26f, 0.28f}, {0.74f, 0.24f}, {0.72f, 0.74f}, {0.28f, 0.72f}
+                {0.26f, 0.36f}, {0.74f, 0.33f}, {0.72f, 0.64f}, {0.28f, 0.67f}
         };
 
         // 亮暗分层定位（用户要求）：按颜色明度从暗到浅排三层——最深的 1 枚在屏幕
@@ -1638,20 +1662,30 @@ public class FragmentPlayerFull extends Fragment {
                     ? palette.weights[Math.min(ci, palette.weights.length - 1)] : 1f;
             final float lo, hi;
             if (blobDepth[i] == 0) {
-                lo = 0.45f; hi = 0.90f;
+                lo = 0.52f; hi = 1.04f;
             } else if (blobDepth[i] == 1) {
-                lo = 0.50f; hi = 1.10f;
+                lo = 0.58f; hi = 1.27f;
             } else {
-                lo = 0.55f; hi = 1.40f;
+                lo = 0.63f; hi = 1.61f;
             }
-            int size = Math.round(shortSide * (lo + (hi - lo) * wn));
+            // 垂直自适应（消灭上下边横线的核心）：色斑可见圆（含渐变长尾，半径
+            // ≈0.42×size）不得越过信息页上/下边——哪怕 α 很低的长尾越出，也会被
+            // 顶栏/控制条的分界截出随涌动涨落的微横线（用户实测）。size 按锚点到
+            // 上/下边的垂直余量收紧；水平方向不约束：信息页左右边 = 屏幕边，屏外
+            // 裁切不可见。
+            float ay = Math.max(0f, Math.min(H, blobAnchors[i][1] * H));
+            float vLimit = Math.min(ay, H - ay) / 0.42f;
+            int size = Math.round(Math.min(shortSide * (lo + (hi - lo) * wn), vLimit));
+            float rCore = 0.42f * size;
+            ay = Math.max(rCore, Math.min(H - rCore, ay));
             ViewGroup.LayoutParams lp = blob.getLayoutParams();
             lp.width = size;
             lp.height = size;
             blob.setLayoutParams(lp);
-            // 初始位置 = 分层锚点（layout_gravity=center 基础上平移）
+            // 初始位置 = 分层锚点（layout_gravity=center 基础上平移）；y 用安全区内推值
             blob.setTranslationX((blobAnchors[i][0] - 0.5f) * W);
-            blob.setTranslationY((blobAnchors[i][1] - 0.5f) * H);
+            blob.setTranslationY(ay - 0.5f * H);
+            blobAnchors[i][1] = ay / H; // 回写内推后的锚点，buildBlobAnimations 轨道同源
             blob.setImageDrawable(makeBlobDrawable(color, size));
         }
     }
@@ -1661,7 +1695,9 @@ public class FragmentPlayerFull extends Fragment {
         if (heroBlobBase == null || heroBlobViews == null || heroBgBlobs.getWidth() <= 0) {
             return;
         }
-        heroBlobBase.setBackgroundColor(darkenBase(palette.base));
+        // 基底垂直渐隐（上下各 ~14% 渐变到全透明）：纯色矩形会在信息页上下边缘
+        // 被截出恒定横线，渐隐后边缘 alpha 归零、与相邻区域无缝延续
+        heroBlobBase.setBackground(makeBaseGradient(darkenBase(palette.base)));
         int colorCount = palette.colors.length;
         for (int i = 0; i < BLOB_COUNT; i++) {
             int color = palette.colors[i % colorCount];
@@ -1675,9 +1711,13 @@ public class FragmentPlayerFull extends Fragment {
      * 两枚错位径向渐变圆叠加（LayerDrawable）+ 三段长尾渐隐，边缘无锐利切线。
      */
     private android.graphics.drawable.Drawable makeBlobDrawable(int color, int sizePx) {
-        GradientDrawable mainBlob = makeBlobGradient(color, 0.42f, 0.42f, sizePx);
+        // 每层渐变半径必须 ≤ 圆心到 view 四边的最小距离（错位圆心离哪边近就用哪边）：
+        // 保证 view 边缘处 alpha 严格归零——色斑 view 越出容器边界的部分全是透明
+        // 像素，被容器边界裁切也不留横/竖直线痕迹（用户实测截图踩坑：半径 0.60
+        // 超出半宽 0.50，边缘 α≈30 被裁出明显直线）
+        GradientDrawable mainBlob = makeBlobGradient(color, 0.42f, 0.42f, sizePx, 0.42f);
         GradientDrawable subBlob = makeBlobGradient(
-                ColorUtils.blendARGB(color, Color.BLACK, 0.14f), 0.64f, 0.63f, sizePx);
+                ColorUtils.blendARGB(color, Color.BLACK, 0.14f), 0.64f, 0.63f, sizePx, 0.35f);
         return new android.graphics.drawable.LayerDrawable(
                 new android.graphics.drawable.Drawable[]{subBlob, mainBlob});
     }
@@ -1686,7 +1726,8 @@ public class FragmentPlayerFull extends Fragment {
      * 单层径向渐变：四段长尾渐隐（中心近实色 → 40% 半透 → 75% 微痕 → 边缘全透明）。
      * 核心透明度拉高到 235，重叠处色彩浓艳（对齐视频），长尾保证无锐利边界。
      */
-    private GradientDrawable makeBlobGradient(int color, float centerX, float centerY, int sizePx) {
+    private GradientDrawable makeBlobGradient(
+            int color, float centerX, float centerY, int sizePx, float radiusRatio) {
         GradientDrawable blob = new GradientDrawable();
         blob.setGradientType(GradientDrawable.RADIAL_GRADIENT);
         blob.setGradientCenter(centerX, centerY);
@@ -1696,8 +1737,8 @@ public class FragmentPlayerFull extends Fragment {
                 ColorUtils.setAlphaComponent(color, 45),
                 Color.TRANSPARENT
         }, new float[]{0f, 0.40f, 0.75f, 1f});
-        // 径向半径取尺寸的 60%，与四段 stops 配合形成长尾柔焦
-        blob.setGradientRadius(sizePx * 0.60f);
+        // 半径取圆心到最近边的距离以内（radiusRatio），view 边缘 alpha 严格归零
+        blob.setGradientRadius(sizePx * radiusRatio);
         return blob;
     }
 
@@ -1813,7 +1854,12 @@ public class FragmentPlayerFull extends Fragment {
             final float cx = (anchor[0] - 0.5f) * heroW;
             final float cy = (anchor[1] - 0.5f) * heroH;
             final float rx = s[0] * heroW;
-            final float ry = s[1] * heroH;
+            // 垂直轨道半径同步安全化：圆心全程 ±ry 不得让可见圆（≈0.42×size，含
+            // 长尾）越过信息页上/下边——否则游走中仍会周期性截出微横线
+            final float rCore = 0.42f * blob.getLayoutParams().width;
+            final float cyAbs = 0.5f * heroH + cy;
+            final float ry = Math.max(0.03f * heroH, Math.min(s[1] * heroH,
+                    Math.min(cyAbs - rCore, heroH - cyAbs - rCore)));
             Path orbit = makeOrbitPath(cx, cy, rx, ry, s[3], s[4] > 0f, s[8]);
 
             ObjectAnimator travel = ObjectAnimator.ofFloat(blob,
@@ -1965,9 +2011,43 @@ public class FragmentPlayerFull extends Fragment {
     }
 
     /**
+     * 全屏基底：垂直渐隐（上下各 ~14% 渐变到全透明）——纯色矩形会在信息页上下
+     * 边缘被截出恒定横线，渐隐后边缘 alpha 归零、与相邻区域无缝延续。
+     */
+    private static android.graphics.drawable.Drawable makeBaseGradient(int baseColor) {
+        GradientDrawable base = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{
+                        Color.TRANSPARENT,
+                        baseColor,
+                        baseColor,
+                        Color.TRANSPARENT
+                });
+        base.setColors(new int[]{
+                Color.TRANSPARENT,
+                baseColor,
+                baseColor,
+                Color.TRANSPARENT
+        }, new float[]{0f, 0.14f, 0.86f, 1f});
+        return base;
+    }
+
+    /**
+     * 从 startView 沿祖先链到窗口根，逐级关闭子 view 裁切（clipChildren=false）：
+     * 色斑越出容器/信息页/pager 的部分得以一路画到窗口边界，唯一裁切发生在
+     * 屏幕物理边界（屏外不可见）——这是消灭可视区内横/竖截断线的关键。
+     * ViewPager 放开后横滑时相邻页内容会短暂越界绘制，视觉影响可忽略。
+     */
+    private static void releaseClipUpToWindow(View startView) {
+        ViewGroup v = startView instanceof ViewGroup ? (ViewGroup) startView : null;
+        while (v != null && v.getParent() instanceof ViewGroup) {
+            v.setClipChildren(false);
+            v = (ViewGroup) v.getParent();
+        }
+    }
+
+    /**
      * 文字护盾层（可读性根治）：中央（55% 高度处，即信息组中心）最暗的椭圆径向
      * 软渐变、向外羽化至全透明——无论色斑如何涌动，中段信息组的背景亮度恒定。
-     * 与 blur 同层（容器 RenderEffect 会再柔化一次，渐变更自然）。
      */
     private void applyHeroShield() {
         if (heroBlobShield == null) {
@@ -1979,7 +2059,7 @@ public class FragmentPlayerFull extends Fragment {
         shield.setGradientCenter(0.5f, 0.55f);
         final int w = heroBgBlobs.getWidth();
         final int h = heroBgBlobs.getHeight();
-        shield.setGradientRadius(w > 0 && h > 0 ? Math.max(w, h) * 0.62f : 1f);
+        shield.setGradientRadius(w > 0 && h > 0 ? Math.max(w, h) * 0.52f : 1f);
         heroBlobShield.setImageDrawable(shield);
     }
 
