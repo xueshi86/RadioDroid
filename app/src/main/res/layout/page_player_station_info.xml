@@ -76,6 +76,14 @@
             android:layout_height="470dp"
             android:layout_gravity="center"
             tools:ignore="ContentDescription" />
+
+        <!-- 文字护盾层：中央椭圆软渐变（信息组 55% 高度处最暗、向外羽化透明），
+             无论色斑如何涌动，中段信息组区域的背景亮度恒定，白字始终可读 -->
+        <ImageView
+            android:id="@+id/heroBlobShield"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:ignore="ContentDescription" />
     </FrameLayout>
 
     <!-- 上下压暗 scrim：保证顶部唱片区与底部备注行的白字在任意背景上可读 -->

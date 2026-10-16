@@ -185,6 +185,10 @@ public class FragmentPlayerFull extends Fragment {
     private final int[] blobDepth = new int[]{2, 2, 2, 2, 2};
     /** 各色斑的分层锚点（applyBlobPaletteImmediate 写入，buildBlobAnimations 读作轨道圆心） */
     private final float[][] blobAnchors = new float[BLOB_COUNT][];
+    /** 文字护盾层：中央椭圆软渐变，保证信息组区域背景亮度恒定（白字可读） */
+    private ImageView heroBlobShield;
+    /** 切台涟漪动画（色板过渡时整场轻微放大回落） */
+    private AnimatorSet blobRippleAnimator;
 
     /**
      * 取色结果（spec：主导色 + 面积占比，保持图标原色，按占比排序）。
@@ -426,6 +430,7 @@ public class FragmentPlayerFull extends Fragment {
                         // 色板就绪但布局前未能渲染：按实际视口补一次
                         applyBlobPaletteImmediate(blobPalette);
                     }
+                    applyHeroShield(); // 布局就绪后按实际视口校正护盾渐变半径
                     if (heroFlowAnimator != null) {
                         if (!heroFlowAnimator.isRunning()) {
                             heroFlowAnimator.start();
@@ -443,6 +448,8 @@ public class FragmentPlayerFull extends Fragment {
         heroStationName = stationInfoPage.findViewById(R.id.heroStationName);
         heroNowPlaying = stationInfoPage.findViewById(R.id.heroNowPlaying);
         heroNowRecording = stationInfoPage.findViewById(R.id.heroNowRecording);
+        heroBlobShield = stationInfoPage.findViewById(R.id.heroBlobShield);
+        applyHeroShield();
         heroMetaChips = stationInfoPage.findViewById(R.id.heroMetaChips);
         statBufferChip = stationInfoPage.findViewById(R.id.statBufferChip);
         statTrafficChip = stationInfoPage.findViewById(R.id.statTrafficChip);
@@ -1516,6 +1523,9 @@ public class FragmentPlayerFull extends Fragment {
         final BlobPalette old = blobPalette;
         blobPalette = newPalette;
         if (old != null && heroBgBlobs.getAlpha() > 0.05f && blobPaletteTransition == null) {
+            // 不闪断、不重排布局；过渡开始时整场做一次极轻微放大回落
+            // 的「涟漪」，把「歌换了」变成一次视觉呼吸（一首歌至多一次）
+            startHeroBlobRipple();
             blobPaletteTransition = ValueAnimator.ofFloat(0f, 1f);
             blobPaletteTransition.setDuration(2000);
             blobPaletteTransition.setInterpolator(new LinearInterpolator());
@@ -1559,7 +1569,7 @@ public class FragmentPlayerFull extends Fragment {
         }
         // 基底：主色铺满，低透明度（~43%）——压低后色斑之间的对比更强烈，
         // 均匀底色感更弱、涌动感更强
-        heroBlobBase.setBackgroundColor(ColorUtils.setAlphaComponent(palette.base, 110));
+        heroBlobBase.setBackgroundColor(darkenBase(palette.base));
 
         final int shortSide = Math.min(heroBgBlobs.getWidth(), heroBgBlobs.getHeight());
         final int W = heroBgBlobs.getWidth();
@@ -1575,13 +1585,14 @@ public class FragmentPlayerFull extends Fragment {
         // 中心收缩 55%），最浅的 2 枚占四角边缘锚点大轨道扫掠边缘；明度对角分布，
         // 避免亮斑顶托中央白色前景字
         int colorCount = palette.colors.length;
+        // 排序依据用 Rec601 感知亮度而非 HSV V：同样 V 的蓝色看起来比黄色暗得多，
+        // 按 V 分层会让蓝紫系图标的「最深色」实际观感发亮——感知亮度才符合人眼
         final float[] blobV = new float[BLOB_COUNT];
         Integer[] byV = new Integer[BLOB_COUNT];
         for (int i = 0; i < BLOB_COUNT; i++) {
             byV[i] = i;
-            float[] hsv = new float[3];
-            Color.colorToHSV(palette.colors[i % colorCount], hsv);
-            blobV[i] = hsv[2];
+            final int c = palette.colors[i % colorCount];
+            blobV[i] = (0.299f * Color.red(c) + 0.587f * Color.green(c) + 0.114f * Color.blue(c)) / 255f;
         }
         java.util.Arrays.sort(byV, (a, b) -> Float.compare(blobV[a], blobV[b]));
         // 槽位：rank0 最深→中心；rank1/2 次深→对角两角的内环收缩位；rank3/4 最浅→另两对角边缘
@@ -1609,10 +1620,19 @@ public class FragmentPlayerFull extends Fragment {
             // 色斑颜色循环取用（5 斑 / 3~4 色，相邻斑错开）
             final int ci = i % colorCount;
             final int color = palette.colors[ci];
-            // 面积按占比分配（用户要求）：占比越大图斑越大（视口短边 50%~130%）
+            // 面积按占比分配 + 按分层收紧上限（用户校准）：中央小而深、边缘大而浅，
+            // 中带自然留出「安静区」，与边缘涌动形成动静对比
             float wn = palette.weights.length > 0
                     ? palette.weights[Math.min(ci, palette.weights.length - 1)] : 1f;
-            int size = Math.round(shortSide * (0.50f + 0.80f * wn));
+            final float lo, hi;
+            if (blobDepth[i] == 0) {
+                lo = 0.45f; hi = 0.90f;
+            } else if (blobDepth[i] == 1) {
+                lo = 0.50f; hi = 1.10f;
+            } else {
+                lo = 0.55f; hi = 1.40f;
+            }
+            int size = Math.round(shortSide * (lo + (hi - lo) * wn));
             ViewGroup.LayoutParams lp = blob.getLayoutParams();
             lp.width = size;
             lp.height = size;
@@ -1629,7 +1649,7 @@ public class FragmentPlayerFull extends Fragment {
         if (heroBlobBase == null || heroBlobViews == null || heroBgBlobs.getWidth() <= 0) {
             return;
         }
-        heroBlobBase.setBackgroundColor(ColorUtils.setAlphaComponent(palette.base, 110));
+        heroBlobBase.setBackgroundColor(darkenBase(palette.base));
         int colorCount = palette.colors.length;
         for (int i = 0; i < BLOB_COUNT; i++) {
             int color = palette.colors[i % colorCount];
@@ -1807,6 +1827,44 @@ public class FragmentPlayerFull extends Fragment {
             anims.add(sy);
         }
 
+        // 整场极慢漂移（准周期化，耐看性关键）：所有色斑作为一个场以质数周期
+        // 两轴缓慢游移 ±2~2.5% 视口，与各斑轨道周期叠加后整体重复周期达分钟级，
+        // 画面「永不重样」但依然平滑（translation 与各斑轨道分属不同 View，无冲突）
+        ObjectAnimator driftX = ObjectAnimator.ofFloat(heroBgBlobs, View.TRANSLATION_X,
+                -0.025f * heroW, 0.025f * heroW);
+        driftX.setDuration(53000L);
+        driftX.setRepeatCount(ValueAnimator.INFINITE);
+        driftX.setRepeatMode(ValueAnimator.REVERSE);
+        driftX.setInterpolator(easeInOut);
+        ObjectAnimator driftY = ObjectAnimator.ofFloat(heroBgBlobs, View.TRANSLATION_Y,
+                -0.02f * heroH, 0.02f * heroH);
+        driftY.setDuration(41000L);
+        driftY.setRepeatCount(ValueAnimator.INFINITE);
+        driftY.setRepeatMode(ValueAnimator.REVERSE);
+        driftY.setInterpolator(easeInOut);
+        anims.add(driftX);
+        anims.add(driftY);
+
+        // 各斑 alpha 涨落（存在感呼吸）：质数周期错开 + 初值差异化（兼作入场错峰），
+        // 色斑有「出墨/收墨」的节奏，画面密度不再恒定
+        final float[][] alphaSpecs = {
+                {0.86f, 1.00f, 23000},
+                {0.90f, 1.00f, 31000},
+                {0.84f, 0.98f, 43000},
+                {0.88f, 1.00f, 29000},
+                {0.86f, 0.99f, 37000},
+        };
+        for (int i = 0; i < BLOB_COUNT; i++) {
+            heroBlobViews[i].setAlpha(alphaSpecs[i][0]); // 初值差异化 = 入场错峰
+            ObjectAnimator fade = ObjectAnimator.ofFloat(heroBlobViews[i], View.ALPHA,
+                    alphaSpecs[i][0], alphaSpecs[i][1]);
+            fade.setDuration((long) (float) alphaSpecs[i][2]);
+            fade.setRepeatCount(ValueAnimator.INFINITE);
+            fade.setRepeatMode(ValueAnimator.REVERSE);
+            fade.setInterpolator(easeInOut);
+            anims.add(fade);
+        }
+
         heroFlowAnimator = new AnimatorSet();
         heroFlowAnimator.playTogether(anims);
     }
@@ -1856,6 +1914,61 @@ public class FragmentPlayerFull extends Fragment {
         if (heroFlowAnimator != null) {
             heroFlowAnimator.cancel();
         }
+    }
+
+    /**
+     * 切台涟漪：色板过渡开始时整场 1.0→1.045→1.0 缓慢放大回落（4s）——把
+     * 「歌换了」变成一次克制的视觉呼吸；scale 与场漂移 translation 分属不同
+     * 属性，无冲突。
+     */
+    private void startHeroBlobRipple() {
+        if (heroBgBlobs == null) {
+            return;
+        }
+        if (blobRippleAnimator != null) {
+            blobRippleAnimator.cancel();
+        }
+        ObjectAnimator sx = ObjectAnimator.ofFloat(heroBgBlobs, View.SCALE_X, 1f, 1.045f, 1f);
+        ObjectAnimator sy = ObjectAnimator.ofFloat(heroBgBlobs, View.SCALE_Y, 1f, 1.045f, 1f);
+        final long dur = 4000L;
+        sx.setDuration(dur);
+        sy.setDuration(dur);
+        TimeInterpolator ease = new AccelerateDecelerateInterpolator();
+        sx.setInterpolator(ease);
+        sy.setInterpolator(ease);
+        blobRippleAnimator = new AnimatorSet();
+        blobRippleAnimator.playTogether(sx, sy);
+        blobRippleAnimator.start();
+    }
+
+    /**
+     * 基底色向深偏移（亮度压到 ≤0.32）并加实（α130）：暗基底让色斑「发光」而非
+     * 「漂浮」，是高级深色 UI 的通行做法，白字对比同时受益。
+     */
+    private static int darkenBase(int base) {
+        float[] hsv = new float[3];
+        Color.colorToHSV(base, hsv);
+        hsv[2] = Math.min(hsv[2], 0.32f);
+        return ColorUtils.setAlphaComponent(Color.HSVToColor(hsv), 130);
+    }
+
+    /**
+     * 文字护盾层（可读性根治）：中央（55% 高度处，即信息组中心）最暗的椭圆径向
+     * 软渐变、向外羽化至全透明——无论色斑如何涌动，中段信息组的背景亮度恒定。
+     * 与 blur 同层（容器 RenderEffect 会再柔化一次，渐变更自然）。
+     */
+    private void applyHeroShield() {
+        if (heroBlobShield == null) {
+            return;
+        }
+        GradientDrawable shield = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[]{0x4D000000, 0x1A000000, 0x00000000});
+        shield.setGradientType(GradientDrawable.RADIAL_GRADIENT);
+        shield.setGradientCenter(0.5f, 0.55f);
+        final int w = heroBgBlobs.getWidth();
+        final int h = heroBgBlobs.getHeight();
+        shield.setGradientRadius(w > 0 && h > 0 ? Math.max(w, h) * 0.62f : 1f);
+        heroBlobShield.setImageDrawable(shield);
     }
 
     /**
