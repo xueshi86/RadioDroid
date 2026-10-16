@@ -1731,12 +1731,23 @@ public class FragmentPlayerFull extends Fragment {
         GradientDrawable blob = new GradientDrawable();
         blob.setGradientType(GradientDrawable.RADIAL_GRADIENT);
         blob.setGradientCenter(centerX, centerY);
-        blob.setColors(new int[]{
-                ColorUtils.setAlphaComponent(color, 235),
-                ColorUtils.setAlphaComponent(color, 135),
-                ColorUtils.setAlphaComponent(color, 45),
-                Color.TRANSPARENT
-        }, new float[]{0f, 0.40f, 0.75f, 1f});
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // 两参 setColors（含渐变位置）仅 API 29+；低版本退化单参（位置均匀分布），
+            // 长尾渐隐的四段透明度保持不变，仅段位从 40%/75% 移到 33%/67%，视觉近似
+            blob.setColors(new int[]{
+                    ColorUtils.setAlphaComponent(color, 235),
+                    ColorUtils.setAlphaComponent(color, 135),
+                    ColorUtils.setAlphaComponent(color, 45),
+                    Color.TRANSPARENT
+            }, new float[]{0f, 0.40f, 0.75f, 1f});
+        } else {
+            blob.setColors(new int[]{
+                    ColorUtils.setAlphaComponent(color, 235),
+                    ColorUtils.setAlphaComponent(color, 135),
+                    ColorUtils.setAlphaComponent(color, 45),
+                    Color.TRANSPARENT
+            });
+        }
         // 半径取圆心到最近边的距离以内（radiusRatio），view 边缘 alpha 严格归零
         blob.setGradientRadius(sizePx * radiusRatio);
         return blob;
@@ -1862,8 +1873,18 @@ public class FragmentPlayerFull extends Fragment {
                     Math.min(cyAbs - rCore, heroH - cyAbs - rCore)));
             Path orbit = makeOrbitPath(cx, cy, rx, ry, s[3], s[4] > 0f, s[8]);
 
-            ObjectAnimator travel = ObjectAnimator.ofFloat(blob,
-                    View.TRANSLATION_X, View.TRANSLATION_Y, orbit);
+            // 轨道动画用 ValueAnimator + PathMeasure 逐帧取点（API 1+），
+            // 不用 ObjectAnimator 的双属性 Path 重载（API 21+，minSdk 16 低版本会崩）
+            final android.graphics.PathMeasure orbitMeasure =
+                    new android.graphics.PathMeasure(orbit, false);
+            final float[] orbitPos = new float[2];
+            ValueAnimator travel = ValueAnimator.ofFloat(0f, 1f);
+            travel.addUpdateListener(a -> {
+                orbitMeasure.getPosTan(
+                        (Float) a.getAnimatedValue() * orbitMeasure.getLength(), orbitPos, null);
+                blob.setTranslationX(orbitPos[0]);
+                blob.setTranslationY(orbitPos[1]);
+            });
             travel.setDuration((long) s[2]);
             travel.setInterpolator(new LinearInterpolator()); // 匀速绕轨，循环点无缝
             travel.setRepeatCount(ValueAnimator.INFINITE);
@@ -2015,19 +2036,19 @@ public class FragmentPlayerFull extends Fragment {
      * 边缘被截出恒定横线，渐隐后边缘 alpha 归零、与相邻区域无缝延续。
      */
     private static android.graphics.drawable.Drawable makeBaseGradient(int baseColor) {
-        GradientDrawable base = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{
-                        Color.TRANSPARENT,
-                        baseColor,
-                        baseColor,
-                        Color.TRANSPARENT
-                });
-        base.setColors(new int[]{
+        final int[] cols = {
                 Color.TRANSPARENT,
                 baseColor,
                 baseColor,
                 Color.TRANSPARENT
-        }, new float[]{0f, 0.14f, 0.86f, 1f});
+        };
+        GradientDrawable base = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                cols);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // 两参 setColors（含渐变位置）仅 API 29+；低版本退化单参（位置均匀分布），
+            // 上下渐隐带从 14% 变为 33%，边缘 alpha 归零的无痕效果不变
+            base.setColors(cols, new float[]{0f, 0.14f, 0.86f, 1f});
+        }
         return base;
     }
 
