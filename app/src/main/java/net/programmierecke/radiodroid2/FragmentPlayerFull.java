@@ -178,6 +178,15 @@ public class FragmentPlayerFull extends Fragment {
     /** 色斑数量（与布局 heroBlob1~5 对应） */
     private static final int BLOB_COUNT = 5;
 
+    /** 内容 pager 真实页数（电台信息/本台曲目/曲目历史/录音列表） */
+    private static final int PAGER_REAL_COUNT = 4;
+    /** 循环副本份数：虚拟页数 = 真实页数 × 副本数，实现首尾循环拖动 */
+    private static final int PAGER_COPIES = 7;
+    /** 中心副本区起点（初始位置与边缘归一化回跳位置） */
+    private static final int PAGER_CENTER_BASE = PAGER_REAL_COUNT * (PAGER_COPIES / 2);
+    /** 程序化同步分段高亮中（onPageSelected → selectTab），onTabSelected 不翻页 */
+    private boolean suppressTabJump;
+
     /**
      * 各色斑明度分层（0=最深→中心小轨道；1=次深→中环围绕；2=最浅→四角边缘大轨道），
      * applyBlobPaletteImmediate 按颜色明度排序写入；默认 2（色板未就绪时走边缘大轨道）。
@@ -578,6 +587,9 @@ public class FragmentPlayerFull extends Fragment {
         pagerContent = view.findViewById(R.id.pagerContent);
         historyAndRecordsPagerAdapter = new HistoryAndRecordsPagerAdapter(requireContext(), pagerContent, stationInfoPage);
         pagerContent.setAdapter(historyAndRecordsPagerAdapter);
+        // 无限循环：初始落在中心副本区的「电台信息」页，两侧各留 3 份完整副本，
+        // 「电台信息」继续右滑到「录音列表」、「录音列表」继续左滑到「电台信息」
+        pagerContent.setCurrentItem(PAGER_CENTER_BASE, false);
 
         // 单行四段分段控件（UI 审查 P1-2）：取代原先两行 PagerTabStrip，四个页面全部保留
         setupSegmentTabs(view);
@@ -2299,6 +2311,9 @@ public class FragmentPlayerFull extends Fragment {
         private ViewGroup layoutSongHistory;
         private ViewGroup layoutRecordings;
 
+        /** 各真实页最近一次 instantiate 的虚拟 position（destroy 时效守卫，见 destroyItem） */
+        private final int[] lastInstantiatedAt = new int[PAGER_REAL_COUNT];
+
         ViewGroup layoutCurrentPlaying;
 
         RecyclerView recyclerViewCurrentStationHistory;
@@ -2338,30 +2353,46 @@ public class FragmentPlayerFull extends Fragment {
         @NonNull
         @Override
         public Object instantiateItem(@NonNull ViewGroup collection, int position) {
-            switch (position) {
+            // 无限循环：虚拟 position 对真实页数取模；四个页面均为单实例 view 复用，
+            // 先从容器摘除已在挂载中的副本页（ViewPager 先 instantiate 新页后 destroy
+            // 旧页，同实例直接重复 add 会抛「already has a parent」）
+            final View page;
+            switch (position % PAGER_REAL_COUNT) {
                 case 0:
-                    collection.addView(layoutStationInfo);
-                    return layoutStationInfo;
+                    page = layoutStationInfo;
+                    break;
                 case 1:
-                    collection.addView(layoutCurrentStationHistory);
-                    return layoutCurrentStationHistory;
+                    page = layoutCurrentStationHistory;
+                    break;
                 case 2:
-                    collection.addView(layoutSongHistory);
-                    return layoutSongHistory;
+                    page = layoutSongHistory;
+                    break;
                 default:
-                    collection.addView(layoutRecordings);
-                    return layoutRecordings;
+                    page = layoutRecordings;
+                    break;
             }
+            if (page.getParent() == collection) {
+                collection.removeView(page);
+            }
+            collection.addView(page);
+            lastInstantiatedAt[position % PAGER_REAL_COUNT] = position;
+            return page;
         }
 
         @Override
         public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object view) {
+            // 时效守卫：同一真实页的 view 单实例复用，若该页已被更近一次 instantiate
+            // 挂到新副本 position（回跳归一化时可能发生），旧副本的 destroy 不能把
+            // view 从新副本位置摘走——否则新页当场空白
+            if (lastInstantiatedAt[position % PAGER_REAL_COUNT] != position) {
+                return;
+            }
             container.removeView((View) view);
         }
 
         @Override
         public int getCount() {
-            return 4;
+            return PAGER_REAL_COUNT * PAGER_COPIES;
         }
 
         @Override
@@ -2412,7 +2443,9 @@ public class FragmentPlayerFull extends Fragment {
      * 单行四段分段控件（UI 审查 P1-2 及后续调整）：合并原先两行 PagerTabStrip，
      * 「电台信息 | 本台曲目 | 曲目历史 | 录音列表」四页全部承载于单个内容 pager
      * （「电台信息」页合并了原专辑封面与信息两页内容），点击分段翻页、横滑翻页
-     * 同步分段高亮，双向联动；录音状态块仅随「电台信息 / 录音列表」显示。
+     * 同步分段高亮，双向联动；四页支持**无限循环拖动**（副本取模 + 边缘归一化：
+     * 「电台信息」继续右滑到「录音列表」、「录音列表」继续左滑到「电台信息」）；
+     * 录音状态块仅随「电台信息 / 录音列表」显示。
      * 胶囊背景用当前主题强调色（配色方案联动），胶囊文字
      * 按 WCAG 亮度自动取黑/白（与项目既有「色块取字色」规则一致）；未选中段用次要文字色。
      */
@@ -2450,8 +2483,13 @@ public class FragmentPlayerFull extends Fragment {
             @Override
             public void onTabSelected(@NonNull TabLayout.Tab tab) {
                 updateSegmentStyles(tab.getPosition());
-                // 点击分段 → 翻页（同位置时 setCurrentItem 为无操作）
-                pagerContent.setCurrentItem(tab.getPosition(), false);
+                // 用户点击分段 → 翻页（同位置时 setCurrentItem 为无操作）；post 到
+                // 下一拍执行，避免 onPageSelected → selectTab 触发本回调时在 populate
+                // 过程中重入 setCurrentItem；程序化同步（suppressTabJump）不翻页
+                if (!suppressTabJump) {
+                    final int target = PAGER_CENTER_BASE + tab.getPosition();
+                    pagerContent.post(() -> pagerContent.setCurrentItem(target, false));
+                }
             }
 
             @Override
@@ -2468,11 +2506,31 @@ public class FragmentPlayerFull extends Fragment {
         pagerContent.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
-                TabLayout.Tab tab = segmentTabs.getTabAt(position);
-                if (tab != null && segmentTabs.getSelectedTabPosition() != position) {
-                    segmentTabs.selectTab(tab);
+                final int real = position % PAGER_REAL_COUNT;
+                // 静默同步分段高亮（程序化选择，不触发 onTabSelected 的翻页路径）
+                suppressTabJump = true;
+                try {
+                    TabLayout.Tab tab = segmentTabs.getTabAt(real);
+                    if (tab != null && segmentTabs.getSelectedTabPosition() != real) {
+                        segmentTabs.selectTab(tab);
+                    }
+                } finally {
+                    suppressTabJump = false;
                 }
                 updateRecordingRowVisibility();
+                // 无限循环：拖进边缘副本区（首尾各 1 份之外）→ 无动画跳回中心副本区
+                // 的同一真实页。观感上即「电台信息」继续右滑出「录音列表」、
+                // 「录音列表」继续左滑出「电台信息」，画面不变、无回卷闪烁。
+                // post 到下一拍执行：onPageSelected 在 populate 内触发，此处同步
+                // setCurrentItem 会重入 populate 导致单实例页 view 摘挂错乱（白页）
+                pagerContent.post(() -> {
+                    final int cur = pagerContent.getCurrentItem();
+                    if (cur < PAGER_REAL_COUNT
+                            || cur >= PAGER_REAL_COUNT * (PAGER_COPIES - 1)) {
+                        pagerContent.setCurrentItem(
+                                PAGER_CENTER_BASE + (cur % PAGER_REAL_COUNT), false);
+                    }
+                });
             }
         });
 
