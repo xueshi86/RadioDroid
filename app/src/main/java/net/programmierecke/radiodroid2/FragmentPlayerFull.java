@@ -178,8 +178,13 @@ public class FragmentPlayerFull extends Fragment {
     /** 色斑数量（与布局 heroBlob1~5 对应） */
     private static final int BLOB_COUNT = 5;
 
-    /** 各色斑亮暗标记（true=深色→中心小轨道常驻中部；applyBlobPaletteImmediate 按颜色明度写入） */
-    private final boolean[] blobDarkFlags = new boolean[BLOB_COUNT];
+    /**
+     * 各色斑明度分层（0=最深→中心小轨道；1=次深→中环围绕；2=最浅→四角边缘大轨道），
+     * applyBlobPaletteImmediate 按颜色明度排序写入；默认 2（色板未就绪时走边缘大轨道）。
+     */
+    private final int[] blobDepth = new int[]{2, 2, 2, 2, 2};
+    /** 各色斑的分层锚点（applyBlobPaletteImmediate 写入，buildBlobAnimations 读作轨道圆心） */
+    private final float[][] blobAnchors = new float[BLOB_COUNT][];
 
     /**
      * 取色结果（spec：主导色 + 面积占比，保持图标原色，按占比排序）。
@@ -1561,33 +1566,42 @@ public class FragmentPlayerFull extends Fragment {
         final int H = heroBgBlobs.getHeight();
 
         // 错落锚点（相对容器比例）：四角内收 + 中部
-        final float[][] anchors = {
-                {0.26f, 0.28f}, {0.74f, 0.24f}, {0.72f, 0.74f}, {0.28f, 0.72f}, {0.50f, 0.50f}
+        final float[][] corners = {
+                {0.26f, 0.28f}, {0.74f, 0.24f}, {0.72f, 0.74f}, {0.28f, 0.72f}
         };
 
-        // 亮暗分布调优（用户要求）：浅色/白色斑块大部分时间待在边缘、深色斑块
-        // 常驻屏幕中部——中央亮斑会顶托白色前景字导致看不清。做法：按颜色明度
-        // 标记亮暗（blobDarkFlags），最暗色斑换到中心锚点（配合小轨道常驻中部，
-        // 见 buildBlobAnimations），其余（含亮/白色）走四角大轨道扫掠边缘
+        // 亮暗分层定位（用户要求）：按颜色明度从暗到浅排三层——最深的 1 枚在屏幕
+        // 最中间附近游动（小轨道），次深的 2 枚围绕最深的在中环游动（四角锚点向
+        // 中心收缩 55%），最浅的 2 枚占四角边缘锚点大轨道扫掠边缘；明度对角分布，
+        // 避免亮斑顶托中央白色前景字
         int colorCount = palette.colors.length;
-        int darkest = 0;
-        float darkestV = 2f;
+        final float[] blobV = new float[BLOB_COUNT];
+        Integer[] byV = new Integer[BLOB_COUNT];
         for (int i = 0; i < BLOB_COUNT; i++) {
+            byV[i] = i;
             float[] hsv = new float[3];
             Color.colorToHSV(palette.colors[i % colorCount], hsv);
-            blobDarkFlags[i] = hsv[2] < 0.55f;
-            if (hsv[2] < darkestV) {
-                darkestV = hsv[2];
-                darkest = i;
-            }
+            blobV[i] = hsv[2];
         }
-        if (darkest != BLOB_COUNT - 1) {
-            float[] tmp = anchors[darkest];
-            anchors[darkest] = anchors[BLOB_COUNT - 1];
-            anchors[BLOB_COUNT - 1] = tmp;
-            boolean flagTmp = blobDarkFlags[darkest];
-            blobDarkFlags[darkest] = blobDarkFlags[BLOB_COUNT - 1];
-            blobDarkFlags[BLOB_COUNT - 1] = flagTmp;
+        java.util.Arrays.sort(byV, (a, b) -> Float.compare(blobV[a], blobV[b]));
+        // 槽位：rank0 最深→中心；rank1/2 次深→对角两角的内环收缩位；rank3/4 最浅→另两对角边缘
+        final int[][] cornerSlot = {{0, 2}, {1, 3}}; // {中环用角}, {边缘用角}
+        int midIdx = 0, edgeIdx = 0;
+        for (int rank = 0; rank < BLOB_COUNT; rank++) {
+            final int blobIdx = byV[rank];
+            final float[] slot;
+            if (rank == 0) {
+                slot = new float[]{0.50f, 0.50f};
+                blobDepth[blobIdx] = 0;
+            } else if (rank <= 2) {
+                float[] c = corners[cornerSlot[0][midIdx++ % 2]];
+                slot = new float[]{0.5f + (c[0] - 0.5f) * 0.55f, 0.5f + (c[1] - 0.5f) * 0.55f};
+                blobDepth[blobIdx] = 1;
+            } else {
+                slot = corners[cornerSlot[1][edgeIdx++ % 2]];
+                blobDepth[blobIdx] = 2;
+            }
+            blobAnchors[blobIdx] = slot;
         }
 
         for (int i = 0; i < BLOB_COUNT; i++) {
@@ -1603,9 +1617,9 @@ public class FragmentPlayerFull extends Fragment {
             lp.width = size;
             lp.height = size;
             blob.setLayoutParams(lp);
-            // 初始位置 = 锚点（layout_gravity=center 基础上平移）
-            blob.setTranslationX((anchors[i][0] - 0.5f) * W);
-            blob.setTranslationY((anchors[i][1] - 0.5f) * H);
+            // 初始位置 = 分层锚点（layout_gravity=center 基础上平移）
+            blob.setTranslationX((blobAnchors[i][0] - 0.5f) * W);
+            blob.setTranslationY((blobAnchors[i][1] - 0.5f) * H);
             blob.setImageDrawable(makeBlobDrawable(color, size));
         }
     }
@@ -1736,32 +1750,39 @@ public class FragmentPlayerFull extends Fragment {
 
         // 各斑轨道参数：{半径X(视口宽比例), 半径Y(视口高比例), 轨道周期ms,
         //                起始角deg, 方向(+1顺时针/-1逆时针), 缩放min, 缩放max, 缩放周期ms}
-        // 亮/白色斑池：四角锚点大轨道，大部分时间在边缘扫掠；暗色斑池：中心
-        // 锚点小轨道常驻中部（亮暗分布用户校准——中央亮斑会顶托白色前景字）
-        final float[][] brightSpecs = {
-                {0.30f, 0.24f, 14000,   0f,  1f, 0.80f, 1.30f, 12000},
-                {0.24f, 0.30f, 16600,  90f, -1f, 0.85f, 1.25f, 14000},
-                {0.34f, 0.20f, 19000, 180f,  1f, 0.78f, 1.32f, 10000},
-                {0.22f, 0.26f, 13000, 270f, -1f, 0.85f, 1.28f, 13000},
-        };
+        // 按明度分层三档轨道池（用户要求）：最深档 = 中心小轨道游动；次深档 =
+        // 中环围绕；最浅档 = 四角大轨道扫掠边缘。每条轨道都带旋转角（各斑错开、
+        // 均非 0°/90° 轴对齐）——轴对齐椭圆会在拱点处呈现水平/垂直直线扫过感
+        // （用户反馈的「明显横竖线条」），旋转后轨迹斜向错落。字段：
+        // {半径X, 半径Y, 轨道周期ms, 起始角deg, 方向(±1), 缩放min, 缩放max, 缩放周期ms, 轨道旋转deg}
         final float[][] darkSpecs = {
-                {0.11f, 0.13f, 18000,  45f,  1f, 0.82f, 1.24f, 16000},
-                {0.14f, 0.17f, 21000, 225f, -1f, 0.80f, 1.28f, 14000},
+                {0.10f, 0.13f, 18000,  45f,  1f, 0.82f, 1.24f, 16000,  30f},
+                {0.12f, 0.15f, 21000, 225f, -1f, 0.80f, 1.28f, 14000, -45f},
         };
-        int brightIdx = 0, darkIdx = 0;
+        final float[][] midSpecs = {
+                {0.16f, 0.13f, 16600, 150f, -1f, 0.85f, 1.25f, 12000,  70f},
+                {0.14f, 0.17f, 19000, 330f,  1f, 0.84f, 1.26f, 15000, -25f},
+        };
+        final float[][] brightSpecs = {
+                {0.28f, 0.22f, 14000,   0f,  1f, 0.80f, 1.30f, 13000,  15f},
+                {0.24f, 0.28f, 13000, 270f, -1f, 0.85f, 1.28f, 14000, -60f},
+        };
+        int[] poolIdx = new int[3];
         TimeInterpolator easeInOut = new AccelerateDecelerateInterpolator();
         java.util.List<Animator> anims = new java.util.ArrayList<>();
         for (int i = 0; i < BLOB_COUNT; i++) {
             final View blob = heroBlobViews[i];
-            final float[] s = blobDarkFlags[i]
-                    ? darkSpecs[darkIdx++ % darkSpecs.length]
-                    : brightSpecs[brightIdx++ % brightSpecs.length];
-            // 轨道椭圆：圆心 = 锚点初始 translation（applyBlobPaletteImmediate 已设置）
-            final float cx = blob.getTranslationX();
-            final float cy = blob.getTranslationY();
+            final int depth = Math.max(0, Math.min(2, blobDepth[i]));
+            final float[][] pool = depth == 0 ? darkSpecs : depth == 1 ? midSpecs : brightSpecs;
+            final float[] s = pool[poolIdx[depth]++ % pool.length];
+            // 轨道椭圆：圆心 = 分层锚点（applyBlobPaletteImmediate 已按明度写入）
+            final float[] anchor = blobAnchors[i] != null
+                    ? blobAnchors[i] : new float[]{0.5f, 0.5f};
+            final float cx = (anchor[0] - 0.5f) * heroW;
+            final float cy = (anchor[1] - 0.5f) * heroH;
             final float rx = s[0] * heroW;
             final float ry = s[1] * heroH;
-            Path orbit = makeOrbitPath(cx, cy, rx, ry, s[3], s[4] > 0f);
+            Path orbit = makeOrbitPath(cx, cy, rx, ry, s[3], s[4] > 0f, s[8]);
 
             ObjectAnimator travel = ObjectAnimator.ofFloat(blob,
                     View.TRANSLATION_X, View.TRANSLATION_Y, orbit);
@@ -1792,11 +1813,12 @@ public class FragmentPlayerFull extends Fragment {
 
     /**
      * 构建椭圆轨道 Path（四段三次贝塞尔近似，kappa 常数）：圆心 (cx,cy)、
-     * 半轴 (rx,ry)、起始角 startDeg、cw 为顺时针（屏幕 y 向下，角度递增即顺时针）。
-     * 路径首尾闭合，配合 RESTART 无限循环无缝衔接。
+     * 半轴 (rx,ry)、起始角 startDeg、cw 为顺时针（屏幕 y 向下，角度递增即顺时针）、
+     * rotateDeg 为整条轨道绕圆心的旋转角（非 0°/90° 时轨迹斜向，消除轴对齐的
+     * 水平/垂直扫过感）。路径首尾闭合，配合 RESTART 无限循环无缝衔接。
      */
     private static Path makeOrbitPath(float cx, float cy, float rx, float ry,
-                                      float startDeg, boolean cw) {
+                                      float startDeg, boolean cw, float rotateDeg) {
         final double kappa = 0.5522847498307933;
         final double dir = cw ? 1.0 : -1.0;
         Path p = new Path();
@@ -1819,6 +1841,12 @@ public class FragmentPlayerFull extends Fragment {
                     pax + (float) (kappa * tax), pay + (float) (kappa * tay),
                     pbx - (float) (kappa * tbx), pby - (float) (kappa * tby),
                     pbx, pby);
+        }
+        if (rotateDeg != 0f) {
+            // 整条轨道绕圆心旋转：打破轴对齐，消除拱点处的水平/垂直直线扫过感
+            android.graphics.Matrix rot = new android.graphics.Matrix();
+            rot.postRotate(rotateDeg, cx, cy);
+            p.transform(rot);
         }
         return p;
     }
