@@ -676,6 +676,12 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
 
         if (playerBottomSheet.getState() == BottomSheetBehavior.STATE_EXPANDED) {
             appBarLayout.setExpanded(false);
+            // recreate（横竖屏/改语言/改主题）恢复时 BottomSheet 直接以展开态呈现、
+            // 不触发 onStateChanged，迷你条 role 卡在默认 PLAYER——展开态顶栏因此
+            // 显示播放暂停按钮而非 ⋮ 收纳按钮；此处按实际 sheet 状态补一次校正
+            if (smallPlayerFragment != null && smallPlayerFragment.isAdded()) {
+                smallPlayerFragment.setRole(FragmentPlayerSmall.Role.HEADER);
+            }
         }
 
         Intent intent = getIntent();

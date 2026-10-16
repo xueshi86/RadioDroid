@@ -784,6 +784,7 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="player_stat_buffer">En búfer</string>
     <string name="player_stat_data">Datos</string>
     <string name="player_hero_now_playing">Reproduciendo: %1$s</string>
+    <string name="player_hero_now_recording">Grabando: %1$s</string>
 
     <string name="content_desc_connection_type">Tipo de red</string>
     <string name="content_desc_connection_type_wifi">Conectado mediante Wi-Fi</string>

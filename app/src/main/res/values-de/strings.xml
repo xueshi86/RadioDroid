@@ -469,6 +469,7 @@
     <string name="player_stat_buffer">Puffer</string>
     <string name="player_stat_data">Daten</string>
     <string name="player_hero_now_playing">Wird gespielt: %1$s</string>
+    <string name="player_hero_now_recording">Aufnahme läuft: %1$s</string>
     <string name="webdav_restore_favourites_confirm">Beim Wiederherstellen der Favoriten wird die auf dem Server gespeicherte Favoritendatei verwendet.\n\n• Ersetzen: Die lokale Liste entspricht exakt dem Server; Sender, die nur lokal existieren, werden entfernt.\n• Zusammenführen: Behält alle lokalen Sender bei und fügt Sender hinzu, die nur auf dem Server existieren.\n\nVor dem Vorgang wird eine Kopie Ihrer aktuellen Favoriten auf diesem Gerät gespeichert.</string>
     <string name="webdav_restore_overwrite">Ersetzen</string>
     <string name="webdav_restore_merge">Zusammenführen</string>

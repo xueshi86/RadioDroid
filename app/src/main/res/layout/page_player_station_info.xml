@@ -252,6 +252,30 @@
             android:textSize="@dimen/text_body_small"
             tools:text="正在播放：John Boswell - From This Day" />
 
+        <!-- 「正在录音」行（信息组末行）：录音中显示（行首红色圆点 + 文件名），
+             与录音列表页的录音块互斥呈现，停止录音即消失 -->
+        <TextView
+            android:id="@+id/heroNowRecording"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="@dimen/space_md"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:paddingStart="@dimen/space_lg"
+            android:paddingLeft="@dimen/space_lg"
+            android:paddingEnd="@dimen/space_lg"
+            android:paddingRight="@dimen/space_lg"
+            android:shadowColor="@color/player_hero_text_shadow"
+            android:shadowDx="0"
+            android:shadowDy="1"
+            android:shadowRadius="6"
+            android:textColor="@color/player_hero_text_soft"
+            android:textSize="@dimen/text_body_small"
+            android:visibility="gone"
+            tools:text="正在录音：AsiaFM-20260101_120000.mp3" />
+
         <Space
             android:layout_width="match_parent"
             android:layout_height="0dp"

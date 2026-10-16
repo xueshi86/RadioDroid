@@ -551,6 +551,7 @@
     <string name="player_stat_buffer">Tampon</string>
     <string name="player_stat_data">Données</string>
     <string name="player_hero_now_playing">Lecture en cours : %1$s</string>
+    <string name="player_hero_now_recording">Enregistrement : %1$s</string>
     <string name="webdav_restore_favourites_confirm">La restauration des favorites utilisera le fichier de favorites stocké sur le serveur.\n\n• Remplacer : la liste locale correspondra exactement au serveur ; les stations présentes uniquement en local seront supprimées.\n• Fusionner : conserve toutes les stations locales et ajoute celles présentes uniquement sur le serveur.\n\nUne copie de vos favorites actuelles est enregistrée sur cet appareil avant l’opération.</string>
     <string name="webdav_restore_overwrite">Remplacer</string>
     <string name="webdav_restore_merge">Fusionner</string>

@@ -768,6 +768,7 @@
     <string name="player_stat_buffer">缓冲时长</string>
     <string name="player_stat_data">流量</string>
     <string name="player_hero_now_playing">正在播放：%1$s</string>
+    <string name="player_hero_now_recording">正在录音：%1$s</string>
 
     <string name="settings_bluetooth_connect_permission">附近设备权限</string>
     <string name="settings_bluetooth_connect_permission_summary">Android 12 及以上版本需要此权限来检测蓝牙音频设备的连接和断开。此权限属于"附近设备"权限类别。未授权时，蓝牙断开/连接相关功能将无法使用。</string>

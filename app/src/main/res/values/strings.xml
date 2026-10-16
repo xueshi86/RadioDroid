@@ -901,6 +901,7 @@ The app will automatically restart to load the new database.</string>
     <string name="player_stat_buffer">Buffered</string>
     <string name="player_stat_data">Data used</string>
     <string name="player_hero_now_playing">Now playing: %1$s</string>
+    <string name="player_hero_now_recording">Now recording: %1$s</string>
     <string name="webdav_restore_favourites_confirm">Restoring favourites will use the favourites file stored on the server.\n\n• Overwrite: the local list will match the server exactly; stations that only exist locally will be removed.\n• Merge: keep all local stations and add stations that only exist on the server.\n\nA copy of your current favourites is saved on this device before the operation.</string>
     <string name="webdav_restore_overwrite">Overwrite</string>
     <string name="webdav_restore_merge">Merge</string>

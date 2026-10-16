@@ -547,6 +547,7 @@
     <string name="player_stat_buffer">Buffer</string>
     <string name="player_stat_data">Dati</string>
     <string name="player_hero_now_playing">In riproduzione: %1$s</string>
+    <string name="player_hero_now_recording">Registrazione: %1$s</string>
     <string name="webdav_restore_favourites_confirm">Il ripristino dei preferiti utilizzerà il file dei preferiti salvato sul server.\n\n• Sostituisci: l’elenco locale corrisponderà esattamente al server; le stazioni esistenti solo in locale verranno rimosse.\n• Unisci: mantiene tutte le stazioni locali e aggiunge le stazioni presenti solo sul server.\n\nPrima dell’operazione verrà salvata una copia dei preferiti attuali su questo dispositivo.</string>
     <string name="webdav_restore_overwrite">Sostituisci</string>
     <string name="webdav_restore_merge">Unisci</string>

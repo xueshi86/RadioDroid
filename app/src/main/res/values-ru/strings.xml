@@ -761,6 +761,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="player_stat_buffer">Буфер</string>
     <string name="player_stat_data">Трафик</string>
     <string name="player_hero_now_playing">Сейчас играет: %1$s</string>
+    <string name="player_hero_now_recording">Идёт запись: %1$s</string>
 
     <string name="detail_shortcut_requested">Запрос на добавление ярлыка на главный экран</string>
     <string name="settings_bluetooth_connect_permission">Разрешение на доступ к nearby devices</string>

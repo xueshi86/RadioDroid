@@ -167,6 +167,8 @@ public class FragmentPlayerFull extends Fragment {
     private View heroTopSpacer;
     private TextView heroStationName;
     private TextView heroNowPlaying;
+    /** 「正在录音」行（信息组末行）：录音中显示，与录音列表页录音块互斥呈现 */
+    private TextView heroNowRecording;
     private TagsView heroMetaChips;
     private TextView statBufferChip;
     private TextView statTrafficChip;
@@ -175,6 +177,9 @@ public class FragmentPlayerFull extends Fragment {
 
     /** 色斑数量（与布局 heroBlob1~5 对应） */
     private static final int BLOB_COUNT = 5;
+
+    /** 各色斑亮暗标记（true=深色→中心小轨道常驻中部；applyBlobPaletteImmediate 按颜色明度写入） */
+    private final boolean[] blobDarkFlags = new boolean[BLOB_COUNT];
 
     /**
      * 取色结果（spec：主导色 + 面积占比，保持图标原色，按占比排序）。
@@ -345,6 +350,14 @@ public class FragmentPlayerFull extends Fragment {
                         fullUpdate();
                         break;
                     }
+                    case PlayerService.PLAYER_SERVICE_BOUND: {
+                        // 服务（重）绑定完成：改语言/主题等 Activity recreate 后
+                        // PlayerServiceUtil 异步重绑，此前的 fullUpdate 查询播放状态
+                        // 得到 Idle（服务未连）导致 Hero 游走动画不建且按钮/行状态
+                        // 失真；绑定完成即全量刷新补齐
+                        fullUpdate();
+                        break;
+                    }
                     case PlayerService.PLAYER_SERVICE_CONNECTION_TYPE_CHANGED: {
                         String connectionTypeName = intent.getStringExtra(PlayerService.PLAYER_SERVICE_CONNECTION_TYPE_EXTRA);
                         if (connectionTypeName != null) {
@@ -387,10 +400,44 @@ public class FragmentPlayerFull extends Fragment {
             heroBgBlobs.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(
                     80f, 80f, android.graphics.Shader.TileMode.CLAMP));
         }
+        // 游走动画自愈兜底：fullUpdate 几乎总在首次布局前运行（onCreateView→init），
+        // 当时 heroBgBlobs 宽高为 0，updateHeroFlow 会提前 return「下次 fullUpdate 再建」；
+        // 而布局完成后若播放状态无变化（无 STATE/META 广播），就永远等不到那个
+        // 「下次 fullUpdate」——改语言/改主题等导致 Activity recreate 后动画永久
+        // 停止正是这个时序。此处在每次布局完成时按当前播放状态补齐渲染与游走。
+        heroBgBlobs.addOnLayoutChangeListener(
+                (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                    if (heroBgBlobs.getWidth() <= 0 || heroBgBlobs.getHeight() <= 0
+                            || PlayerServiceUtil.getPlayerState() != PlayState.Playing) {
+                        return;
+                    }
+                    boolean reduceMotion = Settings.Global.getFloat(
+                            requireContext().getContentResolver(),
+                            Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f;
+                    if (reduceMotion) {
+                        return;
+                    }
+                    if (blobPalette != null && heroBlobViews[0].getLayoutParams().width <= 0) {
+                        // 色板就绪但布局前未能渲染：按实际视口补一次
+                        applyBlobPaletteImmediate(blobPalette);
+                    }
+                    if (heroFlowAnimator != null) {
+                        if (!heroFlowAnimator.isRunning()) {
+                            heroFlowAnimator.start();
+                        }
+                        return;
+                    }
+                    buildBlobAnimations();
+                    if (heroFlowAnimator != null) {
+                        // alpha 交给已在运行的淡入动画（fullUpdate 的 rise），不在此干扰
+                        heroFlowAnimator.start();
+                    }
+                });
         heroLogoCard = stationInfoPage.findViewById(R.id.heroLogoCard);
         heroTopSpacer = stationInfoPage.findViewById(R.id.heroTopSpacer);
         heroStationName = stationInfoPage.findViewById(R.id.heroStationName);
         heroNowPlaying = stationInfoPage.findViewById(R.id.heroNowPlaying);
+        heroNowRecording = stationInfoPage.findViewById(R.id.heroNowRecording);
         heroMetaChips = stationInfoPage.findViewById(R.id.heroMetaChips);
         statBufferChip = stationInfoPage.findViewById(R.id.statBufferChip);
         statTrafficChip = stationInfoPage.findViewById(R.id.statTrafficChip);
@@ -428,9 +475,13 @@ public class FragmentPlayerFull extends Fragment {
                 if (heroTopSpacer == null || heroStationName.getTop() <= 0) {
                     return;
                 }
-                int groupBottom = heroNowPlaying != null
-                        && heroNowPlaying.getVisibility() == View.VISIBLE
-                        ? heroNowPlaying.getBottom() : statRow.getBottom();
+                int groupBottom = statRow.getBottom();
+                if (heroNowPlaying != null && heroNowPlaying.getVisibility() == View.VISIBLE) {
+                    groupBottom = heroNowPlaying.getBottom();
+                }
+                if (heroNowRecording != null && heroNowRecording.getVisibility() == View.VISIBLE) {
+                    groupBottom = heroNowRecording.getBottom();
+                }
                 int infoGroupHeight = groupBottom - heroStationName.getTop();
                 if (infoGroupHeight <= 0) {
                     return;
@@ -484,6 +535,14 @@ public class FragmentPlayerFull extends Fragment {
         nowDot.setSize(dp(7), dp(7));
         heroNowPlaying.setCompoundDrawablesRelativeWithIntrinsicBounds(nowDot, null, null, null);
         heroNowPlaying.setCompoundDrawablePadding(dp(6));
+
+        // 「正在录音」行首红色圆点（录音警示色，尺寸/间距与呼吸点一致）
+        GradientDrawable recDot = new GradientDrawable();
+        recDot.setShape(GradientDrawable.OVAL);
+        recDot.setColor(0xFFE53935);
+        recDot.setSize(dp(7), dp(7));
+        heroNowRecording.setCompoundDrawablesRelativeWithIntrinsicBounds(recDot, null, null, null);
+        heroNowRecording.setCompoundDrawablePadding(dp(6));
 
         // 监听底部弹层状态：展开/收起会改变顶栏（FragmentPlayerSmall）的收起条件，
         // 但不触发分段切换，需在此手动刷新联动（见 updateNowPlayingRowVisibility）
@@ -678,14 +737,9 @@ public class FragmentPlayerFull extends Fragment {
                     PlayerServiceUtil.startRecording();
                 }
 
+                // 用户要求：点击录音不再跳转录音列表，停留当前页——信息页通过
+                // 「正在录音」行（正在播放行下方）呈现录音状态，录音列表页仍有录音块
                 updateRunningRecording();
-
-                // 录音入口（UI 审查 P1-2）：切到单行分段控件的「录音」段，
-                // 由分段联动逻辑互斥显示历史 pager 并翻到录音页
-                TabLayout.Tab recordingsTab = segmentTabs.getTabAt(3);
-                if (recordingsTab != null) {
-                    segmentTabs.selectTab(recordingsTab);
-                }
             } else {
                 Toast.makeText(getActivity(), getResources().getString(R.string.error_record_not_playing), Toast.LENGTH_SHORT).show();
             }
@@ -756,6 +810,7 @@ public class FragmentPlayerFull extends Fragment {
         filter.addAction(PlayerService.PLAYER_SERVICE_STATE_CHANGE);
         filter.addAction(PlayerService.PLAYER_SERVICE_META_UPDATE);
         filter.addAction(PlayerService.PLAYER_SERVICE_CONNECTION_TYPE_CHANGED);
+        filter.addAction(PlayerService.PLAYER_SERVICE_BOUND);
 
         
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(updateUIReceiver, filter);
@@ -1149,6 +1204,11 @@ public class FragmentPlayerFull extends Fragment {
             imgRecordingIcon.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.blink_recording));
             textViewRecordingSize.setText(Utils.getReadableBytes(recordingInfo.getBytesWritten()));
             textViewRecordingName.setText(recordingInfo.getFileName());
+            // 「正在录音」行与录音块共用同一录音状态，文件名同源同命名规则
+            if (heroNowRecording != null) {
+                heroNowRecording.setText(getString(
+                        R.string.player_hero_now_recording, recordingInfo.getFileName()));
+            }
         } else {
             imgRecordingIcon.clearAnimation();
         }
@@ -1156,8 +1216,9 @@ public class FragmentPlayerFull extends Fragment {
     }
 
     /**
-     * 录音状态块显隐（UI 审查 P1-2 后续）：「录音状态栏只在电台信息和录音界面显示」——
-     * 当前段为「电台信息」或「录音」且确有录音进行中时可见，其余情况隐藏。
+     * 录音状态呈现（用户要求）：录音行与录音块是同一录音状态的两种呈现——
+     * 同显同隐、按分段互斥：信息页显示「正在录音」行（正在播放行下方），
+     * 录音列表页显示录音块，其余页隐藏；切换标签即可看到不同呈现。
      * 显隐变化会触发外层全局布局回调，内容 pager 高度随之自动重算。
      */
     private void updateRecordingRowVisibility() {
@@ -1165,8 +1226,12 @@ public class FragmentPlayerFull extends Fragment {
             return;
         }
         final int position = segmentTabs.getSelectedTabPosition();
-        final boolean pageShowsRecording = position == 0 || position == 3;
-        blockRecording.setVisibility(pageShowsRecording && recordingRowActive ? View.VISIBLE : View.GONE);
+        blockRecording.setVisibility(
+                position == 3 && recordingRowActive ? View.VISIBLE : View.GONE);
+        if (heroNowRecording != null) {
+            heroNowRecording.setVisibility(
+                    position == 0 && recordingRowActive ? View.VISIBLE : View.GONE);
+        }
         updateNowPlayingRowVisibility();
     }
 
@@ -1500,7 +1565,31 @@ public class FragmentPlayerFull extends Fragment {
                 {0.26f, 0.28f}, {0.74f, 0.24f}, {0.72f, 0.74f}, {0.28f, 0.72f}, {0.50f, 0.50f}
         };
 
+        // 亮暗分布调优（用户要求）：浅色/白色斑块大部分时间待在边缘、深色斑块
+        // 常驻屏幕中部——中央亮斑会顶托白色前景字导致看不清。做法：按颜色明度
+        // 标记亮暗（blobDarkFlags），最暗色斑换到中心锚点（配合小轨道常驻中部，
+        // 见 buildBlobAnimations），其余（含亮/白色）走四角大轨道扫掠边缘
         int colorCount = palette.colors.length;
+        int darkest = 0;
+        float darkestV = 2f;
+        for (int i = 0; i < BLOB_COUNT; i++) {
+            float[] hsv = new float[3];
+            Color.colorToHSV(palette.colors[i % colorCount], hsv);
+            blobDarkFlags[i] = hsv[2] < 0.55f;
+            if (hsv[2] < darkestV) {
+                darkestV = hsv[2];
+                darkest = i;
+            }
+        }
+        if (darkest != BLOB_COUNT - 1) {
+            float[] tmp = anchors[darkest];
+            anchors[darkest] = anchors[BLOB_COUNT - 1];
+            anchors[BLOB_COUNT - 1] = tmp;
+            boolean flagTmp = blobDarkFlags[darkest];
+            blobDarkFlags[darkest] = blobDarkFlags[BLOB_COUNT - 1];
+            blobDarkFlags[BLOB_COUNT - 1] = flagTmp;
+        }
+
         for (int i = 0; i < BLOB_COUNT; i++) {
             final ImageView blob = heroBlobViews[i];
             // 色斑颜色循环取用（5 斑 / 3~4 色，相邻斑错开）
@@ -1647,19 +1736,26 @@ public class FragmentPlayerFull extends Fragment {
 
         // 各斑轨道参数：{半径X(视口宽比例), 半径Y(视口高比例), 轨道周期ms,
         //                起始角deg, 方向(+1顺时针/-1逆时针), 缩放min, 缩放max, 缩放周期ms}
-        final float[][] specs = {
+        // 亮/白色斑池：四角锚点大轨道，大部分时间在边缘扫掠；暗色斑池：中心
+        // 锚点小轨道常驻中部（亮暗分布用户校准——中央亮斑会顶托白色前景字）
+        final float[][] brightSpecs = {
                 {0.30f, 0.24f, 14000,   0f,  1f, 0.80f, 1.30f, 12000},
                 {0.24f, 0.30f, 16600,  90f, -1f, 0.85f, 1.25f, 14000},
                 {0.34f, 0.20f, 19000, 180f,  1f, 0.78f, 1.32f, 10000},
                 {0.22f, 0.26f, 13000, 270f, -1f, 0.85f, 1.28f, 13000},
-                {0.28f, 0.32f, 21000,  45f,  1f, 0.82f, 1.24f, 16000},
         };
-
+        final float[][] darkSpecs = {
+                {0.11f, 0.13f, 18000,  45f,  1f, 0.82f, 1.24f, 16000},
+                {0.14f, 0.17f, 21000, 225f, -1f, 0.80f, 1.28f, 14000},
+        };
+        int brightIdx = 0, darkIdx = 0;
         TimeInterpolator easeInOut = new AccelerateDecelerateInterpolator();
         java.util.List<Animator> anims = new java.util.ArrayList<>();
         for (int i = 0; i < BLOB_COUNT; i++) {
             final View blob = heroBlobViews[i];
-            final float[] s = specs[i];
+            final float[] s = blobDarkFlags[i]
+                    ? darkSpecs[darkIdx++ % darkSpecs.length]
+                    : brightSpecs[brightIdx++ % brightSpecs.length];
             // 轨道椭圆：圆心 = 锚点初始 translation（applyBlobPaletteImmediate 已设置）
             final float cx = blob.getTranslationX();
             final float cy = blob.getTranslationY();
