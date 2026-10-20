@@ -284,6 +284,18 @@ public class FragmentStarred extends Fragment implements IAdapterRefreshable, Ob
     }
 
     @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+
+        // 全屏播放器展开时主内容区被 hide()、收起时再 show()，而 hide/show 不会触发
+        // onResume，所以列表隐藏期间若数据被重建、或首次渲染时收藏尚未加载完，
+        // 重新回到列表页就会看到一片空白。这里每次重新显示都按当前数据重绘一次。
+        if (!hidden && rvStations != null) {
+            RefreshListGui();
+        }
+    }
+
+    @Override
     public void onDestroyView() {
         if (rvStations != null) {
             rvStations.setAdapter(null);

@@ -336,11 +336,19 @@
     <string name="update_download">Télécharger</string>
     <string name="update_downloading">Téléchargement de la mise à jour…</string>
     <string name="update_download_complete">Téléchargement terminé. Toucher pour installer</string>
+    <string name="update_download_started">Téléchargement de la mise à jour…</string>
+    <string name="update_download_complete_title">Téléchargement terminé</string>
+    <string name="update_download_complete_message">La mise à jour a été téléchargée. Installer maintenant ?</string>
+    <string name="update_install_now">Installer maintenant</string>
+    <string name="update_install_later">Plus tard</string>
+    <string name="update_apk_missing">Le fichier APK téléchargé n\'existe plus. Veuillez télécharger à nouveau la mise à jour</string>
+    <string name="update_allow_unknown_sources">Autorisez RadioDroid à installer des applications inconnues, puis touchez à nouveau Installer</string>
     <string name="update_download_failed">Échec du téléchargement de la mise à jour</string>
     <string name="update_open_installer_failed">Impossible d\'ouvrir l\'installateur. Installez le fichier APK manuellement</string>
     <string name="update_release_notes">Notes de version</string>
     <string name="notification_channel_app_update_name">Mises à jour de l\'app</string>
     <string name="notification_channel_app_update_description">Notifications concernant les nouvelles versions et les téléchargements de mises à jour</string>
+    <string name="notification_channel_app_update_progress_name">Progression du téléchargement de la mise à jour</string>
 
     <string name="description_btn_skip_to_next">Passer au suivant</string>
     <string name="description_btn_skip_to_previous">Passer au précédent</string>

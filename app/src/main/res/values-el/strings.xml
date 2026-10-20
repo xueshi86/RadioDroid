@@ -263,11 +263,19 @@
     <string name="update_download">Λήψη</string>
     <string name="update_downloading">Γίνεται λήψη της ενημέρωσης…</string>
     <string name="update_download_complete">Η λήψη ολοκληρώθηκε. Πατήστε για εγκατάσταση</string>
+    <string name="update_download_started">Γίνεται λήψη της ενημέρωσης…</string>
+    <string name="update_download_complete_title">Η λήψη ολοκληρώθηκε</string>
+    <string name="update_download_complete_message">Η ενημέρωση λήφθηκε. Εγκατάσταση τώρα;</string>
+    <string name="update_install_now">Εγκατάσταση τώρα</string>
+    <string name="update_install_later">Αργότερα</string>
+    <string name="update_apk_missing">Το ληφθέν APK δεν υπάρχει πλέον. Κάντε ξανά λήψη της ενημέρωσης</string>
+    <string name="update_allow_unknown_sources">Επιτρέψτε στο RadioDroid να εγκαθιστά άγνωστες εφαρμογές και πατήστε ξανά Εγκατάσταση</string>
     <string name="update_download_failed">Η λήψη της ενημέρωσης απέτυχε</string>
     <string name="update_open_installer_failed">Δεν είναι δυνατό το άνοιγμα του εγκαταστάτη. Εγκαταστήστε το APK χειροκίνητα</string>
     <string name="update_release_notes">Σημειώσεις έκδοσης</string>
     <string name="notification_channel_app_update_name">Ενημερώσεις εφαρμογής</string>
     <string name="notification_channel_app_update_description">Ειδοποιήσεις για νέες εκδόσεις και λήψεις ενημερώσεων</string>
+    <string name="notification_channel_app_update_progress_name">Πρόοδος λήψης ενημέρωσης</string>
 
     <string-array name="weekdays">
         <item>Κ</item>

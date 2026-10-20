@@ -543,11 +543,19 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="update_download">Скачать</string>
     <string name="update_downloading">Загрузка обновления…</string>
     <string name="update_download_complete">Загрузка завершена. Нажмите, чтобы установить</string>
+    <string name="update_download_started">Загрузка обновления…</string>
+    <string name="update_download_complete_title">Загрузка завершена</string>
+    <string name="update_download_complete_message">Обновление загружено. Установить сейчас?</string>
+    <string name="update_install_now">Установить сейчас</string>
+    <string name="update_install_later">Позже</string>
+    <string name="update_apk_missing">Загруженный APK-файл не найден. Загрузите обновление снова</string>
+    <string name="update_allow_unknown_sources">Разрешите RadioDroid установку неизвестных приложений, затем снова нажмите «Установить»</string>
     <string name="update_download_failed">Не удалось загрузить обновление</string>
     <string name="update_open_installer_failed">Не удалось открыть установщик. Установите APK вручную</string>
     <string name="update_release_notes">Примечания к выпуску</string>
     <string name="notification_channel_app_update_name">Обновления приложения</string>
     <string name="notification_channel_app_update_description">Уведомления о новых версиях и загрузке обновлений</string>
+    <string name="notification_channel_app_update_progress_name">Прогресс загрузки обновления</string>
 
     <string name="description_btn_skip_to_next">Перейти к следующему</string>
     <string name="description_btn_skip_to_previous">Перейти к предыдущему</string>

@@ -6,11 +6,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Path;
+import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.text.TextPaint;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,15 +26,10 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.animation.Animator;
-import android.animation.AnimatorSet;
-import android.animation.ArgbEvaluator;
-import android.animation.ObjectAnimator;
-import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.LinearInterpolator;
 import android.view.animation.AnimationUtils;
+import android.view.animation.LinearInterpolator;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -156,12 +153,6 @@ public class FragmentPlayerFull extends Fragment {
     // 控制条之间；前景自上而下为方形电台图标展示卡 → 电台名 → 正在播放 →
     // 元数据胶囊 → 缓冲/流量状态胶囊（挨在一起居中）→ 备注行（贴底）
     private ImageView heroBgImage;
-    /** 色斑涌动层容器（播放时屏保级动画，未播放透明显示底层模糊图标） */
-    private View heroBgBlobs;
-    /** 基底：取色占比最大的主色铺满（60~75% 透明度），色斑叠于其上 */
-    private View heroBlobBase;
-    /** 色斑视图（4~5 枚大型径向渐变色斑，颜色取自电台图标主色） */
-    private ImageView[] heroBlobViews;
     private View heroLogoCard;
     /** 信息组上方弹性空隙：高度由代码计算，使信息组中心对齐 Hero 高度 55% */
     private View heroTopSpacer;
@@ -175,9 +166,6 @@ public class FragmentPlayerFull extends Fragment {
     /** 缓冲/流量状态胶囊行（信息组下沿参照，用于 55% 定位计算） */
     private View statRow;
 
-    /** 色斑数量（与布局 heroBlob1~5 对应） */
-    private static final int BLOB_COUNT = 5;
-
     /** 内容 pager 真实页数（电台信息/本台曲目/曲目历史/录音列表） */
     private static final int PAGER_REAL_COUNT = 4;
     /** 循环副本份数：虚拟页数 = 真实页数 × 副本数，实现首尾循环拖动 */
@@ -187,48 +175,50 @@ public class FragmentPlayerFull extends Fragment {
     /** 程序化同步分段高亮中（onPageSelected → selectTab），onTabSelected 不翻页 */
     private boolean suppressTabJump;
 
-    /**
-     * 各色斑明度分层（0=最深→中心小轨道；1=次深→中环围绕；2=最浅→四角边缘大轨道），
-     * applyBlobPaletteImmediate 按颜色明度排序写入；默认 2（色板未就绪时走边缘大轨道）。
-     */
-    private final int[] blobDepth = new int[]{2, 2, 2, 2, 2};
-    /** 各色斑的分层锚点（applyBlobPaletteImmediate 写入，buildBlobAnimations 读作轨道圆心） */
-    private final float[][] blobAnchors = new float[BLOB_COUNT][];
     /** 文字护盾层：中央椭圆软渐变，保证信息组区域背景亮度恒定（白字可读） */
     private ImageView heroBlobShield;
-    /** 切台涟漪动画（色板过渡时整场轻微放大回落） */
-    private AnimatorSet blobRippleAnimator;
 
-    /**
-     * 取色结果（spec：主导色 + 面积占比，保持图标原色，按占比排序）。
-     * base = 占比最大色（铺满基底）；colors = 其余色斑色（2~4 个）；
-     * weights = 与 colors 一一对应的图标面积占比（最大者归一为 1），决定色斑面积。
-     */
-    private static class BlobPalette {
-        final int base;
-        final int[] colors;
-        final float[] weights;
+    /** Hero「反向呼吸」光晕层：位于背景与文字护盾之间，播放时与背景缩放反相明灭；
+     *  静止时不可见（不透明度 0） */
+    private ImageView heroGlow;
 
-        BlobPalette(int base, int[] colors, float[] weights) {
-            this.base = base;
-            this.colors = colors;
-            this.weights = weights;
-        }
-    }
+    /** Hero 背景的基准不透明度（模糊位图 0.75 / 主题渐变兜底 1.0）。呼吸的亮度脉冲
+     *  以此为基准做减法，落回静止时也按它复位。 */
+    private float heroBaseAlpha = 1f;
 
-    /** 当前色板（null = 尚未取色） */
-    private BlobPalette blobPalette;
-    /** 色板过渡动画（切台时旧色板 → 新色板 2 秒交叉淡化） */
-    private ValueAnimator blobPaletteTransition;
-    /** 取色缓存（key = 电台 UUID + 图标位图 generationId，同一电台二次播放不重复计算） */
-    private final java.util.HashMap<String, BlobPalette> blobPaletteCache = new java.util.HashMap<>();
-    /** 当前电台缓存 key（fullUpdate 时更新） */
-    private String blobCacheKey = "";
+    /** Hero 背景呼吸缩放的上限倍率。下限恒为 1.0（原尺寸）——centerCrop 的图标
+     *  缩到 1.0 以下会在四边露出下层背景，故呼吸只在「原尺寸 ↔ 放大」之间往复。
+     *  取 1.28：背景是柔性的模糊色块，小幅缩放看不出位移，8%、18% 两档都反馈「不明显」，
+     *  故加大到 28%，让呼吸一眼可辨。 */
+    private static final float HERO_BREATH_MAX_SCALE = 1.28f;
+    /** 一整轮「吸 → 停 → 呼」的时长：慢到像呼吸而非抖动。幅度加大后周期相应放长，
+     *  否则快速的大幅缩合更像「脉动」而非呼吸。 */
+    private static final long HERO_BREATH_PERIOD_MS = 3400;
+    /** 吸气阶段占整个周期的比例：吸气比呼气长，是「像呼吸」而非「像机械脉冲」的关键 */
+    private static final float HERO_BREATH_INHALE_END = 0.55f;
+    /** 吸气到顶后的短暂停顿占周期比例：让 1.28 的峰值被看见，呼吸才有「满」的感觉 */
+    private static final float HERO_BREATH_HOLD_END = 0.63f;
+    /** 亮度/光晕相对缩放的相位滞后（占周期比例，约 150ms）：形体先膨胀、光后到，
+     *  模拟真实呼吸中胸腔扩张与气流之间的时间差，去掉缩放与亮度「一起卡点」的机械感 */
+    private static final float HERO_BREATH_LIGHT_LAG = 0.044f;
+    /** 停止/暂停时从当前倍率平滑落回原尺寸的时长（避免硬跳） */
+    private static final long HERO_BREATH_RESET_MS = 520;
+    /** 「双轴呼吸」的亮度脉冲幅度：背景随膨胀同步压暗该幅度（膨胀到最大时最暗，
+     *  回缩时回到基准）。缩放的可见度取决于背景图的边缘纹理——主题渐变兜底与
+     *  少纹理的背景被模糊放大后近似均匀色块，整体缩放时像素几乎不变；
+     *  而亮度是视觉系统最敏感的通道且不依赖图像内容，故用它兜底，
+     *  同时也给单一的缩放轴补上层次。 */
+    private static final float HERO_BREATH_ALPHA_DIP = 0.14f;
+    /** 光晕层「反向呼吸」的峰值不透明度：背景膨胀到最大时光晕最亮，静止/回缩时为 0 */
+    private static final float HERO_GLOW_MAX_ALPHA = 0.20f;
+    /** 光晕层的最大外扩比例：静止态（不可见）时外扩该值，膨胀到最大时收拢为 1.0
+     *  ——与背景缩放反相，读起来像「光被收拢聚焦 / 光向外弥散」 */
+    private static final float HERO_GLOW_SCALE_SPREAD = 0.10f;
 
-    /** 背景流动动画：播放时各色斑独立游走（涌动），停止时冻结显示当前帧 */
-    private AnimatorSet heroFlowAnimator;
-    /** 色斑层透明度渐起/渐落动画（独立于游走，模拟参考稿的 rise/fall） */
-    private ValueAnimator heroFlowAlphaAnimator;
+    /** Hero 背景「呼吸」缩放动画：播放时放大 ↔ 回缩，停止/暂停平滑落回原尺寸 */
+    private ValueAnimator heroBreathAnimator;
+    /** 当前是否正处于呼吸循环（与「落回原尺寸」的一次性动画区分，避免误判为已呼吸） */
+    private boolean heroBreathing;
 
     /** Hero 背景形态：LOGO = imageViewArt 位图放大模糊；GRADIENT = 主题色渐变兜底 */
     private enum HeroArtMode { LOGO, GRADIENT }
@@ -262,14 +252,10 @@ public class FragmentPlayerFull extends Fragment {
             sheetBehavior.removeBottomSheetCallback(bottomSheetCallback);
             sheetBehavior = null;
         }
-        // Hero 背景流动动画随视图销毁终止，避免泄漏/空指针
-        if (heroFlowAlphaAnimator != null) {
-            heroFlowAlphaAnimator.cancel();
-            heroFlowAlphaAnimator = null;
-        }
-        if (heroFlowAnimator != null) {
-            heroFlowAnimator.cancel();
-            heroFlowAnimator = null;
+        // Hero 背景呼吸动画随视图销毁终止，避免泄漏/空指针
+        if (heroBreathAnimator != null) {
+            heroBreathAnimator.cancel();
+            heroBreathAnimator = null;
         }
         super.onDestroyView();
     }
@@ -403,82 +389,24 @@ public class FragmentPlayerFull extends Fragment {
         stationInfoPage = (ViewGroup) inflater.inflate(R.layout.page_player_station_info, (ViewGroup) view, false);
         imageViewArt = stationInfoPage.findViewById(R.id.imageViewArt);
         heroBgImage = stationInfoPage.findViewById(R.id.heroBgImage);
-        heroBgBlobs = stationInfoPage.findViewById(R.id.heroBgBlobs);
-        heroBlobBase = stationInfoPage.findViewById(R.id.heroBlobBase);
-        heroBlobViews = new ImageView[]{
-                stationInfoPage.findViewById(R.id.heroBlob1),
-                stationInfoPage.findViewById(R.id.heroBlob2),
-                stationInfoPage.findViewById(R.id.heroBlob3),
-                stationInfoPage.findViewById(R.id.heroBlob4),
-                stationInfoPage.findViewById(R.id.heroBlob5),
-        };
-        // 整层毛玻璃（RenderEffect）已移除：它会限制在容器尺寸的离屏 layer 里，
-        // 色斑越出容器的部分在 layer 边界被硬截——四边出现横/竖截断线（用户实测
-        // 截图踩坑，且斑越大越明显）。柔焦改由色斑自身的长尾径向渐隐叠加近似
-        // （无 blur 版观感已在低版本设备长期验证）。作为补偿，把从色斑容器到窗口
-        // 的整条祖先链裁切全部放开：色斑可一路画出容器/信息页/pager，唯一裁切
-        // 发生在窗口边界 = 屏幕物理边界（屏外，不可见）——可视区内再无截断线
-        releaseClipUpToWindow(heroBgBlobs);
-        // 游走动画自愈兜底：fullUpdate 几乎总在首次布局前运行（onCreateView→init），
-        // 当时 heroBgBlobs 宽高为 0，updateHeroFlow 会提前 return「下次 fullUpdate 再建」；
-        // 而布局完成后若播放状态无变化（无 STATE/META 广播），就永远等不到那个
-        // 「下次 fullUpdate」——改语言/改主题等导致 Activity recreate 后动画永久
-        // 停止正是这个时序。此处在每次布局完成时按当前播放状态补齐渲染与游走。
-        heroBgBlobs.addOnLayoutChangeListener(
-                (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
-                    // 左右外扩（消灭左右竖条）：整场漂移（±2.5% 视口）会把容器
-                    // 左右边平进屏幕，露出一侧「容器外」的透明区——被截出随漂移
-                    // 交替涨落的竖条（左条最大时右条消失、反之亦然）。容器左右各
-                    // 外扩一个漂移幅度+余量后，平移极限时边缘恒在屏外。上下无需
-                    // 外扩：基底垂直渐隐与色斑垂直约束已保证上下边缘 alpha 归零。
-                    final View visParent = (View) heroBgBlobs.getParent();
-                    if (visParent != null && visParent.getWidth() > 0
-                            && heroBgBlobs.getLayoutParams()
-                                    instanceof ViewGroup.MarginLayoutParams) {
-                        ViewGroup.MarginLayoutParams mlp =
-                                (ViewGroup.MarginLayoutParams) heroBgBlobs.getLayoutParams();
-                        final int want = Math.round(visParent.getWidth() * 0.025f) + 8;
-                        if (mlp.leftMargin != -want || mlp.rightMargin != -want) {
-                            mlp.leftMargin = -want;
-                            mlp.rightMargin = -want;
-                            heroBgBlobs.setLayoutParams(mlp); // 触发 relayout 后再进本回调即收敛
-                            return;
-                        }
-                    }
-                    if (heroBgBlobs.getWidth() <= 0 || heroBgBlobs.getHeight() <= 0
-                            || PlayerServiceUtil.getPlayerState() != PlayState.Playing) {
-                        return;
-                    }
-                    boolean reduceMotion = Settings.Global.getFloat(
-                            requireContext().getContentResolver(),
-                            Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f;
-                    if (reduceMotion) {
-                        return;
-                    }
-                    if (blobPalette != null && heroBlobViews[0].getLayoutParams().width <= 0) {
-                        // 色板就绪但布局前未能渲染：按实际视口补一次
-                        applyBlobPaletteImmediate(blobPalette);
-                    }
-                    applyHeroShield(); // 布局就绪后按实际视口校正护盾渐变半径
-                    if (heroFlowAnimator != null) {
-                        if (!heroFlowAnimator.isRunning()) {
-                            heroFlowAnimator.start();
-                        }
-                        return;
-                    }
-                    buildBlobAnimations();
-                    if (heroFlowAnimator != null) {
-                        // alpha 交给已在运行的淡入动画（fullUpdate 的 rise），不在此干扰
-                        heroFlowAnimator.start();
-                    }
-                });
         heroLogoCard = stationInfoPage.findViewById(R.id.heroLogoCard);
         heroTopSpacer = stationInfoPage.findViewById(R.id.heroTopSpacer);
         heroStationName = stationInfoPage.findViewById(R.id.heroStationName);
         heroNowPlaying = stationInfoPage.findViewById(R.id.heroNowPlaying);
         heroNowRecording = stationInfoPage.findViewById(R.id.heroNowRecording);
         heroBlobShield = stationInfoPage.findViewById(R.id.heroBlobShield);
+        heroGlow = stationInfoPage.findViewById(R.id.heroGlow);
         applyHeroShield();
+        applyHeroGlow();
+        // 护盾与光晕的渐变半径都依赖实际视口尺寸，而 onCreateView 阶段尺寸仍为 0，
+        // 故在布局就绪后（且尺寸变化时）校正一次
+        heroBlobShield.addOnLayoutChangeListener(
+                (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                    if (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop) {
+                        applyHeroShield();
+                        applyHeroGlow();
+                    }
+                });
         heroMetaChips = stationInfoPage.findViewById(R.id.heroMetaChips);
         statBufferChip = stationInfoPage.findViewById(R.id.statBufferChip);
         statTrafficChip = stationInfoPage.findViewById(R.id.statTrafficChip);
@@ -499,6 +427,17 @@ public class FragmentPlayerFull extends Fragment {
                 final int heroHeight = stationInfoPage.getHeight();
                 if (heroLogoCard == null || heroHeight <= 0 || heroLogoCard.getHeight() <= 0) {
                     return;
+                }
+
+                // ③ 走马灯行宽度上限（用户要求）：「正在播放/正在录音」行保持
+                // wrap_content（呼吸点与文字整体居中），但需可滚动上限——超宽文本
+                // 以 85% 页宽封顶，走马灯在封顶宽度内循环滚动；文本不超宽时不受影响
+                final int marqueeMax = Math.round(stationInfoPage.getWidth() * 0.85f);
+                if (heroNowPlaying.getMaxWidth() != marqueeMax) {
+                    heroNowPlaying.setMaxWidth(marqueeMax);
+                }
+                if (heroNowRecording.getMaxWidth() != marqueeMax) {
+                    heroNowRecording.setMaxWidth(marqueeMax);
                 }
 
                 // ① 图标中心 → Hero 高度 25% 处
@@ -569,21 +508,28 @@ public class FragmentPlayerFull extends Fragment {
                         .size(IconicsSize.dp(12))
                         .color(IconicsColor.colorInt(0xD9FFFFFF)), null, null, null);
 
-        // 「正在播放」行首呼吸点（强调色亮变体，圆点尺寸与间距对齐设计稿 hero-now）
+        // 「正在播放」行首固定引导标签：强调色呼吸点（尺寸对齐设计稿 hero-now）+
+        // 「正在播放：」引导词合成一张 compound drawable——drawable 不参与走马灯
+        // 滚动，只有其后的内容文本滚动，满足「引导词固定、冒号后内容走马灯」；
+        // 文字字号/颜色/阴影取自行 TextView 本身，与滚动内容同款视觉
         GradientDrawable nowDot = new GradientDrawable();
         nowDot.setShape(GradientDrawable.OVAL);
         nowDot.setColor(Utils.getThemeColor(requireContext(), R.attr.presetAccentBrightColor));
         nowDot.setSize(dp(7), dp(7));
-        heroNowPlaying.setCompoundDrawablesRelativeWithIntrinsicBounds(nowDot, null, null, null);
-        heroNowPlaying.setCompoundDrawablePadding(dp(6));
+        heroNowPlaying.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                createFixedLabelDrawable(heroNowPlaying, nowDot, getString(R.string.player_hero_now_playing, "")),
+                null, null, null);
+        heroNowPlaying.setCompoundDrawablePadding(dp(4));
 
-        // 「正在录音」行首红色圆点（录音警示色，尺寸/间距与呼吸点一致）
+        // 「正在录音」行首固定引导标签：录音警示色红点 + 「正在录音：」引导词（同上）
         GradientDrawable recDot = new GradientDrawable();
         recDot.setShape(GradientDrawable.OVAL);
         recDot.setColor(0xFFE53935);
         recDot.setSize(dp(7), dp(7));
-        heroNowRecording.setCompoundDrawablesRelativeWithIntrinsicBounds(recDot, null, null, null);
-        heroNowRecording.setCompoundDrawablePadding(dp(6));
+        heroNowRecording.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                createFixedLabelDrawable(heroNowRecording, recDot, getString(R.string.player_hero_now_recording, "")),
+                null, null, null);
+        heroNowRecording.setCompoundDrawablePadding(dp(4));
 
         // 监听底部弹层状态：展开/收起会改变顶栏（FragmentPlayerSmall）的收起条件，
         // 但不触发分段切换，需在此手动刷新联动（见 updateNowPlayingRowVisibility）
@@ -721,6 +667,14 @@ public class FragmentPlayerFull extends Fragment {
         if (!initialized) {
             fullUpdate();
         }
+
+        // 每次从收起态展开都会走到这里（ActivityMain 的 EXPANDED 分支）。
+        // 展开瞬间 Fragment 的 show() 事务尚未执行完，onHiddenChanged 里那次
+        // fullUpdate 调 updateHeroFlow 时 isVisible() 往往还不为真，于是播放中的
+        // 呼吸被跳过、且此后没有新的状态广播把它唤醒——表现就是「展开播放器后
+        // 背景一动不动」。这里在事务落定后补一次判定，让呼吸必然起得来。
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
+                () -> updateHeroFlow(PlayerServiceUtil.isPlaying()), 250);
     }
 
     @Override
@@ -870,6 +824,9 @@ public class FragmentPlayerFull extends Fragment {
             return;
         }
 
+        // 播放器退到后台/收起：一并停掉 Hero 呼吸（隐藏后不会再收到 fullUpdate）
+        setHeroBreathing(false);
+
         refreshHandler.cancel();
 
         if (trackMetadataCallback != null) {
@@ -951,9 +908,6 @@ public class FragmentPlayerFull extends Fragment {
                 lastStationUuid = station.StationUuid;
                 trackHistoryViewModel.setStationUuid(station.StationUuid);
             }
-            // 色斑取色缓存 key（spec：电台 ID + 图标 URL；此处用 UUID + 后续位图
-            // generationId 组成稳定 key，同一电台图标不变时不重复计算）
-            blobCacheKey = station.StationUuid;
         }
 
         updateCurrentPlayingHeader();
@@ -1000,6 +954,11 @@ public class FragmentPlayerFull extends Fragment {
             } else if (!TextUtils.isEmpty(streamTitle)) {
                 displayText = streamTitle;
                 displayTextForAccessibility = getString(R.string.now_playing_stream, streamTitle);
+            } else if (PlayerServiceUtil.isPlaying()) {
+                // 播放中但元数据缺失/空白：显示未知占位而非留空（空白元数据已在
+                // StreamLiveInfo 源头归一，此处兜底无元数据电台与存量场景）
+                displayText = getString(R.string.unknown_artist) + " - " + getString(R.string.unknown_track);
+                displayTextForAccessibility = getString(R.string.now_playing_all_unknown);
             }
 
             // 顶栏标题行恒显电台名（用户要求恢复；长名走马灯滚动）；曲目信息由
@@ -1012,8 +971,21 @@ public class FragmentPlayerFull extends Fragment {
             // 停止/暂停后元数据仍是最后缓存曲目，继续显示会让用户误解电台仍在播出，
             // 隐藏时只影响该行自身（GONE），上方电台名与胶囊位置不动
             if (PlayerServiceUtil.isPlaying() && !TextUtils.isEmpty(displayText)) {
-                heroNowPlaying.setText(getString(R.string.player_hero_now_playing, displayText));
-                heroNowPlaying.setVisibility(View.VISIBLE);
+                // 引导词「正在播放：」已合成进行首 compound drawable（固定不滚动），
+                // 文本区只放冒号后的内容
+                String nowPlayingText = displayText;
+                boolean textChanged = !TextUtils.equals(nowPlayingText, heroNowPlaying.getText());
+                if (textChanged) {
+                    heroNowPlaying.setText(nowPlayingText);
+                }
+                // 恒置选中态：文本超宽时走马灯循环滚动（TextView 跑马灯需要 selected/focused）
+                heroNowPlaying.setSelected(true);
+                if (heroNowPlaying.getVisibility() != View.VISIBLE) {
+                    heroNowPlaying.setVisibility(View.VISIBLE);
+                    restartMarqueeAfterLayout(heroNowPlaying); // 转可见：补启走马灯
+                } else if (textChanged) {
+                    restartMarqueeAfterLayout(heroNowPlaying); // 文本变化：重测起滚
+                }
             } else {
                 heroNowPlaying.setVisibility(View.GONE);
             }
@@ -1074,8 +1046,8 @@ public class FragmentPlayerFull extends Fragment {
             statTrafficChip.setText(R.string.player_stat_data);
         }
 
-        // Hero 背景动态层：仅真正播放（Playing）时显示涌动，暂停（Paused）与
-        // 停止（Idle）都淡出恢复静态模糊图标背景（用户要求暂停也回静态）；
+        // Hero 背景动态层：仅真正播放（Playing）时背景虚化图标呼吸缩放，暂停（Paused）
+        // 与停止（Idle）平滑落回原尺寸并静止（用户要求暂停也回静态）；
         // 「正在播放」行与状态胶囊仍按 isPlaying() 处理（暂停即隐藏/回退标签名）
         PlayState state = PlayerServiceUtil.getPlayerState();
         updateHeroFlow(state == PlayState.Playing);
@@ -1248,10 +1220,17 @@ public class FragmentPlayerFull extends Fragment {
             imgRecordingIcon.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.blink_recording));
             textViewRecordingSize.setText(Utils.getReadableBytes(recordingInfo.getBytesWritten()));
             textViewRecordingName.setText(recordingInfo.getFileName());
-            // 「正在录音」行与录音块共用同一录音状态，文件名同源同命名规则
+            // 「正在录音」行与录音块共用同一录音状态，文件名同源同命名规则；
+            // 引导词「正在录音：」已合成进行首 drawable（固定不滚动），文本区只放文件名
             if (heroNowRecording != null) {
-                heroNowRecording.setText(getString(
-                        R.string.player_hero_now_recording, recordingInfo.getFileName()));
+                String recText = recordingInfo.getFileName();
+                if (!TextUtils.equals(recText, heroNowRecording.getText())) {
+                    // 文本变化才 setText + 补启走马灯：录音块每秒刷新字节数会连带
+                    // 走到这里，重复切换选中态会把滚动节拍永远卡在起滚延迟上
+                    heroNowRecording.setText(recText);
+                    heroNowRecording.setSelected(true);
+                    restartMarqueeAfterLayout(heroNowRecording);
+                }
             }
         } else {
             imgRecordingIcon.clearAnimation();
@@ -1273,10 +1252,91 @@ public class FragmentPlayerFull extends Fragment {
         blockRecording.setVisibility(
                 position == 3 && recordingRowActive ? View.VISIBLE : View.GONE);
         if (heroNowRecording != null) {
-            heroNowRecording.setVisibility(
-                    position == 0 && recordingRowActive ? View.VISIBLE : View.GONE);
+            final boolean wantVisible = position == 0 && recordingRowActive;
+            if (wantVisible && heroNowRecording.getVisibility() != View.VISIBLE) {
+                // 转可见（如切回电台信息分段）：补启走马灯——文本未变时 setText 侧
+                // 不会触发，此处兜底；隐藏行跳过，转可见时由本分支触发
+                heroNowRecording.setVisibility(View.VISIBLE);
+                restartMarqueeAfterLayout(heroNowRecording);
+            } else if (!wantVisible) {
+                heroNowRecording.setVisibility(View.GONE);
+            }
         }
         updateNowPlayingRowVisibility();
+    }
+
+    /**
+     * 「正在播放/正在录音」行走马灯补启：TextView 跑马灯要求在布局完成、行宽最终
+     * 确定后发生选中态切换才会真正起滚——setText 后立刻 setSelected(true) 时若行
+     * 尚未完成布局（mLayout 为空或仍是旧文本的布局），startMarquee 会静默放弃，
+     * 且后续布局不会重试（真机实测两行恒为静态省略号）。改为 post 到布局完成之后
+     * （setText/显隐变化已排入遍历同步屏障，post 任务必然晚于本轮 layout 执行），
+     * 强制 false→true 的选中态转换触发 startMarquee 重新测量起滚。隐藏行不起滚，
+     * 转可见时由显隐切换点再触发；文本未变不调用，避免高频刷新重置滚动节拍。
+     */
+    private void restartMarqueeAfterLayout(final TextView row) {
+        if (row == null) {
+            return;
+        }
+        row.post(new Runnable() {
+            @Override
+            public void run() {
+                if (row.getVisibility() != View.VISIBLE || row.getWidth() <= 0) {
+                    return;
+                }
+                row.setSelected(false);
+                row.setSelected(true); // false→true 转换触发 startMarquee（此刻布局已完成）
+            }
+        });
+    }
+
+    /**
+     * 行首固定引导标签（圆点 + 引导词文字合成一张位图）：compound drawable 位于
+     * 走马灯文本区之外天然不滚动，实现「引导词固定、冒号后内容走马灯」。
+     * 文字的字号/字体/颜色/阴影全部取自行 TextView 本身，保证与滚动内容同款视觉；
+     * 位图四周预留阴影晕开空间，避免暗晕被裁切后引导词看起来比内容更"硬"。
+     */
+    private Drawable createFixedLabelDrawable(@NonNull TextView row, @NonNull GradientDrawable dot,
+                                              @NonNull String label) {
+        final TextPaint paint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+        paint.setTextAlign(Paint.Align.LEFT);
+        paint.setTypeface(row.getTypeface());
+        paint.setTextSize(row.getTextSize());
+        paint.setColor(row.getCurrentTextColor());
+
+        final float shadowRadius = row.getShadowRadius();
+        final float shadowDx = row.getShadowDx();
+        final float shadowDy = row.getShadowDy();
+        final int shadowColor = row.getShadowColor();
+        final boolean hasShadow = shadowColor != 0 && shadowRadius > 0;
+        if (hasShadow) {
+            paint.setShadowLayer(shadowRadius, shadowDx, shadowDy, shadowColor);
+        }
+
+        final Paint.FontMetrics fm = paint.getFontMetrics();
+        final float textWidth = paint.measureText(label);
+        final float textHeight = fm.descent - fm.ascent;
+        // 阴影晕开余量：半径 + 偏移绝对值 + 1px 保底
+        final float shadowPad = hasShadow
+                ? (float) Math.ceil(shadowRadius + Math.abs(shadowDx) + Math.abs(shadowDy) + 1)
+                : 0;
+        final int dotSize = dp(7);
+        final int dotGap = dp(6); // 圆点与引导词的间距（原行首圆点样式不变）
+        final int width = (int) Math.ceil(shadowPad * 2 + dotSize + dotGap + textWidth);
+        final int height = (int) Math.ceil(shadowPad * 2 + Math.max(dotSize, textHeight));
+
+        final Bitmap bmp = Bitmap.createBitmap(Math.max(1, width), Math.max(1, height),
+                Bitmap.Config.ARGB_8888);
+        final Canvas canvas = new Canvas(bmp);
+        dot.setBounds((int) shadowPad, (int) ((height - dotSize) / 2f),
+                (int) shadowPad + dotSize, (int) ((height + dotSize) / 2f));
+        dot.draw(canvas);
+        final float baseline = (height - textHeight) / 2f - fm.ascent;
+        canvas.drawText(label, shadowPad + dotSize + dotGap, baseline, paint);
+
+        final BitmapDrawable d = new BitmapDrawable(getResources(), bmp);
+        d.setBounds(0, 0, width, height);
+        return d;
     }
 
     /**
@@ -1334,19 +1394,11 @@ public class FragmentPlayerFull extends Fragment {
             applyHeroGradient();
             return;
         }
-        heroBgImage.setAlpha(0.6f);
+        // 0.75：早先 0.6 的透明度叠加大面积模糊后整体对比度过低，背景只剩一团糊，
+        // 提高不透明度让虚化图标的明暗层次透出来（仍是毛玻璃，不与前景卡片抢注意力）
+        heroBaseAlpha = 0.75f;
+        heroBgImage.setAlpha(heroBaseAlpha);
         heroBgImage.setImageBitmap(blurred);
-        // 从原始图标（清晰原图，非模糊缓存）提取色板；同 key 缓存不重复计算（spec）
-        final String cacheKey = blobCacheKey + "|" + source.getGenerationId();
-        BlobPalette palette = blobPaletteCache.get(cacheKey);
-        if (palette == null) {
-            palette = extractBlobPalette(source);
-            if (blobPaletteCache.size() > 8) {
-                blobPaletteCache.clear(); // 简单上限防膨胀
-            }
-            blobPaletteCache.put(cacheKey, palette);
-        }
-        applyBlobPalette(palette);
     }
 
     /** Hero 无位图时的兜底背景：按预设强调色生成的对角渐变（亮/暗主题分别派生）。 */
@@ -1364,711 +1416,180 @@ public class FragmentPlayerFull extends Fragment {
         final int endColor = ColorUtils.blendARGB(accent, dark ? Color.BLACK : Color.WHITE, dark ? 0.12f : 0.22f);
         GradientDrawable gradient = new GradientDrawable(
                 GradientDrawable.Orientation.TL_BR, new int[]{startColor, accent, endColor});
-        heroBgImage.setAlpha(1f);
+        heroBaseAlpha = 1f;
+        heroBgImage.setAlpha(heroBaseAlpha);
         heroBgImage.setImageDrawable(gradient);
-        // 无图标电台：色板退化为强调色系衍生（基底 = 强调色，色斑 = 邻近色变体）
-        applyBlobPalette(extractPaletteFromAccent(accent));
     }
 
     /**
-     * 取色：清晰原图 64×64 降采样 → 27 桶量化聚类（彩色 = 色相 8 × 明度 3，
-     * 中性 = 黑/灰/白 3 桶单列并以绝对色度判别，防暗部噪声串色）→ 均值色 +
-     * 面积占比（保持图标原色，不提亮不增饱和）→ 按占比降序做「可辨性」筛选
-     * 取最多 5 个主导色（防同系深浅占满名额），占比最大者为基底铺满色，
-     * 其余（最多 4 个）为色斑色且色斑面积按各自占比分配。
-     */
-    private BlobPalette extractBlobPalette(Bitmap source) {
-        final int accent = Utils.getThemeColor(requireContext(), R.attr.presetAccentColor);
-        if (source == null || source.isRecycled() || source.getWidth() <= 0) {
-            return extractPaletteFromAccent(accent);
-        }
-
-        Bitmap small;
-        try {
-            small = Bitmap.createScaledBitmap(source, 64, 64, true);
-        } catch (IllegalArgumentException e) {
-            return extractPaletteFromAccent(accent);
-        }
-
-        // 27 桶 = 彩色（色相 8 × 明度 3）+ 中性（暗黑/中灰/亮白 3 桶）。
-        // 中性必须单列：白/灰/黑的 HSV 色相无意义（恒为 0），混进彩色桶会被
-        // 平均进红橙色——此前图标里的白/黄/黑全部丢失、只剩暖橙棕正是这个原因。
-        final int[] count = new int[27];
-        final int[] sumR = new int[27], sumG = new int[27], sumB = new int[27];
-        int[] pixels = new int[64 * 64];
-        small.getPixels(pixels, 0, 64, 0, 0, 64, 64);
-        for (int px : pixels) {
-            if (Color.alpha(px) < 64) {
-                continue;
-            }
-            float[] hsv = new float[3];
-            Color.colorToHSV(px, hsv);
-            int valBucket = hsv[2] < 0.35f ? 0 : (hsv[2] < 0.7f ? 1 : 2);
-            int bucket;
-            // 中性判定用绝对色度 S×V：暗部像素 V 极低时 S（相对值）虚高且色相
-            // 全是噪声（如 RGB(30,35,55) S=0.45 实为深灰蓝黑），若按 S 判色会
-            // 被提亮增饱和放大成图标里不存在的蓝紫品红
-            if (hsv[1] < 0.22f || hsv[1] * hsv[2] < 0.16f || (hsv[2] > 0.93f && hsv[1] < 0.45f)) {
-                bucket = 24 + valBucket; // 中性：黑 / 灰 / 白（含暖白高光、暗部噪声）
-            } else {
-                int hueBucket = Math.min(7, (int) (hsv[0] / 45f));
-                bucket = hueBucket * 3 + valBucket;
-            }
-            sumR[bucket] += Color.red(px);
-            sumG[bucket] += Color.green(px);
-            sumB[bucket] += Color.blue(px);
-            count[bucket]++;
-        }
-
-        // 桶按像素数（面积占比）降序
-        Integer[] order = new Integer[27];
-        for (int i = 0; i < 27; i++) {
-            order[i] = i;
-        }
-        java.util.Arrays.sort(order, (a, b) -> count[b] - count[a]);
-
-        // 第一轮：按占比取最多 5 个主导色（1 基底 + 最多 4 色斑色），要求与
-        // 已选色「可辨」（色相或明度拉开距离），避免名额被同系深浅暖棕挤占；
-        // 同时记录各色桶像素数，供色斑按占比分配面积
-        java.util.ArrayList<Integer> colors = new java.util.ArrayList<>();
-        java.util.ArrayList<Long> pickedCounts = new java.util.ArrayList<>();
-        java.util.ArrayList<Integer> skipped = new java.util.ArrayList<>();
-        java.util.ArrayList<Long> skippedCounts = new java.util.ArrayList<>();
-        for (int i = 0; i < 27 && colors.size() < 5; i++) {
-            int b = order[i];
-            if (count[b] == 0) {
-                break;
-            }
-            int c = Color.rgb(sumR[b] / count[b], sumG[b] / count[b], sumB[b] / count[b]);
-            boolean distinct = true;
-            for (int picked : colors) {
-                if (!isDistinctColor(c, picked)) {
-                    distinct = false;
-                    break;
-                }
-            }
-            if (distinct) {
-                colors.add(c);
-                pickedCounts.add((long) count[b]);
-            } else {
-                skipped.add(c);
-                skippedCounts.add((long) count[b]);
-            }
-        }
-        // 第二轮：可辨色不足时放宽，用被跳过的高占比桶补齐（保证至少基底+3 色斑）
-        for (int si = 0; si < skipped.size() && colors.size() < 4; si++) {
-            colors.add(skipped.get(si));
-            pickedCounts.add(skippedCounts.get(si));
-        }
-
-        // 仍不足（基底 + 3 色斑）时用已有色的明度/饱和度变体补齐（禁止引入图标外色相），
-        // 变体沿用源色的最小占比
-        long minCount = 1L;
-        for (long pc : pickedCounts) {
-            minCount = Math.min(minCount, pc);
-        }
-        while (colors.size() < 4) {
-            int src = colors.isEmpty() ? accent : colors.get(colors.size() - 1);
-            float[] hsv = new float[3];
-            Color.colorToHSV(src, hsv);
-            hsv[1] = Math.min(1f, hsv[1] + 0.12f);
-            hsv[2] = (colors.size() % 2 == 0)
-                    ? Math.max(0.35f, hsv[2] - 0.15f)
-                    : Math.min(0.95f, hsv[2] + 0.15f);
-            colors.add(Color.HSVToColor(hsv));
-            pickedCounts.add(minCount);
-        }
-
-        // 色斑面积按占比分配：以最大占比归一（最大 = 1），占比小的色斑明显更小
-        long wMax = 1L;
-        for (int i = 1; i < colors.size(); i++) {
-            wMax = Math.max(wMax, pickedCounts.get(i));
-        }
-        float[] weights = new float[colors.size() - 1];
-        for (int i = 1; i < colors.size(); i++) {
-            weights[i - 1] = pickedCounts.get(i) / (float) wMax;
-        }
-
-        return new BlobPalette(colors.get(0), toArray(colors, 1), weights);
-    }
-
-    /**
-     * 两色是否「可辨」（主导色挑选用）：中性 vs 彩色必可辨；同为中性比明度差；
-     * 同为彩色比环形色相距离或明度差——防止橙/棕/深橙这类同系色占满名额。
-     */
-    private static boolean isDistinctColor(int c1, int c2) {
-        float[] a = new float[3], b = new float[3];
-        Color.colorToHSV(c1, a);
-        Color.colorToHSV(c2, b);
-        final boolean na = a[1] < 0.22f || a[1] * a[2] < 0.16f;
-        final boolean nb = b[1] < 0.22f || b[1] * b[2] < 0.16f;
-        if (na != nb) {
-            return true;
-        }
-        if (na) {
-            return Math.abs(a[2] - b[2]) >= 0.30f;
-        }
-        float d = Math.abs(a[0] - b[0]) % 360f;
-        if (d > 180f) {
-            d = 360f - d;
-        }
-        return d >= 18f || Math.abs(a[2] - b[2]) >= 0.32f;
-    }
-
-    /** 无图标电台的色板：基底 = 强调色，色斑 = 邻近明度/色相变体（保证可辨差异）。 */
-    private BlobPalette extractPaletteFromAccent(int accent) {
-        float[] hsv = new float[3];
-        Color.colorToHSV(accent, hsv);
-        int c1 = ColorUtils.blendARGB(accent, Color.WHITE, 0.25f);
-        float[] h2 = {hsv[0] + 28f, hsv[1], Math.max(0.4f, hsv[2] - 0.1f)};
-        int c2 = Color.HSVToColor(h2);
-        float[] h3 = {hsv[0] - 28f, hsv[1], Math.min(0.95f, hsv[2] + 0.1f)};
-        int c3 = Color.HSVToColor(h3);
-        return new BlobPalette(accent,
-                new int[]{c1, c2, c3}, new float[]{0.5f, 0.35f, 0.22f});
-    }
-
-    private int[] toArray(java.util.ArrayList<Integer> list, int from) {
-        int[] arr = new int[list.size() - from];
-        for (int i = from; i < list.size(); i++) {
-            arr[i - from] = list.get(i);
-        }
-        return arr;
-    }
-
-    /**
-     * 应用色板到动态层（spec：基底 = 占比最大色铺满 60~75% 透明度；色斑 4~6 个，
-     * 尺寸 = 视口短边 60%~140%、错落四角与中部）。
-     * 换色板（切台/图标刷新）时若动态层可见，做 2 秒 ArgbEvaluator 交叉淡化，
-     * 不闪断、不重排布局。
-     */
-    private void applyBlobPalette(BlobPalette newPalette) {
-        if (heroBgBlobs == null) {
-            return;
-        }
-        if (heroBgBlobs.getWidth() <= 0 || heroBgBlobs.getHeight() <= 0) {
-            // 尚未布局：记下色板，updateHeroFlow 首次启动时按已布局尺寸重新应用
-            blobPalette = newPalette;
-            return;
-        }
-
-        final BlobPalette old = blobPalette;
-        blobPalette = newPalette;
-        if (old != null && heroBgBlobs.getAlpha() > 0.05f && blobPaletteTransition == null) {
-            // 不闪断、不重排布局；过渡开始时整场做一次极轻微放大回落
-            // 的「涟漪」，把「歌换了」变成一次视觉呼吸（一首歌至多一次）
-            startHeroBlobRipple();
-            blobPaletteTransition = ValueAnimator.ofFloat(0f, 1f);
-            blobPaletteTransition.setDuration(2000);
-            blobPaletteTransition.setInterpolator(new LinearInterpolator());
-            blobPaletteTransition.addUpdateListener(animation ->
-                    renderBlobPalette(mixPalette(old, newPalette, (float) animation.getAnimatedValue())));
-            blobPaletteTransition.addListener(new android.animation.AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(android.animation.Animator animation) {
-                    blobPaletteTransition = null;
-                }
-            });
-            blobPaletteTransition.start();
-        } else {
-            applyBlobPaletteImmediate(newPalette);
-        }
-    }
-
-    /** 两套色板按 t 混合（ArgbEvaluator 逐色插值，占比同步插值）。 */
-    private BlobPalette mixPalette(BlobPalette a, BlobPalette b, float t) {
-        ArgbEvaluator ev = new ArgbEvaluator();
-        int base = (int) ev.evaluate(t, a.base, b.base);
-        int n = Math.max(a.colors.length, b.colors.length);
-        int[] mixed = new int[n];
-        float[] mw = new float[n];
-        for (int i = 0; i < n; i++) {
-            int ca = a.colors[Math.min(i, a.colors.length - 1)];
-            int cb = b.colors[Math.min(i, b.colors.length - 1)];
-            mixed[i] = (int) ev.evaluate(t, ca, cb);
-            float wa = a.weights[Math.min(i, a.weights.length - 1)];
-            float wb = b.weights[Math.min(i, b.weights.length - 1)];
-            mw[i] = wa + (wb - wa) * t;
-        }
-        return new BlobPalette(base, mixed, mw);
-    }
-
-    /** 立即把色板渲染到基底与色斑（含按视口短边分配尺寸、错落分布）。 */
-    private void applyBlobPaletteImmediate(BlobPalette palette) {
-        if (heroBlobBase == null || heroBlobViews == null
-                || heroBgBlobs.getWidth() <= 0 || heroBgBlobs.getHeight() <= 0) {
-            return;
-        }
-        // 基底：主色铺满，低透明度（~43%）——压低后色斑之间的对比更强烈，
-        // 均匀底色感更弱、涌动感更强
-        // 基底垂直渐隐（上下各 ~14% 渐变到全透明）：纯色矩形会在信息页上下边缘
-        // 被截出恒定横线，渐隐后边缘 alpha 归零、与相邻区域无缝延续
-        heroBlobBase.setBackground(makeBaseGradient(darkenBase(palette.base)));
-
-        final int shortSide = Math.min(heroBgBlobs.getWidth(), heroBgBlobs.getHeight());
-        final int W = heroBgBlobs.getWidth();
-        final int H = heroBgBlobs.getHeight();
-
-        // 错落锚点（相对容器比例）：四角内收 + 中部。y 取 0.36/0.64（水平仍贴角）：
-        // 色斑可见圆不得越信息页上下边（0.42×size 约束），锚点越靠边可用尺寸越小，
-        // 内移换取边缘斑保持较大面积
-        final float[][] corners = {
-                {0.26f, 0.36f}, {0.74f, 0.33f}, {0.72f, 0.64f}, {0.28f, 0.67f}
-        };
-
-        // 亮暗分层定位（用户要求）：按颜色明度从暗到浅排三层——最深的 1 枚在屏幕
-        // 最中间附近游动（小轨道），次深的 2 枚围绕最深的在中环游动（四角锚点向
-        // 中心收缩 55%），最浅的 2 枚占四角边缘锚点大轨道扫掠边缘；明度对角分布，
-        // 避免亮斑顶托中央白色前景字
-        int colorCount = palette.colors.length;
-        // 排序依据用 Rec601 感知亮度而非 HSV V：同样 V 的蓝色看起来比黄色暗得多，
-        // 按 V 分层会让蓝紫系图标的「最深色」实际观感发亮——感知亮度才符合人眼
-        final float[] blobV = new float[BLOB_COUNT];
-        Integer[] byV = new Integer[BLOB_COUNT];
-        for (int i = 0; i < BLOB_COUNT; i++) {
-            byV[i] = i;
-            final int c = palette.colors[i % colorCount];
-            blobV[i] = (0.299f * Color.red(c) + 0.587f * Color.green(c) + 0.114f * Color.blue(c)) / 255f;
-        }
-        java.util.Arrays.sort(byV, (a, b) -> Float.compare(blobV[a], blobV[b]));
-        // 槽位：rank0 最深→中心；rank1/2 次深→对角两角的内环收缩位；rank3/4 最浅→另两对角边缘
-        final int[][] cornerSlot = {{0, 2}, {1, 3}}; // {中环用角}, {边缘用角}
-        int midIdx = 0, edgeIdx = 0;
-        for (int rank = 0; rank < BLOB_COUNT; rank++) {
-            final int blobIdx = byV[rank];
-            final float[] slot;
-            if (rank == 0) {
-                slot = new float[]{0.50f, 0.50f};
-                blobDepth[blobIdx] = 0;
-            } else if (rank <= 2) {
-                float[] c = corners[cornerSlot[0][midIdx++ % 2]];
-                slot = new float[]{0.5f + (c[0] - 0.5f) * 0.55f, 0.5f + (c[1] - 0.5f) * 0.55f};
-                blobDepth[blobIdx] = 1;
-            } else {
-                slot = corners[cornerSlot[1][edgeIdx++ % 2]];
-                blobDepth[blobIdx] = 2;
-            }
-            blobAnchors[blobIdx] = slot;
-        }
-
-        for (int i = 0; i < BLOB_COUNT; i++) {
-            final ImageView blob = heroBlobViews[i];
-            // 色斑颜色循环取用（5 斑 / 3~4 色，相邻斑错开）
-            final int ci = i % colorCount;
-            final int color = palette.colors[ci];
-            // 面积按占比分配 + 按分层收紧上限（用户校准）：中央小而深、边缘大而浅，
-            // 中带自然留出「安静区」，与边缘涌动形成动静对比
-            float wn = palette.weights.length > 0
-                    ? palette.weights[Math.min(ci, palette.weights.length - 1)] : 1f;
-            final float lo, hi;
-            if (blobDepth[i] == 0) {
-                lo = 0.52f; hi = 1.04f;
-            } else if (blobDepth[i] == 1) {
-                lo = 0.58f; hi = 1.27f;
-            } else {
-                lo = 0.63f; hi = 1.61f;
-            }
-            // 垂直自适应（消灭上下边横线的核心）：色斑可见圆（含渐变长尾，半径
-            // ≈0.42×size）不得越过信息页上/下边——哪怕 α 很低的长尾越出，也会被
-            // 顶栏/控制条的分界截出随涌动涨落的微横线（用户实测）。size 按锚点到
-            // 上/下边的垂直余量收紧；水平方向不约束：信息页左右边 = 屏幕边，屏外
-            // 裁切不可见。
-            float ay = Math.max(0f, Math.min(H, blobAnchors[i][1] * H));
-            float vLimit = Math.min(ay, H - ay) / 0.42f;
-            int size = Math.round(Math.min(shortSide * (lo + (hi - lo) * wn), vLimit));
-            float rCore = 0.42f * size;
-            ay = Math.max(rCore, Math.min(H - rCore, ay));
-            ViewGroup.LayoutParams lp = blob.getLayoutParams();
-            lp.width = size;
-            lp.height = size;
-            blob.setLayoutParams(lp);
-            // 初始位置 = 分层锚点（layout_gravity=center 基础上平移）；y 用安全区内推值
-            blob.setTranslationX((blobAnchors[i][0] - 0.5f) * W);
-            blob.setTranslationY(ay - 0.5f * H);
-            blobAnchors[i][1] = ay / H; // 回写内推后的锚点，buildBlobAnimations 轨道同源
-            blob.setImageDrawable(makeBlobDrawable(color, size));
-        }
-    }
-
-    /** 渲染混合色板（过渡动画每帧调用；只更新颜色不重排布局）。 */
-    private void renderBlobPalette(BlobPalette palette) {
-        if (heroBlobBase == null || heroBlobViews == null || heroBgBlobs.getWidth() <= 0) {
-            return;
-        }
-        // 基底垂直渐隐（上下各 ~14% 渐变到全透明）：纯色矩形会在信息页上下边缘
-        // 被截出恒定横线，渐隐后边缘 alpha 归零、与相邻区域无缝延续
-        heroBlobBase.setBackground(makeBaseGradient(darkenBase(palette.base)));
-        int colorCount = palette.colors.length;
-        for (int i = 0; i < BLOB_COUNT; i++) {
-            int color = palette.colors[i % colorCount];
-            int size = heroBlobViews[i].getLayoutParams().width;
-            heroBlobViews[i].setImageDrawable(makeBlobDrawable(color, size));
-        }
-    }
-
-    /**
-     * 单枚色斑 drawable（用户要求：像衣服染色的不规则斑块，透过毛玻璃是模糊一片）：
-     * 两枚错位径向渐变圆叠加（LayerDrawable）+ 三段长尾渐隐，边缘无锐利切线。
-     */
-    private android.graphics.drawable.Drawable makeBlobDrawable(int color, int sizePx) {
-        // 每层渐变半径必须 ≤ 圆心到 view 四边的最小距离（错位圆心离哪边近就用哪边）：
-        // 保证 view 边缘处 alpha 严格归零——色斑 view 越出容器边界的部分全是透明
-        // 像素，被容器边界裁切也不留横/竖直线痕迹（用户实测截图踩坑：半径 0.60
-        // 超出半宽 0.50，边缘 α≈30 被裁出明显直线）
-        GradientDrawable mainBlob = makeBlobGradient(color, 0.42f, 0.42f, sizePx, 0.42f);
-        GradientDrawable subBlob = makeBlobGradient(
-                ColorUtils.blendARGB(color, Color.BLACK, 0.14f), 0.64f, 0.63f, sizePx, 0.35f);
-        return new android.graphics.drawable.LayerDrawable(
-                new android.graphics.drawable.Drawable[]{subBlob, mainBlob});
-    }
-
-    /**
-     * 单层径向渐变：四段长尾渐隐（中心近实色 → 40% 半透 → 75% 微痕 → 边缘全透明）。
-     * 核心透明度拉高到 235，重叠处色彩浓艳（对齐视频），长尾保证无锐利边界。
-     */
-    private GradientDrawable makeBlobGradient(
-            int color, float centerX, float centerY, int sizePx, float radiusRatio) {
-        GradientDrawable blob = new GradientDrawable();
-        blob.setGradientType(GradientDrawable.RADIAL_GRADIENT);
-        blob.setGradientCenter(centerX, centerY);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // 两参 setColors（含渐变位置）仅 API 29+；低版本退化单参（位置均匀分布），
-            // 长尾渐隐的四段透明度保持不变，仅段位从 40%/75% 移到 33%/67%，视觉近似
-            blob.setColors(new int[]{
-                    ColorUtils.setAlphaComponent(color, 235),
-                    ColorUtils.setAlphaComponent(color, 135),
-                    ColorUtils.setAlphaComponent(color, 45),
-                    Color.TRANSPARENT
-            }, new float[]{0f, 0.40f, 0.75f, 1f});
-        } else {
-            blob.setColors(new int[]{
-                    ColorUtils.setAlphaComponent(color, 235),
-                    ColorUtils.setAlphaComponent(color, 135),
-                    ColorUtils.setAlphaComponent(color, 45),
-                    Color.TRANSPARENT
-            });
-        }
-        // 半径取圆心到最近边的距离以内（radiusRatio），view 边缘 alpha 严格归零
-        blob.setGradientRadius(sizePx * radiusRatio);
-        return blob;
-    }
-
-    /**
-     * Hero 背景动态化：仅真正播放（Playing）时动态色斑层在静态模糊图标上
-     * 淡入（约 1.5s）并持续轨道涌动；暂停（Paused）与停止（Idle）都淡出
-     * （1.4s）后冻结，回到静态模糊图标背景。
-     * 系统开启「减少动态效果」（动画时长缩放 = 0）时退化为静态渐变（不启动动画）。
+     * Hero 背景动态化：仅真正播放（Playing）时，被「毛玻璃」压住的虚化电台图标做
+     * 缓慢的「双轴呼吸」——缩放（放大 ↔ 回缩）+ 同相亮度脉冲（膨胀最暗、回缩最亮），
+     * 同时光晕层反相明灭（膨胀最亮且收拢）；暂停（Paused）与停止（Idle）平滑落回原尺寸
+     * 并静止。系统开启「减少动态效果」（动画时长缩放 = 0）时不启动呼吸。
      */
     private void updateHeroFlow(boolean playing) {
-        if (heroBgBlobs == null || !isAdded()) {
+        // 仅在播放器确实可见（未收起/未隐藏/窗口可见）时呼吸：不可见的无限动画只白烧电量
+        if (heroBgImage == null || !isVisible()) {
             return;
         }
-        // spec 加分项：系统「减少动态效果」→ 静态渐变（色斑层静止显示，不启动游走）
+        // 页码守卫：呼吸只属「电台信息」页——停在其他分段页时背景已离屏，不启动
+        // （pager 未创建时放行：初始尚无翻页概念，见 suspendHeroFlowForPaging）
+        if (pagerContent != null
+                && pagerContent.getCurrentItem() % PAGER_REAL_COUNT != 0) {
+            return;
+        }
+        // 系统「减少动态效果」→ 不起呼吸，保持静态模糊背景
         boolean reduceMotion = Settings.Global.getFloat(requireContext().getContentResolver(),
                 Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f;
-
-        // 透明度渐起/渐落（rise 1.5s / fall 1.4s，spec）
-        float targetAlpha = playing ? 1f : 0f;
-        if (heroFlowAlphaAnimator != null && heroFlowAlphaAnimator.isRunning()) {
-            heroFlowAlphaAnimator.cancel();
-        }
-        heroFlowAlphaAnimator = ValueAnimator.ofFloat(heroBgBlobs.getAlpha(), targetAlpha);
-        heroFlowAlphaAnimator.setDuration(playing ? 1500 : 1400);
-        heroFlowAlphaAnimator.addUpdateListener(animation ->
-                heroBgBlobs.setAlpha((float) animation.getAnimatedValue()));
-        if (!playing) {
-            // 落回 0 后冻结游走：背景完全静止显示底层模糊电台图标
-            heroFlowAlphaAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
-                private boolean cancelled;
-
-                @Override
-                public void onAnimationCancel(android.animation.Animator animation) {
-                    cancelled = true;
-                }
-
-                @Override
-                public void onAnimationEnd(android.animation.Animator animation) {
-                    if (!cancelled) {
-                        stopHeroFlowDrift();
-                    }
-                }
-            });
-        }
-        heroFlowAlphaAnimator.start();
-
-        if (playing && !reduceMotion) {
-            if (heroBgBlobs.getWidth() <= 0) {
-                return; // 尚未布局，下次 fullUpdate 再建
-            }
-            if (blobPalette != null && heroBlobViews[0].getLayoutParams().width <= 0) {
-                // 色板在布局完成前就已取出（updateHeroBackgroundFromArt 早于布局）：
-                // 此处补一次按已布局尺寸的渲染（锚点/尺寸依赖视口大小）
-                applyBlobPaletteImmediate(blobPalette);
-            }
-            if (heroFlowAnimator != null) {
-                if (!heroFlowAnimator.isRunning()) {
-                    heroFlowAnimator.start(); // 停止冻结后重新起播，动画随淡入重启
-                }
-                return; // 已在游走则不重启，避免每次 fullUpdate 都跳回轨道起点
-            }
-            buildBlobAnimations();
-            if (heroFlowAnimator != null) {
-                heroFlowAnimator.start();
-            }
-        }
+        setHeroBreathing(playing && !reduceMotion);
     }
 
     /**
-     * 构建色斑轨道游走动画（色斑沿大椭圆轨道匀速连续扫动，永不停顿减速）：
-     * 平移 = 椭圆轨道 Path 属性动画（GPU 合成层、线性匀速、无限循环无缝衔接），
-     * 各斑轨道半径/周期/方向/起始相位全部错开（周期 13~21 秒，速度经用户校准）；
-     * 缩放 0.78~1.32 呼吸（10~16s ease-in-out 往复），尺寸变化 + 相向轨道使
-     * 色彩互相赶超、穿插覆盖；blur 只创建一次不动它。
+     * 呼吸开关。开：按「慢吸 → 短暂停顿 → 较快呼出」的非对称曲线无限循环
+     * （1.0 → {@link #HERO_BREATH_MAX_SCALE} → 1.0）；关：从当前倍率平滑落回 1.0 后冻结。
+     * 已在呼吸时不重启——updateHeroFlow 会随播放状态广播反复调用，重启会打断呼吸节奏。
+     *
+     * 之所以不用 ofFloat(1, 1.28) + REVERSE：REVERSE 的往返严格等长且对称，读起来像
+     * 匀速机械脉冲；真实呼吸吸气略长、到顶有停顿、呼气略快，故改用 0→1 的线性进度，
+     * 由 {@link #breathExpand(float)} 自行把进度映射成非对称的膨胀曲线。
      */
-    private void buildBlobAnimations() {
-        final int heroW = heroBgBlobs.getWidth();
-        final int heroH = heroBgBlobs.getHeight();
-        if (heroW <= 0 || heroH <= 0) {
-            return; // 尚未布局，下次 fullUpdate 再建
-        }
-
-        // 各斑轨道参数：{半径X(视口宽比例), 半径Y(视口高比例), 轨道周期ms,
-        //                起始角deg, 方向(+1顺时针/-1逆时针), 缩放min, 缩放max, 缩放周期ms}
-        // 按明度分层三档轨道池（用户要求）：最深档 = 中心小轨道游动；次深档 =
-        // 中环围绕；最浅档 = 四角大轨道扫掠边缘。每条轨道都带旋转角（各斑错开、
-        // 均非 0°/90° 轴对齐）——轴对齐椭圆会在拱点处呈现水平/垂直直线扫过感
-        // （用户反馈的「明显横竖线条」），旋转后轨迹斜向错落。字段：
-        // {半径X, 半径Y, 轨道周期ms, 起始角deg, 方向(±1), 缩放min, 缩放max, 缩放周期ms, 轨道旋转deg}
-        final float[][] darkSpecs = {
-                {0.10f, 0.13f, 18000,  45f,  1f, 0.82f, 1.24f, 16000,  30f},
-                {0.12f, 0.15f, 21000, 225f, -1f, 0.80f, 1.28f, 14000, -45f},
-        };
-        final float[][] midSpecs = {
-                {0.16f, 0.13f, 16600, 150f, -1f, 0.85f, 1.25f, 12000,  70f},
-                {0.14f, 0.17f, 19000, 330f,  1f, 0.84f, 1.26f, 15000, -25f},
-        };
-        final float[][] brightSpecs = {
-                {0.28f, 0.22f, 14000,   0f,  1f, 0.80f, 1.30f, 13000,  15f},
-                {0.24f, 0.28f, 13000, 270f, -1f, 0.85f, 1.28f, 14000, -60f},
-        };
-        int[] poolIdx = new int[3];
-        TimeInterpolator easeInOut = new AccelerateDecelerateInterpolator();
-        java.util.List<Animator> anims = new java.util.ArrayList<>();
-        for (int i = 0; i < BLOB_COUNT; i++) {
-            final View blob = heroBlobViews[i];
-            final int depth = Math.max(0, Math.min(2, blobDepth[i]));
-            final float[][] pool = depth == 0 ? darkSpecs : depth == 1 ? midSpecs : brightSpecs;
-            final float[] s = pool[poolIdx[depth]++ % pool.length];
-            // 轨道椭圆：圆心 = 分层锚点（applyBlobPaletteImmediate 已按明度写入）
-            final float[] anchor = blobAnchors[i] != null
-                    ? blobAnchors[i] : new float[]{0.5f, 0.5f};
-            final float cx = (anchor[0] - 0.5f) * heroW;
-            final float cy = (anchor[1] - 0.5f) * heroH;
-            final float rx = s[0] * heroW;
-            // 垂直轨道半径同步安全化：圆心全程 ±ry 不得让可见圆（≈0.42×size，含
-            // 长尾）越过信息页上/下边——否则游走中仍会周期性截出微横线
-            final float rCore = 0.42f * blob.getLayoutParams().width;
-            final float cyAbs = 0.5f * heroH + cy;
-            final float ry = Math.max(0.03f * heroH, Math.min(s[1] * heroH,
-                    Math.min(cyAbs - rCore, heroH - cyAbs - rCore)));
-            Path orbit = makeOrbitPath(cx, cy, rx, ry, s[3], s[4] > 0f, s[8]);
-
-            // 轨道动画用 ValueAnimator + PathMeasure 逐帧取点（API 1+），
-            // 不用 ObjectAnimator 的双属性 Path 重载（API 21+，minSdk 16 低版本会崩）
-            final android.graphics.PathMeasure orbitMeasure =
-                    new android.graphics.PathMeasure(orbit, false);
-            final float[] orbitPos = new float[2];
-            ValueAnimator travel = ValueAnimator.ofFloat(0f, 1f);
-            travel.addUpdateListener(a -> {
-                orbitMeasure.getPosTan(
-                        (Float) a.getAnimatedValue() * orbitMeasure.getLength(), orbitPos, null);
-                blob.setTranslationX(orbitPos[0]);
-                blob.setTranslationY(orbitPos[1]);
-            });
-            travel.setDuration((long) s[2]);
-            travel.setInterpolator(new LinearInterpolator()); // 匀速绕轨，循环点无缝
-            travel.setRepeatCount(ValueAnimator.INFINITE);
-            travel.setRepeatMode(ValueAnimator.RESTART);
-
-            ObjectAnimator sx = ObjectAnimator.ofFloat(blob, View.SCALE_X, s[5], s[6]);
-            sx.setDuration((long) s[7]);
-            ObjectAnimator sy = ObjectAnimator.ofFloat(blob, View.SCALE_Y, s[6], s[5]); // 与 X 反相位
-            sy.setDuration((long) s[7]);
-            sx.setInterpolator(easeInOut);
-            sy.setInterpolator(easeInOut);
-            sx.setRepeatCount(ValueAnimator.INFINITE);
-            sx.setRepeatMode(ValueAnimator.REVERSE);
-            sy.setRepeatCount(ValueAnimator.INFINITE);
-            sy.setRepeatMode(ValueAnimator.REVERSE);
-
-            anims.add(travel);
-            anims.add(sx);
-            anims.add(sy);
-        }
-
-        // 整场极慢漂移（准周期化，耐看性关键）：所有色斑作为一个场以质数周期
-        // 两轴缓慢游移 ±2~2.5% 视口，与各斑轨道周期叠加后整体重复周期达分钟级，
-        // 画面「永不重样」但依然平滑（translation 与各斑轨道分属不同 View，无冲突）
-        ObjectAnimator driftX = ObjectAnimator.ofFloat(heroBgBlobs, View.TRANSLATION_X,
-                -0.025f * heroW, 0.025f * heroW);
-        driftX.setDuration(53000L);
-        driftX.setRepeatCount(ValueAnimator.INFINITE);
-        driftX.setRepeatMode(ValueAnimator.REVERSE);
-        driftX.setInterpolator(easeInOut);
-        ObjectAnimator driftY = ObjectAnimator.ofFloat(heroBgBlobs, View.TRANSLATION_Y,
-                -0.02f * heroH, 0.02f * heroH);
-        driftY.setDuration(41000L);
-        driftY.setRepeatCount(ValueAnimator.INFINITE);
-        driftY.setRepeatMode(ValueAnimator.REVERSE);
-        driftY.setInterpolator(easeInOut);
-        anims.add(driftX);
-        anims.add(driftY);
-
-        // 各斑 alpha 涨落（存在感呼吸）：质数周期错开 + 初值差异化（兼作入场错峰），
-        // 色斑有「出墨/收墨」的节奏，画面密度不再恒定
-        final float[][] alphaSpecs = {
-                {0.86f, 1.00f, 23000},
-                {0.90f, 1.00f, 31000},
-                {0.84f, 0.98f, 43000},
-                {0.88f, 1.00f, 29000},
-                {0.86f, 0.99f, 37000},
-        };
-        for (int i = 0; i < BLOB_COUNT; i++) {
-            heroBlobViews[i].setAlpha(alphaSpecs[i][0]); // 初值差异化 = 入场错峰
-            ObjectAnimator fade = ObjectAnimator.ofFloat(heroBlobViews[i], View.ALPHA,
-                    alphaSpecs[i][0], alphaSpecs[i][1]);
-            fade.setDuration((long) (float) alphaSpecs[i][2]);
-            fade.setRepeatCount(ValueAnimator.INFINITE);
-            fade.setRepeatMode(ValueAnimator.REVERSE);
-            fade.setInterpolator(easeInOut);
-            anims.add(fade);
-        }
-
-        heroFlowAnimator = new AnimatorSet();
-        heroFlowAnimator.playTogether(anims);
-    }
-
-    /**
-     * 构建椭圆轨道 Path（四段三次贝塞尔近似，kappa 常数）：圆心 (cx,cy)、
-     * 半轴 (rx,ry)、起始角 startDeg、cw 为顺时针（屏幕 y 向下，角度递增即顺时针）、
-     * rotateDeg 为整条轨道绕圆心的旋转角（非 0°/90° 时轨迹斜向，消除轴对齐的
-     * 水平/垂直扫过感）。路径首尾闭合，配合 RESTART 无限循环无缝衔接。
-     */
-    private static Path makeOrbitPath(float cx, float cy, float rx, float ry,
-                                      float startDeg, boolean cw, float rotateDeg) {
-        final double kappa = 0.5522847498307933;
-        final double dir = cw ? 1.0 : -1.0;
-        Path p = new Path();
-        final double a0 = Math.toRadians(startDeg);
-        p.moveTo(cx + rx * (float) Math.cos(a0), cy + ry * (float) Math.sin(a0));
-        final double step = Math.toRadians(90.0) * dir;
-        for (int q = 0; q < 4; q++) {
-            final double ta = a0 + step * q;
-            final double tb = ta + step;
-            final float pax = cx + rx * (float) Math.cos(ta);
-            final float pay = cy + ry * (float) Math.sin(ta);
-            final float pbx = cx + rx * (float) Math.cos(tb);
-            final float pby = cy + ry * (float) Math.sin(tb);
-            // 端点切向：d/dθ (rx·cosθ, ry·sinθ) = (-rx·sinθ, ry·cosθ)，乘方向系数
-            final float tax = -rx * (float) Math.sin(ta) * (float) dir;
-            final float tay = ry * (float) Math.cos(ta) * (float) dir;
-            final float tbx = -rx * (float) Math.sin(tb) * (float) dir;
-            final float tby = ry * (float) Math.cos(tb) * (float) dir;
-            p.cubicTo(
-                    pax + (float) (kappa * tax), pay + (float) (kappa * tay),
-                    pbx - (float) (kappa * tbx), pby - (float) (kappa * tby),
-                    pbx, pby);
-        }
-        if (rotateDeg != 0f) {
-            // 整条轨道绕圆心旋转：打破轴对齐，消除拱点处的水平/垂直直线扫过感
-            android.graphics.Matrix rot = new android.graphics.Matrix();
-            rot.postRotate(rotateDeg, cx, cy);
-            p.transform(rot);
-        }
-        return p;
-    }
-
-    /** 停止并冻结背景平移动画（保留当前 translation，画面静止在当前帧）。 */
-    private void stopHeroFlowDrift() {
-        if (heroFlowAnimator != null) {
-            heroFlowAnimator.cancel();
-        }
-    }
-
-    /**
-     * 切台涟漪：色板过渡开始时整场 1.0→1.045→1.0 缓慢放大回落（4s）——把
-     * 「歌换了」变成一次克制的视觉呼吸；scale 与场漂移 translation 分属不同
-     * 属性，无冲突。
-     */
-    private void startHeroBlobRipple() {
-        if (heroBgBlobs == null) {
+    private void setHeroBreathing(boolean on) {
+        if (heroBgImage == null) {
             return;
         }
-        if (blobRippleAnimator != null) {
-            blobRippleAnimator.cancel();
+        if (on) {
+            // 除 heroBreathing 标志外还要确认动画真的在跑：动画曾被 cancel 而标志
+            // 未同步复位时，只看标志会让呼吸永久起不来（无任何状态广播可唤醒）。
+            if (heroBreathing && heroBreathAnimator != null && heroBreathAnimator.isRunning()) {
+                return; // 已在呼吸，不打断
+            }
+            heroBreathing = true;
+            startBreathAnimator();
+            return;
         }
-        ObjectAnimator sx = ObjectAnimator.ofFloat(heroBgBlobs, View.SCALE_X, 1f, 1.045f, 1f);
-        ObjectAnimator sy = ObjectAnimator.ofFloat(heroBgBlobs, View.SCALE_Y, 1f, 1.045f, 1f);
-        final long dur = 4000L;
-        sx.setDuration(dur);
-        sy.setDuration(dur);
-        TimeInterpolator ease = new AccelerateDecelerateInterpolator();
-        sx.setInterpolator(ease);
-        sy.setInterpolator(ease);
-        blobRippleAnimator = new AnimatorSet();
-        blobRippleAnimator.playTogether(sx, sy);
-        blobRippleAnimator.start();
+        if (!heroBreathing && heroBgImage.getScaleX() == 1f) {
+            return; // 本就静止且在原尺寸
+        }
+        heroBreathing = false;
+        startBreathResetAnimator();
+    }
+
+    /** 启动无限循环的呼吸：动画值只是 0→1 的线性相位，形态由 {@link #breathExpand(float)} 决定 */
+    private void startBreathAnimator() {
+        if (heroBreathAnimator != null) {
+            heroBreathAnimator.cancel();
+        }
+        ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
+        animator.setDuration(HERO_BREATH_PERIOD_MS);
+        animator.setInterpolator(new LinearInterpolator());
+        animator.setRepeatCount(-1);
+        animator.setRepeatMode(ValueAnimator.RESTART);
+        animator.addUpdateListener(animation -> applyBreathFrame((float) animation.getAnimatedValue()));
+        heroBreathAnimator = animator;
+        animator.start();
     }
 
     /**
-     * 基底色向深偏移（亮度压到 ≤0.32）并加实（α130）：暗基底让色斑「发光」而非
-     * 「漂浮」，是高级深色 UI 的通行做法，白字对比同时受益。
+     * 把周期相位 t（0~1）映射为膨胀量（0~1）：
+     * 0 ~ 55% 慢吸（半余弦，起步与到顶都自然减速）→ 55% ~ 63% 停在全满 →
+     * 63% ~ 100% 较快呼出（半余弦落回 0）。
      */
-    private static int darkenBase(int base) {
-        float[] hsv = new float[3];
-        Color.colorToHSV(base, hsv);
-        hsv[2] = Math.min(hsv[2], 0.32f);
-        return ColorUtils.setAlphaComponent(Color.HSVToColor(hsv), 130);
+    private static float breathExpand(float t) {
+        if (t < 0f) {
+            t += 1f;
+        } else if (t >= 1f) {
+            t -= 1f;
+        }
+        if (t < HERO_BREATH_INHALE_END) {
+            return 0.5f - 0.5f * (float) Math.cos(Math.PI * t / HERO_BREATH_INHALE_END);
+        }
+        if (t < HERO_BREATH_HOLD_END) {
+            return 1f;
+        }
+        final float p = (t - HERO_BREATH_HOLD_END) / (1f - HERO_BREATH_HOLD_END);
+        return 0.5f + 0.5f * (float) Math.cos(Math.PI * p);
+    }
+
+    /** 按周期相位施加一帧呼吸：缩放用当前相位，亮度与光晕用滞后相位 */
+    private void applyBreathFrame(float t) {
+        final float expand = breathExpand(t);
+        final float scale = 1f + (HERO_BREATH_MAX_SCALE - 1f) * expand;
+        heroBgImage.setScaleX(scale);
+        heroBgImage.setScaleY(scale);
+
+        // 亮度与光晕取「滞后相位」：形体先膨胀、光后到（约 150ms）
+        final float lightExpand = breathExpand(t - HERO_BREATH_LIGHT_LAG);
+        heroBgImage.setAlpha(heroBaseAlpha - HERO_BREATH_ALPHA_DIP * lightExpand);
+
+        if (heroGlow != null) {
+            // 光晕与缩放反相：背景膨胀到最大时光晕最亮且收拢（=1.0，光被聚焦），
+            // 回缩时光晕随之淡出并外扩（光弥散）；静止时完全不透明度为 0
+            heroGlow.setAlpha(HERO_GLOW_MAX_ALPHA * lightExpand);
+            final float glowScale = 1f + HERO_GLOW_SCALE_SPREAD * (1f - lightExpand);
+            heroGlow.setScaleX(glowScale);
+            heroGlow.setScaleY(glowScale);
+        }
+    }
+
+    /** 停止呼吸：从当前倍率用与呼吸同构的方式平滑落回原尺寸，避免硬跳 */
+    private void startBreathResetAnimator() {
+        if (heroBreathAnimator != null) {
+            heroBreathAnimator.cancel();
+        }
+        ValueAnimator animator = ValueAnimator.ofFloat(heroBgImage.getScaleX(), 1f);
+        animator.setDuration(HERO_BREATH_RESET_MS);
+        animator.setInterpolator(new AccelerateDecelerateInterpolator());
+        animator.addUpdateListener(animation -> {
+            final float scale = (float) animation.getAnimatedValue();
+            heroBgImage.setScaleX(scale);
+            heroBgImage.setScaleY(scale);
+
+            final float expand = Math.max(0f, Math.min(1f,
+                    (scale - 1f) / (HERO_BREATH_MAX_SCALE - 1f)));
+            heroBgImage.setAlpha(heroBaseAlpha - HERO_BREATH_ALPHA_DIP * expand);
+
+            if (heroGlow != null) {
+                heroGlow.setAlpha(HERO_GLOW_MAX_ALPHA * expand);
+                final float glowScale = 1f + HERO_GLOW_SCALE_SPREAD * (1f - expand);
+                heroGlow.setScaleX(glowScale);
+                heroGlow.setScaleY(glowScale);
+            }
+        });
+        heroBreathAnimator = animator;
+        animator.start();
     }
 
     /**
-     * 全屏基底：垂直渐隐（上下各 ~14% 渐变到全透明）——纯色矩形会在信息页上下
-     * 边缘被截出恒定横线，渐隐后边缘 alpha 归零、与相邻区域无缝延续。
+     * 翻页离开「电台信息」页时停掉呼吸（背景已离屏，继续跑无意义）：硬停动画并复位
+     * 尺寸，避免滑回时从中间倍率接着跳。
      */
-    private static android.graphics.drawable.Drawable makeBaseGradient(int baseColor) {
-        final int[] cols = {
-                Color.TRANSPARENT,
-                baseColor,
-                baseColor,
-                Color.TRANSPARENT
-        };
-        GradientDrawable base = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                cols);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // 两参 setColors（含渐变位置）仅 API 29+；低版本退化单参（位置均匀分布），
-            // 上下渐隐带从 14% 变为 33%，边缘 alpha 归零的无痕效果不变
-            base.setColors(cols, new float[]{0f, 0.14f, 0.86f, 1f});
+    private void suspendHeroFlowForPaging() {
+        if (heroBgImage == null) {
+            return;
         }
-        return base;
+        heroBreathing = false;
+        if (heroBreathAnimator != null) {
+            heroBreathAnimator.cancel();
+            heroBreathAnimator = null;
+        }
+        heroBgImage.setScaleX(1f);
+        heroBgImage.setScaleY(1f);
+        heroBgImage.setAlpha(heroBaseAlpha);
+        if (heroGlow != null) {
+            heroGlow.setAlpha(0f);
+            heroGlow.setScaleX(1f + HERO_GLOW_SCALE_SPREAD);
+            heroGlow.setScaleY(1f + HERO_GLOW_SCALE_SPREAD);
+        }
     }
 
-    /**
-     * 从 startView 沿祖先链到窗口根，逐级关闭子 view 裁切（clipChildren=false）：
-     * 色斑越出容器/信息页/pager 的部分得以一路画到窗口边界，唯一裁切发生在
-     * 屏幕物理边界（屏外不可见）——这是消灭可视区内横/竖截断线的关键。
-     * ViewPager 放开后横滑时相邻页内容会短暂越界绘制，视觉影响可忽略。
-     */
-    private static void releaseClipUpToWindow(View startView) {
-        ViewGroup v = startView instanceof ViewGroup ? (ViewGroup) startView : null;
-        while (v != null && v.getParent() instanceof ViewGroup) {
-            v.setClipChildren(false);
-            v = (ViewGroup) v.getParent();
-        }
+    /** 滑回「电台信息」页：按当前播放状态恢复背景呼吸（未播放则保持静止背景）。 */
+    private void resumeHeroFlowAfterPaging() {
+        updateHeroFlow(PlayerServiceUtil.isPlaying());
     }
 
     /**
      * 文字护盾层（可读性根治）：中央（55% 高度处，即信息组中心）最暗的椭圆径向
-     * 软渐变、向外羽化至全透明——无论色斑如何涌动，中段信息组的背景亮度恒定。
+     * 软渐变、向外羽化至全透明——无论背景图标如何呼吸缩放，中段信息组的背景亮度恒定。
      */
     private void applyHeroShield() {
         if (heroBlobShield == null) {
@@ -2078,22 +1599,59 @@ public class FragmentPlayerFull extends Fragment {
                 new int[]{0x4D000000, 0x1A000000, 0x00000000});
         shield.setGradientType(GradientDrawable.RADIAL_GRADIENT);
         shield.setGradientCenter(0.5f, 0.55f);
-        final int w = heroBgBlobs.getWidth();
-        final int h = heroBgBlobs.getHeight();
+        // 护盾与 Hero 背景同尺寸（都是整页铺满），故直接取其自身尺寸即可
+        final int w = heroBlobShield.getWidth();
+        final int h = heroBlobShield.getHeight();
         shield.setGradientRadius(w > 0 && h > 0 ? Math.max(w, h) * 0.52f : 1f);
         heroBlobShield.setImageDrawable(shield);
     }
 
     /**
-     * Hero 背景模糊：先把源图缩到 ≤64px 宽，再做 3 次盒式模糊（近似高斯）。
-     * 输入极小，UI 线程开销可忽略；盒式模糊用滑动窗口求和，无需额外依赖。
+     * 「反向呼吸」光晕层：中心亮、向外羽化至全透明的径向软渐变，常驻不可见
+     * （不透明度由呼吸动画驱动）。渐变中心对齐 Hero 高度 30% 处（即方形图标卡附近），
+     * 半径取视口长边的 0.34 倍——收得较紧，光晕集中在图标卡周围，膨胀时形成
+     * 「光被收拢聚焦」的观感，不去抢中段信息组的注意力。
+     */
+    private void applyHeroGlow() {
+        if (heroGlow == null) {
+            return;
+        }
+        GradientDrawable glow = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[]{0xFFFFFFFF, 0x66FFFFFF, 0x00000000});
+        glow.setGradientType(GradientDrawable.RADIAL_GRADIENT);
+        glow.setGradientCenter(0.5f, 0.30f);
+        // 与护盾同尺寸（都是整页铺满），直接取自身尺寸即可
+        final int w = heroGlow.getWidth();
+        final int h = heroGlow.getHeight();
+        glow.setGradientRadius(w > 0 && h > 0 ? Math.max(w, h) * 0.34f : 1f);
+        heroGlow.setImageDrawable(glow);
+        heroGlow.setScaleX(1f + HERO_GLOW_SCALE_SPREAD);
+        heroGlow.setScaleY(1f + HERO_GLOW_SCALE_SPREAD);
+        heroGlow.setAlpha(0f);
+    }
+
+    /** Hero 背景虚化的三个旋钮：低分辨率位图的采样宽度、盒式模糊半径与模糊次数。
+     *  整体虚化 ≈（半径 + 1）× 放大倍率，放大倍率 = Hero 高度 / 采样宽度，
+     *  故采样宽度是主要旋钮：64px 位图放大 34×、85px 放大 26× 时都仍是一片糊
+     *  （两档都被反馈「太模糊」），提到 128px 后放大倍率降到约 17×，
+     *  盒式模糊再由 3 次减为 2 次，整体虚化约为最初的 4 成。 */
+    private static final int HERO_BLUR_WIDTH = 128;
+    /** 盒式模糊半径（作用于上面的低分辨率位图），水平、垂直各 {@link #HERO_BLUR_PASSES} 次 */
+    private static final int HERO_BLUR_RADIUS = 4;
+    /** 盒式模糊次数：3 次近似高斯更柔和，2 次更透亮（配合更大的采样宽度） */
+    private static final int HERO_BLUR_PASSES = 2;
+
+    /**
+     * Hero 背景模糊：先把源图缩到 {@link #HERO_BLUR_WIDTH} px 宽，再做
+     * {@link #HERO_BLUR_PASSES} 次盒式模糊（近似高斯）。输入极小，UI 线程开销可忽略；
+     * 盒式模糊用滑动窗口求和，无需额外依赖。
      */
     @Nullable
     private static Bitmap blurHeroBitmap(@Nullable Bitmap source) {
         if (source == null || source.isRecycled() || source.getWidth() <= 0 || source.getHeight() <= 0) {
             return null;
         }
-        final int targetWidth = 64;
+        final int targetWidth = HERO_BLUR_WIDTH;
         int targetHeight = Math.max(1, Math.round(source.getHeight() * (targetWidth / (float) source.getWidth())));
         Bitmap small;
         try {
@@ -2106,9 +1664,9 @@ public class FragmentPlayerFull extends Fragment {
         int[] pixels = new int[w * h];
         small.getPixels(pixels, 0, w, 0, 0, w, h);
         int[] temp = new int[pixels.length];
-        for (int pass = 0; pass < 3; pass++) {
-            boxBlurHorizontal(pixels, temp, w, h, 4);
-            boxBlurVertical(temp, pixels, w, h, 4);
+        for (int pass = 0; pass < HERO_BLUR_PASSES; pass++) {
+            boxBlurHorizontal(pixels, temp, w, h, HERO_BLUR_RADIUS);
+            boxBlurVertical(temp, pixels, w, h, HERO_BLUR_RADIUS);
         }
         small.setPixels(pixels, 0, w, 0, 0, w, h);
         return small;
@@ -2608,6 +2166,13 @@ public class FragmentPlayerFull extends Fragment {
             @Override
             public void onPageSelected(int position) {
                 final int real = position % PAGER_REAL_COUNT;
+                // Hero 背景呼吸只属「电台信息」页：离开即停（背景已离屏），
+                // 滑回按播放状态恢复
+                if (real == 0) {
+                    resumeHeroFlowAfterPaging();
+                } else {
+                    suspendHeroFlowForPaging();
+                }
                 // 静默同步分段高亮（程序化选择，不触发 onTabSelected 的翻页路径）
                 suppressTabJump = true;
                 try {

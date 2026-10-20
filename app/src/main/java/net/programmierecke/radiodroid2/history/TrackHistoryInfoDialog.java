@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -89,15 +90,18 @@ public class TrackHistoryInfoDialog extends BottomSheetDialogFragment {
             textViewDuration.setText("");
         }
 
-        // 获取本地化的艺术家和曲名
+        // 获取本地化的艺术家和曲名；空白归一：存量空白条目（电台返回仅空格元数据）
+        // 统一显示本地化未知占位，避免详情页出现空白行
         final String artistName;
         final String trackName;
-        if ("Unknown Artist".equals(historyEntry.artist)) {
+        if (TextUtils.isEmpty(historyEntry.artist) || historyEntry.artist.trim().isEmpty()
+                || "Unknown Artist".equals(historyEntry.artist) || "未知".equals(historyEntry.artist)) {
             artistName = getString(R.string.unknown_artist);
         } else {
             artistName = historyEntry.artist;
         }
-        if ("Unknown Track".equals(historyEntry.track)) {
+        if (TextUtils.isEmpty(historyEntry.track) || historyEntry.track.trim().isEmpty()
+                || "Unknown Track".equals(historyEntry.track) || "未知".equals(historyEntry.track)) {
             trackName = getString(R.string.unknown_track);
         } else {
             trackName = historyEntry.track;

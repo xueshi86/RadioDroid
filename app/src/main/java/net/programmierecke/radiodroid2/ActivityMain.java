@@ -315,7 +315,13 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
                     FragmentTransaction fragmentTransaction = mFragmentManager.beginTransaction();
                     applyPlayerFadeAnimation(fragmentTransaction);
                     fragmentTransaction.hide(mFragmentManager.findFragmentById(R.id.containerView));
+                    // 与收起态对称：真实拖拽展开会先派发 DRAGGING / SETTLING，把 oldState
+                    // 覆盖掉，于是真正落到 EXPANDED 时下面 `oldState == STATE_COLLAPSED`
+                    // 的判断失效，fullPlayerFragment 既不 show 也不 init——表现就是展开后
+                    // 全屏播放器不出现、Hero 呼吸也起不来。show 幂等，这里无条件补上。
+                    fragmentTransaction.show(fullPlayerFragment);
                     fragmentTransaction.commit();
+                    fullPlayerFragment.init();
                 } else if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
                     appBarLayout.setExpanded(true);
                     smallPlayerFragment.setRole(FragmentPlayerSmall.Role.PLAYER);
@@ -324,6 +330,12 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
                     FragmentTransaction fragmentTransaction = mFragmentManager.beginTransaction();
                     applyPlayerFadeAnimation(fragmentTransaction);
                     fragmentTransaction.hide(fullPlayerFragment);
+                    // 收起态同时无条件 show 主内容区（show 是幂等操作）：只靠下面
+                    // `oldState == STATE_EXPANDED` 的判断不够稳——真实拖拽收起会先经过
+                    // DRAGGING / SETTLING，这两个中间态会把 oldState 覆盖掉，于是真正落到
+                    // COLLAPSED 时漏掉 show(containerView)，表现就是「从播放器收起后
+                    // 收藏列表整片空白」，再收起一次又正常。
+                    fragmentTransaction.show(mFragmentManager.findFragmentById(R.id.containerView));
                     fragmentTransaction.commit();
                 }
 

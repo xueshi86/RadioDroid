@@ -687,11 +687,19 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="update_download">Download</string>
     <string name="update_downloading">Downloading update…</string>
     <string name="update_download_complete">Download complete. Tap to install</string>
+    <string name="update_download_started">Downloading update…</string>
+    <string name="update_download_complete_title">Download complete</string>
+    <string name="update_download_complete_message">The update has been downloaded. Install now?</string>
+    <string name="update_install_now">Install now</string>
+    <string name="update_install_later">Later</string>
+    <string name="update_apk_missing">The downloaded APK is no longer available. Please download the update again</string>
+    <string name="update_allow_unknown_sources">Allow RadioDroid to install unknown apps, then tap Install again</string>
     <string name="update_download_failed">Update download failed</string>
     <string name="update_open_installer_failed">Cannot open the installer. Please install the APK manually</string>
     <string name="update_release_notes">Release notes</string>
     <string name="notification_channel_app_update_name">App updates</string>
     <string name="notification_channel_app_update_description">Notifications about new app versions and update downloads</string>
+    <string name="notification_channel_app_update_progress_name">Update download progress</string>
 
     <string name="description_btn_skip_to_next">Skip to next</string>
     <string name="description_btn_skip_to_previous">Skip to previous</string>

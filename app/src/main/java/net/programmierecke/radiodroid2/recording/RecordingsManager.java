@@ -159,7 +159,12 @@ public class RecordingsManager {
             final int recordNum = prefs.getInt("record_num", 1);
             formattingArgs.put("index", Integer.toString(recordNum));
 
-            final String recordTitle = Utils.formatStringWithNamedArgs(fileNameFormat, formattingArgs);
+            String recordTitle = Utils.formatStringWithNamedArgs(fileNameFormat, formattingArgs);
+            // 兜底限长（UTF-8 字节）：存储层限制单个文件名组件 ≤255 字节，默认格式
+            // 已在 RadioPlayer 分组件限长（≈189 字节），但用户自定义格式（如多个
+            // 长参数连拼）仍可能超限——超限时文件 open 失败（ENOENT），表现为
+            // 「无法开始录音」。此处统一钳到 200 字节，为重名后缀 _N 与扩展名留空间
+            recordTitle = Utils.truncateUtf8Bytes(recordTitle, 200);
 
             info.setTitle(recordTitle);
             info.setFileName(String.format("%s.%s", recordTitle, recordable.getExtension()));

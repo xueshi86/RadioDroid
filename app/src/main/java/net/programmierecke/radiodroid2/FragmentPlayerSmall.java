@@ -378,6 +378,10 @@ public class FragmentPlayerSmall extends Fragment {
         } else if (!TextUtils.isEmpty(streamTitle)) {
             displayText = streamTitle;
             displayTextForAccessibility = getString(R.string.now_playing_stream, streamTitle);
+        } else if (PlayerServiceUtil.isPlaying()) {
+            // 播放中但元数据缺失/空白：显示未知占位而非留空
+            displayText = getString(R.string.unknown_artist) + " - " + getString(R.string.unknown_track);
+            displayTextForAccessibility = getString(R.string.now_playing_all_unknown);
         }
         
         if (!TextUtils.isEmpty(displayText)) {
@@ -392,6 +396,9 @@ public class FragmentPlayerSmall extends Fragment {
         }
 
         textViewLiveInfoBig.setText(stationName);
+        // 恒置选中态：展开态顶栏走马灯（TextView 跑马灯需要 selected/focused 才滚动），
+        // 文本超宽时循环滚动，否则静态居中
+        textViewLiveInfoBig.setSelected(true);
 
         if (!Utils.shouldLoadIcons(getContext())) {
             imageViewIcon.setVisibility(View.GONE);

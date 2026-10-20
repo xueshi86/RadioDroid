@@ -313,7 +313,10 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
     @Override
     public Map<String, String> getRecordNameFormattingArgs() {
         Map<String, String> args = new HashMap<>();
-        args.put("station", Utils.sanitizeName(streamName));
+        // 分组件限长（UTF-8 字节）：电台_艺术家_曲目_日期_时间 拼出的文件名组件
+        // 不得超过存储层 255 字节上限——70+1+50+1+50+1+10+1+5 ≈ 189 字节，留足
+        // 重名后缀 _N 与扩展名空间；超长电台名不截断会导致录音文件 open 失败
+        args.put("station", Utils.sanitizeName(streamName, 70));
 
         if (lastLiveInfo != null) {
             String artist = lastLiveInfo.getArtist();
@@ -321,12 +324,12 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
             if (isUnknownMetadata(artist)) {
                 args.put("artist", "-");
             } else {
-                args.put("artist", Utils.sanitizeName(artist));
+                args.put("artist", Utils.sanitizeName(artist, 50));
             }
             if (isUnknownMetadata(track)) {
                 args.put("track", "-");
             } else {
-                args.put("track", Utils.sanitizeName(track));
+                args.put("track", Utils.sanitizeName(track, 50));
             }
         } else {
             args.put("artist", "-");

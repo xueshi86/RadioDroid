@@ -150,11 +150,19 @@
     <string name="update_download">Herunterladen</string>
     <string name="update_downloading">Update wird heruntergeladen…</string>
     <string name="update_download_complete">Download abgeschlossen. Tippen zum Installieren</string>
+    <string name="update_download_started">Update wird heruntergeladen…</string>
+    <string name="update_download_complete_title">Download abgeschlossen</string>
+    <string name="update_download_complete_message">Das Update wurde heruntergeladen. Jetzt installieren?</string>
+    <string name="update_install_now">Jetzt installieren</string>
+    <string name="update_install_later">Später</string>
+    <string name="update_apk_missing">Die heruntergeladene APK ist nicht mehr vorhanden. Bitte laden Sie das Update erneut herunter</string>
+    <string name="update_allow_unknown_sources">Erlauben Sie RadioDroid die Installation unbekannter Apps und tippen Sie erneut auf Installieren</string>
     <string name="update_download_failed">Update-Download fehlgeschlagen</string>
     <string name="update_open_installer_failed">Installationsprogramm kann nicht geöffnet werden. Bitte APK manuell installieren</string>
     <string name="update_release_notes">Versionshinweise</string>
     <string name="notification_channel_app_update_name">App-Updates</string>
     <string name="notification_channel_app_update_description">Benachrichtigungen über neue Versionen und Update-Downloads</string>
+    <string name="notification_channel_app_update_progress_name">Update-Downloadfortschritt</string>
 
     <string name="settings_connectivity">Konnektivität</string>
     <string name="settings_warn_no_wifi">Netzwerktyp-Anzeige</string>

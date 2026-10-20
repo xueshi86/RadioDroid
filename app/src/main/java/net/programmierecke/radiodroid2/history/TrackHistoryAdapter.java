@@ -103,11 +103,15 @@ public class TrackHistoryAdapter extends PagedListAdapter<TrackHistoryEntry, Tra
 
         String trackName = historyEntry.track;
         String artistName = historyEntry.artist;
-        
-        if ("Unknown Track".equals(trackName) || "未知".equals(trackName)) {
+
+        // 空白归一：存量空白条目（电台返回仅空格元数据，如平壤广播 FM）与
+        // 「Unknown」字面值统一显示为本地化未知占位，避免历史列表出现空白行
+        if (TextUtils.isEmpty(trackName) || trackName.trim().isEmpty()
+                || "Unknown Track".equals(trackName) || "未知".equals(trackName)) {
             trackName = context.getString(R.string.unknown_track);
         }
-        if ("Unknown Artist".equals(artistName) || "未知".equals(artistName)) {
+        if (TextUtils.isEmpty(artistName) || artistName.trim().isEmpty()
+                || "Unknown Artist".equals(artistName) || "未知".equals(artistName)) {
             artistName = context.getString(R.string.unknown_artist);
         }
         

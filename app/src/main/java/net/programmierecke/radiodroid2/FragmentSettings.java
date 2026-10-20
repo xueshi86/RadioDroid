@@ -123,6 +123,8 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
     private BroadcastReceiver timerFinishedReceiver;
     private BroadcastReceiver databaseUpdatedReceiver;
     private ActivityResultLauncher<String> bluetoothPermissionLauncher;
+    private ActivityResultLauncher<String> notificationPermissionLauncher;
+    private UpdateInfo pendingUpdateInfo;
     private boolean dialogOpenedFromCheckbox = false;
     private final Handler webDavHandler = new Handler();
     private int webDavCheckVersion;
@@ -381,17 +383,30 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         );
 
         bluetoothPermissionLauncher = registerForActivityResult(
-            new ActivityResultContracts.RequestPermission(),
-            granted -> {
-                updateBluetoothPermissionState();
-                if (!granted) {
-                    SharedPreferences.Editor editor = getPreferenceManager().getSharedPreferences().edit();
-                    editor.putBoolean("pause_on_bluetooth_disconnect", false);
-                    editor.putBoolean("close_on_bluetooth_disconnect", false);
-                    editor.putBoolean("auto_resume_on_bluetooth_a2dp_connection", false);
-                    editor.apply();
+                new ActivityResultContracts.RequestPermission(),
+                granted -> {
+                    updateBluetoothPermissionState();
+                    if (!granted) {
+                        SharedPreferences.Editor editor = getPreferenceManager().getSharedPreferences().edit();
+                        editor.putBoolean("pause_on_bluetooth_disconnect", false);
+                        editor.putBoolean("close_on_bluetooth_disconnect", false);
+                        editor.putBoolean("auto_resume_on_bluetooth_a2dp_connection", false);
+                        editor.apply();
+                    }
                 }
-            }
+        );
+
+        // Android 13+ 通知权限：下载更新前申请，确保下载进度与完成通知可见（Issue #55）
+        notificationPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                granted -> {
+                    UpdateInfo info = pendingUpdateInfo;
+                    pendingUpdateInfo = null;
+                    Context context = getContext();
+                    if (info != null && context != null) {
+                        UpdateDownloader.startDownload(context, info);
+                    }
+                }
         );
 
 
@@ -736,11 +751,38 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
             builder.setMessage(message);
         }
         if (info != null) {
-            builder.setPositiveButton(R.string.update_download, (dialog, which) ->
-                    UpdateDownloader.startDownload(requireContext(), info));
+            builder.setPositiveButton(R.string.update_download, (dialog, which) -> requestUpdateDownload(info));
         }
         builder.setNegativeButton(android.R.string.cancel, null);
         builder.show();
+    }
+
+    /**
+     * 先确保通知权限（Android 13+）再开始下载，否则下载过程与完成提示对用户完全不可见（Issue #55）。
+     */
+    private void requestUpdateDownload(UpdateInfo info) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            pendingUpdateInfo = info;
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            return;
+        }
+        UpdateDownloader.startDownload(requireContext(), info);
+    }
+
+    /**
+     * 下载完成后在应用内直接提供安装入口，避免依赖可能被关闭的通知。
+     */
+    private void showInstallUpdateDialog(final File apkFile) {
+        if (!isAdded()) {
+            return;
+        }
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext(), Utils.getAlertDialogThemeResId(requireContext()))
+                .setTitle(R.string.update_download_complete_title)
+                .setMessage(R.string.update_download_complete_message)
+                .setPositiveButton(R.string.update_install_now, (dialog, which) -> UpdateDownloader.installApk(requireContext(), apkFile))
+                .setNegativeButton(R.string.update_install_later, null)
+                .show();
     }
 
     // Method to show network connection results
@@ -1123,6 +1165,18 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         
         getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
 
+        // 监听更新下载结果，在应用内弹出「立即安装」
+        UpdateDownloader.setDownloadCallback(new UpdateDownloader.DownloadCallback() {
+            @Override
+            public void onDownloadFinished(File apkFile) {
+                showInstallUpdateDialog(apkFile);
+            }
+
+            @Override
+            public void onDownloadFailed() {
+            }
+        });
+
         // 注册定时器完成广播接收器
         timerFinishedReceiver = new BroadcastReceiver() {
             @Override
@@ -1191,6 +1245,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
 
     @Override
     public void onPause() {
+        UpdateDownloader.setDownloadCallback(null);
         ++webDavCheckVersion;
         webDavCheckActive = false;
         webDavHandler.removeCallbacks(webDavBlinkRunnable);

@@ -492,11 +492,19 @@
     <string name="update_download">下载</string>
     <string name="update_downloading">正在下载更新…</string>
     <string name="update_download_complete">下载完成，点击安装</string>
+    <string name="update_download_started">正在下载更新…</string>
+    <string name="update_download_complete_title">下载完成</string>
+    <string name="update_download_complete_message">更新已下载完成，是否立即安装？</string>
+    <string name="update_install_now">立即安装</string>
+    <string name="update_install_later">稍后</string>
+    <string name="update_apk_missing">安装包已不存在，请重新下载更新</string>
+    <string name="update_allow_unknown_sources">请允许 RadioDroid 安装未知应用，然后再次点击安装</string>
     <string name="update_download_failed">更新下载失败</string>
     <string name="update_open_installer_failed">无法打开安装程序，请手动安装 APK</string>
     <string name="update_release_notes">更新说明</string>
     <string name="notification_channel_app_update_name">应用更新</string>
     <string name="notification_channel_app_update_description">关于新版本和更新下载的通知</string>
+    <string name="notification_channel_app_update_progress_name">更新下载进度</string>
 
     <string name="description_btn_skip_to_next">跳到下一首</string>
     <string name="description_btn_skip_to_previous">跳到上一首</string>

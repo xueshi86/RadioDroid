@@ -685,7 +685,48 @@ public class Utils {
     }
 
     public static String sanitizeName(String str) {
-        return str.replaceAll("\\W+", "_").replaceAll("^_+", "").replaceAll("_+$", "");
+        return sanitizeName(str, 0);
+    }
+
+    /**
+     * 同 {@link #sanitizeName(String)}，并按 UTF-8 字节数截断（maxBytes ≤ 0 时不限制）。
+     * 存储层限制单个文件名组件 ≤255 字节：录音文件名由 电台_艺术家_曲目_日期_时间
+     * 拼接，超长电台名（如整段流派列表作名字）会把组件撑爆，文件 open 失败
+     * （ENOENT），用户侧表现为「无法开始录音，请重试。」。
+     */
+    public static String sanitizeName(String str, int maxBytes) {
+        String s = str.replaceAll("\\W+", "_").replaceAll("^_+", "").replaceAll("_+$", "");
+        if (maxBytes > 0) {
+            s = truncateUtf8Bytes(s, maxBytes);
+        }
+        return s;
+    }
+
+    /**
+     * 按 UTF-8 字节数截断字符串：按码点完整保留（不拆多字节序列/代理对），
+     * 截断后清理结尾悬挂的 _-. 分隔符；截不出任何内容时兜底返回 "rec"。
+     */
+    public static String truncateUtf8Bytes(String s, int maxBytes) {
+        if (s == null || maxBytes <= 0
+                || s.getBytes(java.nio.charset.StandardCharsets.UTF_8).length <= maxBytes) {
+            return s;
+        }
+        int end = 0;
+        int bytes = 0;
+        int i = 0;
+        while (i < s.length()) {
+            int cp = s.codePointAt(i);
+            int cl = Character.charCount(cp);
+            int cb = cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
+            if (bytes + cb > maxBytes) {
+                break;
+            }
+            bytes += cb;
+            i += cl;
+            end = i;
+        }
+        String out = s.substring(0, end).replaceAll("[_\\-.]+$", "");
+        return out.isEmpty() ? "rec" : out;
     }
 
     // ISO 639-1 码 → RadioBrowser language 字段的英文全名（含 Android 旧码 iw/in/ji）

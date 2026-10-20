@@ -25,6 +25,14 @@ public class StreamLiveInfo implements Parcelable {
         if (rawMetadata != null && rawMetadata.containsKey("StreamTitle")) {
             title = rawMetadata.get("StreamTitle");
 
+            // 空白归一：部分电台（如 ICECAST 服务器）返回仅含空格的 StreamTitle，
+            // TextUtils.isEmpty 将其判为非空，导致「正在播放」行与曲目历史显示空白。
+            // 将纯空白标题归一为空串，走统一的未知兜底。
+            if (title != null && title.trim().isEmpty()) {
+                Log.w(TAG, "StreamLiveInfo构造函数 - StreamTitle仅为空白('" + title + "')，归一为空串");
+                title = "";
+            }
+
             Log.i(TAG, "StreamLiveInfo构造函数 - StreamTitle: " + title);
             Log.i(TAG, "StreamLiveInfo构造函数 - StreamTitle长度: " + (title != null ? title.length() : 0));
             
@@ -74,6 +82,15 @@ public class StreamLiveInfo implements Parcelable {
             }
         } else {
             Log.w(TAG, "StreamLiveInfo构造函数 - 原始元数据为空或不包含StreamTitle");
+        }
+
+        // 兜底：智能解析出的 artist/track 也可能为空白（如「歌手 - 」这类畸形标题），
+        // 统一归一为空串，保证 hasArtistAndTrack() 与 UI 未知兜底判定一致
+        if (artist.trim().isEmpty()) {
+            artist = "";
+        }
+        if (track.trim().isEmpty()) {
+            track = "";
         }
     }
 

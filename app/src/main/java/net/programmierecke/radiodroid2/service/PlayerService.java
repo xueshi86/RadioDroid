@@ -2245,6 +2245,12 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                     return;
                 }
 
+                // 空白标题（StreamLiveInfo 已将纯空白归一为空串）不入曲目历史：
+                // 电台未提供有效曲目元数据时，入库空白条目会在曲目历史列表显示为空白行
+                if (TextUtils.isEmpty(newTitle)) {
+                    return;
+                }
+
                 Calendar calendar = Calendar.getInstance();
                 Date currentTime = calendar.getTime();
 
