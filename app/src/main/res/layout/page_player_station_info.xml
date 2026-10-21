@@ -59,30 +59,24 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- ① 电台图标展示卡（v3.1.1 方形样式）：92dp 白底圆角卡 + 白描边 + 投影，
-             顶边距 60dp 仅为初值，实际由代码按 Hero 高度 25% 动态定位（图标中心
-             对齐该点，见 FragmentPlayerFull）；
-             图标不论原图多大一律 fitCenter 缩放进卡内（适配大小不一/无图标电台） -->
-        <com.google.android.material.card.MaterialCardView
+        <!-- ① 电台图标展示卡：92dp 方形/圆形随「外观 → 圆形图标」设置切换（形状由代码设置，
+             见 FragmentPlayerFull#applyHeroIconShape），无白色衬底与描边，图标以
+             centerCrop 填满；顶边距 60dp 仅为初值，实际由代码按 Hero 高度
+             25% 动态定位（图标中心对齐该点，见 FragmentPlayerFull） -->
+        <FrameLayout
             android:id="@+id/heroLogoCard"
             android:layout_width="92dp"
             android:layout_height="92dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="60dp"
-            app:cardBackgroundColor="@android:color/white"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="6dp"
-            app:strokeColor="@android:color/white"
-            app:strokeWidth="2dp">
+            android:layout_marginTop="60dp">
 
-            <ImageView
+            <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/imageViewArt"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="@string/tab_player_station_info"
-                android:padding="12dp"
-                android:scaleType="fitCenter" />
-        </com.google.android.material.card.MaterialCardView>
+                android:scaleType="centerCrop" />
+        </FrameLayout>
 
         <!-- 中段弹性空隙（顶部）：高度由代码精确计算，使信息组中心对齐 Hero 高度
              的 55%（用户指定）；剩余空间由底部 weight=1 Space 吸收，备注行贴底 -->

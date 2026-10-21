@@ -54,6 +54,10 @@ import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.imageview.ShapeableImageView;
+import com.google.android.material.shape.RelativeCornerSize;
+import com.google.android.material.shape.RoundedCornerTreatment;
+import com.google.android.material.shape.ShapeAppearanceModel;
 import com.google.android.material.tabs.TabLayout;
 import com.mikepenz.iconics.IconicsColor;
 import com.mikepenz.iconics.IconicsSize;
@@ -192,13 +196,14 @@ public class FragmentPlayerFull extends Fragment {
      *  故加大到 28%，让呼吸一眼可辨。 */
     private static final float HERO_BREATH_MAX_SCALE = 1.28f;
     /** 一整轮「吸 → 停 → 呼」的时长：慢到像呼吸而非抖动。幅度加大后周期相应放长，
-     *  否则快速的大幅缩合更像「脉动」而非呼吸。 */
-    private static final long HERO_BREATH_PERIOD_MS = 3400;
+     *  否则快速的大幅缩合更像「脉动」而非呼吸。现为整体循环降速一半后的时长——
+     *  各阶段占周期的比例不变，节奏形态一致，只是整轮拉长。 */
+    private static final long HERO_BREATH_PERIOD_MS = 6800;
     /** 吸气阶段占整个周期的比例：吸气比呼气长，是「像呼吸」而非「像机械脉冲」的关键 */
     private static final float HERO_BREATH_INHALE_END = 0.55f;
     /** 吸气到顶后的短暂停顿占周期比例：让 1.28 的峰值被看见，呼吸才有「满」的感觉 */
     private static final float HERO_BREATH_HOLD_END = 0.63f;
-    /** 亮度/光晕相对缩放的相位滞后（占周期比例，约 150ms）：形体先膨胀、光后到，
+    /** 亮度/光晕相对缩放的相位滞后（占周期比例，约 300ms）：形体先膨胀、光后到，
      *  模拟真实呼吸中胸腔扩张与气流之间的时间差，去掉缩放与亮度「一起卡点」的机械感 */
     private static final float HERO_BREATH_LIGHT_LAG = 0.044f;
     /** 停止/暂停时从当前倍率平滑落回原尺寸的时长（避免硬跳） */
@@ -388,6 +393,7 @@ public class FragmentPlayerFull extends Fragment {
         // 取代原先被合并的「专辑封面 / 信息」两个 ViewPager 页
         stationInfoPage = (ViewGroup) inflater.inflate(R.layout.page_player_station_info, (ViewGroup) view, false);
         imageViewArt = stationInfoPage.findViewById(R.id.imageViewArt);
+        applyHeroIconShape();
         heroBgImage = stationInfoPage.findViewById(R.id.heroBgImage);
         heroLogoCard = stationInfoPage.findViewById(R.id.heroLogoCard);
         heroTopSpacer = stationInfoPage.findViewById(R.id.heroTopSpacer);
@@ -1439,9 +1445,11 @@ public class FragmentPlayerFull extends Fragment {
             return;
         }
         // 系统「减少动态效果」→ 不起呼吸，保持静态模糊背景
-        boolean reduceMotion = Settings.Global.getFloat(requireContext().getContentResolver(),
-                Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f;
-        setHeroBreathing(playing && !reduceMotion);
+        // boolean reduceMotion = Settings.Global.getFloat(requireContext().getContentResolver(),
+        //         Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f;
+        // 播放态呼吸动画暂时关闭：播放时背景保持静止（仅 Hero 背景），不再缩放/明灭
+        // setHeroBreathing(playing && !reduceMotion);
+        setHeroBreathing(false);
     }
 
     /**
@@ -1588,6 +1596,24 @@ public class FragmentPlayerFull extends Fragment {
     }
 
     /**
+     * Hero 电台图标形状跟随设置 →「外观 → 圆形图标」：开启时裁成圆形，关闭时保持方形。
+     * 用 {@link ShapeableImageView} 的形状遮罩实现，各系统版本表现一致（Outline 裁剪仅 API 21+）。
+     */
+    private void applyHeroIconShape() {
+        if (!(imageViewArt instanceof ShapeableImageView)) {
+            return;
+        }
+        final ShapeableImageView art = (ShapeableImageView) imageViewArt;
+        final ShapeAppearanceModel model = Utils.useCircularIcons(requireContext())
+                ? new ShapeAppearanceModel.Builder()
+                        .setAllCorners(new RoundedCornerTreatment())
+                        .setAllCornerSizes(new RelativeCornerSize(0.5f))
+                        .build()
+                : new ShapeAppearanceModel();
+        art.setShapeAppearanceModel(model);
+    }
+
+    /**
      * 文字护盾层（可读性根治）：中央（55% 高度处，即信息组中心）最暗的椭圆径向
      * 软渐变、向外羽化至全透明——无论背景图标如何呼吸缩放，中段信息组的背景亮度恒定。
      */
@@ -1636,8 +1662,10 @@ public class FragmentPlayerFull extends Fragment {
      *  （两档都被反馈「太模糊」），提到 128px 后放大倍率降到约 17×，
      *  盒式模糊再由 3 次减为 2 次，整体虚化约为最初的 4 成。 */
     private static final int HERO_BLUR_WIDTH = 128;
-    /** 盒式模糊半径（作用于上面的低分辨率位图），水平、垂直各 {@link #HERO_BLUR_PASSES} 次 */
-    private static final int HERO_BLUR_RADIUS = 4;
+    /** 盒式模糊半径（作用于上面的低分辨率位图），水平、垂直各 {@link #HERO_BLUR_PASSES} 次。
+     *  由 4 提到 6：整体虚化约为原来的 1.4 倍（约等于模糊度 50% → 75%），
+     *  采样宽度不变，故背景的色彩层次与明暗保留不变，仅更柔和。 */
+    private static final int HERO_BLUR_RADIUS = 6;
     /** 盒式模糊次数：3 次近似高斯更柔和，2 次更透亮（配合更大的采样宽度） */
     private static final int HERO_BLUR_PASSES = 2;
 
