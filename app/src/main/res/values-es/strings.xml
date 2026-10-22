@@ -636,7 +636,7 @@ Esto sobrescribirá la base de datos principal actual, asegúrese de haber reali
     <string name="station_detail_deleted_on_server">ELIMINADA</string>
 
     <string name="settings_lastfm_api_key">Clave API de Last.fm</string>
-    <string name="settings_lastfm_api_key_desc">Introduzca una clave API para habilitar las carátulas de álbum en el reproductor a pantalla completa</string>
+    <string name="settings_lastfm_api_key_desc">Introduzca una clave API de Last.fm para mostrar la carátula del tema en reproducción como icono y fondo del reproductor; también aparece en los detalles del historial de temas</string>
     <string name="settings_disable_battery_optimization">Optimización de batería</string>
     <string name="settings_ignore_battery_optimization_summary_on">La optimización de batería está desactivada, RadioDroid debería poder recuperar el foco después de perderlo.</string>
     <string name="settings_ignore_battery_optimization_summary_off">La optimización de batería está activada, RadioDroid no podrá recuperar el foco después de perderlo si está en segundo plano.</string>

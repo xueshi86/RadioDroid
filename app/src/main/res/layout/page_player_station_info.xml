@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 「电台信息」页 v4.2（整页 Hero + 方形图标）：
+<!-- 「电台信息」页 v4.3（整页 Hero + 无衬底图标）：
      分段条之下 → 控制条之上整页为沉浸式 Hero 模糊背景（imageViewArt 位图放大模糊镜像，
      无 logo 电台用主题色渐变兜底，见 FragmentPlayerFull），上叠上下压暗 scrim。
      前景自上而下：
-     ① 方形电台图标卡（92dp 白底圆角卡，代码动态定位：图标中心对齐 Hero 高度的
-        25% 处，见 FragmentPlayerFull 布局回调）；
+     ① 电台图标（92dp 无衬底，形状随「外观 → 圆形图标」设置，代码动态定位：图标中心
+        对齐 Hero 高度的 25% 处，见 FragmentPlayerFull 布局回调）；
      ② 中段信息组（顶部 Space 高度由代码计算，组中心对齐 Hero 高度 55%）：
         电台名（≤3 行自适应字号居中优雅展现）→
         码率/编码/地区/语言元数据胶囊 →
         缓冲+流量状态胶囊（两枚挨在一起整组居中，未播放时只显示标签名）→
-        正在播放行（强调色呼吸点 + 曲目，位于组末尾，未播放时隐藏只影响自身）；
+        正在播放行（强调色圆点 + 曲目，位于组末尾，未播放时隐藏只影响自身）；
      ③ 备注行贴底：轻量居中文字行，空态「添加备注」提示，点击整行弹出编辑对话框。
      固定布局无需滚动；风格标签与「本次/累计收听」已移除。 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -19,9 +19,7 @@
     android:layout_height="match_parent">
 
     <!-- ① Hero 背景（毛玻璃）：logo 放大模糊位图（0.75 不透明度由代码设置）或主题色
-         渐变兜底。播放时由代码对其做「双轴呼吸」：缓慢缩放（1.0↔1.28，永不小于 1.0
-         以免 centerCrop 缩小时四周露底）+ 同相的亮度脉冲（膨胀最暗、回缩最亮），
-         停止/暂停即静止落回原尺寸 -->
+         渐变兜底。播放态呼吸动画当前已关闭（代码保留并注释），背景始终静止 -->
     <ImageView
         android:id="@+id/heroBgImage"
         android:layout_width="match_parent"
@@ -29,9 +27,8 @@
         android:scaleType="centerCrop"
         tools:ignore="ContentDescription" />
 
-    <!-- ①b 「反向呼吸」光晕层（仅播放时可见，不透明度由代码驱动）：中心亮、向外羽化
-         至全透明。与背景缩放反相——背景膨胀到最大时光晕最亮且略收拢（光聚焦），
-         回缩时光晕淡出弥散，给单一缩放轴补上层次与节奏，消解「单调不耐看」 -->
+    <!-- ①b 反向呼吸光晕层：随呼吸动画一并启用，当前呼吸关闭故始终 alpha=0；
+         不透明度由代码驱动，静止时不参与画面 -->
     <ImageView
         android:id="@+id/heroGlow"
         android:layout_width="match_parent"
@@ -40,7 +37,7 @@
         tools:ignore="ContentDescription" />
 
     <!-- ② 文字护盾层：中央椭圆软渐变（信息组 55% 高度处最暗、向外羽化透明），
-         无论背景图标如何呼吸缩放，中段信息组区域的背景亮度恒定，白字始终可读 -->
+         无论背景图标明暗如何，中段信息组区域的背景亮度恒定，白字始终可读 -->
     <ImageView
         android:id="@+id/heroBlobShield"
         android:layout_width="match_parent"
@@ -191,7 +188,7 @@
         </LinearLayout>
 
         <!-- ⑤ 正在播放行（置于状态胶囊下一行，隐藏时只影响自身不挤动上方内容）：
-             行首引导标签（强调色呼吸点 + 「正在播放：」引导词，代码合成为不参与
+             行首引导标签（强调色圆点 + 「正在播放：」引导词，代码合成为不参与
              走马灯滚动的 compound drawable，见 FragmentPlayerFull）+ 冒号后内容
              （走马灯滚动）；wrap_content 让标签与居中文字一起整体居中 -->
         <TextView

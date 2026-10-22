@@ -247,6 +247,8 @@
     <string name="action_mpd_connected">Συνδέθηκε στον εξυπηρετητή:  %1$s</string>
 
     <string name="settings_other">Άλλα</string>
+    <string name="settings_lastfm_api_key">Κλειδί API Last.fm</string>
+    <string name="settings_lastfm_api_key_desc">Εισαγάγετε ένα κλειδί API Last.fm για εμφάνιση του εξωφύλλου του κομματιού ως εικονίδιο και φόντο της συσκευής αναπαραγωγής· το εξώφυλλο εμφανίζεται και στις λεπτομέρειες του ιστορικού</string>
     <string name="settings_statistics">Στατιστικά</string>
     <string name="settings_about">Σχετικά με το ΡάδιοΔροειδές</string>
     <string name="settings_check_update">Έλεγχος για ενημερώσεις</string>

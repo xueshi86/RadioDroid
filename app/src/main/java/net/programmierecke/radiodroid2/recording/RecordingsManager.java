@@ -15,6 +15,12 @@ import androidx.preference.PreferenceManager;
 import net.programmierecke.radiodroid2.BuildConfig;
 import net.programmierecke.radiodroid2.R;
 import net.programmierecke.radiodroid2.Utils;
+import net.programmierecke.radiodroid2.database.RadioDroidDatabase;
+import net.programmierecke.radiodroid2.database.RadioStation;
+import net.programmierecke.radiodroid2.history.TrackHistoryEntry;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,10 +37,15 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Observable;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /* TODO: Actually have info about recording by storing them in the database and matching with files on disk.
  */
@@ -43,6 +54,35 @@ public class RecordingsManager {
 
     /** 旧录音目录（公共音乐目录）一次性迁移完成的标记 */
     private final static String PREF_LEGACY_MIGRATION_DONE = "recordings_legacy_migration_done";
+
+    /** 录音文件名 -> 所属电台（UUID/名称）的持久化映射，用于录音列表行首图标 */
+    private final static String PREF_RECORDING_STATION_META = "recording_station_meta";
+
+    /** 录音文件名中的录制起始时间（默认命名格式含 yyyy-MM-dd_HH-mm） */
+    private static final Pattern RECORDING_DATE_TIME_PATTERN =
+            Pattern.compile("(\\d{4})-(\\d{2})-(\\d{2})_(\\d{2})-(\\d{2})");
+
+    /** 已解析的录音所属电台信息（含图标地址） */
+    private static class StationInfo {
+        final String uuid;
+        final String name;
+        final String iconUrl;
+        final String homePageUrl;
+
+        StationInfo(String uuid, String name, String iconUrl, String homePageUrl) {
+            this.uuid = uuid;
+            this.name = name;
+            this.iconUrl = iconUrl;
+            this.homePageUrl = homePageUrl;
+        }
+    }
+
+    private final Object stationLock = new Object();
+    /** 文件名 -> 电台信息；避免列表每次刷新都查库 */
+    private final Map<String, StationInfo> stationInfoCache = new HashMap<>();
+    /** 已确认无法反查所属电台的文件名，避免重复查库 */
+    private final Set<String> failedStationLookup = new HashSet<>();
+    private boolean stationResolutionRunning = false;
 
     private final Context appContext;
 
@@ -200,6 +240,11 @@ public class RecordingsManager {
                 return;
             }
 
+            // 文件已成功创建后再记录所属电台，供录音列表行首显示对应电台图标。
+            // 录音文件本身不含电台身份，且文件名中的中文台名会被清理为空，
+            // 因此必须在录制时单独持久化，不能靠文件名反解析。
+            saveStationMeta(info.getFileName(), recordable.getStationUuid(), recordable.getStationName());
+
             recordable.startRecording(new RunningRecordableListener(info, context));
 
             runningRecordings.put(recordable, info);
@@ -226,7 +271,9 @@ public class RecordingsManager {
     }
 
     public List<DataRecording> getSavedRecordings() {
-        return new ArrayList<>(savedRecordings);
+        synchronized (savedRecordings) {
+            return new ArrayList<>(savedRecordings);
+        }
     }
 
     public Observable getSavedRecordingsObservable() {
@@ -369,23 +416,363 @@ public class RecordingsManager {
             Log.d(TAG, "Updating recordings from " + path);
         }
 
-        savedRecordings.clear();
-
         File folder = new File(path);
         File[] files = folder.listFiles();
         if (files != null) {
+            JSONObject persistedMeta = readStationMeta();
+            List<DataRecording> newRecordings = new ArrayList<>();
+
             for (File f : files) {
                 DataRecording dr = new DataRecording();
                 dr.Name = f.getName();
                 dr.Time = new Date(f.lastModified());
-                savedRecordings.add(dr);
+
+                // 先取录制时持久化的电台身份（仅 UUID/名称，图标地址下面再查库补全）
+                JSONObject meta = persistedMeta.optJSONObject(dr.Name);
+                if (meta != null) {
+                    dr.StationUuid = meta.optString("uuid", "");
+                    dr.StationName = meta.optString("name", "");
+                }
+
+                // 已解析过的电台信息直接复用，避免滚动/刷新反复查库
+                synchronized (stationLock) {
+                    StationInfo info = stationInfoCache.get(dr.Name);
+                    if (info != null) {
+                        applyStationInfo(dr, info);
+                    }
+                }
+
+                newRecordings.add(dr);
             }
 
-            Collections.sort(savedRecordings, (o1, o2) -> Long.compare(o2.Time.getTime(), o1.Time.getTime()));
+            Collections.sort(newRecordings, (o1, o2) -> Long.compare(o2.Time.getTime(), o1.Time.getTime()));
+            synchronized (savedRecordings) {
+                savedRecordings.clear();
+                savedRecordings.addAll(newRecordings);
+            }
+            pruneStationMeta();
         } else {
+            synchronized (savedRecordings) {
+                savedRecordings.clear();
+            }
             Log.e(TAG, "Could not enumerate files in recordings directory");
         }
 
         savedRecordingsObservable.notifyObservers();
+        scheduleStationInfoResolution();
+    }
+
+    private void applyStationInfo(DataRecording dr, StationInfo info) {
+        dr.StationUuid = info.uuid;
+        dr.StationName = info.name;
+        dr.StationIconUrl = info.iconUrl;
+        dr.StationHomePageUrl = info.homePageUrl;
+    }
+
+    /**
+     * 为缺少所属电台信息的录音补全电台（UUID、名称、图标地址）。
+     * 旧录音文件名不含电台身份（中文台名在文件名中会被清理为空），
+     * 因此按录制起始时间在曲目历史中反查当时正在播放的电台。
+     * 整个过程在后台线程执行，结果回主线程刷新列表。
+     */
+    private void scheduleStationInfoResolution() {
+        final List<DataRecording> snapshot;
+        synchronized (savedRecordings) {
+            snapshot = new ArrayList<>(savedRecordings);
+        }
+
+        synchronized (stationLock) {
+            if (stationResolutionRunning) {
+                return;
+            }
+            boolean needResolve = false;
+            for (DataRecording dr : snapshot) {
+                if (needsStationInfo(dr.Name)) {
+                    needResolve = true;
+                    break;
+                }
+            }
+            if (!needResolve) {
+                return;
+            }
+            stationResolutionRunning = true;
+        }
+
+        new Thread(() -> {
+            boolean changed = false;
+            boolean failedWithError = false;
+            try {
+                RadioDroidDatabase db = RadioDroidDatabase.getDatabase(appContext);
+                for (DataRecording dr : snapshot) {
+                    synchronized (stationLock) {
+                        if (!needsStationInfo(dr.Name)) {
+                            continue;
+                        }
+                    }
+
+                    StationInfo info = resolveStationInfo(db, dr);
+                    synchronized (stationLock) {
+                        if (info != null) {
+                            stationInfoCache.put(dr.Name, info);
+                        } else {
+                            failedStationLookup.add(dr.Name);
+                        }
+                    }
+                    if (info != null) {
+                        changed = true;
+                    }
+                }
+            } catch (Exception e) {
+                failedWithError = true;
+                Log.e(TAG, "Failed to resolve recording station: " + e.getMessage(), e);
+            } finally {
+                synchronized (stationLock) {
+                    stationResolutionRunning = false;
+                }
+            }
+
+            final boolean anyResolved = changed;
+            final boolean canReschedule = !failedWithError;
+            new Handler(Looper.getMainLooper()).post(() -> {
+                if (anyResolved) {
+                    synchronized (savedRecordings) {
+                        synchronized (stationLock) {
+                            for (DataRecording dr : savedRecordings) {
+                                StationInfo info = stationInfoCache.get(dr.Name);
+                                if (info != null) {
+                                    applyStationInfo(dr, info);
+                                }
+                            }
+                        }
+                    }
+                    savedRecordingsObservable.notifyObservers();
+                }
+                // 解析期间列表可能新增了录音，补一次调度保证全部补全；
+                // 查询异常时不再重试，避免数据库不可用时反复起线程
+                if (canReschedule) {
+                    scheduleStationInfoResolution();
+                }
+            });
+        }, "RecordingStationResolver").start();
+    }
+
+    private boolean needsStationInfo(String fileName) {
+        return fileName != null
+                && !stationInfoCache.containsKey(fileName)
+                && !failedStationLookup.contains(fileName);
+    }
+
+    private StationInfo resolveStationInfo(RadioDroidDatabase db, DataRecording dr) {
+        String uuid = dr.StationUuid;
+        String name = dr.StationName;
+        String iconUrl = dr.StationIconUrl;
+        String homePageUrl = dr.StationHomePageUrl;
+
+        boolean uuidFromHistory = false;
+        if (isEmpty(uuid)) {
+            TrackHistoryEntry entry = db.songHistoryDao().getHistoryCoveringTime(recordingStartTime(dr));
+            if (entry != null && !isEmpty(entry.stationUuid)) {
+                uuid = entry.stationUuid;
+                uuidFromHistory = true;
+            }
+        }
+
+        if (isEmpty(uuid)) {
+            // 完全没有归属线索时尝试按文件名里的电台名反查
+            RadioStation byName = findStationByFileName(db, dr);
+            if (byName == null) {
+                return null;
+            }
+            uuid = byName.stationUuid;
+            name = byName.name;
+            iconUrl = byName.favicon;
+            homePageUrl = byName.homepage;
+            return new StationInfo(uuid, name, iconUrl, homePageUrl);
+        }
+
+        RadioStation station = db.radioStationDao().getStationById(uuid);
+
+        // 时间匹配可能因曲目历史未及时记录换台而得到错误电台：
+        // 用文件名里的电台名做一致性校验，不符时按文件名重新定位，仍找不到就宁可不显示图标。
+        if (uuidFromHistory && (station == null || !isStationNameConsistent(station, dr))) {
+            RadioStation byName = findStationByFileName(db, dr);
+            if (byName == null) {
+                return null;
+            }
+            station = byName;
+            uuid = byName.stationUuid;
+            name = byName.name;
+            iconUrl = byName.favicon;
+            homePageUrl = byName.homepage;
+        }
+
+        if (station != null) {
+            if (isEmpty(name)) {
+                name = station.name;
+            }
+            if (isEmpty(iconUrl)) {
+                iconUrl = station.favicon;
+            }
+            if (isEmpty(homePageUrl)) {
+                homePageUrl = station.homepage;
+            }
+        }
+
+        return new StationInfo(uuid, name, iconUrl, homePageUrl);
+    }
+
+    /**
+     * 电台名称经文件名清理后是否与录音文件名开头一致。
+     * 中文台名清理后为空，此时无法校验，保留时间匹配结果。
+     */
+    private boolean isStationNameConsistent(RadioStation station, DataRecording dr) {
+        if (dr.Name == null) {
+            return false;
+        }
+        String sanitized = Utils.sanitizeName(station.name, 70);
+        return sanitized.isEmpty() || dr.Name.startsWith(sanitized);
+    }
+
+    /**
+     * 按文件名开头的电台名片段在电台库中反查，取清理后名称与文件名前缀匹配最长的一个。
+     * 文件名格式不含电台名（如以序号/日期开头或中文台名被清理为空）时返回 null。
+     */
+    private RadioStation findStationByFileName(RadioDroidDatabase db, DataRecording dr) {
+        if (dr.Name == null) {
+            return null;
+        }
+
+        int separator = dr.Name.indexOf('_');
+        if (separator < 2) {
+            return null;
+        }
+
+        String prefixToken = dr.Name.substring(0, separator);
+        if (prefixToken.matches("\\d+")) {
+            return null;
+        }
+
+        RadioStation best = null;
+        int bestLength = 0;
+        for (RadioStation station : db.radioStationDao().getStationsByRawNamePrefix(prefixToken)) {
+            String sanitized = Utils.sanitizeName(station.name, 70);
+            if (!sanitized.isEmpty() && dr.Name.startsWith(sanitized) && sanitized.length() > bestLength) {
+                best = station;
+                bestLength = sanitized.length();
+            }
+        }
+        return best;
+    }
+
+    /**
+     * 录音起始时间：优先从文件名中的 yyyy-MM-dd_HH-mm 解析（录制时生成），
+     * 命名格式不含时间时退化为文件修改时间（记录结束时刻，通常仍在同一曲目历史区间内）。
+     */
+    private Date recordingStartTime(DataRecording dr) {
+        if (dr.Name != null) {
+            Matcher matcher = RECORDING_DATE_TIME_PATTERN.matcher(dr.Name);
+            if (matcher.find()) {
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd_HH-mm", Locale.US);
+                formatter.setLenient(false);
+                try {
+                    return formatter.parse(matcher.group());
+                } catch (Exception ignored) {
+                    // 解析失败时使用文件时间兜底
+                }
+            }
+        }
+        return dr.Time != null ? dr.Time : new Date();
+    }
+
+    private boolean isEmpty(String value) {
+        return value == null || value.isEmpty();
+    }
+
+    private void saveStationMeta(String fileName, String stationUuid, String stationName) {
+        if (isEmpty(fileName)) {
+            return;
+        }
+
+        synchronized (stationLock) {
+            // 同名文件可能被复用（删除后重新录制），先清掉旧解析结果
+            stationInfoCache.remove(fileName);
+            failedStationLookup.remove(fileName);
+
+            JSONObject all = readStationMetaLocked();
+            JSONObject item = new JSONObject();
+            try {
+                item.put("uuid", stationUuid == null ? "" : stationUuid);
+                item.put("name", stationName == null ? "" : stationName);
+                all.put(fileName, item);
+            } catch (JSONException e) {
+                Log.e(TAG, "Failed to store recording station meta: " + e.getMessage());
+                return;
+            }
+            PreferenceManager.getDefaultSharedPreferences(appContext)
+                    .edit().putString(PREF_RECORDING_STATION_META, all.toString()).apply();
+        }
+    }
+
+    /**
+     * 删除录音时一并清理其电台映射，避免录音目录无限增长后元数据残留。
+     */
+    public void removeRecordingStationInfo(String fileName) {
+        if (isEmpty(fileName)) {
+            return;
+        }
+
+        synchronized (stationLock) {
+            stationInfoCache.remove(fileName);
+            failedStationLookup.remove(fileName);
+
+            JSONObject all = readStationMetaLocked();
+            if (all.has(fileName)) {
+                all.remove(fileName);
+                PreferenceManager.getDefaultSharedPreferences(appContext)
+                        .edit().putString(PREF_RECORDING_STATION_META, all.toString()).apply();
+            }
+        }
+    }
+
+    private JSONObject readStationMeta() {
+        synchronized (stationLock) {
+            return readStationMetaLocked();
+        }
+    }
+
+    private JSONObject readStationMetaLocked() {
+        String raw = PreferenceManager.getDefaultSharedPreferences(appContext)
+                .getString(PREF_RECORDING_STATION_META, "{}");
+        try {
+            return new JSONObject(raw);
+        } catch (JSONException e) {
+            return new JSONObject();
+        }
+    }
+
+    /**
+     * 清理已不存在的录音文件对应的电台映射，防止偏好设置无限累积。
+     * 以文件是否真实存在为准，避免与「刚创建文件并保存映射」并发时误删。
+     */
+    private void pruneStationMeta() {
+        synchronized (stationLock) {
+            JSONObject all = readStationMetaLocked();
+            List<String> stale = new ArrayList<>();
+            File recordDir = new File(getRecordDir());
+            Iterator<String> keys = all.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                if (!new File(recordDir, key).exists()) {
+                    stale.add(key);
+                }
+            }
+            if (!stale.isEmpty()) {
+                for (String key : stale) {
+                    all.remove(key);
+                }
+                PreferenceManager.getDefaultSharedPreferences(appContext)
+                        .edit().putString(PREF_RECORDING_STATION_META, all.toString()).apply();
+            }
+        }
     }
 }

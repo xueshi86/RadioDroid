@@ -467,7 +467,7 @@
     <string name="action_choose_external_player">选择外部播放器</string>
 
     <string name="settings_lastfm_api_key">Last.fm API密钥</string>
-    <string name="settings_lastfm_api_key_desc">输入API密钥以在全屏播放器中启用专辑封面</string>
+    <string name="settings_lastfm_api_key_desc">输入 Last.fm API 密钥后，播放时优先以曲目专辑封面作为播放器图标与背景，曲目历史详情中也会显示封面</string>
     <string name="settings_disable_battery_optimization">电池优化</string>
     <string name="settings_ignore_battery_optimization_summary_on">电池优化被忽略，睿卓会始终在失去焦点后重获焦点。</string>
     <string name="settings_ignore_battery_optimization_summary_off">电池优化被激活，睿卓将无法在后台失去焦点后重获焦点。</string>

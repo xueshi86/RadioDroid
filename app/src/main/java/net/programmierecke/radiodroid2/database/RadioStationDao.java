@@ -258,6 +258,12 @@ public interface RadioStationDao {
     @Query("SELECT * FROM radio_stations WHERE station_uuid = :stationId")
     RadioStation getStationById(String stationId);
 
+    /**
+     * 按名称前缀查找电台（用于旧录音按文件名中的电台名反查所属电台）。
+     */
+    @Query("SELECT * FROM radio_stations WHERE name LIKE :namePrefix || '%' LIMIT 100")
+    List<RadioStation> getStationsByRawNamePrefix(String namePrefix);
+
     @Query("SELECT station_uuid FROM radio_stations")
     List<String> getAllStationIds();
     

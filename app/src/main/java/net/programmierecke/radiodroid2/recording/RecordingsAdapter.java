@@ -7,11 +7,13 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -28,6 +30,9 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 
 import net.programmierecke.radiodroid2.R;
+import net.programmierecke.radiodroid2.Utils;
+import net.programmierecke.radiodroid2.service.PlayerServiceUtil;
+import net.programmierecke.radiodroid2.ui.StationPlaceholderUtils;
 
 import java.io.File;
 import java.util.List;
@@ -56,6 +61,7 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
 
     class RecordingItemViewHolder extends RecyclerView.ViewHolder {
         final ViewGroup viewRoot;
+        final ImageView imageViewStationIcon;
         final TextView textViewTitle;
         final TextView textViewTime;
 
@@ -63,6 +69,7 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
             super(itemView);
 
             viewRoot = (ViewGroup) itemView;
+            imageViewStationIcon = itemView.findViewById(R.id.imageViewStationIcon);
             textViewTitle = itemView.findViewById(R.id.textViewTitle);
             textViewTime = itemView.findViewById(R.id.textViewTime);
         }
@@ -101,6 +108,8 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
     public void onBindViewHolder(@NonNull RecordingItemViewHolder holder, int position) {
         final DataRecording recording = recordings.get(position);
 
+        bindStationIcon(holder, recording);
+
         holder.textViewTitle.setText(recording.Name);
         // 选中态触发走马灯滚动：文件名过长省略号截断时自动横向循环滚动
         // （与「本台曲目 / 曲目历史」列表的 TrackHistoryAdapter 行为一致）
@@ -116,6 +125,34 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
             showContextMenu(recording, holder.getAdapterPosition());
             return true;
         });
+    }
+
+    /**
+     * 行首电台图标：与「本台曲目 / 曲目历史」一致。
+     * 录音所属电台已知时加载该电台图标；无法确定时显示通用占位图标，
+     * 避免视图复用残留上一行的图标。
+     */
+    private void bindStationIcon(RecordingItemViewHolder holder, DataRecording recording) {
+        if (!Utils.shouldLoadIcons(context)) {
+            holder.imageViewStationIcon.setVisibility(View.GONE);
+            return;
+        }
+
+        holder.imageViewStationIcon.setVisibility(View.VISIBLE);
+
+        if (!TextUtils.isEmpty(recording.StationUuid)) {
+            PlayerServiceUtil.getStationIcon(
+                    holder.imageViewStationIcon,
+                    recording.StationIconUrl,
+                    recording.StationHomePageUrl,
+                    recording.StationUuid,
+                    recording.StationName);
+        } else {
+            // 清除上一行电台的绑定标记，防止异步回调把旧图标画到本行
+            holder.imageViewStationIcon.setTag(R.id.tag_station_uuid, null);
+            holder.imageViewStationIcon.setImageDrawable(
+                    StationPlaceholderUtils.createPlaceholderDrawable(context, recording.StationName, null));
+        }
     }
 
     public void setRecordings(List<DataRecording> recordings) {
@@ -489,6 +526,7 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
             Toast.makeText(context, R.string.recording_file_not_found, Toast.LENGTH_SHORT).show();
         }
         if (deleted || !file.exists()) {
+            recordingsManager.removeRecordingStationInfo(recording.Name);
             recordingsManager.updateRecordingsList();
         }
     }

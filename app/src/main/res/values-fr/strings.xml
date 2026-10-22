@@ -318,7 +318,7 @@
     <string name="action_choose_external_player">Choisir un lecteur externe</string>
 
     <string name="settings_lastfm_api_key">Clé API Last.fm</string>
-    <string name="settings_lastfm_api_key_desc">Entrez une clé API pour activer la pochette d\'album dans le lecteur plein écran</string>
+    <string name="settings_lastfm_api_key_desc">Saisissez une clé API Last.fm pour afficher la pochette du titre en cours comme icône et fond du lecteur ; elle apparaît aussi dans les détails de l\'historique</string>
     <string name="settings_other">Autre</string>
     <string name="settings_statistics">Statistiques</string>
     <string name="settings_about">À propos RadioDroid</string>

@@ -133,7 +133,7 @@
     <string name="settings_play_external">Interner/externer Abspieler</string>
 
     <string name="settings_lastfm_api_key">Last.fm API Schlüssel</string>
-    <string name="settings_lastfm_api_key_desc">Mit Last.fm werden Album Bilder im Player angezeigt</string>
+    <string name="settings_lastfm_api_key_desc">Mit einem Last.fm API-Schlüssel wird das Albumbild des laufenden Titels als Player-Symbol und Hintergrund angezeigt; es erscheint auch in den Titeldetails</string>
     <string name="settings_statistics">Statistik</string>
     <string name="settings_about">Über RadioDroid</string>
     <string name="settings_check_update">Nach Updates suchen</string>

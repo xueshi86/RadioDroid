@@ -353,6 +353,16 @@ public class RadioPlayer implements PlayerWrapper.PlayListener, Recordable {
         return currentPlayer.getExtension();
     }
 
+    @Override
+    public String getStationUuid() {
+        return currentStationUuid;
+    }
+
+    @Override
+    public String getStationName() {
+        return streamName;
+    }
+
     public final void runInPlayerThread(Runnable runnable) {
         playerThreadHandler.post(runnable);
     }

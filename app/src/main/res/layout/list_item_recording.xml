@@ -1,42 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 录音列表项：补上点击涟漪反馈，间距与文字色统一走设计令牌。 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- 录音列表项：行首电台图标与「本台曲目 / 曲目历史」一致（56dp），
+     右侧为单行文件名（走马灯）与录制时间，底部统一分隔线。 -->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?attr/selectableItemBackground"
     android:clickable="true"
-    android:orientation="vertical"
-    android:paddingTop="@dimen/space_md"
     android:focusable="true">
+
+    <ImageView
+        android:id="@+id/imageViewStationIcon"
+        android:layout_width="@dimen/icon_station_history"
+        android:layout_height="@dimen/icon_station_history"
+        android:layout_marginStart="@dimen/space_xs"
+        android:layout_marginLeft="@dimen/space_xs"
+        android:layout_marginEnd="@dimen/space_lg"
+        android:layout_marginRight="@dimen/space_lg"
+        android:contentDescription="@null"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/textViewTitle"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/space_lg"
+        android:layout_marginStart="@dimen/space_sm"
+        android:layout_marginLeft="@dimen/space_sm"
+        android:layout_marginTop="@dimen/space_xs"
         android:layout_marginEnd="@dimen/space_lg"
+        android:layout_marginRight="@dimen/space_lg"
         android:ellipsize="marquee"
         android:marqueeRepeatLimit="marquee_forever"
         android:maxLines="1"
         android:singleLine="true"
         android:textAppearance="@style/TextAppearance.RadioDroid.Title"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@id/textViewTime"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/imageViewStationIcon"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/textViewTime"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/space_lg"
+        android:layout_marginStart="@dimen/space_sm"
+        android:layout_marginLeft="@dimen/space_sm"
+        android:layout_marginBottom="@dimen/space_xs"
         android:layout_marginEnd="@dimen/space_lg"
+        android:layout_marginRight="@dimen/space_lg"
         android:maxLines="1"
-        android:textAppearance="@style/TextAppearance.RadioDroid.Caption" />
+        android:textAppearance="@style/TextAppearance.RadioDroid.Caption"
+        app:layout_constraintBottom_toTopOf="@id/dividerBottom"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/imageViewStationIcon"
+        app:layout_constraintTop_toBottomOf="@id/textViewTitle" />
 
     <!-- 行间分割线：位于全屏播放器内部，必须用播放器自身的分隔色（?attr/colorPlayerShadow），
          否则暗色主题下与「正在播放」行下方分割线深浅不一致 -->
     <View
-        android:layout_width="match_parent"
+        android:id="@+id/dividerBottom"
+        android:layout_width="0dp"
         android:layout_height="@dimen/divider_thickness"
-        android:layout_marginTop="@dimen/space_md"
-        android:background="?attr/colorPlayerShadow" />
+        android:background="?attr/colorPlayerShadow"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

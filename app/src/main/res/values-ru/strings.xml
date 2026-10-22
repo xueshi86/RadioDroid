@@ -521,7 +521,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="action_choose_external_player">Выбрать внешний плеер</string>
 
     <string name="settings_lastfm_api_key">Ключ API Last.fm</string>
-    <string name="settings_lastfm_api_key_desc">Введите ключ API для включения обложек альбомов в полноэкранном плеере</string>
+    <string name="settings_lastfm_api_key_desc">Введите ключ API Last.fm, чтобы показывать обложку играющего трека как значок и фон плеера; обложка также отображается в подробностях истории треков</string>
     <string name="settings_disable_battery_optimization">Оптимизация батареи</string>
     <string name="settings_ignore_battery_optimization_summary_on">Оптимизация батареи игнорируется, RadioDroid всегда сможет восстановить фокус после потери фокуса.</string>
     <string name="settings_ignore_battery_optimization_summary_off">Оптимизация батареи активирована, RadioDroid не сможет восстановить фокус после потери фокуса, если находится в фоновом режиме.</string>
