@@ -47,6 +47,7 @@ public class FragmentRecentlyChanged extends FragmentBase implements IFragmentSe
     private StationsFilter.SearchStyle lastSearchStyle = StationsFilter.SearchStyle.ByName;
     private String lastSearchQuery = "";
     private FloatingActionButton fabScrollToTop;
+    private Boolean lastShowBroken;
 
     @Nullable
     @Override
@@ -145,6 +146,30 @@ public class FragmentRecentlyChanged extends FragmentBase implements IFragmentSe
         
         // 加载数据
         loadData();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        // 从设置页返回时按最新的"显示损坏电台"开关重新加载，避免列表沿用旧过滤结果
+        if (getContext() == null) {
+            return;
+        }
+        boolean showBroken = PreferenceManager.getDefaultSharedPreferences(getContext())
+                .getBoolean("show_broken", false);
+        if (lastShowBroken != null && lastShowBroken != showBroken) {
+            refreshList();
+        }
+        lastShowBroken = showBroken;
+    }
+
+    private void refreshList() {
+        if (lastSearchQuery != null && !lastSearchQuery.isEmpty()) {
+            search(lastSearchStyle, lastSearchQuery);
+        } else {
+            loadData();
+        }
     }
 
     private void onStationClick(DataRadioStation station, int pos) {

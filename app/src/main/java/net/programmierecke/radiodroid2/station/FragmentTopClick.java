@@ -10,6 +10,7 @@ import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -42,6 +43,7 @@ public class FragmentTopClick extends FragmentBase implements IFragmentSearchabl
     private RadioStationRepository repository;
     private StationsFilter.SearchStyle lastSearchStyle = StationsFilter.SearchStyle.ByName;
     private String lastSearchQuery = "";
+    private Boolean lastShowBroken;
 
     @Nullable
     @Override
@@ -133,6 +135,30 @@ public class FragmentTopClick extends FragmentBase implements IFragmentSearchabl
         loadData();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        // 从设置页返回时按最新的"显示损坏电台"开关重新加载，避免沿用旧过滤结果
+        if (getContext() == null) {
+            return;
+        }
+        boolean showBroken = PreferenceManager.getDefaultSharedPreferences(getContext())
+                .getBoolean("show_broken", false);
+        if (lastShowBroken != null && lastShowBroken != showBroken) {
+            refreshList();
+        }
+        lastShowBroken = showBroken;
+    }
+
+    private void refreshList() {
+        if (lastSearchQuery != null && !lastSearchQuery.isEmpty()) {
+            search(lastSearchStyle, lastSearchQuery);
+        } else {
+            loadData();
+        }
+    }
+
     private void onStationClick(DataRadioStation station, int pos) {
         if (getActivity() == null) {
             Log.e(TAG, "Activity is null, cannot play station");
@@ -184,12 +210,15 @@ public class FragmentTopClick extends FragmentBase implements IFragmentSearchabl
                     @Override
                     public void onChanged(List<RadioStation> radioStations) {
                         if (radioStations != null && !radioStations.isEmpty()) {
+                            // 尊重"显示损坏电台"开关：关闭时过滤 lastcheckok=0 的电台
+                            boolean showBroken = PreferenceManager.getDefaultSharedPreferences(requireContext())
+                                    .getBoolean("show_broken", false);
                             // 转换为DataRadioStation
                             List<DataRadioStation> dataStations = new ArrayList<>();
                             for (RadioStation radioStation : radioStations) {
                                 if (radioStation != null) {
                                     DataRadioStation dataStation = radioStation.toDataRadioStation();
-                                    if (dataStation != null) {
+                                    if (dataStation != null && (showBroken || dataStation.Working)) {
                                         dataStations.add(dataStation);
                                     }
                                 }
@@ -289,12 +318,15 @@ public class FragmentTopClick extends FragmentBase implements IFragmentSearchabl
     
     private void handleSearchResults(List<RadioStation> radioStations) {
         if (radioStations != null && !radioStations.isEmpty()) {
+            // 搜索结果同样尊重"显示损坏电台"开关
+            boolean showBroken = PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getBoolean("show_broken", false);
             // 转换为DataRadioStation
             List<DataRadioStation> dataStations = new ArrayList<>();
             for (RadioStation radioStation : radioStations) {
                 if (radioStation != null) {
                     DataRadioStation dataStation = radioStation.toDataRadioStation();
-                    if (dataStation != null) {
+                    if (dataStation != null && (showBroken || dataStation.Working)) {
                         dataStations.add(dataStation);
                     }
                 }

@@ -449,6 +449,67 @@ public class StationSaveManager extends Observable {
         return false;
     }
 
+    /**
+     * 收藏/历史电台缺少图标地址时，按 UUID 从本地数据库补全图标与主页地址。
+     * 用于导入旧版 M3U（无图标扩展行）、而本地数据库稍后才同步完成的场景：
+     * 下次启动加载列表时自动补齐并持久化，无需重新导入文件。
+     */
+    private void fillMissingStationInfoAsync() {
+        new AsyncTask<Void, Void, Boolean>() {
+            private List<DataRadioStation> stationsToFix;
+
+            @Override
+            protected void onPreExecute() {
+                stationsToFix = new ArrayList<>(listStations);
+            }
+
+            @Override
+            protected Boolean doInBackground(Void... params) {
+                RadioStationRepository repository = RadioStationRepository.getInstance(context);
+                // 本地数据库尚未同步时直接跳过，避免无意义的逐条查询
+                if (repository.getStationCountSync() == 0) {
+                    return false;
+                }
+
+                boolean changed = false;
+                for (DataRadioStation station : stationsToFix) {
+                    if (!station.hasValidUuid()) {
+                        continue;
+                    }
+                    boolean missingIcon = !station.hasIcon();
+                    boolean missingHomePage = station.HomePageUrl == null || station.HomePageUrl.isEmpty();
+                    if (!missingIcon && !missingHomePage) {
+                        continue;
+                    }
+
+                    RadioStation localStation = repository.getStationByUuid(station.StationUuid);
+                    if (localStation == null) {
+                        continue;
+                    }
+                    DataRadioStation details = localStation.toDataRadioStation();
+                    if (missingIcon && details.hasIcon()) {
+                        station.IconUrl = details.IconUrl;
+                        changed = true;
+                    }
+                    if (missingHomePage && details.HomePageUrl != null && !details.HomePageUrl.isEmpty()) {
+                        station.HomePageUrl = details.HomePageUrl;
+                        changed = true;
+                    }
+                }
+                return changed;
+            }
+
+            @Override
+            protected void onPostExecute(Boolean changed) {
+                if (Boolean.TRUE.equals(changed)) {
+                    Save();
+                    notifyAllListeners();
+                }
+                super.onPostExecute(changed);
+            }
+        }.execute();
+    }
+
     public List<DataRadioStation> getList() {
         return Collections.unmodifiableList(listStations);
     }
@@ -505,6 +566,8 @@ public class StationSaveManager extends Observable {
             listStations.addAll(arr);
             if (hasInvalidUuids() && Utils.hasAnyConnection(context)) {
                 refreshStationsFromServer();
+            } else {
+                fillMissingStationInfoAsync();
             }
         } else {
             Log.w("SAVE", "Load() no stations to load");
@@ -669,6 +732,8 @@ public class StationSaveManager extends Observable {
     }
 
     protected final String M3U_PREFIX = "#RADIOBROWSERUUID:";
+    // 电台图标地址扩展行：M3U 标准没有封面字段，本地数据库未同步时靠它保留封面
+    protected final String M3U_ICON_PREFIX = "#RADIOBROWSERICON:";
 
     boolean SaveM3UInternal(String filePath, String fileName) {
         final RadioDroidApp radioDroidApp = (RadioDroidApp) context.getApplicationContext();
@@ -706,6 +771,10 @@ public class StationSaveManager extends Observable {
                 String safeUrl = station.StreamUrl == null ? "" : station.StreamUrl.replaceAll("[\\r\\n]", "");
                 bw.write(M3U_PREFIX + station.StationUuid + "\n");
                 bw.write("#EXTINF:-1," + safeName + "\n");
+                // 图标地址随文件导出，旧版本播放器会忽略该扩展行
+                if (station.hasIcon()) {
+                    bw.write(M3U_ICON_PREFIX + station.IconUrl.replaceAll("[\\r\\n]", "") + "\n");
+                }
                 bw.write(safeUrl + "\n\n");
             }
             bw.flush();
@@ -748,10 +817,11 @@ public class StationSaveManager extends Observable {
 
     protected List<DataRadioStation> LoadM3UReader(Reader reader) {
         List<String> listUuids = new ArrayList<>();
-        // UUID → (名称, URL) 映射：用于 API 查询失败时的离线 fallback
-        // （电台下线/UUID 变更/断网时仍可基于 M3U 中的 URL 导入）
+        // UUID → (名称, URL, 图标) 映射：用于 API 查询失败时的离线 fallback
+        // （电台下线/UUID 变更/断网/本地数据库未同步时仍可基于 M3U 中的信息导入）
         Map<String, String> uuidToName = new HashMap<>();
         Map<String, String> uuidToUrl = new HashMap<>();
+        Map<String, String> uuidToIcon = new HashMap<>();
 
         // 用 try-with-resources 关闭 BufferedReader，避免异常路径下文件句柄泄漏
         try (BufferedReader br = new BufferedReader(reader)) {
@@ -779,6 +849,11 @@ public class StationSaveManager extends Observable {
                         if (!name.isEmpty()) {
                             uuidToName.put(pendingUuid, name);
                         }
+                    }
+                } else if (pendingUuid != null && line.startsWith(M3U_ICON_PREFIX)) {
+                    String icon = line.substring(M3U_ICON_PREFIX.length()).trim();
+                    if (!icon.isEmpty()) {
+                        uuidToIcon.put(pendingUuid, icon);
                     }
                 } else if (pendingUuid != null && !pendingUrlSeen
                         && !line.startsWith("#") && !line.trim().isEmpty()) {
@@ -828,6 +903,11 @@ public class StationSaveManager extends Observable {
                     }
                     fallback.StreamUrl = url;
                     fallback.TagsAll = "";
+                    // 优先使用 M3U 中导出的图标地址，避免本地数据库未同步时只剩占位封面
+                    String icon = uuidToIcon.get(uuid);
+                    if (icon != null && !icon.isEmpty()) {
+                        fallback.IconUrl = icon;
+                    }
                     listStationsSorted.add(fallback);
                 }
             }

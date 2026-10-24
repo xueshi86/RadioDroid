@@ -46,7 +46,8 @@ public class TimePickerFragment {
     }
 
     public void show(@NonNull Context context, androidx.fragment.app.FragmentManager fragmentManager, String tag) {
-        boolean dark = Utils.getThemeResId(context) == R.style.MyMaterialTheme_Dark;
+        // 按当前界面实际主题选择对话框主题，避免主题偏好与界面暂时不一致时出现白底白字
+        boolean dark = Utils.isCurrentThemeDark(context);
         int themeRes = dark ? R.style.DialogTheme_Dark : R.style.DialogTheme;
 
         ContextThemeWrapper themedContext = new ContextThemeWrapper(context, themeRes);

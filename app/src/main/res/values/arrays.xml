@@ -32,12 +32,13 @@
         <item>@string/startup_show_last_view</item>
         <item>@string/startup_show_player</item>
     </string-array>
+    <!-- 启动页 entryValues 使用与语言无关的稳定标识，切换语言/导入备份不改变已选项 -->
     <string-array name="startup_action_entryvalues">
-        <item>@string/startup_show_history</item>
-        <item>@string/startup_show_favorites</item>
-        <item>@string/startup_show_all_stations</item>
-        <item>@string/startup_show_last_view</item>
-        <item>@string/startup_show_player</item>
+        <item>history</item>
+        <item>favorites</item>
+        <item>all_stations</item>
+        <item>last_view</item>
+        <item>player</item>
     </string-array>
 
     <string-array name="theme_entries">
@@ -45,10 +46,11 @@
         <item>@string/theme_dark</item>
         <item>@string/theme_auto</item>
     </string-array>
+    <!-- 主题 entryValues 使用与语言无关的稳定标识，切换语言/导入备份不改变已选主题 -->
     <string-array name="theme_values">
-        <item>@string/theme_light</item>
-        <item>@string/theme_dark</item>
-        <item>@string/theme_auto</item>
+        <item>light</item>
+        <item>dark</item>
+        <item>auto</item>
     </string-array>
 
     <!-- 配色预设（Issue #50）：entryValues 使用与语言无关的稳定标识，切换语言不影响已选配色 -->

@@ -1750,7 +1750,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         Context context = requireContext();
         if (kind == STATUS_OK) {
             return ContextCompat.getColor(context,
-                    Utils.isDarkTheme(context) ? R.color.colorStatusOkDark : R.color.colorStatusOk);
+                    Utils.isCurrentThemeDark(context) ? R.color.colorStatusOkDark : R.color.colorStatusOk);
         }
         if (kind == STATUS_ERROR) {
             return Utils.getThemeColor(context, R.attr.colorError);

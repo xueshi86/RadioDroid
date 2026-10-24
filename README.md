@@ -79,7 +79,7 @@
 | ------ | --------------------------------- |
 | 首次初始化  | 全量下载 5 万+ 电台，耗时约 1-20 分钟（取决于网络质量） |
 | 数据时效性  | 增量更新大幅缓解：应用启动时若距上次更新超 24h 自动同步，手动增量秒级完成 |
-| 存储空间   | 本地数据库约 40MB                       |
+| 存储空间   | 本地数据库约 50MB                       |
 | ️ 更新方式 | 支持手动全量 / 手动增量 / 自动增量（默认关闭，可仅 Wi-Fi）    |
 
 #### 预置数据库文件
@@ -334,11 +334,11 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 
 #### 暗色主题
 
-支持亮色和暗色主题，可在设置中切换。修正了原版暗色模式下部分界面元素和字体颜色显示不正确的问题。常用界面元素（标题、标签、描述等）根据主题自动调整文字颜色。
+支持亮色和暗色主题，可在设置中切换，默认跟随系统深浅色。修正了原版暗色模式下部分界面元素和字体颜色显示不正确的问题。常用界面元素（标题、标签、描述等）根据主题自动调整文字颜色。
 
 #### 配色方案
 
-在设置中提供 8 套预设配色：湖光青（默认）、经典蓝、森林绿、紫罗兰、玫瑰粉、日落橙、石墨灰、纯黑。全新安装时默认主题为「自动」（跟随系统亮暗），默认配色为「湖光青」。每套配色同时为亮色主题和暗色主题准备了一组色值，色相一致、明暗分别调优，保证两种主题下都清晰美观；配色会统一作用于顶栏、状态栏、播放条、按钮、选中文字、滑块、标签下划线与「正在播放」高亮方框。其中纯黑配色在暗色主题下会进一步把窗口与内容面切换为纯黑系，适合 OLED 屏幕省电显示。选择页为每套配色提供实时色卡缩略图（顶栏主色块 + 强调色点 + 选中标记），切换配色或旋转屏幕后状态栏与导航栏也会同步刷新。
+在设置中提供 8 套预设配色：湖光青（默认）、经典蓝、森林绿、紫罗兰、玫瑰粉、日落橙、石墨灰、纯黑。全新安装时默认主题为「自动」（跟随系统亮暗），默认配色为「湖光青」。每套配色同时为亮色主题和暗色主题准备了一组色值，色相一致、明暗分别调优，保证两种主题下都清晰美观；配色会统一作用于顶栏、状态栏、播放条、按钮、选中文字、滑块、标签下划线与「正在播放」高亮方框。其中纯黑配色在暗色主题下会进一步把窗口与内容面切换为纯黑系，适合 OLED 屏幕省电显示。选择页为每套配色提供实时色卡缩略图（顶栏主色块 + 强调色点 + 选中标记），切换配色或旋转屏幕后状态栏与导航栏也会同步刷新。主题、配色与「启动操作」等偏好均使用与语言无关的稳定标识保存，切换应用语言或导入设置备份不会丢失已选设置。
 
 #### 界面美化
 
@@ -400,7 +400,7 @@ MPD（Music Player Daemon）是一款开源的音频播放服务端程序，通�
 
 #### ️ 其他功能
 
-- **收藏电台**：支持添加/移除收藏，长按拖拽排序（任意排序状态下可用，拖拽后自动切换为自定义顺序），滑动删除，撤销操作（Snackbar），M3U 导入/导出
+- **收藏电台**：支持添加/移除收藏，长按拖拽排序（任意排序状态下可用，拖拽后自动切换为自定义顺序），滑动删除，撤销操作（Snackbar），M3U 导入/导出（导出文件附带电台图标地址；本地数据库同步后会自动补全旧文件缺失的封面）
 - **历史记录**：播放过的电台列表，支持 M3U 导出，一键清除
 - **内置歌词**：曲目详情「查看歌词」打开内置歌词面板，来源按 LRCLIB → LrcAPI → 网易云音乐依次降级尝试，支持自定义/自建实例地址与本地缓存；详见「内置歌词」章节
 - **睡眠定时器**：SeekBar 设置分钟数，终点自动停止播放，保存默认值
@@ -472,7 +472,7 @@ Core functionality is identical across both variants. The difference is the avai
 | -------------- | ------------------------------------------------------------------------ |
 | Initial Setup  | Full download of 50K+ stations takes 1-20 minutes (network-dependent)    |
 | Data Freshness | Station data is a snapshot; new/modified stations require manual refresh |
-| Storage        | Local database uses approximately 40MB                                   |
+| Storage        | Local database uses approximately 50MB                                   |
 | ️  Updates     | Not real-time; manual user trigger required                              |
 
 #### Pre-built Database Files
@@ -771,7 +771,7 @@ A full visual pass over the original interface, leaving page structure, navigati
 
 #### ️ Other Features
 
-- **Favorites**: Add/remove with undo snackbar, long-press drag to reorder (works in any sort mode; dragging switches to Custom Order), swipe-to-delete, M3U import/export
+- **Favorites**: Add/remove with undo snackbar, long-press drag to reorder (works in any sort mode; dragging switches to Custom Order), swipe-to-delete, M3U import/export (exported files include station icon URLs; covers missing from older files are backfilled automatically once the local database is synced)
 - **History**: Played station list with M3U export, one-tap clear
 - **Built-in Lyrics**: "View lyrics" opens a built-in lyrics panel; sources are tried in fallback order LRCLIB → LrcAPI → NetEase Cloud Music, with custom/self-hosted instance URLs and local caching supported — see the "Built-in Lyrics" section for details
 - **Sleep Timer**: SeekBar dialog, auto-stops playback, saves default

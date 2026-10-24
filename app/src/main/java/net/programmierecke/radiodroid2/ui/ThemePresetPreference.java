@@ -56,7 +56,7 @@ public class ThemePresetPreference extends ListPreference {
         }
 
         final float density = context.getResources().getDisplayMetrics().density;
-        final boolean dark = Utils.isDarkTheme(context);
+        final boolean dark = Utils.isCurrentThemeDark(context);
         final String currentValue = Utils.getThemePreset(context);
 
         final LayoutInflater inflater = LayoutInflater.from(context);

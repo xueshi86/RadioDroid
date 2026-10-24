@@ -426,14 +426,66 @@ public class Utils {
 
     public static String getTheme(final Context context) {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
-        return sharedPref.getString("theme_name", context.getResources().getString(R.string.theme_light));
+        String storedTheme = sharedPref.getString("theme_name", "auto");
+        String theme = normalizeTheme(context, storedTheme);
+        if (!theme.equals(storedTheme)) {
+            // 兼容旧版本以本地化名称保存的主题偏好，读取时迁移为稳定标识
+            sharedPref.edit().putString("theme_name", theme).apply();
+        }
+        return theme;
+    }
+
+    private static String normalizeTheme(final Context context, final String value) {
+        if ("light".equals(value) || "dark".equals(value) || "auto".equals(value)) {
+            return value;
+        }
+
+        // 旧版本把本地化的主题名称直接保存为偏好值，这里把 8 种支持语言的旧值迁移为稳定标识
+        switch (value) {
+            case "Light":
+            case "浅色":
+            case "Светлая":
+            case "Claro":
+            case "Hell":
+            case "Clair":
+            case "Chiaro":
+            case "Φωτεινό":
+                return "light";
+            case "Dark":
+            case "深色":
+            case "Темная":
+            case "Oscuro":
+            case "Dunkel":
+            case "Noir":
+            case "Scuro":
+            case "Σκοτεινό":
+                return "dark";
+            case "Auto":
+            case "自动":
+            case "Авто":
+            case "Automático":
+                return "auto";
+            default:
+                break;
+        }
+
+        // 兜底：按当前语言资源再匹配一次，覆盖其他语言
+        final String[] themeIds = {"light", "dark", "auto"};
+        final int[] themeStringIds = {R.string.theme_light, R.string.theme_dark, R.string.theme_auto};
+        for (int i = 0; i < themeIds.length; i++) {
+            if (value.equals(context.getResources().getString(themeStringIds[i]))) {
+                return themeIds[i];
+            }
+        }
+        // 无法识别的值（例如来自其他语言的旧备份）回退为跟随系统
+        return "auto";
     }
 
     public static int getThemeResId(final Context context) {
         String selectedTheme = getTheme(context);
-        if (selectedTheme.equals(context.getResources().getString(R.string.theme_dark)))
+        if ("dark".equals(selectedTheme))
             return R.style.MyMaterialTheme_Dark;
-        if (selectedTheme.equals(context.getResources().getString(R.string.theme_auto)))
+        if ("auto".equals(selectedTheme))
             return isSystemInDarkTheme(context) ? R.style.MyMaterialTheme_Dark : R.style.MyMaterialTheme;
         else
             return R.style.MyMaterialTheme;
@@ -449,6 +501,21 @@ public class Utils {
 
     public static boolean isDarkTheme(final Context context) {
         return getThemeResId(context) == R.style.MyMaterialTheme_Dark;
+    }
+
+    /**
+     * 当前 Activity 实际应用的主题是否为深色。
+     * <p>
+     * 与 {@link #isDarkTheme(Context)} 不同，这里读取的是主题自身声明的 isDarkTheme 属性，
+     * 而不是偏好设置。导入设置后在 Activity 重建前，偏好里的主题可能已改变而界面仍是旧主题，
+     * 此时对话框必须跟随界面实际主题，否则会出现白底白字。
+     */
+    public static boolean isCurrentThemeDark(final Context context) {
+        TypedValue typedValue = new TypedValue();
+        if (context.getTheme().resolveAttribute(R.attr.isDarkTheme, typedValue, true)) {
+            return typedValue.data != 0;
+        }
+        return isDarkTheme(context);
     }
 
     /**
@@ -470,21 +537,78 @@ public class Utils {
     }
 
     public static int getAlertDialogThemeResId(final Context context) {
-        int theme;
-        if (getThemeResId(context) == R.style.MyMaterialTheme_Dark)
-            theme = R.style.AlertTheme_Dark;
-        else
-            theme = R.style.AlertTheme;
-        return theme;
+        if (isCurrentThemeDark(context))
+            return R.style.AlertTheme_Dark;
+        return R.style.AlertTheme;
     }
     
     public static int getBottomSheetDialogThemeResId(final Context context) {
-        int theme;
-        if (getThemeResId(context) == R.style.MyMaterialTheme_Dark)
-            theme = R.style.BottomSheetDialogTheme_Dark;
-        else
-            theme = R.style.BottomSheetDialogTheme;
-        return theme;
+        if (isCurrentThemeDark(context))
+            return R.style.BottomSheetDialogTheme_Dark;
+        return R.style.BottomSheetDialogTheme;
+    }
+
+    // ================= 启动页行为 =================
+
+    public static final String STARTUP_ACTION_HISTORY = "history";
+    public static final String STARTUP_ACTION_FAVORITES = "favorites";
+    public static final String STARTUP_ACTION_ALL_STATIONS = "all_stations";
+    public static final String STARTUP_ACTION_LAST_VIEW = "last_view";
+    public static final String STARTUP_ACTION_PLAYER = "player";
+
+    private static final String[] STARTUP_ACTION_IDS = {
+            STARTUP_ACTION_HISTORY, STARTUP_ACTION_FAVORITES, STARTUP_ACTION_ALL_STATIONS,
+            STARTUP_ACTION_LAST_VIEW, STARTUP_ACTION_PLAYER
+    };
+    private static final int[] STARTUP_ACTION_STRING_IDS = {
+            R.string.startup_show_history, R.string.startup_show_favorites, R.string.startup_show_all_stations,
+            R.string.startup_show_last_view, R.string.startup_show_player
+    };
+
+    public static String getStartupAction(final Context context) {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+        String storedAction = sharedPref.getString("startup_action", STARTUP_ACTION_ALL_STATIONS);
+        String action = normalizeStartupAction(context, storedAction);
+        if (!action.equals(storedAction)) {
+            // 兼容旧版本以本地化名称保存的启动页偏好，读取时迁移为稳定标识
+            sharedPref.edit().putString("startup_action", action).apply();
+        }
+        return action;
+    }
+
+    private static String normalizeStartupAction(final Context context, final String value) {
+        if (value == null) {
+            return STARTUP_ACTION_ALL_STATIONS;
+        }
+        for (String id : STARTUP_ACTION_IDS) {
+            if (id.equals(value)) {
+                return id;
+            }
+        }
+
+        // 旧版本把本地化文案直接保存为偏好值，先按当前语言反查
+        for (int i = 0; i < STARTUP_ACTION_STRING_IDS.length; i++) {
+            if (value.equals(context.getResources().getString(STARTUP_ACTION_STRING_IDS[i]))) {
+                return STARTUP_ACTION_IDS[i];
+            }
+        }
+
+        // 再按应用支持的 8 种语言反查，覆盖切换语言后失效的旧值
+        // createConfigurationContext / Configuration.setLocale 需要 API 17
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            final Configuration baseConfig = context.getResources().getConfiguration();
+            for (String language : new String[]{"zh", "en", "ru", "es", "de", "fr", "it", "el"}) {
+                Configuration config = new Configuration(baseConfig);
+                config.setLocale(new Locale(language));
+                Resources resources = context.createConfigurationContext(config).getResources();
+                for (int i = 0; i < STARTUP_ACTION_STRING_IDS.length; i++) {
+                    if (value.equals(resources.getString(STARTUP_ACTION_STRING_IDS[i]))) {
+                        return STARTUP_ACTION_IDS[i];
+                    }
+                }
+            }
+        }
+        return STARTUP_ACTION_ALL_STATIONS;
     }
 
     // ================= 预设配色（Issue #50） =================

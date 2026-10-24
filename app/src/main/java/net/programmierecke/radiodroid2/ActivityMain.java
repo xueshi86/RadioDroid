@@ -1400,29 +1400,29 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         HistoryManager hm = radioDroidApp.getHistoryManager();
         FavouriteManager fm = radioDroidApp.getFavouriteManager();
 
-        final String startupAction = sharedPref.getString("startup_action", getResources().getString(R.string.startup_show_history));
+        final String startupAction = Utils.getStartupAction(this);
 
-        if (startupAction.equals(getResources().getString(R.string.startup_show_player))) {
+        if (Utils.STARTUP_ACTION_PLAYER.equals(startupAction)) {
             selectMenuItem(R.id.nav_item_stations);
             new android.os.Handler().postDelayed(() -> playerBottomSheet.setState(BottomSheetBehavior.STATE_EXPANDED), 300);
             return;
         }
 
-        if (startupAction.equals(getResources().getString(R.string.startup_show_history)) && hm.isEmpty()) {
+        if (Utils.STARTUP_ACTION_HISTORY.equals(startupAction) && hm.isEmpty()) {
             selectMenuItem(R.id.nav_item_stations);
             return;
         }
 
-        if (startupAction.equals(getResources().getString(R.string.startup_show_favorites)) && fm.isEmpty()) {
+        if (Utils.STARTUP_ACTION_FAVORITES.equals(startupAction) && fm.isEmpty()) {
             selectMenuItem(R.id.nav_item_stations);
             return;
         }
 
-        if (startupAction.equals(getResources().getString(R.string.startup_show_history))) {
+        if (Utils.STARTUP_ACTION_HISTORY.equals(startupAction)) {
             selectMenuItem(R.id.nav_item_history);
-        } else if (startupAction.equals(getResources().getString(R.string.startup_show_favorites))) {
+        } else if (Utils.STARTUP_ACTION_FAVORITES.equals(startupAction)) {
             selectMenuItem(R.id.nav_item_starred);
-        } else if (startupAction.equals(getResources().getString(R.string.startup_show_all_stations)) || selectedMenuItem < 0) {
+        } else if (Utils.STARTUP_ACTION_ALL_STATIONS.equals(startupAction) || selectedMenuItem < 0) {
             selectMenuItem(R.id.nav_item_stations);
         } else {
             selectMenuItem(selectedMenuItem);

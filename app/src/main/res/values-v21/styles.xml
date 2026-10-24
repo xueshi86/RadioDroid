@@ -11,6 +11,7 @@
     <style name="MyMaterialTheme.Base" parent="Theme.MaterialComponents.Light">
         <item name="windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
+        <item name="isDarkTheme">false</item>
         <item name="dialogTheme">@style/DialogTheme</item>
         <item name="alertDialogTheme">@style/AlertTheme</item>
         <item name="bottomSheetDialogTheme">@style/BottomSheetDialogTheme</item>
@@ -79,6 +80,7 @@
     <style name="MyMaterialTheme.Base.Dark" parent="Theme.MaterialComponents">
         <item name="windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
+        <item name="isDarkTheme">true</item>
         <item name="dialogTheme">@style/DialogTheme.Dark</item>
         <item name="alertDialogTheme">@style/AlertTheme.Dark</item>
         <item name="bottomSheetDialogTheme">@style/BottomSheetDialogTheme.Dark</item>

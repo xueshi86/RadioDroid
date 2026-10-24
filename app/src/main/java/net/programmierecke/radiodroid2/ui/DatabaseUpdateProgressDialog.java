@@ -224,7 +224,7 @@ public class DatabaseUpdateProgressDialog {
         cancelButton = view.findViewById(R.id.cancel_button);
         
         // 根据主题设置文本颜色和背景
-        boolean isDarkTheme = Utils.isDarkTheme(context);
+        boolean isDarkTheme = Utils.isCurrentThemeDark(context);
         if (isDarkTheme) {
             messageText.setTextColor(Color.WHITE);
             progressText.setTextColor(Color.WHITE);

@@ -14,4 +14,6 @@
     <attr name="sliderTrackInactiveColor" format="color"/>
     <attr name="sliderTickColor" format="color"/>
     <attr name="sliderTickInactiveColor" format="color"/>
+    <!-- 当前实际应用的界面主题是否为深色（由主题自身声明，供对话框等按实际主题取色） -->
+    <attr name="isDarkTheme" format="boolean"/>
 </resources>

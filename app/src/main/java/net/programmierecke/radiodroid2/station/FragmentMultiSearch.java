@@ -201,8 +201,8 @@ public class FragmentMultiSearch extends FragmentBase {
             swipeRefreshLayout.setEnabled(false);
             swipeRefreshLayout.setRefreshing(false);
 
-            // 根据主题设置按钮文字颜色
-            boolean isDarkTheme = Utils.isDarkTheme(getContext());
+            // 根据当前界面实际主题设置按钮文字颜色
+            boolean isDarkTheme = Utils.isCurrentThemeDark(getContext());
             if (isDarkTheme) {
                 // 暗色主题下使用白色文字
                 btnResetFilters.setTextColor(android.graphics.Color.WHITE);

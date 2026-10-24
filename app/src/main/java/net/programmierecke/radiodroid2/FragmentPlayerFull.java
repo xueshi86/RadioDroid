@@ -1416,7 +1416,7 @@ public class FragmentPlayerFull extends Fragment {
         lastMirroredDrawable = null;
 
         final int accent = Utils.getThemeColor(requireContext(), R.attr.presetAccentColor);
-        final boolean dark = Utils.isDarkTheme(requireContext());
+        final boolean dark = Utils.isCurrentThemeDark(requireContext());
         // 亮色：800 阶主体 + 两端向黑/白微偏移制造纵深；暗色：整体压暗保持沉浸
         final int startColor = ColorUtils.blendARGB(accent, Color.BLACK, dark ? 0.45f : 0.22f);
         final int endColor = ColorUtils.blendARGB(accent, dark ? Color.BLACK : Color.WHITE, dark ? 0.12f : 0.22f);

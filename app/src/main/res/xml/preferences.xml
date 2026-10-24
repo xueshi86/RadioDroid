@@ -130,7 +130,7 @@
             android:summary="%s"/>
 
         <ListPreference
-            android:defaultValue="@string/theme_auto"
+            android:defaultValue="auto"
             android:entries="@array/theme_entries"
             android:entryValues="@array/theme_values"
             android:key="theme_name"
@@ -217,7 +217,7 @@
         android:key="pref_category_startup">
 
         <ListPreference
-            android:defaultValue="@string/startup_show_all_stations"
+            android:defaultValue="all_stations"
             android:entries="@array/startup_action_entries"
             android:entryValues="@array/startup_action_entryvalues"
             android:key="startup_action"

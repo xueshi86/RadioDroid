@@ -11,6 +11,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -44,6 +45,7 @@ public class FragmentSearchLocal extends FragmentBase implements IFragmentSearch
     private RadioStationRepository repository;
     private StationsFilter.SearchStyle lastSearchStyle = StationsFilter.SearchStyle.ByName;
     private String lastSearchQuery = "";
+    private Boolean lastShowBroken;
 
     @Nullable
     @Override
@@ -65,6 +67,23 @@ public class FragmentSearchLocal extends FragmentBase implements IFragmentSearch
         swiperefresh.setEnabled(false); // 本地数据不需要下拉刷新
 
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        // 从设置页返回时按最新的"显示损坏电台"开关重新执行当前搜索
+        if (getContext() == null) {
+            return;
+        }
+        boolean showBroken = PreferenceManager.getDefaultSharedPreferences(getContext())
+                .getBoolean("show_broken", false);
+        if (lastShowBroken != null && lastShowBroken != showBroken
+                && lastSearchQuery != null && !lastSearchQuery.isEmpty()) {
+            search(lastSearchStyle, lastSearchQuery);
+        }
+        lastShowBroken = showBroken;
     }
 
     @Override
@@ -299,12 +318,15 @@ public class FragmentSearchLocal extends FragmentBase implements IFragmentSearch
         
         try {
             if (radioStations != null && !radioStations.isEmpty()) {
+                // 搜索结果同样尊重"显示损坏电台"开关
+                boolean showBroken = PreferenceManager.getDefaultSharedPreferences(requireContext())
+                        .getBoolean("show_broken", false);
                 // 转换为DataRadioStation，预分配容量以提高性能
                 List<DataRadioStation> dataStations = new ArrayList<>(radioStations.size());
                 for (RadioStation radioStation : radioStations) {
                     if (radioStation != null) {
                         DataRadioStation dataStation = radioStation.toDataRadioStation();
-                        if (dataStation != null) {
+                        if (dataStation != null && (showBroken || dataStation.Working)) {
                             dataStations.add(dataStation);
                         }
                     }
