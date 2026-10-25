@@ -95,6 +95,9 @@ radio_droid_database_*.db
 # Release database staging folder (local-only, not tracked / not pushed)
 /DB/
 
+# UI review mockups (local-only, not tracked / not pushed)
+/ui_review/
+
 # Handover notes (local-only, not tracked / not pushed)
 /HANDOVER*.md
 
