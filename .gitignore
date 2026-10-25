@@ -98,6 +98,30 @@ radio_droid_database_*.db
 # UI review mockups (local-only, not tracked / not pushed)
 /ui_review/
 
+# Local design mockups / share packages (local-only, not tracked / not pushed)
+/player-info-page-design/
+/.trae-html-share-packages/
+
+# Unused app files removed from tracking (local copies kept, not pushed)
+app/src/main/res/drawable/custom_scrollbar_layer.xml
+app/src/main/res/drawable/custom_scrollbar_thick.xml
+app/src/main/res/drawable/ic_back_arrow_24dp.xml
+app/src/main/res/drawable/ic_skip_next_circle.xml
+app/src/main/res/drawable/ic_skip_previous_circle.xml
+app/src/main/res/drawable/ic_sort_alphabetical.xml
+app/src/main/res/drawable/ic_sort_clock.xml
+app/src/main/res/drawable/ic_sort_number.xml
+app/src/main/res/drawable/ic_sort_star.xml
+app/src/main/res/drawable/rounded_search_box.xml
+app/src/main/res/layout/custom_spinner_dropdown_item.xml
+app/src/main/res/layout/list_item_search_history.xml
+app/src/main/res/layout/list_item_search_suggestion.xml
+app/src/main/res/layout/preference_widget_switch.xml
+app/src/main/java/net/programmierecke/radiodroid2/HttpClient.java
+app/src/main/java/net/programmierecke/radiodroid2/interfaces/IChanged.java
+app/src/main/java/net/programmierecke/radiodroid2/station/StationDiffCallback.java
+app/src/main/java/net/programmierecke/radiodroid2/database/TagCount.java
+
 # Handover notes (local-only, not tracked / not pushed)
 /HANDOVER*.md
 
