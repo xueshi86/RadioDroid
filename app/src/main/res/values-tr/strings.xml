@@ -23,9 +23,9 @@
     <string name="action_top_vote">Çok Oylanan</string>
     <string name="action_changed_lately">Yakında değişen</string>
     <string name="action_currently_playing">Oynatılıyor</string>
-    <string name="action_tags">Etiketler</string>
-    <string name="action_countries">Ülkeler</string>
-    <string name="action_languages">Diller</string>
+    
+    
+    
     <string name="action_station_visit_website">Web sitesini ziyaret et</string>
     <string name="action_station_copy_stream_url">Yayın Url\'sini kopyala</string>
     <string name="action_station_share">Paylaş</string>
@@ -41,13 +41,13 @@
     <string name="nav_item_alarm">Alarm</string>
     <string name="tab_player_recordings">Kayıtlar</string>
 
-    <string name="about_text">Bu uygulama özgür radyo istasyon dizini kullanır:\nhttps://www.radio-browser.info\nHerkes istasyon ekleyebilir veya var olan istasyonları düzenleyebilir. Çevrimiçi (yayın yapan) radyo istasyonlarının bir vikisi gibi çalışır.\n\nİletişim:\nsegler_alex@web.de\n\nHata izleyici:\nhttps://github.com/segler-alex/RadioDroid/issues\n\nBu yazılımı beğendiyseniz ve yardım etmek isterseniz, bana bir eposta göndermekten çekinmeyin. Uygulamanın göze iyi görünmesi için gerçekten grafik deneyimi olan birine ihtiyacım var :) Belki simgeler, resimler için çizebilen biri...Ama hataları düzeltmek için programcılar da, veya yenilerini eklemek için (özellikler hatalar değil ;)\nAyrıca yeni özellikler için fikirler hep iyi karşılanır!\n\nBu uygulama GPLv3 altında lisanslanmış özgür yazılımdır.\nhttps://www.gnu.org/licenses/gpl-3.0.html</string>
+    
     <string name="about_version">Sürüm: %1$s</string>
     <string name="detail_star">Beğenilen olarak işaretle</string>
     <string name="detail_unstar">Beğenileni sil</string>
-    <string name="progress_loading">Yükleniyor...</string>
+    
 
-    <string name="sleep_timer" formatted="true">Uyku zamanlayıcı: %1$02d:%2$02d</string>
+    
     <string name="sleep_timer_title">Durmadan önce kaç dakika?</string>
     <string name="sleep_timer_apply">Uygula</string>
     <string name="sleep_timer_clear">Temizle</string>
@@ -128,7 +128,7 @@
     <string name="notify_paused">Duraklatıldı</string>
     <string name="notify_starred">İstasyon beğenilen olarak işaretlendi</string>
     <string name="notify_autostarred">İstasyon beğenilen olarak kendiliğinden işaretlendi</string>
-    <string name="notify_unstarred">İstasyon beğenilenler listesinden kaldırıldı</string>
+    
     <string name="notify_deleted_favorites">Beğenilen silindi.</string>
     <string name="notify_deleted_history">Geçmiş silindi.</string>
 
@@ -140,12 +140,12 @@
     <string name="yes">Evet</string>
     <string name="no">Hayır</string>
 
-    <string name="alert_select_mpd_server">Hangi sunucu?</string>
+    
     <string name="alert_select_mpd_server_name">Sunucu adı</string>
     <string name="hostname">Alan adı</string>
     <string name="port">Port</string>
 
-    <string name="alert_select_mpd_server_add">Ekle</string>
+    
     <string name="alert_select_mpd_server_save">Kaydet</string>
     <string name="alert_select_mpd_server_remove">Kaldır</string>
     <string name="alert_add_or_edit_mpd_server">Bir sunucu için ayrıntıları gir</string>
@@ -161,21 +161,21 @@
 
     <string name="error_no_equalizer_found">Ekolayzır uygulaması bulunmadı!</string>
 
-    <string name="player_info_status">Durum:&#160;</string>
-    <string name="player_info_status_stopped">durdu</string>
-    <string name="player_info_status_playing">oynatılıyor</string>
-    <string name="player_info_status_recording">kaydediliyor</string>
-    <string name="player_info_status_playing_and_recording">oynatılıyor ve kaydediliyor</string>
-    <string name="player_info_transferred">Taşınan veri: %1$s</string>
-    <string name="player_info_recording_to">Kayıt yeri:\n%1$s</string>
-    <string name="player_info_recorded_to">Son kayıt:\n%1$s</string>
+    
+    
+    
+    
+    
+    
+    
+    
 
     <string name="station_detail_bitrate">%1$1d kbps</string>
     <string name="station_detail_broken">BOZUK</string>
 
-    <string name="image_button_disable">Devre dışı</string>
+    
     <string name="image_button_record">Kayıt</string>
-    <string name="image_button_recordings">Kayıtlar</string>
+    
     <string name="image_button_delete">Sil</string>
     <string name="image_button_more">Daha çok</string>
     <string name="image_button_less">Daha az</string>
@@ -190,9 +190,9 @@
 
     <string name="settings_mpd">Music Player Daemon</string>
     <string name="settings_view_mpd_servers">Sunucularınız</string>
-    <string name="action_mpd_nok">MPD bağlanmadı</string>
-    <string name="action_mpd_ok">MPD bağlandı</string>
-    <string name="action_mpd_connected">Bağlanılan sunucu: %1$s</string>
+    
+    
+    
 
     <string name="settings_other">Diğer</string>
     <string name="settings_statistics">İstatistikler</string>
@@ -210,9 +210,9 @@
 
     <string name="notify_stream_url_copied">Yayın Url\'si Başarıyla Kopyalandı!</string>
 
-    <string name="nav_item_statistics">İstatistikler</string>
-    <string name="nav_item_about">Hakkında</string>
-    <string name="settings_mpd_port">MPD portu</string>
+    
+    
+    
     <string name="refresh">Yenile</string>
     <string name="alarm_fade_invalid_range">Başlangıç ses düzeyi hedef ses düzeyinden düşük olmalı</string>
 </resources>

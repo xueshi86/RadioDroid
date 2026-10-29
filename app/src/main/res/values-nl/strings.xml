@@ -25,9 +25,9 @@
     <string name="action_top_vote">Meest op gestemde stations</string>
     <string name="action_changed_lately">Onlangs gewijzigd</string>
     <string name="action_currently_playing">Bezig met afspelen</string>
-    <string name="action_tags">Labels</string>
-    <string name="action_countries">Landen</string>
-    <string name="action_languages">Talen</string>
+    
+    
+    
     <string name="action_station_visit_website">Website bezoeken</string>
     <string name="action_station_copy_stream_url">Stream-URL kopiëren</string>
     <string name="action_station_share">Delen</string>
@@ -43,13 +43,13 @@
     <string name="nav_item_alarm">Alarm</string>
     <string name="tab_player_recordings">Opnames</string>
 
-    <string name="about_text">Deze app gebruikt de gratis radiostationsindex van\nhttps://www.radio-browser.info\nIedereen kan stations toevoegen of bewerken. Het is een soort van wiki voor online(streaming) radiostations.\n\nContact:\nsegler_alex@web.de\n\nBugtracker:\nhttps://github.com/segler-alex/RadioDroid/issues\n\nAls je deze software fijn vindt en wilt helpen, stuur me dan een e-mail. Ik heb iemand nodig met ontwerpervaring om deze oogstrelender te maken :) Iemand die pictogrammen kan creëren of afbeeldingen... Maar ook programmeurs die bugs willen oplossen of nieuwe functies willen toevoegen.\nIdeeën voor nieuwe functies zijn ook altijd welkom!\n\nDeze app is vrije software, uitgebracht onder de GPLv3-licentie.\nhttps://www.gnu.org/licenses/gpl-3.0.html</string>
+    
     <string name="about_version">Versie: %1$s</string>
     <string name="detail_star">Toevoegen aan favorieten</string>
     <string name="detail_unstar">Verwijderen uit favorieten</string>
-    <string name="progress_loading">Bezig met laden...</string>
+    
 
-    <string name="sleep_timer" formatted="true">Slaaptimer: %1$02d:%2$02d</string>
+    
     <string name="sleep_timer_title">Hoeveel minuten alvorens te stoppen?</string>
     <string name="sleep_timer_apply">Toepassen</string>
     <string name="sleep_timer_clear">Wissen</string>
@@ -141,7 +141,7 @@
     <string name="notify_paused">Gepauzeerd</string>
     <string name="notify_starred">Station is toegevoegd aan favorieten</string>
     <string name="notify_autostarred">Station is automatisch toegevoegd aan favorieten</string>
-    <string name="notify_unstarred">Station is verwijderd uit favorieten</string>
+    
     <string name="notify_deleted_favorites">Favorieten zijn verwijderd.</string>
     <string name="notify_deleted_history">Geschiedenis is gewist.</string>
 
@@ -153,12 +153,12 @@
     <string name="yes">Ja</string>
     <string name="no">Nee</string>
 
-    <string name="alert_select_mpd_server">Welke server?</string>
+    
     <string name="alert_select_mpd_server_name">Servernaam</string>
     <string name="hostname">Hostnaam</string>
     <string name="port">Poort</string>
 
-    <string name="alert_select_mpd_server_add">Toegevoegd</string>
+    
     <string name="alert_select_mpd_server_save">Opslaan</string>
     <string name="alert_select_mpd_server_remove">Verwijderen</string>
     <string name="alert_add_or_edit_mpd_server">Voer de servergegevens in</string>
@@ -174,21 +174,21 @@
 
     <string name="error_no_equalizer_found">Geen equalizer-app gevonden!</string>
 
-    <string name="player_info_status">Status:&#160;</string>
-    <string name="player_info_status_stopped">gestopt</string>
-    <string name="player_info_status_playing">bezig met afspelen</string>
-    <string name="player_info_status_recording">bezig met opnemen</string>
-    <string name="player_info_status_playing_and_recording">bezig met afspelen en opnemen</string>
-    <string name="player_info_transferred">Overgedragen gegevens: %1$s</string>
-    <string name="player_info_recording_to">Bezig met opnemen naar:\n%1$s</string>
-    <string name="player_info_recorded_to">Vorige opname:\n%1$s</string>
+    
+    
+    
+    
+    
+    
+    
+    
 
     <string name="station_detail_bitrate">%1$1d kbps</string>
     <string name="station_detail_broken">GEBROKEN</string>
 
-    <string name="image_button_disable">Uitgeschakeld</string>
+    
     <string name="image_button_record">Opnemen</string>
-    <string name="image_button_recordings">Opnames</string>
+    
     <string name="image_button_delete">Verwijderen</string>
     <string name="image_button_more">Meer</string>
     <string name="image_button_less">Minder</string>
@@ -203,9 +203,9 @@
 
     <string name="settings_mpd">Music Player Daemon</string>
     <string name="settings_view_mpd_servers">Jouw servers</string>
-    <string name="action_mpd_nok">MPD is niet verbonden</string>
-    <string name="action_mpd_ok">MPD is verbonden</string>
-    <string name="action_mpd_connected">Verbonden met server: %1$s</string>
+    
+    
+    
 
     <string name="settings_other">Overig</string>
     <string name="settings_statistics">Statistieken</string>
@@ -223,9 +223,9 @@
 
     <string name="notify_stream_url_copied">Stream-URL is gekopieerd!</string>
 
-    <string name="nav_item_statistics">Statistieken</string>
-    <string name="nav_item_about">Over</string>
-    <string name="settings_mpd_port">MPD-poort</string>
+    
+    
+    
     <string name="refresh">Verversen</string>
     <string name="alarm_fade_invalid_range">Startvolume moet lager zijn dan het doelvolume</string>
 </resources>

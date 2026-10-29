@@ -25,7 +25,7 @@
     <string name="action_label_refresh">刷新</string>
     <string name="detail_play_in_radiodroid">使用睿卓播放</string>
 
-    <string name="action_links">链接</string>
+    
     <string name="action_homepage">主页</string>
     <string name="action_favorite">收藏</string>
     <string name="action_alarm">闹钟</string>
@@ -53,9 +53,9 @@
     <string name="action_top_vote">投票排行</string>
     <string name="action_changed_lately">最近更新</string>
     <string name="action_currently_playing">正在播放</string>
-    <string name="action_tags">标签</string>
-    <string name="action_countries">国家/地区</string>
-    <string name="action_languages">语言</string>
+    
+    
+    
     <string name="action_edit">编辑</string>
     <string name="action_lyrics">歌词</string>
     <string name="action_copy_info">复制信息</string>
@@ -72,14 +72,14 @@
     <string name="nav_item_multi_search">多条件搜索</string>
     <string name="nav_item_alarm">闹钟</string>
 
-    <string name="about_text">本应用使用免费的电台目录\nhttps://www.radio-browser.info\n每个人都可以向其中添加电台。它就像一个在线（流媒体）电台的维基百科。\n\n联系方式：\nsegler_alex@web.de\n\n问题跟踪：\nhttps://github.com/segler-alex/RadioDroid/issues\n\n如果您喜欢这个软件并想提供帮助，请随时给我发邮件。我真的很需要有图形设计经验的人来让应用看起来更美观 :) 也许有人可以绘制图标、图片...但也包括修复bug或实现新功能的程序员（功能不是bug ;)\n同时也非常感谢新的功能建议！\n\n本应用是在GPLv3许可下的免费软件。\nhttps://www.gnu.org/licenses/gpl-3.0.html</string>
+    
     <string name="about_version">版本：%1$s</string>
     <string name="about_fork_description">Fork RadioDroid by xueshi86</string>
     <string name="about_github">GitHub：https://github.com/xueshi86/RadioDroid</string>
     <string name="detail_star">添加到收藏</string>
     <string name="detail_unstar">从收藏中删除</string>
     <string name="detail_play_in_external_player">@string/action_play_in_external</string>
-    <string name="progress_loading">加载中...</string>
+    
     
     <!-- Unknown artist/track/station -->
     <string name="unknown_artist">未知艺术家</string>
@@ -94,7 +94,7 @@
     <string name="now_playing_all_unknown">正在播放音乐，艺术家和歌曲信息未知</string>
     <string name="now_playing_stream">正在播放：%s</string>
 
-    <string name="sleep_timer" formatted="true">睡眠定时器：%1$02d:%2$02d</string>
+    
     <string name="sleep_timer_title">在选定的分钟后停止播放</string>
     <string name="sleep_timer_set_title">设置睡眠时间 (分钟)</string>
     <string name="sleep_timer_minutes_label">分钟</string>
@@ -106,19 +106,19 @@
     <string name="nav_item_save_playlist">导出收藏为播放列表</string>
     <string name="nav_item_load_playlist">从播放列表导入收藏</string>
     <string name="nav_item_save_history_playlist">导出历史为播放列表</string>
-    <string name="confirm_overwrite_file">覆盖文件？</string>
-    <string name="dialog_hint_file_name">输入文件名</string>
-    <string name="error_empty_field">此字段为必填项</string>
-    <string name="error_invalid_file_name">无效的文件名</string>
-    <string name="label_button_cancel">取消</string>
-    <string name="label_button_overwrite">覆盖</string>
+    
+    
+    
+    
+    
+    
     <string name="notify_load_playlist_nok">无法从 %1$s&#47;%2$s 导入</string>
     <string name="notify_load_playlist_now">正在从 %1$s&#47;%2$s 导入，请稍候。</string>
     <string name="notify_load_playlist_ok">已从 %2$s&#47;%3$s 导入 %1$d 个电台</string>
     <string name="notify_save_playlist_nok">无法导出到 %1$s&#47;%2$s</string>
     <string name="notify_save_playlist_now">正在导出到 %1$s&#47;%2$s，请稍候。</string>
     <string name="notify_save_playlist_ok">已成功导出到 %1$s&#47;%2$s</string>
-    <string name="notify_sync_list_deleted_entries">列表中的 %2$d 个本地电台中有 %1$d 个在服务器上被标记为不存在</string>
+    
 
     <string name="searchpreference_clear_history">清除历史</string>
     <string name="searchpreference_no_results">无结果</string>
@@ -313,7 +313,7 @@
 
     <string name="notify_starred">电台已添加到收藏</string>
     <string name="notify_autostarred">电台已自动添加到收藏</string>
-    <string name="notify_unstarred">电台已从收藏中删除</string>
+    
     <string name="notify_deleted_favorites">收藏已删除</string>
     <string name="notify_deleted_history">历史已删除</string>
 
@@ -345,13 +345,13 @@
     <string name="yes">是</string>
     <string name="no">否</string>
 
-    <string name="alert_select_mpd_server">请选择一个服务器</string>
+    
     <string name="alert_select_mpd_server_name">服务器名称</string>
     <string name="alert_select_mpd_server_password">服务器密码</string>
     <string name="hostname">主机名</string>
     <string name="port">端口</string>
 
-    <string name="alert_select_mpd_server_add">添加</string>
+    
     <string name="alert_select_mpd_server_save">保存</string>
     <string name="alert_select_mpd_server_remove">删除</string>
     <string name="alert_add_or_edit_mpd_server">输入服务器详细信息</string>
@@ -416,14 +416,14 @@
     <string name="sort_ascending">升序 ↑</string>
     <string name="sort_descending">降序 ↓</string>
 
-    <string name="player_info_status">状态：&#160;</string>
-    <string name="player_info_status_stopped">已停止</string>
-    <string name="player_info_status_playing">正在播放</string>
-    <string name="player_info_status_recording">正在录音</string>
-    <string name="player_info_status_playing_and_recording">正在播放和录音</string>
-    <string name="player_info_transferred">已传输数据：%1$s</string>
-    <string name="player_info_recording_to">正在录音到：\n%1$s</string>
-    <string name="player_info_recorded_to">上次录音：\n%1$s</string>
+    
+    
+    
+    
+    
+    
+    
+    
 
     <string name="tab_player_art">专辑封面</string>
     <string name="tab_player_station_info">电台信息</string>
@@ -435,9 +435,9 @@
     <string name="station_detail_broken">损坏</string>
     <string name="station_detail_deleted_on_server">已删除</string>
 
-    <string name="image_button_disable">禁用</string>
+    
     <string name="image_button_record">录音</string>
-    <string name="image_button_recordings">录音</string>
+    
     <string name="image_button_delete">删除</string>
     <string name="image_button_more">更多</string>
     <string name="image_button_less">更少</string>
@@ -452,11 +452,11 @@
     <string name="app_name">睿卓收音机</string>
 
     <string name="settings_mpd">音乐播放器守护进程</string>
-    <string name="settings_mpd_port">MPD端口</string>
+    
     <string name="settings_view_mpd_servers">您的服务器</string>
-    <string name="action_mpd_nok">MPD未连接</string>
-    <string name="action_mpd_ok">MPD已连接</string>
-    <string name="action_mpd_connected">已连接到服务器：%1$s</string>
+    
+    
+    
 
     <string name="mpd_no_connection">无连接</string>
     <string name="action_enable_mpd">启用MPD</string>
@@ -464,7 +464,7 @@
     <string name="action_add_mpd_server">添加MPD服务器</string>
 
     <string name="action_play_in_external">在外部播放器中播放</string>
-    <string name="action_choose_external_player">选择外部播放器</string>
+    
 
     <string name="settings_lastfm_api_key">Last.fm API密钥</string>
     <string name="settings_lastfm_api_key_desc">输入 Last.fm API 密钥后，播放时优先以曲目专辑封面作为播放器图标与背景，曲目历史详情中也会显示封面</string>
@@ -524,15 +524,12 @@
     <string name="notify_stream_url_copied">流媒体地址复制成功</string>
     <string name="notify_track_info_copied">曲目信息已成功复制</string>
 
-    <string-array name="actions_station_link">
-        <item>访问网站</item>
-        <item>复制流媒体地址</item>
-    </string-array>
+    
 
     <string name="alert_metered_connection_title">检测到计量连接</string>
     <string name="alert_metered_connection_message">计量连接可能会产生额外费用，按\'确认\'继续。</string>
-    <string name="nav_item_statistics">统计</string>
-    <string name="nav_item_about">关于</string>
+    
+    
     <string name="refresh">刷新</string>
 
     <string name="alarm_backup">备用闹钟</string>
@@ -556,13 +553,13 @@
     <string name="no_results_message">未找到%s类别，数据库更新可能不完整，请尝试在设置中更新本地数据库</string>
     
     <string name="settings_language">界面语言</string>
-    <string name="settings_language_desc">选择应用界面的语言</string>
+    
     <string name="language_system">系统默认</string>
     <string name="language_english">English</string>
     <string name="language_chinese">中文</string>
     <string name="language_spanish">Español</string>
     
-    <string name="multi_search_title">多条件搜索</string>
+    
     <string name="multi_search_country">国家</string>
     <string name="multi_search_language">语言</string>
     <string name="multi_search_tag">标签</string>
@@ -584,15 +581,15 @@
     <string name="network_check_error">无法连接到电台浏览器服务器：%1$s</string>
     <string name="network_check_results_title">网络连接速度测试结果</string>
     <string name="network_check_time">测试时间：%1$s</string>
-    <string name="network_check_server_1">服务器 1：fi1.api.radio-browser.info</string>
-    <string name="network_check_server_2">服务器 2：de2.api.radio-browser.info</string>
-    <string name="network_check_http">HTTP：%1$s</string>
-    <string name="network_check_https">HTTPS：%1$s</string>
+    
+    
+    
+    
     <string name="network_check_connection_failed">连接失败</string>
-    <string name="network_check_fastest">最快连接：</string>
+    
     <string name="network_check_no_connection">无连接</string>
     <string name="network_check_no_available">无可用连接</string>
-    <string name="network_check_ok">确定</string>
+    
     
     <string name="export_database_title">导出主数据库</string>
     <string name="export_database_message">是否将主数据库导出到外部存储？导出的文件将保存在Download文件夹中。</string>
@@ -609,10 +606,10 @@
     <string name="progress_exporting_database">正在导出主数据库，请稍候...</string>
     <string name="database_not_updated">数据库尚未更新</string>
     <string name="last_update">上次更新：%1$s，电台数量：%2$d</string>
-    <string name="get_status_failed">获取状态失败：%1$s</string>
-    <string name="save_file_failed">保存文件失败：%1$s</string>
-    <string name="import_failed_invalid_format">请选择M3U格式的播放列表文件</string>
-    <string name="import_failed_parse">导入失败：无法解析文件</string>
+    
+    
+    
+    
     <string name="progress_importing_database">正在导入主数据库，请稍候...</string>
     <string name="import_success_title">导入成功</string>
     <string name="import_success_message">主数据库导入成功，共包含 %d 个电台。应用将自动重启以加载新数据库。</string>
@@ -625,9 +622,9 @@
     <string name="error_database_corrupted">导入的数据库无法正常访问，可能文件已损坏</string>
     <string name="export_database_corrupted">主数据库无法正常访问，可能文件已损坏</string>
     <string name="export_database_empty">主数据库文件为空，无法导出</string>
-    <string name="database_status_updated">数据库状态已更新：%1$s</string>
-    <string name="database_status_update_failed">数据库状态更新失败：%1$s</string>
-    <string name="database_status_from_fields">数据库状态已从数据库字段更新：%1$s</string>
+    
+    
+    
     
     <string name="progress_checking_network">正在检查网络连接</string>
     <string name="progress_getting_station_count">正在获取电台总数</string>
@@ -671,8 +668,8 @@
     <string name="update_preparing">准备中...</string>
     <string name="progress_preparing_update">正在准备更新...</string>
     <string name="progress_resuming_update">正在恢复更新...</string>
-    <string name="progress_updating_database">正在更新数据库</string>
-    <string name="progress_completing_update">正在完成更新</string>
+    
+    
     <string name="progress_system_paused">（可能被系统暂停）</string>
     <string name="update_notification_channel_name">数据库更新</string>
     <string name="update_notification_channel_description">显示数据库更新进度</string>

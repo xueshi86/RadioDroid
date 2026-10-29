@@ -25,7 +25,7 @@
     <string name="action_label_refresh">Refresh</string>
     <string name="detail_play_in_radiodroid">Play in RadioDroid</string>
 
-    <string name="action_links">Links</string>
+    
     <string name="action_homepage">Homepage</string>
     <string name="action_favorite">Favorite</string>
     <string name="action_alarm">Alarm</string>
@@ -53,9 +53,9 @@
     <string name="action_top_vote">Top Vote</string>
     <string name="action_changed_lately">Changed Lately</string>
     <string name="action_currently_playing">Currently Playing</string>
-    <string name="action_tags">Tags</string>
-    <string name="action_countries">Countries/Regions</string>
-    <string name="action_languages">Languages</string>
+    
+    
+    
     <string name="action_edit">Edit</string>
     <string name="action_lyrics">Lyrics</string>
     <string name="action_copy_info">Copy Info</string>
@@ -72,14 +72,14 @@
     <string name="nav_item_multi_search">Multi Criteria Search</string>
     <string name="nav_item_alarm">Alarm</string>
 
-    <string name="about_text">This app uses the free radio station directory at\nhttps://www.radio-browser.info\nEveryone can add stations to it. It works like a wiki for online (streaming) radio stations.\n\nContact:\nsegler_alex@web.de\n\nBugtracker:\nhttps://github.com/segler-alex/RadioDroid/issues\n\nIf you like the software and want to help, feel free to send me an email. I really need someone with graphical experience to make the app nicer to the eye :) Maybe someone who can draw icons, images...but also programmers who fix bugs, or implement new ones (features not bugs ;)\nAlso ideas for new features are always appreciated!\n\nThis app is free software licensed under the GPLv3.\nhttps://www.gnu.org/licenses/gpl-3.0.html</string>
+    
     <string name="about_version">Version: %1$s</string>
     <string name="about_fork_description">Fork RadioDroid by xueshi86</string>
     <string name="about_github">GitHub: https://github.com/xueshi86/RadioDroid</string>
     <string name="detail_star">Add to favorites</string>
     <string name="detail_unstar">Delete from favorites</string>
     <string name="detail_play_in_external_player">@string/action_play_in_external</string>
-    <string name="progress_loading">Loading...</string>
+    
     
     <!-- Unknown artist/track/station -->
     <string name="unknown_artist">Unknown Artist</string>
@@ -94,7 +94,7 @@
     <string name="now_playing_all_unknown">Now playing music, artist and track unknown</string>
     <string name="now_playing_stream">Now playing: %s</string>
 
-    <string name="sleep_timer" formatted="true">Sleep timer: %1$02d:%2$02d</string>
+    
     <string name="sleep_timer_title">Stop playing after the selected minute</string>
     <string name="sleep_timer_set_title">Set Sleep Timer (minutes)</string>
     <string name="sleep_timer_minutes_label">minutes</string>
@@ -107,12 +107,12 @@
     <string name="nav_item_save_playlist">Export favorites as playlist</string>
     <string name="nav_item_load_playlist">Import favorites from playlist</string>
     <string name="nav_item_save_history_playlist">Export history as playlist</string>
-    <string name="confirm_overwrite_file">Overwrite the file?</string>
-    <string name="dialog_hint_file_name">Enter file name</string>
-    <string name="error_empty_field">This field is required</string>
-    <string name="error_invalid_file_name">Invalid file name</string>
-    <string name="label_button_cancel">Cancel</string>
-    <string name="label_button_overwrite">Overwrite</string>
+    
+    
+    
+    
+    
+    
     <string name="notify_load_playlist_nok">Could not import from %1$s&#47;%2$s</string>
     <string name="notify_load_playlist_now">Importing from %1$s&#47;%2$s, please wait.</string>
     <string name="notify_load_playlist_ok">Imported %1$d stations from %2$s&#47;%3$s</string>
@@ -120,7 +120,7 @@
     <string name="notify_save_playlist_now">Exporting to %1$s&#47;%2$s, please wait.</string>
     <string name="notify_save_playlist_ok">Exported to %1$s&#47;%2$s successfully</string>
     <string name="export_type_file">File</string>
-    <string name="notify_sync_list_deleted_entries">%1$d of %2$d local stations in the list marked non-existent on the server</string>
+    
 
     <string name="searchpreference_clear_history">Clear history</string>
     <string name="searchpreference_no_results">No results</string>
@@ -147,7 +147,7 @@
     <string name="settings_local_database_status_failed">Update failed: %s</string>
     
     <string name="settings_language">Interface Language</string>
-    <string name="settings_language_desc">Select language for app interface</string>
+    
     <string name="language_system">System Default</string>
     <string name="language_english">English</string>
     <string name="language_chinese">Chinese</string>
@@ -158,7 +158,7 @@
     <string name="language_italian">Italian</string>
     <string name="language_greek">Greek</string>
     
-    <string name="multi_search_title">Multi Criteria Search</string>
+    
     <string name="multi_search_country">Country</string>
     <string name="multi_search_language">Language</string>
     <string name="multi_search_tag">Tag</string>
@@ -180,15 +180,15 @@
     <string name="network_check_error">Unable to connect to radio browser server: %1$s</string>
     <string name="network_check_results_title">Network Connection Speed Test Results</string>
     <string name="network_check_time">Test Time: %1$s</string>
-    <string name="network_check_server_1">Server 1: fi1.api.radio-browser.info</string>
-    <string name="network_check_server_2">Server 2: de2.api.radio-browser.info</string>
-    <string name="network_check_http">HTTP: %1$s</string>
-    <string name="network_check_https">HTTPS: %1$s</string>
+    
+    
+    
+    
     <string name="network_check_connection_failed">Connection Failed</string>
-    <string name="network_check_fastest">Fastest Connection:</string>
+    
     <string name="network_check_no_connection">No Connection</string>
     <string name="network_check_no_available">No Available Connection</string>
-    <string name="network_check_ok">OK</string>
+    
     
     <string name="webdav_backup_restore">Backup and Restore</string>
     <string name="webdav_configure">WebDAV configuration</string>
@@ -277,13 +277,13 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="import_database_summary">Import main database from external storage, quickly restore radio station data</string>
     <string name="database_not_updated">Database Not Updated Yet</string>
     <string name="last_update">Last Update: %1$s, Station Count: %2$d</string>
-    <string name="get_status_failed">Failed to Get Status: %1$s</string>
-    <string name="save_file_failed">Failed to Save File: %1$s</string>
-    <string name="import_failed_invalid_format">Please select an M3U format playlist file</string>
-    <string name="import_failed_parse">Import Failed: Unable to Parse File</string>
-    <string name="database_status_updated">Database Status Updated: %1$s</string>
-    <string name="database_status_update_failed">Database Status Update Failed: %1$s</string>
-    <string name="database_status_from_fields">Database Status Updated from Database Fields: %1$s</string>
+    
+    
+    
+    
+    
+    
+    
     
     <string name="empty_database_message">Local database is empty, please update the local database in settings first</string>
     <string name="empty_database_title">Local Database is Empty</string>
@@ -506,7 +506,7 @@ This will overwrite the current main database, please ensure you have backed up 
 
     <string name="notify_starred">Station has been added to favorites</string>
     <string name="notify_autostarred">Station has been automatically added to favorites</string>
-    <string name="notify_unstarred">Station has been removed from favorites</string>
+    
     <string name="notify_deleted_favorites">The favorites have been deleted</string>
     <string name="notify_deleted_history">The history has been deleted</string>
 
@@ -538,13 +538,13 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="yes">Yes</string>
     <string name="no">No</string>
 
-    <string name="alert_select_mpd_server">Please select a server</string>
+    
     <string name="alert_select_mpd_server_name">Server name</string>
     <string name="alert_select_mpd_server_password">Server password</string>
     <string name="hostname">Hostname</string>
     <string name="port">Port</string>
 
-    <string name="alert_select_mpd_server_add">Add</string>
+    
     <string name="alert_select_mpd_server_save">Save</string>
     <string name="alert_select_mpd_server_remove">Remove</string>
     <string name="alert_add_or_edit_mpd_server">Enter details about a server</string>
@@ -610,14 +610,14 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="sort_ascending">Ascending ↑</string>
     <string name="sort_descending">Descending ↓</string>
 
-    <string name="player_info_status">Status:&#160;</string>
-    <string name="player_info_status_stopped">stopped</string>
-    <string name="player_info_status_playing">playing</string>
-    <string name="player_info_status_recording">recording</string>
-    <string name="player_info_status_playing_and_recording">playing and recording</string>
-    <string name="player_info_transferred">Transferred data: %1$s</string>
-    <string name="player_info_recording_to">Recording to:\n%1$s</string>
-    <string name="player_info_recorded_to">Last recording:\n%1$s</string>
+    
+    
+    
+    
+    
+    
+    
+    
 
     <string name="tab_player_art">Album art</string>
     <string name="tab_player_station_info">Station info</string>
@@ -629,9 +629,9 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="station_detail_broken">BROKEN</string>
     <string name="station_detail_deleted_on_server">DELETED</string>
 
-    <string name="image_button_disable">Disable</string>
+    
     <string name="image_button_record">Record</string>
-    <string name="image_button_recordings">Recordings</string>
+    
     <string name="image_button_delete">Delete</string>
     <string name="image_button_more">More</string>
     <string name="image_button_less">Less</string>
@@ -647,11 +647,11 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="app_name">RadioDroid</string>
 
     <string name="settings_mpd">Music Player Daemon</string>
-    <string name="settings_mpd_port">MPD port</string>
+    
     <string name="settings_view_mpd_servers">Your servers</string>
-    <string name="action_mpd_nok">MPD not connected</string>
-    <string name="action_mpd_ok">MPD connected</string>
-    <string name="action_mpd_connected">Connected to server: %1$s</string>
+    
+    
+    
 
     <string name="mpd_no_connection">No connection</string>
     <string name="action_enable_mpd">Enable MPD</string>
@@ -659,7 +659,7 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="action_add_mpd_server">Add MPD server</string>
 
     <string name="action_play_in_external">Play in external player</string>
-    <string name="action_choose_external_player">Choose external player</string>
+    
 
     <string name="settings_lastfm_api_key">Last.fm API key</string>
     <string name="settings_lastfm_api_key_desc">Enter a Last.fm API key to show the playing track\'s album art as the player icon and background; it also appears in track history details</string>
@@ -719,15 +719,12 @@ This will overwrite the current main database, please ensure you have backed up 
     <string name="notify_stream_url_copied">Stream URL successfully copied</string>
     <string name="notify_track_info_copied">Track info successfully copied</string>
 
-    <string-array name="actions_station_link">
-        <item>Visit Website</item>
-        <item>Copy Stream URL</item>
-    </string-array>
+    
 
     <string name="alert_metered_connection_title">Metered connection detected</string>
     <string name="alert_metered_connection_message">Metered connection may incur additional charges, press \'OK\' to continue.</string>
-    <string name="nav_item_statistics">Statistics</string>
-    <string name="nav_item_about">About</string>
+    
+    
     <string name="refresh">Refresh</string>
 
     <string name="alarm_backup">Alternative Alarm</string>
@@ -772,8 +769,8 @@ The app will automatically restart to load the new database.</string>
     <string name="progress_preparing_update">Preparing update...</string>
     <string name="progress_resuming_update">Resuming update...</string>
     <string name="progress_downloading_stations">Downloading station data</string>
-    <string name="progress_updating_database">Updating database</string>
-    <string name="progress_completing_update">Completing update</string>
+    
+    
     <string name="update_failed">Update Failed</string>
     <string name="update_failed_toast">Database update failed. Check your connection and try again.</string>
     <string name="update_failed_message">Update failed: %s</string>

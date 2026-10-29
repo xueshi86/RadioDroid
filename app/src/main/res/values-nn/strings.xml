@@ -21,9 +21,9 @@
   <string name="action_top_vote">Flest stemmer</string>
   <string name="action_changed_lately">Nyleg endra</string>
   <string name="action_currently_playing">Vert avspela</string>
-  <string name="action_tags">Merkelappar</string>
-  <string name="action_countries">Land</string>
-  <string name="action_languages">Språk</string>
+  
+  
+  
   <string name="action_station_visit_website">Besøk heimesida</string>
   <string name="action_station_copy_stream_url">Kopier adressa til radiostraumen</string>
   <string name="action_station_share">Del</string>
@@ -36,12 +36,12 @@
   <string name="nav_item_settings">Innstillingar</string>
   <string name="nav_item_alarm">Varsling</string>
   <string name="tab_player_recordings">Opptaksliste</string>
-  <string name="about_text">Denne appen brukar radiokanaloversikta på\nhttps://www.radio-browser.info/\nAlle kan leggja til nye radiokanalar eller oppdatera informasjonen om kanalar som finst frå før. Nettsida fungerer som ein wiki om radiokanalar som tilbyr strauming over nettet.\n\nTa kontakt:\nsegler_alex\@web.de\n\nMeld frå om feil:\nhttps://github.com/segler-alex/RadioDroid/issues\n\nViss du likar dette programmet og ønskjer å hjelpa til, ta gjerne kontakt med meg på e-post. Eg treng verkeleg nokon med designkompetanse for å gjera appen finare. :) Kanskje nokon som kan teikna ikon, bilete osv. Men òg programmerarar som kan retta feil eller leggja til ny funksjonalitet.\nForslag til nye funksjonar vert òg sette pris på!\n\nDenne appen er fri programvare tilgjengeleg under GPLv3-lisensen:\nhttps://www.gnu.org/licenses/gpl-3.0.html</string>
+  
   <string name="about_version">Versjon: %1$s</string>
   <string name="detail_star">Merk som favoritt</string>
   <string name="detail_unstar">Slett frå favorittar</string>
-  <string name="progress_loading">Lastar …</string>
-  <string name="sleep_timer">Nedteljing: %1$02d:%2$02d</string>
+  
+  
   <string name="sleep_timer_title">Kor mange minutt før avspelingsstopp?</string>
   <string name="sleep_timer_apply">Bruk</string>
   <string name="sleep_timer_clear">Tøm</string>
@@ -107,7 +107,7 @@
   <string name="notify_paused">Pausa</string>
   <string name="notify_starred">Kanalen er no merkt som favoritt</string>
   <string name="notify_autostarred">Kanalen vart automatisk merkt som favoritt</string>
-  <string name="notify_unstarred">Kanalen er no fjerna frå favorittlista</string>
+  
   <string name="notify_deleted_favorites">Favorittane er no sletta.</string>
   <string name="notify_deleted_history">Speleloggen er no tømd.</string>
   <string name="notify_station_removed_from_list">1 fjerna</string>
@@ -116,11 +116,11 @@
   <string name="alert_delete_favorites">Er du sikker på at du vil sletta alle favorittane?</string>
   <string name="yes">Ja</string>
   <string name="no">Nei</string>
-  <string name="alert_select_mpd_server">Kva tenar?</string>
+  
   <string name="alert_select_mpd_server_name">Tenarnamn</string>
   <!--<string name="alert_select_mpd_server_hostname">Vertsnamn</string>-->
   <!--<string name="alert_select_mpd_server_port">Port</string>-->
-  <string name="alert_select_mpd_server_add">Legg til</string>
+  
   <string name="alert_select_mpd_server_save">Lagra</string>
   <string name="alert_select_mpd_server_remove">Fjern</string>
   <string name="alert_add_or_edit_mpd_server">Skriv inn informasjon om ein tenar</string>
@@ -131,19 +131,19 @@
   <string name="error_stream_reconnect_timeout">Klarar ikkje kopla til straum på nytt: tidsavbrot.</string>
   <string name="error_grant_audiofocus">Førespurnad om lydfokus vart avvist av systemet.</string>
   <string name="error_no_equalizer_found">Fann ingen app for lydbalanse</string>
-  <string name="player_info_status">Status: </string>
-  <string name="player_info_status_stopped">stoppa</string>
-  <string name="player_info_status_playing">spelar</string>
-  <string name="player_info_status_recording">tek opp</string>
-  <string name="player_info_status_playing_and_recording">spelar og tek opp</string>
-  <string name="player_info_transferred">Data overført: %1$s</string>
-  <string name="player_info_recording_to">Tek opp til:\n%1$s</string>
-  <string name="player_info_recorded_to">Siste opptak:\n%1$s</string>
+  
+  
+  
+  
+  
+  
+  
+  
   <string name="station_detail_bitrate">%1$1d kb/s</string>
   <string name="station_detail_broken">UVERKSAM</string>
-  <string name="image_button_disable">Slå av</string>
+  
   <string name="image_button_record">Ta opp</string>
-  <string name="image_button_recordings">Opptak</string>
+  
   <string name="image_button_delete">Slett</string>
   <string name="image_button_more">Fleire</string>
   <string name="image_button_less">Færre</string>
@@ -156,9 +156,9 @@
   <string name="app_id">5A97BAE4</string>
   <string name="settings_mpd">Musikkavspelingsteneste</string>
   <string name="settings_view_mpd_servers">Tenarane dine</string>
-  <string name="action_mpd_nok">MPD ikkje kopla til</string>
-  <string name="action_mpd_ok">MPD kopla til</string>
-  <string name="action_mpd_connected">Kopla til tenar: %1$s</string>
+  
+  
+  
   <string name="settings_other">Anna</string>
   <string name="settings_statistics">Statistikk</string>
   <string name="settings_about">Om RadioDroid</string>
@@ -172,9 +172,9 @@
     <item>L</item>
   </string-array>
   <string name="notify_stream_url_copied">Adressa til radiostraumen er no kopiert</string>
-  <string name="nav_item_statistics">Statistikk</string>
-  <string name="nav_item_about">Om</string>
-  <string name="settings_mpd_port">MPD-port</string>
+  
+  
+  
   <string name="refresh">Oppdater</string>
   <string name="alarm_fade_invalid_range">Startvolumet må vere lågare enn målvolumet</string>
 </resources>

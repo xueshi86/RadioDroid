@@ -14,7 +14,7 @@
     <string name="detail_share">Compartilhar</string>
     <string name="detail_play_in_radiodroid">Reproduzir no RadioDroid</string>
 
-    <string name="action_links">Links</string>
+    
     <string name="action_homepage">Página inicial</string>
     <string name="action_favorite">Favorito</string>
     <string name="action_alarm">Alarme</string>
@@ -41,9 +41,9 @@
     <string name="action_top_vote">Mais votados</string>
     <string name="action_changed_lately">Mudou recentemente</string>
     <string name="action_currently_playing">Reproduzindo</string>
-    <string name="action_tags">Etiquetas</string>
-    <string name="action_countries">Países</string>
-    <string name="action_languages">Idiomas</string>
+    
+    
+    
     <string name="action_edit">Editar</string>
     <string name="action_lyrics">Letras das músicas</string>
     <string name="action_copy_info">Informações sobre cópia</string>
@@ -58,14 +58,14 @@
     <string name="nav_item_settings">Ajustes</string>
     <string name="nav_item_alarm">Alarme</string>
 
-    <string name="about_text">Este aplicativo usa o catálogo gratuito de rádios em\nhttps://www.radio-browser.info\nTodos podem adicionar rádios aí ou editar rádios existentes. Funciona como wiki para rádios na rede.\n\nContact:\nsegler_alex@web.de\n\nBugtracker:\nhttps://github.com/segler-alex/RadioDroid/issues\n\nSe você gosta da idea e quer ajudar, fique a vontade para enviar um e-mail. Realmente preciso de alguém com experiência gráfica para tornar o aplicativo mais agradável aos olhos :) Talvez alguém que possa desenhar ícones, imagens... mas também desenvolvedores que corrijam bugs, ou implementem novos (recursos não bugs ;)\nTambém idéias para novas funcionalidades são sempre bem-vindos!\n\nEste aplicativo é de software livre licenciado sob a GPLv3.\nhttps://www.gnu.org/licenses/gpl-3.0.html</string>
+    
     <string name="about_version">Versão: %1$s</string>
     <string name="detail_star">Adicionar aos favoritos</string>
     <string name="detail_unstar">Excluir dos favoritos</string>
     <string name="detail_play_in_external_player">@string/action_play_in_external</string>
-    <string name="progress_loading">Carregando...</string>
+    
 
-    <string name="sleep_timer" formatted="true">Despertador do sono: %1$02d:%2$02d</string>
+    
     <string name="sleep_timer_title">Parar de reproduzir após o tempo selecionado</string>
     <string name="sleep_timer_apply">Aplicar</string>
     <string name="sleep_timer_clear">Limpar</string>
@@ -74,12 +74,12 @@
     <string name="nav_item_save_playlist">Exportar os favoritos para lista de reprodução </string>
     <string name="nav_item_load_playlist">Importar os favoritos da lista de reprodução</string>
     <string name="nav_item_save_history_playlist">Exportar histórico como lista de reprodução</string>
-    <string name="confirm_overwrite_file">Substituir o arquivo?</string>
-    <string name="dialog_hint_file_name">Digite o nome do arquivo</string>
-    <string name="error_empty_field">Este campo é obrigatório</string>
-    <string name="error_invalid_file_name">Nome do arquivo inválido</string>
-    <string name="label_button_cancel">Cancelar</string>
-    <string name="label_button_overwrite">Substituir</string>
+    
+    
+    
+    
+    
+    
     <string name="notify_load_playlist_nok">Não poderia importar de %1$s&#47;%2$s</string>
     <string name="notify_load_playlist_now">Importando de %1$&#47;%2$s, aguarde.</string>
     <string name="notify_load_playlist_ok">Importou %1$d rádios a partir de %2$s&#47;%3$s</string>
@@ -194,7 +194,7 @@
 
     <string name="notify_starred">O rádio foi adicionado aos favoritos</string>
     <string name="notify_autostarred">O rádio foi automaticamente adicionado aos favoritos</string>
-    <string name="notify_unstarred">O rádio foi removido dos favoritos</string>
+    
     <string name="notify_deleted_favorites">Os favoritos foram excluídos</string>
     <string name="notify_deleted_history">O histórico foi excluído</string>
 
@@ -210,13 +210,13 @@
     <string name="yes">Sim</string>
     <string name="no">Não</string>
 
-    <string name="alert_select_mpd_server">Favor selecione um servidor</string>
+    
     <string name="alert_select_mpd_server_name">Nome do servidor</string>
     <string name="alert_select_mpd_server_password">Senha do servidor</string>
     <string name="hostname">Hostname</string>
     <string name="port">Porto</string>
 
-    <string name="alert_select_mpd_server_add">Adicionar</string>
+    
     <string name="alert_select_mpd_server_save">Salvar</string>
     <string name="alert_select_mpd_server_remove">Remover</string>
     <string name="alert_add_or_edit_mpd_server">Digite os detalhes sobre um servidor</string>
@@ -237,14 +237,14 @@
 
     <string name="error_no_equalizer_found">Nenhum equalizador de música encontrado</string>
 
-    <string name="player_info_status">Estado: </string>
-    <string name="player_info_status_stopped">parado</string>
-    <string name="player_info_status_playing">reproduzindo</string>
-    <string name="player_info_status_recording">gravando</string>
-    <string name="player_info_status_playing_and_recording">reproduzindo e gravando</string>
-    <string name="player_info_transferred">Dados transferidos: %1$s</string>
-    <string name="player_info_recording_to">Gravando a :\n%1$s</string>
-    <string name="player_info_recorded_to">Última gravação:\n%1$s</string>
+    
+    
+    
+    
+    
+    
+    
+    
 
     <string name="tab_player_art">Arte do álbum</string>
     <string name="tab_player_station_info">Info da estação</string>
@@ -254,9 +254,9 @@
     <string name="station_detail_bitrate">%1$1d kbps</string>
     <string name="station_detail_broken">SEM FUNCIONAR</string>
 
-    <string name="image_button_disable">Desativar</string>
+    
     <string name="image_button_record">Grave</string>
-    <string name="image_button_recordings">Gravações</string>
+    
     <string name="image_button_delete">Excluir</string>
     <string name="image_button_more">Mais</string>
     <string name="image_button_less">Menos</string>
@@ -271,11 +271,11 @@
     <string name="app_name">RadioDroid</string>
 
     <string name="settings_mpd">Daemon de reprodutor da música</string>
-    <string name="settings_mpd_port">MPD porto</string>
+    
     <string name="settings_view_mpd_servers">Seus servidores</string>
-    <string name="action_mpd_nok">MPD não conectado</string>
-    <string name="action_mpd_ok">MPD conectado</string>
-    <string name="action_mpd_connected">Conectado ao servidor: %1$s</string>
+    
+    
+    
 
     <string name="mpd_no_connection">Sem conexão</string>
     <string name="action_enable_mpd">Ativar o MPD</string>
@@ -283,7 +283,7 @@
     <string name="action_add_mpd_server">Adicionar servidor MPD</string>
 
     <string name="action_play_in_external">Reproduzir no aplicativo externo</string>
-    <string name="action_choose_external_player">Escolha um aplicativo externo</string>
+    
 
     <string name="settings_other">Outros</string>
     <string name="settings_statistics">Estatísticas</string>
@@ -295,7 +295,7 @@
     <string name="description_btn_setup_alarm">Ajustar alarme</string>
 
     <string name="settings_language">Idioma da interface</string>
-    <string name="settings_language_desc">Selecione o idioma da interface do aplicativo</string>
+    
     <string name="language_system">Padrão do sistema</string>
     <string name="language_english">English</string>
     <string name="language_chinese">中文</string>
@@ -318,15 +318,12 @@
     <string name="notify_stream_url_copied">URL da transmissão copiada com êxito</string>
     <string name="notify_track_info_copied">Informação copiada com êxito</string>
 
-    <string-array name="actions_station_link">
-        <item>Visite o site</item>
-        <item>Copiar URL da transmissão</item>
-    </string-array>
+    
 
     <string name="alert_metered_connection_title">Conexão medida detectada</string>
     <string name="alert_metered_connection_message">A conexão medida pode invocar cobrança adicional, pressione \'OK\' para continuar.</string>
-    <string name="nav_item_statistics">Estatísticas</string>
-    <string name="nav_item_about">Sobre</string>
+    
+    
     <string name="refresh">Atualizar</string>
 
     <string name="alarm_backup">Alarme alternativo</string>

@@ -29,9 +29,9 @@
     <string name="action_top_vote">Les més votades</string>
     <string name="action_changed_lately">Darrers canvis</string>
     <string name="action_currently_playing">Reproducció en curs</string>
-    <string name="action_tags">Etiquetes</string>
-    <string name="action_countries">Països</string>
-    <string name="action_languages">Idiomes</string>
+    
+    
+    
     <string name="error_station_load">No s\'ha pogut connectar a l\'emissora</string>
     <string name="error_list_update">No s\'ha pogut connectar al servidor</string>
 
@@ -44,13 +44,13 @@
     <string name="nav_item_alarm">Alarma</string>
     <string name="tab_player_recordings">Enregistraments</string>
 
-    <string name="about_text">Aquesta aplicació utilitza el directori d\'emissores de ràdio gratuïtes a\nhttps://www.radio-browser.info\nTothom pot afegir emissores. Funciona com un wiki per a emissores de ràdio en línia. \n\nContacte:\nsegler_alex@web.de\n\nBugtracker: \nhttps://github.com/segler-alex/RadioDroid/issues\n\nSi us agrada aquest programari i voleu ajudar-nos, no dubteu a enviar-nos un correu electrònic. Necessitem algú amb experiència en disseny gràfic per fer que l\'aplicació sigui més agradable a la vista :) Potser algú que pugui dibuixar icones, imatges... però també programadors que arreglin errors, o desenvolupin (noves funcionalitats, no  errors ;)\nLes idees per a noves funcionalitats també són benvingudes!\n\nAquesta aplicació és un programari lliure llicenciat sota la llicència GPLv3. \nhttp://www.gnu.org/licenses/gpl-3.0.html</string>
+    
     <string name="about_version">Versió: %1$s</string>
     <string name="detail_star">Afegir a preferides</string>
     <string name="detail_unstar">Suprimeix de preferides</string>
-    <string name="progress_loading">Carregant ...</string>
+    
 
-    <string formatted="true" name="sleep_timer">Temporitzador: %1$02d:%2$02d</string>
+    
     <string name="sleep_timer_title">Atura la reproducció després del minut seleccionat</string>
     <string name="sleep_timer_apply">Aplica</string>
     <string name="sleep_timer_clear">Esborra</string>
@@ -58,12 +58,12 @@
 
     <string name="nav_item_save_playlist">Desa a la llista de reproducció</string>
     <string name="nav_item_load_playlist">Carrega a la llista de reproducció</string>
-    <string name="confirm_overwrite_file">Sobreescriu el fitxer?</string>
-    <string name="dialog_hint_file_name">Introduïu el nom del fitxer</string>
-    <string name="error_empty_field">Aquest camp és obligatori</string>
-    <string name="error_invalid_file_name">Nom de fitxer no vàlid</string>
-    <string name="label_button_cancel">Cancel·lar</string>
-    <string name="label_button_overwrite">Sobreescriure</string>
+    
+    
+    
+    
+    
+    
 
     <string name="searchpreference_clear_history">Esborra historial</string>
     <string name="searchpreference_no_results">Sense resultats</string>
@@ -143,7 +143,7 @@
     <string name="notify_paused">En pausa</string>
     <string name="notify_starred">S\'ha afegit l\'emissora a les preferides</string>
     <string name="notify_autostarred">L\'emissora s\'ha afegit automàticament a les preferides</string>
-    <string name="notify_unstarred">L\'emissora s\'ha eliminat de les preferides</string>
+    
     <string name="notify_deleted_favorites">S\'han suprimit de les preferides</string>
     <string name="notify_deleted_history">S\'ha suprimit l\'historial</string>
 
@@ -155,12 +155,12 @@
     <string name="yes">Sí</string>
     <string name="no">No</string>
 
-    <string name="alert_select_mpd_server">Seleccioneu un servidor</string>
+    
     <string name="alert_select_mpd_server_name">Nom del servidor</string>
     <string name="hostname">Nom d\'amfitrió</string>
     <string name="port">Port</string>
 
-    <string name="alert_select_mpd_server_add">Afegeix</string>
+    
     <string name="alert_select_mpd_server_save">Desa</string>
     <string name="alert_select_mpd_server_remove">Elimina</string>
     <string name="alert_add_or_edit_mpd_server">Introduïu detalls sobre un servidor</string>
@@ -180,21 +180,21 @@
 
     <string name="error_no_equalizer_found">No s\'ha trobat cap aplicació d\'equalització</string>
 
-    <string name="player_info_status">Estat:&#160;</string>
-    <string name="player_info_status_stopped">aturat</string>
-    <string name="player_info_status_playing">reproduint</string>
-    <string name="player_info_status_recording">enregistrant</string>
-    <string name="player_info_status_playing_and_recording">reproduint i enregistrant</string>
-    <string name="player_info_transferred">Dades transferides: %1$s</string>
-    <string name="player_info_recording_to">Enregistrament a:\n%1$s</string>
-    <string name="player_info_recorded_to">Últim enregistrament:\n%1$s</string>
+    
+    
+    
+    
+    
+    
+    
+    
 
     <string name="station_detail_bitrate">%1$1d kbps</string>
     <string name="station_detail_broken">ERROR</string>
 
-    <string name="image_button_disable">Inhabilitar</string>
+    
     <string name="image_button_record">Enregistrar</string>
-    <string name="image_button_recordings">Enregistraments</string>
+    
     <string name="image_button_delete">Suprimir</string>
     <string name="image_button_more">Més</string>
     <string name="image_button_less">Menys</string>
@@ -209,11 +209,11 @@
     <string name="app_name">RadioDroid</string>
 
     <string name="settings_mpd">Music Player Daemon</string>
-    <string name="settings_mpd_port">Port MPD</string>
+    
     <string name="settings_view_mpd_servers">Els vostres servidors</string>
-    <string name="action_mpd_nok">MPD no connectat</string>
-    <string name="action_mpd_ok">Connexió MPD</string>
-    <string name="action_mpd_connected">Connectat al servidor: %1$s</string>
+    
+    
+    
 
     <string name="settings_other">Altres</string>
     <string name="settings_statistics">Estadístiques</string>
@@ -231,13 +231,10 @@
 
     <string name="notify_stream_url_copied">L\'URL del flux de dades s\'ha copiat correctament</string>
 
-    <string-array name="actions_station_link">
-        <item>Visiteu el lloc web</item>
-        <item>Copia l\'URL del flux de dades</item>
-    </string-array>
+    
 
-    <string name="nav_item_statistics">Estadístiques</string>
-    <string name="nav_item_about">Quant a</string>
+    
+    
     <string name="refresh">Actualització</string>
 
     <string name="alarm_fade_invalid_range">El volum inicial ha de ser inferior al volum objectiu</string>

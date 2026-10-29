@@ -21,9 +21,9 @@
     <string name="action_top_vote">Höchste Bewertung</string>
     <string name="action_changed_lately">Kürzlich geändert</string>
     <string name="action_currently_playing">Andere hören</string>
-    <string name="action_tags">Tags</string>
-    <string name="action_countries">Länder</string>
-    <string name="action_languages">Sprachen</string>
+    
+    
+    
     <string name="action_station_visit_website">Zur Website gehen</string>
     <string name="action_station_copy_stream_url">Stream-Url ins Clipboard kopieren</string>
     <string name="action_station_share">Teilen</string>
@@ -46,7 +46,7 @@
     <string name="unknown_artist">Unbekannter Künstler</string>
     <string name="unknown_track">Unbekannter Titel</string>
 
-    <string name="about_text">Diese App basiert auf dem freien Internetradio-Stationsverzeichnis https://www.radio-browser.info .\n\nDas Stationsverzeichnis funktioniert nach dem Wiki-Prinzip: jeder, auch Du, kann mithelfen, es aktuell zu halten.\n\nKontakt:\nsegler_alex@web.de\n\nSourcecode und Bugtracker:\nhttps://github.com/segler-alex/RadioDroid/issues\n\nIch freue mich immer über Mails mit Verbesserungsvorschlägen. Falls Du sonst irgendwie helfen willst: es gibt immer Bugs zu fixen :). Wenn Du Dein grafisches Talent einbringen möchtest, wäre ich besonders dankbar, speziell für schönere Icons, Hintergründe oder auch ein insgesamt besseres Design.\n\nDiese App wurde mit der GPLv3 https://www.gnu.org/licenses/gpl-3.0.html lizenziert.</string>
+    
     <string name="detail_star">Als Favorit setzen</string>
     <!-- Kurze Aktionsbeschriftungen (UI-Review P1-1): lesbare Texte unter den Symbolen -->
     <string name="action_label_website">Startseite</string>
@@ -58,9 +58,9 @@
     <string name="action_label_relay">Öffnen</string>
     <string name="action_label_refresh">Aktualisieren</string>
     <string name="detail_unstar">Als Favorit löschen</string>
-    <string name="progress_loading">Lade...</string>
+    
 
-    <string name="sleep_timer" formatted="true">Schlaftimer: %1$02d:%2$02d</string>
+    
     <string name="sleep_timer_title">Wie viele Minuten bis zum Stop?</string>
     <string name="sleep_timer_apply">Anwenden</string>
     <string name="sleep_timer_clear">Löschen</string>
@@ -177,7 +177,7 @@
     <string name="notify_play">Wiedergabe</string>
     <string name="notify_starred">Die Station wurde zur Favoritenliste hinzugefügt.</string>
     <string name="notify_autostarred">Die Station wurde automatisch zur Favoritenliste hinzugefügt.</string>
-    <string name="notify_unstarred">Die Station wurde als Favorit gelöscht.</string>
+    
     <string name="notify_deleted_favorites">Die Favoritenliste wurde gelöscht.</string>
     <string name="notify_deleted_history">Liste der bisher gespielten Sender wurde gelöscht.</string>
 
@@ -189,10 +189,10 @@
     <string name="yes">Ja</string>
     <string name="no">Nein</string>
 
-    <string name="alert_select_mpd_server">Welcher Server?</string>
+    
     <string name="alert_select_mpd_server_name">Servername</string>
 
-    <string name="alert_select_mpd_server_add">Hinzufügen</string>
+    
     <string name="alert_select_mpd_server_save">Speichern</string>
     <string name="alert_select_mpd_server_remove">Löschen</string>
     <string name="alert_add_or_edit_mpd_server">Gib Details über den Server an</string>
@@ -209,26 +209,26 @@
 
     <string name="error_no_equalizer_found">Keine Equalizer-App gefunden!</string>
     <string name="equalizer_unsupported_android5">Der integrierte Equalizer ist auf Android 5.x standardmäßig deaktiviert (um Knackgeräusche zu vermeiden).</string>
-    <string name="player_info_status">Status:&#160;</string>
-    <string name="player_info_status_stopped">gestoppt</string>
-    <string name="player_info_status_playing">Wiedergabe läuft</string>
-    <string name="player_info_status_recording">Aufnahme läuft</string>
-    <string name="player_info_status_playing_and_recording">Aufnahme und Wiedergabe laufen</string>
-    <string name="player_info_transferred">Übertragene Daten: %1$s</string>
-    <string name="player_info_recording_to">Wird aufgenommen als:\n%1$s</string>
-    <string name="player_info_recorded_to">Zuletzt aufgenommen:\n%1$s</string>
+    
+    
+    
+    
+    
+    
+    
+    
 
     <string name="station_detail_bitrate">%1$1d kbps</string>
     <string name="station_detail_broken">KAPUTT</string>
 
-    <string name="image_button_disable">Deaktivieren</string>
+    
     <string name="image_button_record">Aufnahme starten</string>
     <string name="image_button_delete">Sleeptimer löschen</string>
     <string name="image_button_more">Mehr</string>
 
-    <string name="action_mpd_nok">MPD nicht verbunden</string>
-    <string name="action_mpd_ok">MPD verbunden</string>
-    <string name="action_mpd_connected">Verbunden mit Server: %1$s</string>
+    
+    
+    
 
     <string name="settings_other">Anderes</string>
     <string-array name="weekdays">
@@ -252,11 +252,11 @@
     <string name="alert_alarm_not_working">Keine ausreichenden Informationen für den Alarm</string>
     <string name="alert_alarm_working">Weckzeit jetzt</string>
     <string name="alert_select_external_alarm_app">Wählen Sie den Audioplayer</string>
-    <string name="confirm_overwrite_file">Datei überschreiben?</string>
+    
     <string name="detail_create_shortcut">Zum Startbildschirm hinzufügen</string>
-    <string name="dialog_hint_file_name">Dateiname eingeben</string>
-    <string name="error_empty_field">Dieses Feld wird benötigt</string>
-    <string name="error_invalid_file_name">Ungültiger Dateiname</string>
+    
+    
+    
     <string name="error_stream_reconnect_timeout">Die Verbindung zum Stream konnte wegen Zeitüberschreitung nicht wiederhergestellt werden.</string>
     <string name="giving_up_resume">Die Versuche zur Fortsetzung der Wiedergabe werden aufgegeben.</string>
     <string name="icon_click_trend_decreasing">Popularität abnehmend</string>
@@ -264,12 +264,12 @@
     <string name="icon_click_trend_stable">Beliebtheit stabil</string>
     <string name="image_button_dont_repeat">Wiederhole nicht</string>
     <string name="image_button_less">Weniger</string>
-    <string name="image_button_recordings">Aufnahmen</string>
+    
     <string name="image_button_repeat">Wiederholen</string>
-    <string name="label_button_cancel">Abbrechen</string>
-    <string name="label_button_overwrite">Überschreiben</string>
-    <string name="nav_item_about">Über</string>
-    <string name="nav_item_statistics">Statistiken</string>
+    
+    
+    
+    
     <string name="notify_paused">Angehalten</string>
     <string name="notify_pre_play">Verbinde</string>
     <string name="refresh">Aktualisierung</string>

@@ -24,7 +24,7 @@
     <string name="action_label_refresh">Actualizar</string>
     <string name="detail_play_in_radiodroid">Reproducir en RadioDroid</string>
 
-    <string name="action_links">Enlaces</string>
+    
     <string name="action_homepage">Página de inicio</string>
     <string name="action_favorite">Favorito</string>
     <string name="action_alarm">Alarma</string>
@@ -51,9 +51,9 @@
     <string name="action_top_vote">Más votos</string>
     <string name="action_changed_lately">Cambiado recientemente</string>
     <string name="action_currently_playing">Emitiendo</string>
-    <string name="action_tags">Etiquetas</string>
-    <string name="action_countries">Países</string>
-    <string name="action_languages">Idiomas</string>
+    
+    
+    
     <string name="action_edit">Editar</string>
     <string name="action_lyrics">Letras</string>
     <string name="action_copy_info">Copiar info</string>
@@ -68,14 +68,14 @@
     <string name="nav_item_settings">Ajustes</string>
     <string name="nav_item_alarm">Alarma</string>
 
-    <string name="about_text">Esta aplicación usa el directorio libre de radios en\nhttps://www.radio-browser.info\nCualquiera puede agregar estaciones o editar las existentes. Funciona como una wiki para estaciones de radio que emiten por internet (streaming).\n\nContacto:\nsegler_alex@web.de\n\nGestor de incidencias:\nhttps://github.com/segler-alex/RadioDroid/issues\n\nSi te gusta este software y quieres ayudar, siéntete libre de enviar un correo. Realmente necesitaría alguien con experiencia en gráficos para hacer la aplicación más agradable de ver :) Quizá alguien que pueda dibujar iconos, imágenes... Pero también programadores para arregar fallos, o implementar nuevas características. ;)\n¡También se agradecen siempre ideas para nuevas características!\n\nEsta aplicación es software libre bajo la licencia GPLv3.\nhttps://www.gnu.org/licenses/gpl-3.0.html</string>
+    
     <string name="about_version">Versión: %1$s</string>
     <string name="detail_star">Agregar a favoritos</string>
     <string name="detail_unstar">Quitar de favoritos</string>
     <string name="detail_play_in_external_player">@string/action_play_in_external</string>
-    <string name="progress_loading">Cargando...</string>
+    
 
-    <string name="sleep_timer" formatted="true">Tiempo para dormir: %1$02d:%2$02d</string>
+    
     <string name="sleep_timer_title">Parar la reproducción tras el minuto seleccionado</string>
     <string name="sleep_timer_apply">Aplicar</string>
     <string name="sleep_timer_clear">Borrar</string>
@@ -84,12 +84,12 @@
     <string name="nav_item_save_playlist">Guardar en lista de reproducción</string>
     <string name="nav_item_load_playlist">Cargar desde lista de reproducción</string>
     <string name="nav_item_save_history_playlist">Exportar historial como lista de reproducción</string>
-    <string name="confirm_overwrite_file">¿Sobrescribir el archivo?</string>
-    <string name="dialog_hint_file_name">Indicar el nombre del archivo</string>
-    <string name="error_empty_field">Este campo es obligatorio</string>
-    <string name="error_invalid_file_name">Nombre de archivo no válido</string>
-    <string name="label_button_cancel">Cancelar</string>
-    <string name="label_button_overwrite">Sobrescribir</string>
+    
+    
+    
+    
+    
+    
     <string name="notify_load_playlist_nok">No se pudo importar desde %1$s&#47;%2$s</string>
     <string name="notify_load_playlist_now">Importando desde %1$s&#47;%2$s, por favor, espera.</string>
     <string name="notify_load_playlist_ok">Importadas %1$d estaciones desde %2$s&#47;%3$s</string>
@@ -254,7 +254,7 @@
 
     <string name="notify_starred">La estación ha sido marcada como favorita</string>
     <string name="notify_autostarred">La estación ha sido marcada automáticamente como favorita</string>
-    <string name="notify_unstarred">La estación ha sido borrada de la lista de favoritos</string>
+    
     <string name="notify_deleted_favorites">Los favoritos han sido borrados.</string>
     <string name="notify_deleted_history">El historial ha sido borrado.</string>
 
@@ -270,13 +270,13 @@
     <string name="yes">Sí</string>
     <string name="no">No</string>
 
-    <string name="alert_select_mpd_server">Por favor selecciona un servidor</string>
+    
     <string name="alert_select_mpd_server_name">Nombre del servidor</string>
     <string name="alert_select_mpd_server_password">Contraseña del servidor</string>
     <string name="hostname">Nombre del host</string>
     <string name="port">Puerto</string>
 
-    <string name="alert_select_mpd_server_add">Agregar</string>
+    
     <string name="alert_select_mpd_server_save">Guardar</string>
     <string name="alert_select_mpd_server_remove">Quitar</string>
     <string name="alert_add_or_edit_mpd_server">Escribir detalles sobre un servidor</string>
@@ -330,14 +330,14 @@
     <string name="equalizer_use_builtin">Usar ecualizador integrado</string>
     <string name="equalizer_no_external">No se encontró ecualizador del sistema. Usando ecualizador integrado.</string>
 
-    <string name="player_info_status">Estado:&#160;</string>
-    <string name="player_info_status_stopped">parado</string>
-    <string name="player_info_status_playing">reproduciendo</string>
-    <string name="player_info_status_recording">grabando</string>
-    <string name="player_info_status_playing_and_recording">reproduciendo y grabando</string>
-    <string name="player_info_transferred">Datos transferidos: %1$s</string>
-    <string name="player_info_recording_to">Grabando a: %1$s</string>
-    <string name="player_info_recorded_to">Última grabación:\n%1$s</string>
+    
+    
+    
+    
+    
+    
+    
+    
 
     <string name="tab_player_art">Arte del álbum</string>
     <string name="tab_player_station_info">Info de la emisora</string>
@@ -348,9 +348,9 @@
     <string name="station_detail_bitrate">%1$1d kbps</string>
     <string name="station_detail_broken">ROTO</string>
 
-    <string name="image_button_disable">Deshabilitar</string>
+    
     <string name="image_button_record">Grabar</string>
-    <string name="image_button_recordings">Grabaciones</string>
+    
     <string name="image_button_delete">Borrar</string>
     <string name="image_button_more">Más</string>
     <string name="image_button_less">Menos</string>
@@ -365,11 +365,11 @@
     <string name="app_name">RadioDroid</string>
 
     <string name="settings_mpd">Servicio de reproductor de música (MPD)</string>
-    <string name="settings_mpd_port">Puerto del MPD</string>
+    
     <string name="settings_view_mpd_servers">Tus servidores</string>
-    <string name="action_mpd_nok">MPD no conectado</string>
-    <string name="action_mpd_ok">MPD conectado</string>
-    <string name="action_mpd_connected">Conectado al servidor: %1$s</string>
+    
+    
+    
 
     <string name="mpd_no_connection">Sin conexión</string>
     <string name="action_enable_mpd">Habilitar MPD</string>
@@ -377,7 +377,7 @@
     <string name="action_add_mpd_server">Agregar servidor MPD</string>
 
     <string name="action_play_in_external">Reproducir en reproductor externo</string>
-    <string name="action_choose_external_player">Elegir reproductor externo</string>
+    
 
     <string name="settings_other">Otros</string>
     <string name="settings_statistics">Estadísticas</string>
@@ -416,7 +416,7 @@
     <string name="description_btn_setup_alarm">Establecer alarma</string>
 
     <string name="settings_language">Idioma de la interfaz</string>
-    <string name="settings_language_desc">Seleccione el idioma de la interfaz de la aplicación</string>
+    
     <string name="language_system">Predeterminado del sistema</string>
     <string name="language_english">English</string>
     <string name="language_chinese">中文</string>
@@ -439,15 +439,12 @@
     <string name="notify_stream_url_copied">URL de la transmisión copiada con éxito</string>
     <string name="notify_track_info_copied">Información de la pista copiada correctamente</string>
 
-    <string-array name="actions_station_link">
-        <item>Visitar sitio web</item>
-        <item>Copiar la URLde la transmisión</item>
-    </string-array>
+    
 
     <string name="alert_metered_connection_title">Detectada conexión de uso medido</string>
     <string name="alert_metered_connection_message">La conexión de uso medido puedo ocasionar cargos adicionales, pulsa \'Aceptar\' para continuar.</string>
-    <string name="nav_item_statistics">Estadísticas</string>
-    <string name="nav_item_about">Acerca de</string>
+    
+    
     <string name="refresh">Recargar</string>
 
     <string name="alarm_backup">Alarma alternativa</string>
@@ -528,7 +525,7 @@
 
     <string name="action_random_play">Reproducción aleatoria</string>
 
-    <string name="notify_sync_list_deleted_entries">%1$d de %2$d estaciones locales en la lista marcadas como inexistentes en el servidor</string>
+    
 
     <string name="settings_local_database_update">Actualización de base de datos local</string>
     <string name="settings_update_local_database">Actualizar base de datos local</string>
@@ -542,7 +539,7 @@
     <string name="settings_incremental_update_note">Atención: las actualizaciones incrementales no sincronizan las emisoras eliminadas remotamente. Tras un uso prolongado, el número de emisoras locales puede superar gradualmente al remoto. Puedes consultar ambos números en «Estado de la base de datos local» y decidir cuándo actualizar. Si quieres que los datos locales coincidan con los remotos, pulsa «Actualizar base de datos local» para realizar una actualización completa.</string>
     <string name="settings_local_database_status_failed">Error en la actualización: %s</string>
 
-    <string name="multi_search_title">Búsqueda multicriterio</string>
+    
     <string name="multi_search_country">País</string>
     <string name="multi_search_language">Idioma</string>
     <string name="multi_search_tag">Etiqueta</string>
@@ -564,15 +561,15 @@
     <string name="network_check_error">No se pudo conectar al servidor de directorio de radios: %1$s</string>
     <string name="network_check_results_title">Resultados de la prueba de velocidad de conexión de red</string>
     <string name="network_check_time">Hora de la prueba: %1$s</string>
-    <string name="network_check_server_1">Servidor 1: fi1.api.radio-browser.info</string>
-    <string name="network_check_server_2">Servidor 2: de2.api.radio-browser.info</string>
-    <string name="network_check_http">HTTP: %1$s</string>
-    <string name="network_check_https">HTTPS: %1$s</string>
+    
+    
+    
+    
     <string name="network_check_connection_failed">Conexión fallida</string>
-    <string name="network_check_fastest">Conexión más rápida:</string>
+    
     <string name="network_check_no_connection">Sin conexión</string>
     <string name="network_check_no_available">Sin conexión disponible</string>
-    <string name="network_check_ok">Aceptar</string>
+    
     <string name="network_check_server_label">Servidor %1$d</string>
     <string name="network_check_fastest_label">Conexión más rápida</string>
 
@@ -591,13 +588,13 @@ Esto sobrescribirá la base de datos principal actual, asegúrese de haber reali
 
     <string name="database_not_updated">Base de datos aún no actualizada</string>
     <string name="last_update">Última actualización: %1$s, Cantidad de estaciones: %2$d</string>
-    <string name="get_status_failed">Error al obtener el estado: %1$s</string>
-    <string name="save_file_failed">Error al guardar el archivo: %1$s</string>
-    <string name="import_failed_invalid_format">Seleccione un archivo de lista de reproducción en formato M3U</string>
-    <string name="import_failed_parse">Error de importación: No se pudo analizar el archivo</string>
-    <string name="database_status_updated">Estado de la base de datos actualizado: %1$s</string>
-    <string name="database_status_update_failed">Error al actualizar el estado de la base de datos: %1$s</string>
-    <string name="database_status_from_fields">Estado de la base de datos actualizado desde campos de la base de datos: %1$s</string>
+    
+    
+    
+    
+    
+    
+    
 
     <string name="no_results_message">No se encontraron categorías de %s, la actualización de la base de datos puede estar incompleta, intente actualizar la base de datos local en la configuración</string>
 
@@ -666,8 +663,8 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="progress_preparing_update">Preparando actualización...</string>
     <string name="progress_resuming_update">Reanudando actualización...</string>
     <string name="progress_downloading_stations">Descargando datos de estaciones</string>
-    <string name="progress_updating_database">Actualizando base de datos</string>
-    <string name="progress_completing_update">Completando actualización</string>
+    
+    
     <string name="update_failed">Error en la actualización</string>
     <string name="update_failed_toast">Error en la actualización de la base de datos. Compruebe su conexión e inténtelo de nuevo.</string>
     <string name="update_failed_message">Error en la actualización: %s</string>

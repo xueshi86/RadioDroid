@@ -14,7 +14,7 @@
     <string name="detail_share">Share</string>
     <string name="detail_play_in_radiodroid">Play in RadioDroid</string>
 
-    <string name="action_links">Links</string>
+    
     <string name="action_homepage">Homepage</string>
     <string name="action_favorite">Favorite</string>
     <string name="action_alarm">Alarm</string>
@@ -41,9 +41,9 @@
     <string name="action_top_vote">Top Vote</string>
     <string name="action_changed_lately">Changed Lately</string>
     <string name="action_currently_playing">Currently Playing</string>
-    <string name="action_tags">Tags</string>
-    <string name="action_countries">Countries/Regions</string>
-    <string name="action_languages">Languages</string>
+    
+    
+    
     <string name="action_edit">Edit</string>
     <string name="action_lyrics">Lyrics</string>
     <string name="action_copy_info">Copy Info</string>
@@ -61,14 +61,14 @@
     <string name="nav_item_multi_search">Multi Criteria Search</string>
     <string name="nav_item_alarm">Alarm</string>
 
-    <string name="about_text">This app uses the free radio station directory at\nhttps://www.radio-browser.info\nEveryone can add stations to it. It works like a wiki for online (streaming) radio stations.\n\nContact:\nsegler_alex@web.de\n\nBugtracker:\nhttps://github.com/segler-alex/RadioDroid/issues\n\nIf you like the software and want to help, feel free to send me an email. I really need someone with graphical experience to make the app nicer to the eye :) Maybe someone who can draw icons, images...but also programmers who fix bugs, or implement new ones (features not bugs ;)\nAlso ideas for new features are always appreciated!\n\nThis app is free software licensed under the GPLv3.\nhttps://www.gnu.org/licenses/gpl-3.0.html</string>
+    
     <string name="about_version">Version: %1$s</string>
     <string name="detail_star">Add to favorites</string>
     <string name="detail_unstar">Delete from favorites</string>
     <string name="detail_play_in_external_player">@string/action_play_in_external</string>
-    <string name="progress_loading">Loading...</string>
+    
 
-    <string name="sleep_timer" formatted="true">Sleep timer: %1$02d:%2$02d</string>
+    
     <string name="sleep_timer_title">Stop playing after the selected minute</string>
     <string name="sleep_timer_apply">Apply</string>
     <string name="sleep_timer_clear">Clear</string>
@@ -77,19 +77,19 @@
     <string name="nav_item_save_playlist">Export favorites as playlist</string>
     <string name="nav_item_load_playlist">Import favorites from playlist</string>
     <string name="nav_item_save_history_playlist">Export history as playlist</string>
-    <string name="confirm_overwrite_file">Overwrite the file?</string>
-    <string name="dialog_hint_file_name">Enter file name</string>
-    <string name="error_empty_field">This field is required</string>
-    <string name="error_invalid_file_name">Invalid file name</string>
-    <string name="label_button_cancel">Cancel</string>
-    <string name="label_button_overwrite">Overwrite</string>
+    
+    
+    
+    
+    
+    
     <string name="notify_load_playlist_nok">Could not import from %1$s&#47;%2$s</string>
     <string name="notify_load_playlist_now">Importing from %1$s&#47;%2$s, please wait.</string>
     <string name="notify_load_playlist_ok">Imported %1$d stations from %2$s&#47;%3$s</string>
     <string name="notify_save_playlist_nok">Could not export to %1$s&#47;%2$s</string>
     <string name="notify_save_playlist_now">Exporting to %1$s&#47;%2$s, please wait.</string>
     <string name="notify_save_playlist_ok">Exported to %1$s&#47;%2$s successfully</string>
-    <string name="notify_sync_list_deleted_entries">%1$d of %2$d local stations in the list marked non-existent on the server</string>
+    
 
     <string name="searchpreference_clear_history">Clear history</string>
     <string name="searchpreference_no_results">No results</string>
@@ -249,7 +249,7 @@
 
     <string name="notify_starred">Station has been added to favorites</string>
     <string name="notify_autostarred">Station has been automatically added to favorites</string>
-    <string name="notify_unstarred">Station has been removed from favorites</string>
+    
     <string name="notify_deleted_favorites">The favorites have been deleted</string>
     <string name="notify_deleted_history">The history has been deleted</string>
 
@@ -265,13 +265,13 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
 
-    <string name="alert_select_mpd_server">Please select a server</string>
+    
     <string name="alert_select_mpd_server_name">Server name</string>
     <string name="alert_select_mpd_server_password">Server password</string>
     <string name="hostname">Hostname</string>
     <string name="port">Port</string>
 
-    <string name="alert_select_mpd_server_add">Add</string>
+    
     <string name="alert_select_mpd_server_save">Save</string>
     <string name="alert_select_mpd_server_remove">Remove</string>
     <string name="alert_add_or_edit_mpd_server">Enter details about a server</string>
@@ -332,14 +332,14 @@
     <string name="sort_by_recent">Sort by Recent</string>
     <string name="sort_by_default">Default Order</string>
 
-    <string name="player_info_status">Status:&#160;</string>
-    <string name="player_info_status_stopped">stopped</string>
-    <string name="player_info_status_playing">playing</string>
-    <string name="player_info_status_recording">recording</string>
-    <string name="player_info_status_playing_and_recording">playing and recording</string>
-    <string name="player_info_transferred">Transferred data: %1$s</string>
-    <string name="player_info_recording_to">Recording to:\n%1$s</string>
-    <string name="player_info_recorded_to">Last recording:\n%1$s</string>
+    
+    
+    
+    
+    
+    
+    
+    
 
     <string name="tab_player_art">Album art</string>
     <string name="tab_player_station_info">Station info</string>
@@ -351,9 +351,9 @@
     <string name="station_detail_broken">BROKEN</string>
     <string name="station_detail_deleted_on_server">DELETED</string>
 
-    <string name="image_button_disable">Disable</string>
+    
     <string name="image_button_record">Record</string>
-    <string name="image_button_recordings">Recordings</string>
+    
     <string name="recording_play_error">Unable to play recording</string>
     <string name="recording_export">Export</string>
     <string name="recording_export_success">Recording exported</string>
@@ -377,11 +377,11 @@
     <string name="app_name">RadioDroid</string>
 
     <string name="settings_mpd">Music Player Daemon</string>
-    <string name="settings_mpd_port">MPD port</string>
+    
     <string name="settings_view_mpd_servers">Your servers</string>
-    <string name="action_mpd_nok">MPD not connected</string>
-    <string name="action_mpd_ok">MPD connected</string>
-    <string name="action_mpd_connected">Connected to server: %1$s</string>
+    
+    
+    
 
     <string name="mpd_no_connection">No connection</string>
     <string name="action_enable_mpd">Enable MPD</string>
@@ -389,7 +389,7 @@
     <string name="action_add_mpd_server">Add MPD server</string>
 
     <string name="action_play_in_external">Play in external player</string>
-    <string name="action_choose_external_player">Choose external player</string>
+    
 
     <string name="settings_lastfm_api_key">Last.fm API key</string>
     <string name="settings_lastfm_api_key_desc">Enter a Last.fm API key to show the playing track\'s album art as the player icon and background; it also appears in track history details</string>
@@ -446,15 +446,12 @@
     <string name="notify_stream_url_copied">Stream URL successfully copied</string>
     <string name="notify_track_info_copied">Track info successfully copied</string>
 
-    <string-array name="actions_station_link">
-        <item>Visit Website</item>
-        <item>Copy Stream URL</item>
-    </string-array>
+    
 
     <string name="alert_metered_connection_title">Metered connection detected</string>
     <string name="alert_metered_connection_message">Metered connection may incur additional charges, press \'OK\' to continue.</string>
-    <string name="nav_item_statistics">Statistics</string>
-    <string name="nav_item_about">About</string>
+    
+    
     <string name="refresh">Refresh</string>
 
     <string name="alarm_backup">Alternative Alarm</string>
@@ -478,7 +475,7 @@
     <string name="no_results_message">No %s categories found, database update may be incomplete, please try updating the local database in settings</string>
     
     <string name="settings_language">Interface Language</string>
-    <string name="settings_language_desc">Select the language for the app interface</string>
+    
     <string name="language_system">System Default</string>
     <string name="language_english">English</string>
     <string name="language_chinese">Chinese</string>
@@ -490,7 +487,7 @@
     <string name="language_german">German</string>
     <string name="language_greek">Greek</string>
     
-    <string name="multi_search_title">Multi Criteria Search</string>
+    
     <string name="multi_search_country">Country</string>
     <string name="multi_search_language">Language</string>
     <string name="multi_search_tag">Tag</string>

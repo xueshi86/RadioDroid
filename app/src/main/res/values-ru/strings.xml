@@ -23,7 +23,7 @@
     <string name="action_label_refresh">Обновить</string>
     <string name="detail_play_in_radiodroid">Воспроизвести в RadioDroid</string>
 
-    <string name="action_links">Ссылки</string>
+    
     <string name="action_homepage">Домашняя страница</string>
     <string name="action_favorite">Избранное</string>
     <string name="action_alarm">Будильник</string>
@@ -51,9 +51,9 @@
     <string name="action_top_vote">Топ голосов</string>
     <string name="action_changed_lately">Недавно измененные</string>
     <string name="action_currently_playing">В настоящее время воспроизводится</string>
-    <string name="action_tags">Теги</string>
-    <string name="action_countries">Страны/Регионы</string>
-    <string name="action_languages">Языки</string>
+    
+    
+    
     <string name="action_edit">Редактировать</string>
     <string name="action_lyrics">Текст песни</string>
     <string name="action_copy_info">Копировать информацию</string>
@@ -70,26 +70,12 @@
     <string name="nav_item_multi_search">Многокритериальный поиск</string>
     <string name="nav_item_alarm">Будильник</string>
 
-    <string name="about_text">Это приложение использует бесплатный каталог радиостанций по адресу
-https://www.radio-browser.info
-Каждый может добавить станции в него. Это работает как вики для онлайн (стриминговых) радиостанций.
-
-Контакт:
-segler_alex@web.de
-
-Трекер ошибок:
-https://github.com/segler-alex/RadioDroid/issues
-
-Если вам нравится программное обеспечение и вы хотите помочь, не стесняйтесь отправить мне электронное письмо. Мне действительно нужен кто-то с графическим опытом, чтобы сделать приложение приятнее для глаз :) Может быть, кто-то, кто может рисовать иконки, изображения... но также программисты, которые исправляют ошибки или реализуют новые функции (функции, а не ошибки ;)
-Также идеи для новых функций всегда приветствуются!
-
-Это свободное программное обеспечение, лицензированное под GPLv3.
-https://www.gnu.org/licenses/gpl-3.0.html</string>
+    
     <string name="about_version">Версия: %1$s</string>
     <string name="detail_star">Добавить в избранное</string>
     <string name="detail_unstar">Удалить из избранного</string>
     <string name="detail_play_in_external_player">@string/action_play_in_external</string>
-    <string name="progress_loading">Загрузка...</string>
+    
     
     <!-- Unknown artist/track/station -->
     <string name="unknown_artist">Неизвестный исполнитель</string>
@@ -104,7 +90,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="now_playing_all_unknown">Сейчас играет музыка, исполнитель и трек неизвестны</string>
     <string name="now_playing_stream">Сейчас играет: %s</string>
 
-    <string name="sleep_timer" formatted="true">Таймер сна: %1$02d:%2$02d</string>
+    
     <string name="sleep_timer_title">Остановить воспроизведение после выбранного минуты</string>
     <string name="sleep_timer_set_title">Установить таймер сна (минуты)</string>
     <string name="sleep_timer_minutes_label">минуты</string>
@@ -116,19 +102,19 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="nav_item_save_playlist">Экспортировать избранное в плейлист</string>
     <string name="nav_item_load_playlist">Импортировать избранное из плейлиста</string>
     <string name="nav_item_save_history_playlist">Экспортировать историю в плейлист</string>
-    <string name="confirm_overwrite_file">Перезаписать файл?</string>
-    <string name="dialog_hint_file_name">Введите имя файла</string>
-    <string name="error_empty_field">Это поле обязательно</string>
-    <string name="error_invalid_file_name">Недопустимое имя файла</string>
-    <string name="label_button_cancel">Отмена</string>
-    <string name="label_button_overwrite">Перезаписать</string>
+    
+    
+    
+    
+    
+    
     <string name="notify_load_playlist_nok">Не удалось импортировать из %1$s&#47;%2$s</string>
     <string name="notify_load_playlist_now">Импортируется из %1$s&#47;%2$s, пожалуйста, подождите.</string>
     <string name="notify_load_playlist_ok">Импортировано %1$d станций из %2$s&#47;%3$s</string>
     <string name="notify_save_playlist_nok">Не удалось экспортировать в %1$s&#47;%2$s</string>
     <string name="notify_save_playlist_now">Экспортируется в %1$s&#47;%2$s, пожалуйста, подождите.</string>
     <string name="notify_save_playlist_ok">Успешно экспортировано в %1$s&#47;%2$s</string>
-    <string name="notify_sync_list_deleted_entries">%1$d из %2$d локальных станций в списке помечены как несуществующие на сервере</string>
+    
 
     <string name="searchpreference_clear_history">Очистить историю</string>
     <string name="searchpreference_no_results">Нет результатов</string>
@@ -144,7 +130,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="settings_local_database_status_failed">Обновление не удалось: %s</string>
     
     <string name="settings_language">Язык интерфейса</string>
-    <string name="settings_language_desc">Выберите язык для интерфейса приложения</string>
+    
     <string name="language_system">Системный по умолчанию</string>
     <string name="language_english">English</string>
     <string name="language_chinese">中文</string>
@@ -154,7 +140,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="language_italian">Italiano</string>
     <string name="language_brazilian_portuguese">Português (Brasil)</string>
     
-    <string name="multi_search_title">Многокритериальный поиск</string>
+    
     <string name="multi_search_country">Страна</string>
     <string name="multi_search_language">Язык</string>
     <string name="multi_search_tag">Тег</string>
@@ -178,15 +164,15 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="network_check_error">Не удалось подключиться к серверу браузера радиостанций: %1$s</string>
     <string name="network_check_results_title">Результаты теста скорости подключения к сети</string>
     <string name="network_check_time">Время теста: %1$s</string>
-    <string name="network_check_server_1">Сервер 1: fi1.api.radio-browser.info</string>
-    <string name="network_check_server_2">Сервер 2: de2.api.radio-browser.info</string>
-    <string name="network_check_http">HTTP: %1$s</string>
-    <string name="network_check_https">HTTPS: %1$s</string>
+    
+    
+    
+    
     <string name="network_check_connection_failed">Подключение не удалось</string>
-    <string name="network_check_fastest">Самое быстрое подключение:</string>
+    
     <string name="network_check_no_connection">Нет подключения</string>
     <string name="network_check_no_available">Нет доступного подключения</string>
-    <string name="network_check_ok">OK</string>
+    
     
     <string name="export_database_title">Экспорт основной базы данных</string>
     <string name="export_database_message">Экспортировать основную базу данных в внешнее хранилище? Экспортированный файл будет сохранен в папке Загрузки.</string>
@@ -202,10 +188,10 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="import_database_summary">Импортировать основную базу данных из внешнего хранилища, быстро восстановить данные радиостанций</string>
     <string name="database_not_updated">База данных еще не обновлена</string>
     <string name="last_update">Последнее обновление: %1$s, Количество станций: %2$d</string>
-    <string name="get_status_failed">Не удалось получить статус: %1$s</string>
-    <string name="save_file_failed">Не удалось сохранить файл: %1$s</string>
-    <string name="import_failed_invalid_format">Пожалуйста, выберите файл плейлиста формата M3U</string>
-    <string name="import_failed_parse">Не удалось импортировать: не удалось разобрать файл</string>
+    
+    
+    
+    
     <string name="progress_importing_database">Импорт основной базы данных, пожалуйста, подождите...</string>
     <string name="import_success_message">Основная база данных успешно импортирована, содержит %d станций. Приложение автоматически перезапустится для загрузки новой базы данных.</string>
     <string name="import_failed_title">Ошибка импорта</string>
@@ -217,9 +203,9 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="error_database_corrupted">Импортированная база данных не может быть доступна, файл может быть поврежден</string>
     <string name="export_database_corrupted">Основная база данных не может быть доступна, файл может быть поврежден</string>
     <string name="export_database_empty">Файл основной базы данных пуст, экспорт невозможен</string>
-    <string name="database_status_updated">Статус базы данных обновлен: %1$s</string>
-    <string name="database_status_update_failed">Не удалось обновить статус базы данных: %1$s</string>
-    <string name="database_status_from_fields">Статус базы данных обновлен из полей базы данных: %1$s</string>
+    
+    
+    
     
     <string name="empty_database_message">Локальная база данных пуста, пожалуйста, сначала обновите локальную базу данных в настройках</string>
     <string name="empty_database_title">Локальная база данных пуста</string>
@@ -393,7 +379,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
 
     <string name="notify_starred">Станция добавлена в избранное</string>
     <string name="notify_autostarred">Станция автоматически добавлена в избранное</string>
-    <string name="notify_unstarred">Станция удалена из избранного</string>
+    
     <string name="notify_deleted_favorites">Избранное удалено</string>
     <string name="notify_deleted_history">История удалена</string>
 
@@ -409,13 +395,13 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="yes">Да</string>
     <string name="no">Нет</string>
 
-    <string name="alert_select_mpd_server">Пожалуйста, выберите сервер</string>
+    
     <string name="alert_select_mpd_server_name">Название сервера</string>
     <string name="alert_select_mpd_server_password">Пароль сервера</string>
     <string name="hostname">Имя хоста</string>
     <string name="port">Порт</string>
 
-    <string name="alert_select_mpd_server_add">Добавить</string>
+    
     <string name="alert_select_mpd_server_save">Сохранить</string>
     <string name="alert_select_mpd_server_remove">Удалить</string>
     <string name="alert_add_or_edit_mpd_server">Введите данные о сервере</string>
@@ -468,16 +454,14 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="equalizer_use_builtin">Использовать встроенный эквалайзер</string>
     <string name="equalizer_no_external">Системный эквалайзер не найден. Используется встроенный эквалайзер.</string>
 
-    <string name="player_info_status">Статус:&#160;</string>
-    <string name="player_info_status_stopped">остановлено</string>
-    <string name="player_info_status_playing">воспроизводится</string>
-    <string name="player_info_status_recording">запись</string>
-    <string name="player_info_status_playing_and_recording">воспроизводится и записывается</string>
-    <string name="player_info_transferred">Переданные данные: %1$s</string>
-    <string name="player_info_recording_to">Записывается в:
-%1$s</string>
-    <string name="player_info_recorded_to">Последняя запись:
-%1$s</string>
+    
+    
+    
+    
+    
+    
+    
+    
 
     <string name="tab_player_art">Обложка альбома</string>
     <string name="tab_player_station_info">О станции</string>
@@ -489,9 +473,9 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="station_detail_broken">НЕРАБОЧАЯ</string>
     <string name="station_detail_deleted_on_server">УДАЛЕНА</string>
 
-    <string name="image_button_disable">Отключить</string>
+    
     <string name="image_button_record">Записать</string>
-    <string name="image_button_recordings">Записи</string>
+    
     <string name="image_button_delete">Удалить</string>
     <string name="image_button_more">Больше</string>
     <string name="image_button_less">Меньше</string>
@@ -506,11 +490,11 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="app_name">RadioDroid</string>
 
     <string name="settings_mpd">Music Player Daemon</string>
-    <string name="settings_mpd_port">Порт MPD</string>
+    
     <string name="settings_view_mpd_servers">Ваши серверы</string>
-    <string name="action_mpd_nok">MPD не подключен</string>
-    <string name="action_mpd_ok">MPD подключен</string>
-    <string name="action_mpd_connected">Подключено к серверу: %1$s</string>
+    
+    
+    
 
     <string name="mpd_no_connection">Нет подключения</string>
     <string name="action_enable_mpd">Включить MPD</string>
@@ -518,7 +502,7 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="action_add_mpd_server">Добавить сервер MPD</string>
 
     <string name="action_play_in_external">Воспроизвести во внешнем плеере</string>
-    <string name="action_choose_external_player">Выбрать внешний плеер</string>
+    
 
     <string name="settings_lastfm_api_key">Ключ API Last.fm</string>
     <string name="settings_lastfm_api_key_desc">Введите ключ API Last.fm, чтобы показывать обложку играющего трека как значок и фон плеера; обложка также отображается в подробностях истории треков</string>
@@ -575,15 +559,12 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="notify_stream_url_copied">URL потока успешно скопирован</string>
     <string name="notify_track_info_copied">Информация о треке успешно скопирована</string>
 
-    <string-array name="actions_station_link">
-        <item>Посетить сайт</item>
-        <item>Копировать URL потока</item>
-    </string-array>
+    
 
     <string name="alert_metered_connection_title">Обнаружено измерительное соединение</string>
     <string name="alert_metered_connection_message">Измерительное соединение может вызвать дополнительные расходы, нажмите "OK" для продолжения.</string>
-    <string name="nav_item_statistics">Статистика</string>
-    <string name="nav_item_about">О программе</string>
+    
+    
     <string name="refresh">Обновить</string>
 
     <string name="alarm_backup">Альтернативный будильник</string>
@@ -611,8 +592,8 @@ https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="progress_preparing_update">Подготовка обновления...</string>
     <string name="progress_resuming_update">Возобновление обновления...</string>
     <string name="progress_downloading_stations">Загрузка данных станций</string>
-    <string name="progress_updating_database">Обновление базы данных</string>
-    <string name="progress_completing_update">Завершение обновления</string>
+    
+    
     <string name="update_failed">Обновление не удалось</string>
     <string name="update_failed_toast">Ошибка обновления базы данных. Проверьте подключение и попробуйте снова.</string>
     <string name="update_failed_message">Обновление не удалось: %s</string>

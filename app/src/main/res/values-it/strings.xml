@@ -25,7 +25,7 @@
     <string name="action_label_refresh">Aggiorna</string>
     <string name="detail_play_in_radiodroid">Riproduci in RadioDroid</string>
 
-    <string name="action_links">Collegamenti</string>
+    
     <string name="action_homepage">Pagina di inizio</string>
     <string name="action_favorite">Preferito</string>
     <string name="action_alarm">Sveglia</string>
@@ -52,9 +52,9 @@
     <string name="action_top_vote">Maggiori voti</string>
     <string name="action_changed_lately">Modificate recentemente</string>
     <string name="action_currently_playing">In onda</string>
-    <string name="action_tags">Etichette</string>
-    <string name="action_countries">Nazioni</string>
-    <string name="action_languages">Lingue</string>
+    
+    
+    
     <string name="action_edit">Modifica</string>
     <string name="action_lyrics">Testo</string>
     <string name="action_copy_info">Copia info</string>
@@ -71,14 +71,14 @@
     <string name="nav_item_settings">Impostazioni</string>
     <string name="nav_item_alarm">Sveglia</string>
 
-    <string name="about_text">Questa applicazione usa il direttorio libero di radio presso\nhttps://www.radio-browser.info\nChiunque può aggiungere stazioni radio o modificare quelle esistenti. Funziona come una wiki per le stazioni radio che trasmettono (streaming) su internet.\n\Centatti:\nsegler_alex@web.de\n\Gestore di bachi:\nhttps://github.com/segler-alex/RadioDroid/issues\n\nSe ti piace questo software e vuoi aiutare, sentiti libero di inviare un email. Ho davvero bisogno di qualcuno con esperienza grafica che possa rendere l\'applicazione più bella da vedere :) Magari qualcuno che sa disegnare icone, immagini... Ma anche programmatori per sistemare i bachi, o implementare nuove caratteristiche. ;)\nInoltre sono sempre apprezzate idee per nuove caratteristiche!\n\nQuesta applicazione è software libero sotto la licenza\nhttps://www.gnu.org/licenses/gpl-3.0.html</string>
+    
     <string name="about_version">Versione: %1$s</string>
     <string name="detail_star">Aggiungi ai preferiti</string>
     <string name="detail_unstar">Cancella dai favoriti</string>
     <string name="detail_play_in_external_player">@string/action_play_in_external</string>
-    <string name="progress_loading">Caricamento...</string>
+    
 
-    <string name="sleep_timer" formatted="true">Tempo di sonno: %1$02d:%2$02d</string>
+    
     <string name="sleep_timer_title">Smetti la riproduzione dopo il minuto selezionato</string>
     <string name="sleep_timer_apply">Applica</string>
     <string name="sleep_timer_clear">Annulla</string>
@@ -87,12 +87,12 @@
     <string name="nav_item_save_playlist">Esporta preferiti nella playlist</string>
     <string name="nav_item_load_playlist">Importa preferiti dalla playlist</string>
     <string name="nav_item_save_history_playlist">Esporta cronologia come playlist</string>
-    <string name="confirm_overwrite_file">Sovrascrivere il documento?</string>
-    <string name="dialog_hint_file_name">Indica il nome del documento</string>
-    <string name="error_empty_field">Questo campo è obbligatorio</string>
-    <string name="error_invalid_file_name">Nome del documento non valido</string>
-    <string name="label_button_cancel">Annulla</string>
-    <string name="label_button_overwrite">Sovrascrivi</string>
+    
+    
+    
+    
+    
+    
     <string name="notify_load_playlist_nok">Impossibile importare da %1$s&#47;%2$s</string>
     <string name="notify_load_playlist_now">Importando da %1$s&#47;%2$s, please wait.</string>
     <string name="notify_load_playlist_ok">Importate %1$d stazioni da %2$s&#47;%3$s</string>
@@ -223,7 +223,7 @@
 
     <string name="notify_starred">La stazione è stata marcata come preferita</string>
     <string name="notify_autostarred">La stazione è stata marcata automaticamente come preferita</string>
-    <string name="notify_unstarred">La stazione è stata cancellata dai preferiti</string>
+    
     <string name="notify_deleted_favorites">I preferiti sono stati cancellati</string>
     <string name="notify_deleted_history">La cronologia è stata cancellata</string>
 
@@ -239,13 +239,13 @@
     <string name="yes">Sì</string>
     <string name="no">No</string>
 
-    <string name="alert_select_mpd_server">Per favore scegli un server</string>
+    
     <string name="alert_select_mpd_server_name">Nome del server</string>
     <string name="alert_select_mpd_server_password">Password del server</string>
     <string name="hostname">Nome dell\'host</string>
     <string name="port">Porta</string>
 
-    <string name="alert_select_mpd_server_add">Aggiungi</string>
+    
     <string name="alert_select_mpd_server_save">Salva</string>
     <string name="alert_select_mpd_server_remove">Remove</string>
     <string name="alert_add_or_edit_mpd_server">Inserisci i dettagli del server</string>
@@ -266,14 +266,14 @@
 
     <string name="error_no_equalizer_found">Nessuna applicazione di equalizzazione</string>
     <string name="equalizer_unsupported_android5">L\'equalizzatore integrato è disabilitato per impostazione predefinita su Android 5.x (per evitare scoppiettii).</string>
-    <string name="player_info_status">Stato:&#160;</string>
-    <string name="player_info_status_stopped">interrotto</string>
-    <string name="player_info_status_playing">riproducendo</string>
-    <string name="player_info_status_recording">registrando</string>
-    <string name="player_info_status_playing_and_recording">riproducendo e registrando</string>
-    <string name="player_info_transferred">Dati trasferiti: %1$s</string>
-    <string name="player_info_recording_to">Registrando a:\n%1$s</string>
-    <string name="player_info_recorded_to">Ultima registrazione:\n%1$s</string>
+    
+    
+    
+    
+    
+    
+    
+    
 
     <string name="tab_player_art">Copertina</string>
     <string name="tab_player_station_info">Info stazione</string>
@@ -284,9 +284,9 @@
     <string name="station_detail_bitrate">%1$1d kbps</string>
     <string name="station_detail_broken">ROTTO</string>
 
-    <string name="image_button_disable">Disabilita</string>
+    
     <string name="image_button_record">Registra</string>
-    <string name="image_button_recordings">Registrazioni</string>
+    
     <string name="image_button_delete">Cancella</string>
     <string name="image_button_more">Più</string>
     <string name="image_button_less">Meno</string>
@@ -301,11 +301,11 @@
     <string name="app_name">RadioDroid</string>
 
     <string name="settings_mpd">Music Player Daemon</string>
-    <string name="settings_mpd_port">Porta di MPD</string>
+    
     <string name="settings_view_mpd_servers">I tuoi server</string>
-    <string name="action_mpd_nok">MPD non connesso</string>
-    <string name="action_mpd_ok">MPD connesso</string>
-    <string name="action_mpd_connected">Connesso al server: %1$s</string>
+    
+    
+    
 
     <string name="mpd_no_connection">Nessuna connessione</string>
     <string name="action_enable_mpd">Abilita MPD</string>
@@ -313,7 +313,7 @@
     <string name="action_add_mpd_server">Aggiungi server MPD</string>
 
     <string name="action_play_in_external">Riproduci in riproduttore esterno</string>
-    <string name="action_choose_external_player">Scegli riproduttore esterno</string>
+    
 
     <string name="settings_other">Altro</string>
     <string name="settings_lastfm_api_key">Chiave API Last.fm</string>
@@ -354,7 +354,7 @@
     <string name="description_btn_setup_alarm">Imposta sveglia</string>
 
     <string name="settings_language">Lingua interfaccia</string>
-    <string name="settings_language_desc">Seleziona la lingua dell\'interfaccia dell\'app</string>
+    
     <string name="language_system">Predefinito di sistema</string>
     <string name="language_english">English</string>
     <string name="language_chinese">中文</string>
@@ -377,15 +377,12 @@
     <string name="notify_stream_url_copied">L\'URL del flusso copiato correttamente</string>
     <string name="notify_track_info_copied">Informazioni sulla traccia copiate correttamente</string>
 
-    <string-array name="actions_station_link">
-        <item>Visita sito web</item>
-        <item>Copia URL del flusso</item>
-    </string-array>
+    
 
     <string name="alert_metered_connection_title">Rilevata connessione a uso misurato</string>
     <string name="alert_metered_connection_message">La connessione ad uso misurato può incorrere in costi aggiuntivi, premi \'OK\' per continuare.</string>
-    <string name="nav_item_statistics">Statistiche</string>
-    <string name="nav_item_about">Circa</string>
+    
+    
     <string name="refresh">Ricarica</string>
 
     <string name="alarm_backup">Sveglia alternativa</string>

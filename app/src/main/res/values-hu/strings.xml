@@ -23,9 +23,9 @@
     <string name="action_top_vote">Legnépszerűbb</string>
     <string name="action_changed_lately">Nemrég változott</string>
     <string name="action_currently_playing">Lejátszás</string>
-    <string name="action_tags">Címkék</string>
-    <string name="action_countries">Országok</string>
-    <string name="action_languages">Nyelvek</string>
+    
+    
+    
     <string name="action_station_visit_website">Webhely felkeresése</string>
     <string name="action_station_copy_stream_url">Adatfolyam Url másolása</string>
     <string name="action_station_share">Megosztás</string>
@@ -41,13 +41,13 @@
     <string name="nav_item_alarm">Riasztások</string>
     <string name="tab_player_recordings">Rögzítések</string>
 
-    <string name="about_text">Ez az alkalmazás az itt lévő rádióállomás-jegyzéket használja:\nhttps://www.radio-browser.info\Bárki adhat hozzá és szerkesztheti az állomásokat. Úgy működik, mint egy online rádióállomásokról szóló wiki.\n\nKapcsolat:\nsegler_alex@web.de\n\nHibakövető:\nhttps://github.com/segler-alex/RadioDroid/issues\n\nHa tetszik a szoftver, és segíteni szeretne, akkor küldjön nyugodtan e-mailt. Tényleg szükségem van valakira, akinek vannak grafikusi tapasztalati, hogy jobb érzés legyen az appra ránézni :) Talán valaki, aki tud ikonokat és képeket rajzolni… De programozókra is szükség van, akik kijavítják a hibákat, vagy újakat fejlesztenek (funkciókat, nem hibákat ;)\nAz új funkcióötleteket is értékeljük!\n\nEz az app szabad szoftver, és a GPLv3 licenc alatt érhető el.\nhttps://www.gnu.org/licenses/gpl-3.0.html</string>
+    
     <string name="about_version">Verzió: %1$s</string>
     <string name="detail_star">Könyvjelzőzés kedvencként</string>
     <string name="detail_unstar">Törlés a kedvencek közül</string>
-    <string name="progress_loading">Betöltés…</string>
+    
 
-    <string name="sleep_timer" formatted="true">Alvási időzítő: %1$02d:%2$02d</string>
+    
     <string name="sleep_timer_title">Hány perc maradt a leállításig?</string>
     <string name="sleep_timer_apply">Alkalmaz</string>
     <string name="sleep_timer_clear">Törlés</string>
@@ -133,7 +133,7 @@
     <string name="notify_paused">Szüneteltetve</string>
     <string name="notify_starred">Az állomás kedvencként könyvjelzőzve</string>
     <string name="notify_autostarred">Az állomás automatikus kedvencként könyvjelzőzve</string>
-    <string name="notify_unstarred">Az állomás eltávolításra került a kedvencek listájáról</string>
+    
     <string name="notify_deleted_favorites">A kedvencek törölve lettek.</string>
     <string name="notify_deleted_history">Az előzmények törölve lettek.</string>
 
@@ -145,12 +145,12 @@
     <string name="yes">Igen</string>
     <string name="no">Nem</string>
 
-    <string name="alert_select_mpd_server">Melyik kiszolgáló?</string>
+    
     <string name="alert_select_mpd_server_name">Kiszolgálónév</string>
     <!--<string name="alert_select_mpd_server_hostname">Gépnév</string>-->
     <!--<string name="alert_select_mpd_server_port">Port</string>-->
 
-    <string name="alert_select_mpd_server_add">Hozzáadás</string>
+    
     <string name="alert_select_mpd_server_save">Mentés</string>
     <string name="alert_select_mpd_server_remove">Eltávolítás</string>
     <string name="alert_add_or_edit_mpd_server">Adja meg a kiszolgáló részleteit</string>
@@ -166,21 +166,21 @@
 
     <string name="error_no_equalizer_found">Nem található hangerőszabályzó alkalmazás!</string>
 
-    <string name="player_info_status">Állapot:&#160;</string>
-    <string name="player_info_status_stopped">leállítva</string>
-    <string name="player_info_status_playing">lejátszás</string>
-    <string name="player_info_status_recording">rögzítés</string>
-    <string name="player_info_status_playing_and_recording">lejátszás és rögzítés</string>
-    <string name="player_info_transferred">Átküldött adatok: %1$s</string>
-    <string name="player_info_recording_to">Rögzítés ide:\n%1$s</string>
-    <string name="player_info_recorded_to">Legutóbbi rögzítés:\n%1$s</string>
+    
+    
+    
+    
+    
+    
+    
+    
 
     <string name="station_detail_bitrate">%1$1d kbps</string>
     <string name="station_detail_broken">TÖRÖTT</string>
 
-    <string name="image_button_disable">Letiltás</string>
+    
     <string name="image_button_record">Rögzítés</string>
-    <string name="image_button_recordings">Rögzítések</string>
+    
     <string name="image_button_delete">Törlés</string>
     <string name="image_button_more">Több</string>
     <string name="image_button_less">Kevesebb</string>
@@ -195,9 +195,9 @@
 
     <string name="settings_mpd">Zenelejátszó démon</string>
     <string name="settings_view_mpd_servers">Saját kiszolgálók</string>
-    <string name="action_mpd_nok">MPD nincs csatlakoztatva</string>
-    <string name="action_mpd_ok">MPD csatlakoztatva</string>
-    <string name="action_mpd_connected">Kapcsolódva a kiszolgálóhoz: %1$s</string>
+    
+    
+    
 
     <string name="settings_other">Egyéb</string>
     <string name="settings_statistics">Statisztika</string>
@@ -215,9 +215,9 @@
 
     <string name="notify_stream_url_copied">Adatfolyam Url sikeresen másolva!</string>
 
-    <string name="nav_item_statistics">Statisztika</string>
-    <string name="nav_item_about">Névjegy</string>
-    <string name="settings_mpd_port">MPD port</string>
+    
+    
+    
     <string name="refresh">Frissítés</string>
     <string name="alarm_fade_invalid_range">A kezdő hangerőnek alacsonyabbnak kell lennie a célnál</string>
 </resources>

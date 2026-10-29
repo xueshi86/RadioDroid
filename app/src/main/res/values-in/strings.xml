@@ -14,7 +14,7 @@
     <string name="detail_share">Bagikan</string>
     <string name="detail_play_in_radiodroid">Putar di RadioDroid</string>
 
-    <string name="action_links">Tautan</string>
+    
     <string name="action_homepage">Situs resmi</string>
     <string name="action_favorite">Favorit</string>
     <string name="action_alarm">Alarm</string>
@@ -41,9 +41,9 @@
     <string name="action_top_vote">Top Vote</string>
     <string name="action_changed_lately">Berubah baru</string>
     <string name="action_currently_playing">Diputar</string>
-    <string name="action_tags">Tag</string>
-    <string name="action_countries">Negara</string>
-    <string name="action_languages">Bahasa</string>
+    
+    
+    
     <string name="action_edit">Sunting</string>
     <string name="action_lyrics">Lirik</string>
     <string name="action_copy_info">Salin Info</string>
@@ -58,14 +58,14 @@
     <string name="nav_item_settings">Pengaturan</string>
     <string name="nav_item_alarm">Alarm</string>
 
-    <string name="about_text">Aplikasi ini menggunakan direktori radio gratis di \nhttps://www.radio-browser.info\nSemua orang bisa menambahkan stasiun radio atau menyunting stasiun yang sudah ada. Bekerja seperti wiki untuk stasiun radio daring (streaming).\n\nKontak:\nsegler_alex@web.de\n\nPelacak bug:\nhttps://github.com/segler-alex/RadioDroid/issues\n\nJuka anda menyukai aplikasi ini dan ingin membantu, jangan sungkan untuk mengirim surel. Saya sangat membutuhkan seseorang dengan keahlian grafis untuk membuat desain aplikasi ini menjadi lebih baik :) Mungkin seseorang yang bisa menggambar ikon, aset gambar...tetapi juga programer yang bisa memperbaiki bug, atau mengimplementasikan fitur baru.\nSaran ide-ide baru juga selalu kami hargai!\n\nAplikasi ini adalah perangkat lunak bebas dibawah naungan lisensi GPLv3.\nhttps://www.gnu.org/licenses/gpl-3.0.html</string>
+    
     <string name="about_version">Versi: %1$s</string>
     <string name="detail_star">Tambahkan ke favorit</string>
     <string name="detail_unstar">Hapus dari favorit</string>
     <string name="detail_play_in_external_player">@string/action_play_in_external</string>
-    <string name="progress_loading">Memuat...</string>
+    
 
-    <string name="sleep_timer" formatted="true">Waktu tidur: %1$02d:%2$02d</string>
+    
     <string name="sleep_timer_title">Setop pemutaran setelah rentang waktu</string>
     <string name="sleep_timer_apply">Terapkan</string>
     <string name="sleep_timer_clear">Hapus</string>
@@ -74,12 +74,12 @@
     <string name="nav_item_save_playlist">Ekspor favorit sebagai daftar putar</string>
     <string name="nav_item_load_playlist">Impor favorit dari daftar putar</string>
     <string name="nav_item_save_history_playlist">Ekspor riwayat sebagai daftar putar</string>
-    <string name="confirm_overwrite_file">Timpa berkas?</string>
-    <string name="dialog_hint_file_name">Masukkan nama berkas</string>
-    <string name="error_empty_field">Ruas ini dibutuhkan</string>
-    <string name="error_invalid_file_name">Nama berkas tidak valid</string>
-    <string name="label_button_cancel">Batal</string>
-    <string name="label_button_overwrite">Timpa</string>
+    
+    
+    
+    
+    
+    
     <string name="notify_load_playlist_nok">Tidak bisa mengimpor dari %1$s&#47;%2$s</string>
     <string name="notify_load_playlist_now">Mengimpor dari %1$s&#47;%2$s, silakan tunggu.</string>
     <string name="notify_load_playlist_ok">Mengimpor %1$d stasiun dari %2$s&#47;%3$s</string>
@@ -194,7 +194,7 @@
 
     <string name="notify_starred">Stasiun telah ditambahkan ke favorit</string>
     <string name="notify_autostarred">Stasiun telah ditambahkan secara otomatis ke favorit</string>
-    <string name="notify_unstarred">Stasiun telah dihapus dari favorit</string>
+    
     <string name="notify_deleted_favorites">Favorit telah dihapus</string>
     <string name="notify_deleted_history">Riwayat telah dihapus</string>
 
@@ -210,13 +210,13 @@
     <string name="yes">Iya</string>
     <string name="no">Tidak</string>
 
-    <string name="alert_select_mpd_server">Silakan pilih server</string>
+    
     <string name="alert_select_mpd_server_name">Nama server</string>
     <string name="alert_select_mpd_server_password">Sandi server</string>
     <string name="hostname">Nama hos</string>
     <string name="port">Porta</string>
 
-    <string name="alert_select_mpd_server_add">Tambah</string>
+    
     <string name="alert_select_mpd_server_save">Simpan</string>
     <string name="alert_select_mpd_server_remove">Hapus</string>
     <string name="alert_add_or_edit_mpd_server">Masukkan detail tentang server</string>
@@ -237,14 +237,14 @@
 
     <string name="error_no_equalizer_found">Tidak ada aplikasi equalizer yang ditemukan</string>
 
-    <string name="player_info_status">Status:&#160;</string>
-    <string name="player_info_status_stopped">disetop</string>
-    <string name="player_info_status_playing">memutar</string>
-    <string name="player_info_status_recording">merekam</string>
-    <string name="player_info_status_playing_and_recording">memutar dan merekam</string>
-    <string name="player_info_transferred">Data ditransfer: %1$s</string>
-    <string name="player_info_recording_to">Merekam ke:\n%1$s</string>
-    <string name="player_info_recorded_to">Rekaman terakhir:\n%1$s</string>
+    
+    
+    
+    
+    
+    
+    
+    
 
     <string name="tab_player_art">Kover album</string>
     <string name="tab_player_station_info">Info stasiun</string>
@@ -254,9 +254,9 @@
     <string name="station_detail_bitrate">%1$1d kbps</string>
     <string name="station_detail_broken">RUSAK</string>
 
-    <string name="image_button_disable">Nonaktifkan</string>
+    
     <string name="image_button_record">Rekam</string>
-    <string name="image_button_recordings">Rekaman</string>
+    
     <string name="image_button_delete">Hapus</string>
     <string name="image_button_more">Lebih banyak</string>
     <string name="image_button_less">Lebih sedikit</string>
@@ -271,11 +271,11 @@
     <string name="app_name">RadioDroid</string>
 
     <string name="settings_mpd">Daemon Pemutar Musik</string>
-    <string name="settings_mpd_port">Porta MPD</string>
+    
     <string name="settings_view_mpd_servers">Server anda</string>
-    <string name="action_mpd_nok">MPD tidak tersambung</string>
-    <string name="action_mpd_ok">MPD tersambung</string>
-    <string name="action_mpd_connected">Tersambung ke server: %1$s</string>
+    
+    
+    
 
     <string name="mpd_no_connection">Tidak ada koneksi</string>
     <string name="action_enable_mpd">Aktifkan MPD</string>
@@ -283,7 +283,7 @@
     <string name="action_add_mpd_server">Tambah server MPD</string>
 
     <string name="action_play_in_external">Putar di pemutar eksternal</string>
-    <string name="action_choose_external_player">Pilih pemutar eksternal</string>
+    
 
     <string name="settings_other">Lainnya</string>
     <string name="settings_statistics">Statistik</string>
@@ -307,15 +307,12 @@
     <string name="notify_stream_url_copied">URL stream berhasil di salin</string>
     <string name="notify_track_info_copied">Info trek berhasil di salin</string>
 
-    <string-array name="actions_station_link">
-        <item>Kunjungi situs web</item>
-        <item>Salin URL stream</item>
-    </string-array>
+    
 
     <string name="alert_metered_connection_title">Mendeteksi koneksi terukur</string>
     <string name="alert_metered_connection_message">Koneksi terukur akan menyebabkan penggunaan data lebih, tekan \'OKE\' untuk melanjutkan.</string>
-    <string name="nav_item_statistics">Statistik</string>
-    <string name="nav_item_about">Tentang</string>
+    
+    
     <string name="refresh">Segarkan</string>
 
     <string name="alarm_backup">Alarm Alternatif</string>

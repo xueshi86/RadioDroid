@@ -202,7 +202,14 @@ public abstract class RadioDroidDatabase extends RoomDatabase {
                 if (isClosing) {
                     return;
                 }
-                
+
+                // 国家码大小写归一：radio-browser 存量数据同一国家存在 "BR"/"br" 两种代码，
+                // 会令按 countrycode 分组的筛选下拉出现重复项（如两个"巴西"），一并归一为大写
+                try {
+                    db.execSQL("UPDATE radio_stations SET countrycode = UPPER(countrycode) WHERE countrycode != UPPER(countrycode)");
+                } catch (Exception ignored) {
+                }
+
                 // App may have been terminated without notice so we should set last track history entry's
                 // end time to something reasonable.
                 try {

@@ -29,9 +29,9 @@
     <string name="action_top_vote">Najwyższa ocena</string>
     <string name="action_changed_lately">Niedawno zmienione</string>
     <string name="action_currently_playing">Teraz odtwarzane</string>
-    <string name="action_tags">Tagi</string>
-    <string name="action_countries">Kraje</string>
-    <string name="action_languages">Języki</string>
+    
+    
+    
     <string name="error_station_load">Nie można połączyć się ze stacją</string>
     <string name="error_list_update">Nie można połączyć się z serwerem przeglądarki radiowej</string>
 
@@ -44,13 +44,13 @@
     <string name="nav_item_alarm">Alarm</string>
     <string name="tab_player_recordings">Nagrania</string>
 
-    <string name="about_text">Ta aplikacja korzysta z bezpłatnego katalogu stacji radiowych umieszczonych pod adresem \nhttps://www.radio-browser.info\nKażdy może dodawać do niego stacje lub edytować istniejące stacje. Działa jak wiki dla internetowych (streaming) stacji radiowych.\n\nKontakt:\nsegler_alex@web.de\n\nBugtracker - Zgłoś błąd:\nhttps://github.com/segler-alex/RadioDroid/issues\n\nJeśli podoba Ci się oprogramowanie i chcesz pomóc, wyślij mi e-mail. Potrzebuję kogoś z doświadczeniem graficznym, aby uczynić aplikację przyjemniejszą dla oka :) Może ktoś, kto potrafi rysować ikony, obrazy... ale także programistów, którzy naprawiają błędy lub wdrażają nowe (funkcje nie zawierające błędów;)\nRównież pomysły na nowe funkcje są zawsze mile widziane!\n\nTa aplikacja jest wolnym oprogramowaniem na licencji GPLv3.\nhttps://www.gnu.org/licenses/gpl-3.0.html</string>
+    
     <string name="about_version">Wersja: %1$s</string>
     <string name="detail_star">Dodaj do ulubionych</string>
     <string name="detail_unstar">Usuń z ulubionych</string>
-    <string name="progress_loading">Ładowanie...</string>
+    
 
-    <string name="sleep_timer" formatted="true">Wyłącznik czasowy: %1$02d:%2$02d</string>
+    
     <string name="sleep_timer_title">Zatrzymaj odtwarzanie po wybranej liczbie minut</string>
     <string name="sleep_timer_apply">Zastosuj</string>
     <string name="sleep_timer_clear">Wyczyść</string>
@@ -58,12 +58,12 @@
 
     <string name="nav_item_save_playlist">Dopisz do listy odtwarzania </string>
     <string name="nav_item_load_playlist">Wczytaj z listy odtwarzania</string>
-    <string name="confirm_overwrite_file">Zastąpić plik?</string>
-    <string name="dialog_hint_file_name">Wpisz nazwę pliku</string> 
-    <string name="error_empty_field">To pole jest wymagane</string>
-    <string name="error_invalid_file_name">Nieprawidłowa nazwa pliku</string>
-    <string name="label_button_cancel">Anuluj</string>
-    <string name="label_button_overwrite">Zastąp</string>
+    
+     
+    
+    
+    
+    
 
     <string name="searchpreference_clear_history">Wyczyść historię</string>
     <string name="searchpreference_no_results">Brak wyników</string>
@@ -158,7 +158,7 @@
     <string name="notify_paused">Zatrzymaj</string>
     <string name="notify_starred">Stacja została dodana do ulubionych</string>
     <string name="notify_autostarred">Stacja została automatycznie dodana do ulubionych</string>
-    <string name="notify_unstarred">Stacja została usunięta z ulubionych</string>
+    
     <string name="notify_deleted_favorites">Ulubione zostały usunięte</string>
     <string name="notify_deleted_history">Historia została usunięta</string>
 
@@ -170,12 +170,12 @@
     <string name="yes">Tak</string>
     <string name="no">Nie</string>
 
-    <string name="alert_select_mpd_server">Wybierz serwer</string>
+    
     <string name="alert_select_mpd_server_name">Nazwa serwera</string>
     <string name="hostname">Nazwa hosta</string>
     <string name="port">Port</string>
 
-    <string name="alert_select_mpd_server_add">Dodaj</string>
+    
     <string name="alert_select_mpd_server_save">Zapisz</string>
     <string name="alert_select_mpd_server_remove">Usuń</string>
     <string name="alert_add_or_edit_mpd_server">Wprowadź informacje o serwerze</string>
@@ -195,21 +195,21 @@
 
     <string name="error_no_equalizer_found">Nie znaleziono aplikacji korektora graficznego</string>
 
-    <string name="player_info_status">Stan:&#160;</string>
-    <string name="player_info_status_stopped">zatrzymane</string>
-    <string name="player_info_status_playing">odtwarzanie</string>
-    <string name="player_info_status_recording">nagrywanie</string>
-    <string name="player_info_status_playing_and_recording">odtwarzanie i nagrywanie</string>
-    <string name="player_info_transferred">Przesłane dane: %1$s</string>
-    <string name="player_info_recording_to">Nagrywanie do:\n%1$s</string>
-    <string name="player_info_recorded_to">Ostatnie nagranie:\n%1$s</string>
+    
+    
+    
+    
+    
+    
+    
+    
 
     <string name="station_detail_bitrate">%1$1d kbps</string>
     <string name="station_detail_broken">USZKODZONE</string>
 
-    <string name="image_button_disable">Wyłącz</string>
+    
     <string name="image_button_record">Nagraj</string>
-    <string name="image_button_recordings">Nagrania</string>
+    
     <string name="image_button_delete">Usuń</string>
     <string name="image_button_more">Więcej</string>
     <string name="image_button_less">Mniej</string>
@@ -224,11 +224,11 @@
     <string name="app_name">RadioDroid</string>
 
     <string name="settings_mpd">Music Player Daemon</string>
-    <string name="settings_mpd_port">Port MPD</string>
+    
     <string name="settings_view_mpd_servers">Twoje serwery</string>
-    <string name="action_mpd_nok">MPD nie jest podłączony</string>
-    <string name="action_mpd_ok">MPD podłączony</string>
-    <string name="action_mpd_connected">Połączono z serwerem: %1$s</string>
+    
+    
+    
 
     <string name="settings_other">Inne</string>
     <string name="settings_statistics">Statystyki</string>
@@ -246,13 +246,10 @@
 
     <string name="notify_stream_url_copied">Adres URL strumienia skopiowano pomyślnie</string>
 
-    <string-array name="actions_station_link">
-        <item>Odwiedź Stronę Internetową</item>
-        <item>Skopiuj adres URL strumienia</item>
-    </string-array>
+    
 
-    <string name="nav_item_statistics">Statystyki</string>
-    <string name="nav_item_about">O</string>
+    
+    
     <string name="refresh">Odśwież</string>
     <string name="alarm_fade_invalid_range">Głośność początkowa musi być niższa niż docelowa</string>
 <!-- v1.06: Incremental update + click reporting -->

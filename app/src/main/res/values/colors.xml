@@ -52,10 +52,10 @@
          页面与样式不应再直接引用它们；仅在尚未改造完成的角落保留，改造完成后删除。 -->
     <color name="colorPrimaryDark">#232325</color>
     <color name="textColorPrimary">#FFFFFF</color>
-    <color name="navigationBarColor">#000000</color>
+    
     <!-- 暗色主题对话框主色：比强调色更亮，保证暗色背景上文字/滑块清晰可见 -->
     <color name="colorAlertPrimaryDark">#64B5F6</color>
-    <color name="colorStationSwipeBackground">#ff4081</color>
+    
 
     <color name="colorPlayerBackground">#ffffff</color>
     <color name="colorPlayerBackgroundDark">@color/colorPrimaryDark</color>

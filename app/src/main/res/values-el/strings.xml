@@ -44,9 +44,9 @@
     <string name="action_top_vote">ΠιοΨηφισμένοι</string>
     <string name="action_changed_lately">Άλλαξαν πρόσφατα</string>
     <string name="action_currently_playing">Παίζουν</string>
-    <string name="action_tags">Καρτέλες</string>
-    <string name="action_countries">Χώρες</string>
-    <string name="action_languages">Γλώσσες</string>
+    
+    
+    
     <string name="action_station_visit_website">Επίσκεψη στον Ιστότοπο</string>
     <string name="action_station_copy_stream_url">Αντιγραφή της Διεύθυνσης Url της Ροής</string>
     <string name="error_station_load">Αδυναμία σύνδεσης στο σταθμό</string>
@@ -70,32 +70,13 @@
     <string name="unknown_artist">Άγνωστος καλλιτέχνης</string>
     <string name="unknown_track">Άγνωστο κομμάτι</string>
 
-    <string name="about_text">Αυτή η εφαρμογή χρησιμοποιεί τον ελεύθερο κατάλογο ραδιοφωνικών σταθμών, στο...\n
-  https://www.radio-browser.info\n
-  Ο καθένας μπορεί να προσθέσει σταθμούς σε αυτόν, ή να επεξεργαστεί υπάρχοντες σταθμούς.\n
-  Λειτουργεί σαν ένα γουίκι για διαδικτυακούς ραδιοφωνικούς σταθμούς (ροές).\n
-  \n
-  Επικοινωνία:\n
-  segler_alex@web.de\n
-  \n
-  Εποπτεία Δυσλειτουργιών:\n
-  https://github.com/segler-alex/RadioDroid/issues\n
-  \n
-  Αν σου αρέσει αυτό το λογισμικό και θα ήθελες να βοηθήσεις, μην διστάσεις να μου στείλεις ένα ηλεκτρονικό γράμμα.\n
-  Πραγματικά χρειάζομαι κάποιον με εμπειρία στα γραφικά, για να κάνω την εφαρμογή ευχάριστη στο μάτι :) .\n
-  Ίσως κάποιος που μπορεί να ζωγραφίζει εικονίδια, εικόνες...\n
-  Αλλά, επίσης, προγραμματιστές που διορθώνουν δυσλειτουργίες, ή εφαρμόζουν νέες \n
-  (λειτουργίες και χαρακτηριστικά, όχι δυσλειτουργίες ;)  ) .\n
-  Επίσης,  ιδέες για νέα χαρακτηριστικά είναι πάντα καλοδεχούμενες!\n
-  \n
-  Η παρούσα εφαρμογή είναι ελεύθερο λογισμικό υπό την άδεια GPLv3.\n
-  https://www.gnu.org/licenses/gpl-3.0.html</string>
+    
     <string name="about_version">Έκδοση: %1$s</string>
     <string name="detail_star">Προσθήκη στους σελιδοδείκτες των αγαπημένων</string>
     <string name="detail_unstar">Διαγραφή από τα αγαπημένα</string>
-    <string name="progress_loading">Φορτώνει...</string>
+    
 
-    <string name="sleep_timer" formatted="true">Χρονοδιακόπτης ύπνου: %1$02d:%2$02d</string>
+    
     <string name="sleep_timer_title">Πόσα λεπτά πριν τη διακοπή;</string>
     <string name="sleep_timer_apply">Εφαρμογή</string>
     <string name="sleep_timer_clear">Καθάρισμα</string>
@@ -186,7 +167,7 @@
     <string name="notify_paused">Παυμένο</string>
     <string name="notify_starred">Ο σταθμός έχει προστεθεί στους σελιδοδείκτες των αγαπημένων</string>
     <string name="notify_autostarred">Ο σταθμός έχει προστεθεί, αυτόματα, στους σελιδοδείκτες των αγαπημένων</string>
-    <string name="notify_unstarred">Ο σταθμός έχει απομακρυνθεί από το κατάστιχο των αγαπημένων</string>
+    
     <string name="notify_deleted_favorites">Τα αγαπημένα έχουν διαγραφεί.</string>
     <string name="notify_deleted_history">Το ιστορικό έχει διαγραφεί.</string>
 
@@ -198,12 +179,12 @@
     <string name="yes">Ναι</string>
     <string name="no">Όχι</string>
 
-    <string name="alert_select_mpd_server">Ποιον εξυπηρετητή;</string>
+    
     <string name="alert_select_mpd_server_name">Όνομα του εξυπηρετητή</string>
     <string name="hostname">Όνομα του οικοδεσπότη</string>
     <string name="port">Θύρα</string>
 
-    <string name="alert_select_mpd_server_add">Προσθήκη</string>
+    
     <string name="alert_select_mpd_server_save">Αποθήκευση</string>
     <string name="alert_select_mpd_server_remove">Απομάκρυνση</string>
     <string name="alert_add_or_edit_mpd_server">Εισαγωγή λεπτομερειών για τον εξυπηρετητή</string>
@@ -219,21 +200,19 @@
 
     <string name="error_no_equalizer_found">Δεν βρέθηκε εφαρμογή ισοστάθμισης.</string>
     <string name="equalizer_unsupported_android5">Ο ενσωματωμένος ισοσταθμιστής είναι απενεργοποιημένος από προεπιλογή σε Android 5.x (για αποφυγή «κρότων»).</string>
-    <string name="player_info_status">Κατάσταση: </string>
-    <string name="player_info_status_stopped">σταματημένο</string>
-    <string name="player_info_status_playing">παίζει</string>
-    <string name="player_info_status_recording">ηχογραφεί</string>
-    <string name="player_info_status_playing_and_recording">παίζει και ηχογραφείται</string>
-    <string name="player_info_transferred">Μεταφέρθηκαν δεδομένα: %1$s</string>
-    <string name="player_info_recording_to">Ηχογραφείται στο:\n
-    %1$s</string>
-    <string name="player_info_recorded_to">Τελευταία ηχογράφηση:\n
-    %1$s</string>
+    
+    
+    
+    
+    
+    
+    
+    
 
     <string name="station_detail_bitrate">%1$1d χιλιομπίτια/δευτ.</string>
     <string name="station_detail_broken">ΧΑΛΑΣΜΕΝΟΣ</string>
 
-    <string name="image_button_disable">Απενεργοποίηση</string>
+    
     <string name="image_button_record">Ηχογράφηση</string>
     <string name="image_button_delete">Διαγραφή</string>
     <string name="image_button_more">Περισσότερα</string>
@@ -242,9 +221,9 @@
 
     <string name="settings_mpd">Δαίμονας Αναπαραγωγής Μουσικής</string>
     <string name="settings_view_mpd_servers">Οι εξυπηρετητές</string>
-    <string name="action_mpd_nok">Δεν συνδέθηκε το MPD</string>
-    <string name="action_mpd_ok">Συνδέθηκε το MPD</string>
-    <string name="action_mpd_connected">Συνδέθηκε στον εξυπηρετητή:  %1$s</string>
+    
+    
+    
 
     <string name="settings_other">Άλλα</string>
     <string name="settings_lastfm_api_key">Κλειδί API Last.fm</string>
@@ -291,9 +270,9 @@
 
     <string name="notify_stream_url_copied">Η Διεύθυνση Url της Ροής Έχει Αντιγραφεί με Επιτυχία!</string>
 
-    <string name="nav_item_statistics">Στατιστικά</string>
-    <string name="nav_item_about">Σχετικά με...</string>
-    <string name="settings_mpd_port">Θύρα MPD</string>
+    
+    
+    
     <string name="refresh">Ανανέωση</string>
     <string name="alarm_fade_invalid_range">Η αρχική ένταση πρέπει να είναι χαμηλότερη από την τελική</string>
     <string name="alarm_no_history_auto_pick">Δεν υπάρχει ιστορικό αναπαραγωγής. Ο πρώτος διαθέσιμος σταθμός επιλέχθηκε αυτόματα ως ξυπνητήρι. Το ξυπνητήρι θα αποθηκευτεί και θα αναπαραχθεί κανονικά.</string>

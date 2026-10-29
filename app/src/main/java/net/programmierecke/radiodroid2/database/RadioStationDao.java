@@ -106,18 +106,18 @@ public interface RadioStationDao {
     @Query("SELECT * FROM radio_stations WHERE language = :language ORDER BY clickcount DESC LIMIT :limit")
     LiveData<List<RadioStation>> getStationsByLanguageWithLimit(String language, int limit);
     
-    @Query("SELECT * FROM radio_stations WHERE language = :language AND countrycode = :countryCode ORDER BY clickcount DESC LIMIT :limit")
+    @Query("SELECT * FROM radio_stations WHERE language = :language AND UPPER(countrycode) = UPPER(:countryCode) ORDER BY clickcount DESC LIMIT :limit")
     LiveData<List<RadioStation>> getStationsByLanguageAndCountry(String language, String countryCode, int limit);
     
     // language 字段是 "english,german" 这类逗号分隔英文全名，本地分类按系统语言降级时
     // 需按逗号分词匹配（= 精确匹配多语言字段会恒为空），与 getStationCountByTagSync 的 tags 模式一致
-    @Query("SELECT * FROM radio_stations WHERE (language = :language OR language LIKE :language || ',%' OR language LIKE '%,' || :language OR language LIKE '%,' || :language || ',%') AND countrycode = :countryCode ORDER BY clickcount DESC")
+    @Query("SELECT * FROM radio_stations WHERE (language = :language OR language LIKE :language || ',%' OR language LIKE '%,' || :language OR language LIKE '%,' || :language || ',%') AND UPPER(countrycode) = UPPER(:countryCode) ORDER BY clickcount DESC")
     LiveData<List<RadioStation>> getStationsByLanguageAndCountry(String language, String countryCode);
     
-    @Query("SELECT * FROM radio_stations WHERE countrycode = :countryCode ORDER BY clickcount DESC LIMIT :limit")
+    @Query("SELECT * FROM radio_stations WHERE UPPER(countrycode) = UPPER(:countryCode) ORDER BY clickcount DESC LIMIT :limit")
     LiveData<List<RadioStation>> getStationsByCountryWithLimit(String countryCode, int limit);
 
-    @Query("SELECT * FROM radio_stations WHERE countrycode = :countryCode ORDER BY clickcount DESC")
+    @Query("SELECT * FROM radio_stations WHERE UPPER(countrycode) = UPPER(:countryCode) ORDER BY clickcount DESC")
     LiveData<List<RadioStation>> getStationsByCountryCodeAll(String countryCode);
 
     // 以下三个同步查询与"本地电台"列表页的加载链路（国家→语言→全部，点击量降序）保持一致，
@@ -178,8 +178,11 @@ public interface RadioStationDao {
      * 按 ISO 国家代码分组统计（country 列复用为代码值）。
      * 供搜索筛选下拉使用：同一代码下的英文国名变体（如 "Russia"/"Russian Federation"）
      * 合并为一个选项，计数更准确，且筛选可按 countrycode 精确匹配。
+     * radio-browser 存量数据存在同一国家大小写两种代码（如 "BR" 与 "br"），
+     * 直接 GROUP BY countrycode（BINARY 排序规则）会分成两组，本地化后显示为重复项
+     * （如两个"巴西"），故按 UPPER(countrycode) 归一分组。
      */
-    @Query("SELECT countrycode AS country, COUNT(*) AS stationCount FROM radio_stations WHERE countrycode != '' GROUP BY countrycode HAVING COUNT(*) > 0 ORDER BY COUNT(*) DESC")
+    @Query("SELECT UPPER(countrycode) AS country, COUNT(*) AS stationCount FROM radio_stations WHERE countrycode != '' GROUP BY UPPER(countrycode) HAVING COUNT(*) > 0 ORDER BY COUNT(*) DESC")
     List<CountryCount> getAllCountriesWithCountByCodeSync();
 
     // 优化的查询方法 - 一次性获取所有语言及其电台数量
@@ -296,7 +299,7 @@ public interface RadioStationDao {
      * @param keyword 关键词搜索，为空表示不搜索
      * @return 符合条件的电台列表
      */
-    @Query("SELECT * FROM radio_stations WHERE (:country = '' OR countrycode = :country) AND (:language = '' OR language = :language) AND (:tag = '' OR tags LIKE ',' || :tag || ',' OR tags LIKE :tag || ',%' OR tags LIKE '%,' || :tag OR tags = :tag) AND (:keyword = '' OR name LIKE :keyword || '%' ESCAPE '\\' OR name LIKE '%' || :keyword || '%' ESCAPE '\\' OR country LIKE :keyword || '%' ESCAPE '\\' OR country LIKE '%' || :keyword || '%' ESCAPE '\\' OR state LIKE :keyword || '%' ESCAPE '\\' OR state LIKE '%' || :keyword || '%' ESCAPE '\\' OR language LIKE :keyword || '%' ESCAPE '\\' OR language LIKE '%' || :keyword || '%' ESCAPE '\\' OR tags LIKE '%' || :keyword || '%' ESCAPE '\\') ORDER BY CASE WHEN :keyword != '' AND name LIKE :keyword || '%' ESCAPE '\\' THEN 0 WHEN :keyword != '' AND (name LIKE '% ' || :keyword || '%' ESCAPE '\\' OR name LIKE '%-' || :keyword || '%' ESCAPE '\\' OR name LIKE '%(' || :keyword || '%' ESCAPE '\\' OR name LIKE '%.' || :keyword || '%' ESCAPE '\\') THEN 1 WHEN :keyword != '' AND name LIKE '%' || :keyword || '%' ESCAPE '\\' THEN 2 ELSE 3 END, clickcount DESC LIMIT 1000")
+    @Query("SELECT * FROM radio_stations WHERE (:country = '' OR UPPER(countrycode) = UPPER(:country)) AND (:language = '' OR language = :language) AND (:tag = '' OR tags LIKE ',' || :tag || ',' OR tags LIKE :tag || ',%' OR tags LIKE '%,' || :tag OR tags = :tag) AND (:keyword = '' OR name LIKE :keyword || '%' ESCAPE '\\' OR name LIKE '%' || :keyword || '%' ESCAPE '\\' OR country LIKE :keyword || '%' ESCAPE '\\' OR country LIKE '%' || :keyword || '%' ESCAPE '\\' OR state LIKE :keyword || '%' ESCAPE '\\' OR state LIKE '%' || :keyword || '%' ESCAPE '\\' OR language LIKE :keyword || '%' ESCAPE '\\' OR language LIKE '%' || :keyword || '%' ESCAPE '\\' OR tags LIKE '%' || :keyword || '%' ESCAPE '\\') ORDER BY CASE WHEN :keyword != '' AND name LIKE :keyword || '%' ESCAPE '\\' THEN 0 WHEN :keyword != '' AND (name LIKE '% ' || :keyword || '%' ESCAPE '\\' OR name LIKE '%-' || :keyword || '%' ESCAPE '\\' OR name LIKE '%(' || :keyword || '%' ESCAPE '\\' OR name LIKE '%.' || :keyword || '%' ESCAPE '\\') THEN 1 WHEN :keyword != '' AND name LIKE '%' || :keyword || '%' ESCAPE '\\' THEN 2 ELSE 3 END, clickcount DESC LIMIT 1000")
     LiveData<List<RadioStation>> searchStationsByMultiCriteria(String country, String language, String tag, String keyword);
     
     // 获取搜索建议

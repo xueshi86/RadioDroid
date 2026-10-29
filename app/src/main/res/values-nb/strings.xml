@@ -14,7 +14,7 @@
   <string name="detail_share">Del</string>
   <string name="detail_play_in_radiodroid">Spill i RadioDroid</string>
 
-  <string name="action_links">Lenker</string>
+  
   <string name="action_homepage">Hjemmeside</string>
   <string name="action_favorite">Favoritt</string>
   <string name="action_alarm">Alarm</string>
@@ -41,9 +41,9 @@
   <string name="action_top_vote">Flest stemmer</string>
   <string name="action_changed_lately">Nylig endret</string>
   <string name="action_currently_playing">Spilles av</string>
-  <string name="action_tags">Merkelapper</string>
-  <string name="action_countries">Land</string>
-  <string name="action_languages">Språk</string>
+  
+  
+  
   <string name="action_edit">Rediger</string>
   <string name="action_lyrics">Tekster</string>
   <string name="action_copy_info">Kopier info</string>
@@ -58,14 +58,14 @@
   <string name="nav_item_settings">Innstillinger</string>
   <string name="nav_item_alarm">Alarm</string>
 
-  <string name="about_text">Denne appen bruker radiokanaloversikten til\nhttps://www.radio-browser.info/\nAlle kan legge til nye radiokanaler eller oppdatere informasjonen om kanaler som finnes fra før. Nettsiden fungerer som en wiki om nettbaserte radiokanaler.\n\nKontakt:\nsegler_alex\@web.de\n\nMeld om feil:\nhttps://github.com/segler-alex/RadioDroid/issues\n\nHvis du liker appen og ønsker å hjelpe til, ta gjerne kontakt med meg på e-post. Jeg trenger virkelig noen med designkompetanse for å gjøre appen finere. :) Kanskje noen som kan tegne ikoner, bilder osv. Men og utviklere som kan rette feil eller legge til ny funksjonalitet.\nForslag til nye funksjoner blir også satt pris på!\n\nDenne appen er fri programvare tilgjengelig under GPLv3-lisensen:\nhttps://www.gnu.org/licenses/gpl-3.0.html</string>
+  
   <string name="about_version">Versjon: %1$s</string>
   <string name="detail_star">Legg til som favoritt</string>
   <string name="detail_unstar">Fjern fra favoritter</string>
   <string name="detail_play_in_external_player">@string/action_play_in_external</string>
-  <string name="progress_loading">Laster …</string>
+  
 
-  <string name="sleep_timer">Søvnnedtelling: %1$02d:%2$02d</string>
+  
   <string name="sleep_timer_title">Stopp avspilling etter valgte minutter</string>
   <string name="sleep_timer_apply">Bruk</string>
   <string name="sleep_timer_clear">Tøm</string>
@@ -74,19 +74,19 @@
   <string name="nav_item_save_playlist">Eksporter favoritter som spilleliste</string>
   <string name="nav_item_load_playlist">Importer favoritter fra spilleliste</string>
   <string name="nav_item_save_history_playlist">Eksporter historikk som spilleliste</string>
-  <string name="confirm_overwrite_file">Skrive over?</string>
-  <string name="dialog_hint_file_name">Angi filnavn</string>
-  <string name="error_empty_field">Feltet må fylles ut</string>
-  <string name="error_invalid_file_name">Ugyldig filnavn</string>
-  <string name="label_button_cancel">Avbryt</string>
-  <string name="label_button_overwrite">Skriv over</string>
+  
+  
+  
+  
+  
+  
   <string name="notify_load_playlist_nok">Kunne ikke importere fra %1$s&#47;%2$s</string>
   <string name="notify_load_playlist_now">Importerer fra %1$s&#47;%2$s, vent litt.</string>
   <string name="notify_load_playlist_ok">Importert %1$d kanaler fra %2$s&#47;%3$s</string>
   <string name="notify_save_playlist_nok">Kunne ikke eksportere til %1$s&#47;%2$s</string>
   <string name="notify_save_playlist_now">Eksporterer til %1$s&#47;%2$s, vent litt.</string>
   <string name="notify_save_playlist_ok">Eksportering til %1$s&#47;%2$s vellykket</string>
-  <string name="notify_sync_list_deleted_entries">%1$d av %2$d lokale kanalene i listen merket som ikkeeksisterende på serveren</string>
+  
 
   <string name="searchpreference_clear_history">Tøm historikk</string>
   <string name="searchpreference_no_results">Ingen resultater</string>
@@ -200,7 +200,7 @@
 	  
   <string name="notify_starred">Kanalen er lagt til favoritter</string>
   <string name="notify_autostarred">Kanalen er automatisk lagt til i favoritter</string>
-  <string name="notify_unstarred">Kanalen er fjernet fra favoritter</string>
+  
   <string name="notify_deleted_favorites">Favorittene er slettet</string>
   <string name="notify_deleted_history">Historikken er tømt</string>
   
@@ -216,13 +216,13 @@
   <string name="yes">Ja</string>
   <string name="no">Nei</string>
   
-  <string name="alert_select_mpd_server">Velg server</string>
+  
   <string name="alert_select_mpd_server_name">Servernavn</string>
   <string name="alert_select_mpd_server_password">Serverpassord</string>
   <string name="hostname">Vertsnavn</string>
   <string name="port">Port</string>
 	
-  <string name="alert_select_mpd_server_add">Legg til</string>
+  
   <string name="alert_select_mpd_server_save">Lagre</string>
   <string name="alert_select_mpd_server_remove">Fjern</string>
   <string name="alert_add_or_edit_mpd_server">Angi info om server</string>
@@ -243,14 +243,14 @@
   
   <string name="error_no_equalizer_found">Fant ingen equalizer app</string>
   
-  <string name="player_info_status">Status:&#160;</string>
-  <string name="player_info_status_stopped">stoppet</string>
-  <string name="player_info_status_playing">spiller av</string>
-  <string name="player_info_status_recording">tar opp</string>
-  <string name="player_info_status_playing_and_recording">spiller av og tar opp</string>
-  <string name="player_info_transferred">Data overført: %1$s</string>
-  <string name="player_info_recording_to">Tar opp til:\n%1$s</string>
-  <string name="player_info_recorded_to">Siste opptak:\n%1$s</string>
+  
+  
+  
+  
+  
+  
+  
+  
   
   <string name="tab_player_art">Albumgrafikk</string>
   <string name="tab_player_station_info">Stasjoninfo</string>
@@ -261,9 +261,9 @@
   <string name="station_detail_broken">BRUTT</string>
   <string name="station_detail_deleted_on_server">SLETTET</string>
 	  
-  <string name="image_button_disable">Slå av</string>
+  
   <string name="image_button_record">Ta opp</string>
-  <string name="image_button_recordings">Opptak</string>
+  
   <string name="image_button_delete">Slett</string>
   <string name="image_button_more">Mer</string>
   <string name="image_button_less">Mindre</string>
@@ -278,11 +278,11 @@
   <string name="app_name">RadioDroid</string>
 	  
   <string name="settings_mpd">Musikkavspillingstjeneste</string>
-  <string name="settings_mpd_port">MPD port</string>
+  
   <string name="settings_view_mpd_servers">Dine servere</string>
-  <string name="action_mpd_nok">MPD ikke koblet til</string>
-  <string name="action_mpd_ok">MPD koblet til</string>
-  <string name="action_mpd_connected">Koble til server: %1$s</string>
+  
+  
+  
   
   <string name="mpd_no_connection">Ingen tilkobling</string>
   <string name="action_enable_mpd">Slå på MPD</string>
@@ -290,7 +290,7 @@
   <string name="action_add_mpd_server">Legg til MPD server</string>
 
   <string name="action_play_in_external">Spill av i ekstern avspiller</string>
-  <string name="action_choose_external_player">Velg ekstern avspiller</string>
+  
 
   <string name="settings_lastfm_api_key">Last.fm API nøkkel</string>
   <string name="settings_lastfm_api_key_desc">Angi API nøkkel for å spå på albumgrafikk i fullskjermspiller</string>
@@ -316,15 +316,12 @@
   <string name="notify_stream_url_copied">Adressen til radiostrømmen kopiert</string>
   <string name="notify_track_info_copied">Sporinfo kopiert</string>
   
-  <string-array name="actions_station_link">
-        <item>Besøk nettside</item>
-        <item>Kopier adressen til radiostrømmen</item>
-  </string-array>
+  
 
   <string name="alert_metered_connection_title">Forbruksmålt tilkobling oppdaget</string>
   <string name="alert_metered_connection_message">Forbruksmålt tilkobling kan medføre tilleggsavgifter, trykk \'OK\' for å fortsette.</string>
-  <string name="nav_item_statistics">Statistikk</string>
-  <string name="nav_item_about">Om</string>
+  
+  
   <string name="refresh">Oppdater</string>
   
   <string name="alarm_backup">Alternative Alarm</string>

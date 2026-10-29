@@ -23,9 +23,9 @@
     <string name="action_top_vote">Najlepšie (Hlasovanie)</string>
     <string name="action_changed_lately">Naposledy zmenené</string>
     <string name="action_currently_playing">Prehrávajúce</string>
-    <string name="action_tags">Značky</string>
-    <string name="action_countries">Krajiny</string>
-    <string name="action_languages">Jazyky</string>
+    
+    
+    
     <string name="action_station_share">Zdieľať</string>
     <string name="error_station_load">Nie je možné pripojiť sa k stanici</string>
     <string name="error_list_update">Nie je možné pripojiť sa k serveru služby radio browser</string>
@@ -39,27 +39,13 @@
     <string name="nav_item_alarm">Budík</string>
     <string name="tab_player_recordings">Nahrávky</string>
 
-    <string name="about_text">Táto aplikácia používa bezplatný zoznam rádio staníc na adrese\n
-    https://www.radio-browser.info\n
-    Každý môže upravovať alebo pridávať stanice do tohoto zoznamu. Služba Radio browser funguje na princípe wiki s tým rozdieľom, že členovia komunity neupravujú články ale udržujú zoznam online (streamovateľných) rádio staníc.\n
-    \n
-    Kontakt:\n
-    segler_alex@web.de\n
-    \n
-    Nahlasovanie chýb:\n
-    https://github.com/segler-alex/RadioDroid/issues\n
-    \n
-    Ak sa vám táto aplikácia páči a radi by ste pomohli, prosím ozvite sa emailom. Rád by som našiel niekoho so skúsenosťami v oblasti grafiky, aby mi pomohol zatraktívniť aplikáciu tak, aby bola krajšia na pohľad :) možno niekto z vás dokáže nakresliť ikony a obrázky... alebo tiež šikovní vývojári, ktorí dokážete opraviť chyby a pridať nové (vlastnosti nie chyby ;)\n
-    Nápady na nové vylepšenia sú tiež vítané!\n
-    \n
-    Táto aplikácia je poskytovaná zdarma pod licenciou GPLv3.\n
-    https://www.gnu.org/licenses/gpl-3.0.html</string>
+    
     <string name="about_version">Verzia: %1$s</string>
     <string name="detail_star">Do obľúbených</string>
     <string name="detail_unstar">Odstrániť z obľúbených</string>
-    <string name="progress_loading">Načítavanie...</string>
+    
 
-    <string name="sleep_timer" formatted="true">Časovač zaspávania: %1$02d:%2$02d</string>
+    
     <string name="sleep_timer_title">Koľko minút do automatického zastavenia</string>
     <string name="sleep_timer_apply">Použiť</string>
     <string name="sleep_timer_clear">Vynulovať</string>
@@ -137,7 +123,7 @@
     <string name="notify_paused">Pozastavené</string>
     <string name="notify_starred">Stanica bola pridaná do obľúbených</string>
     <string name="notify_autostarred">Stanica bola automaticky pridaná do obľúbených</string>
-    <string name="notify_unstarred">Stanica bola odstránená zo zoznamu obľúbených</string>
+    
     <string name="notify_deleted_favorites">Obľúbené stanice boli vymazané.</string>
     <string name="notify_deleted_history">História prehrávania bola vymazaná.</string>
 
@@ -149,12 +135,12 @@
     <string name="yes">Áno</string>
     <string name="no">Nie</string>
 
-    <string name="alert_select_mpd_server">Ktorý server?</string>
+    
     <string name="alert_select_mpd_server_name">Názouv servera</string>
     <string name="hostname">Názov hostiteľa</string>
     <string name="port">Port</string>
 
-    <string name="alert_select_mpd_server_add">Pridať</string>
+    
     <string name="alert_select_mpd_server_save">Uložiť</string>
     <string name="alert_select_mpd_server_remove">Odstrániť</string>
     <string name="alert_add_or_edit_mpd_server">Zadajte podrobnosti servera</string>
@@ -170,22 +156,21 @@
 
     <string name="error_no_equalizer_found">Nie je možné nájsť žiadnu aplikáciu ekvalizér!</string>
 
-    <string name="player_info_status">STAV:</string>
-    <string name="player_info_status_stopped">Zastavené</string>
-    <string name="player_info_status_playing">Prehrávanie</string>
-    <string name="player_info_status_recording">Nahrávanie</string>
-    <string name="player_info_status_playing_and_recording">Prehrávanie aj nahrávanie</string>
-    <string name="player_info_transferred">Prenesené údaje: %1$s</string>
-    <string name="player_info_recording_to">Nahrávanie do: %1$s</string>
-    <string name="player_info_recorded_to">Posledná nahrávka:\n
-   %1$s</string>
+    
+    
+    
+    
+    
+    
+    
+    
 
     <string name="station_detail_bitrate">%1$1d kbps</string>
     <string name="station_detail_broken">NEFUNKČNÁ</string>
 
-    <string name="image_button_disable">Zakázať</string>
+    
     <string name="image_button_record">Nahrávať</string>
-    <string name="image_button_recordings">Nahrávky</string>
+    
     <string name="image_button_delete">Odstrániť</string>
     <string name="image_button_more">Viac</string>
     <string name="image_button_less">Menej</string>
@@ -197,9 +182,9 @@
 
 
     <string name="settings_view_mpd_servers">Vaše servery</string>
-    <string name="action_mpd_nok">Nepripojené ku MPD</string>
-    <string name="action_mpd_ok">Pripojené ku MPD</string>
-    <string name="action_mpd_connected">Pripojené k serveru: %1$s</string>
+    
+    
+    
 
     <string name="settings_other">Ostatné</string>
     <string name="settings_statistics">Štatistika</string>
@@ -209,8 +194,8 @@
     <string name="notify_stream_url_copied">Adresa URL streamu úspešne skopírovaná</string>
 
 
-    <string name="nav_item_statistics">Štatistika</string>
-    <string name="nav_item_about">O aplikácii</string>
+    
+    
     <string name="refresh">Obnoviť</string>
     <string name="alarm_fade_invalid_range">Počiatočná hlasitosť musí byť nižšia ako cieľová</string>
 </resources>
