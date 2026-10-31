@@ -56,6 +56,10 @@ public class FragmentServerInfo extends Fragment implements IFragmentRefreshable
         // 统计页面统一显示本地数据库的三个口径数字：全部（含损坏）、未损坏、损坏。
         // 线上 /json/stats 不返回 stations_working 字段，无法提供一致的三数字，
         // 故不使用 ServerStatistics，直接读取本地库（本地库为全量镜像，三数字即实际状态）。
+        // 收藏数在进入方法时取好，避免后台线程访问已 detach 的 Fragment。
+        final RadioDroidApp app = getActivity() == null
+                ? null
+                : (RadioDroidApp) getActivity().getApplication();
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -65,12 +69,15 @@ public class FragmentServerInfo extends Fragment implements IFragmentRefreshable
                     final int workingCount = repository.getWorkingStationCountSync();
                     final int brokenCount = repository.getBrokenStationCountSync();
 
+                    // 用户收藏数（本地保存列表的长度，Issue #56）
+                    final int favouriteCount = app == null ? 0 : app.getFavouriteManager().size();
+
                     // 在主线程更新UI
                     if (getActivity() != null) {
                         getActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                updateStatisticsUI(totalCount, workingCount, brokenCount);
+                                updateStatisticsUI(totalCount, workingCount, brokenCount, favouriteCount);
                             }
                         });
                     }
@@ -81,7 +88,7 @@ public class FragmentServerInfo extends Fragment implements IFragmentRefreshable
         }).start();
     }
     
-    private void updateStatisticsUI(int totalCount, int workingCount, int brokenCount) {
+    private void updateStatisticsUI(int totalCount, int workingCount, int brokenCount, int favouriteCount) {
         // 创建统计数据
         ArrayList<DataStatistics> statistics = new ArrayList<>();
         
@@ -102,6 +109,12 @@ public class FragmentServerInfo extends Fragment implements IFragmentRefreshable
         brokenStations.Name = getString(R.string.statistics_broken_stations);
         brokenStations.Value = String.valueOf(brokenCount);
         statistics.add(brokenStations);
+
+        // 用户收藏的电台数（Issue #56）
+        DataStatistics favouriteStations = new DataStatistics();
+        favouriteStations.Name = getString(R.string.statistics_favourite_stations);
+        favouriteStations.Value = String.valueOf(favouriteCount);
+        statistics.add(favouriteStations);
             
         // 更新UI
         itemAdapterStatistics.clear();

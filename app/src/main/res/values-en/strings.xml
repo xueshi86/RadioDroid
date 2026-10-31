@@ -683,4 +683,9 @@ The app will automatically restart to load the new database.</string>
     <string name="update_failed_db_migration">Update failed: Database version incompatible. The local database will be rebuilt on next update.</string>
     <string name="error_network_unavailable">Network connection unavailable, please check network settings</string>
     <string name="error_network_check_failed">Network check failed</string>
+    <string name="settings_version">Version</string>
+    <string name="statistics_total_stations">Total stations (incl. broken)</string>
+    <string name="statistics_working_stations">Working stations</string>
+    <string name="statistics_broken_stations">Broken stations</string>
+    <string name="statistics_favourite_stations">Favourite stations</string>
 </resources>

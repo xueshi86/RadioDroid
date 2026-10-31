@@ -424,4 +424,9 @@
     <string name="update_failed_db_migration">Η ενημέρωση απέτυχε: μη συμβατή έκδοση βάσης δεδομένων. Η τοπική βάση δεδομένων θα αναδομηθεί στην επόμενη ενημέρωση.</string>
     <string name="error_network_unavailable">Η σύνδεση δικτύου δεν είναι διαθέσιμη, ελέγξτε τις ρυθμίσεις δικτύου</string>
     <string name="error_network_check_failed">Ο έλεγχος δικτύου απέτυχε</string>
+    <string name="settings_version">Έκδοση</string>
+    <string name="statistics_total_stations">Σύνολο σταθμών (συμπ. προβληματικών)</string>
+    <string name="statistics_working_stations">Λειτουργικοί σταθμοί</string>
+    <string name="statistics_broken_stations">Προβληματικοί σταθμοί</string>
+    <string name="statistics_favourite_stations">Αγαπημένοι σταθμοί</string>
 </resources>

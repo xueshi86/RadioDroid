@@ -113,9 +113,11 @@ android {
     productFlavors {
         play {
             dimension "one"
+            buildConfigField "boolean", "HAS_CAST_SUPPORT", "true"
         }
         free {
             dimension "one"
+            buildConfigField "boolean", "HAS_CAST_SUPPORT", "false"
         }
     }
     lint {

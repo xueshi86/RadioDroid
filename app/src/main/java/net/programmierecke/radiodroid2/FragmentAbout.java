@@ -19,8 +19,8 @@ public class FragmentAbout extends Fragment {
 
         TextView aTextVersion = (TextView) view.findViewById(R.id.about_version);
         if (aTextVersion != null) {
-            String version = BuildConfig.VERSION_NAME;
-            aTextVersion.setText(getString(R.string.about_version, version));
+            // 同时标明安装的是哪个变体，便于用户反馈问题时区分 Free / Play（Issue #56）
+            aTextVersion.setText(getString(R.string.about_version, RadioDroidApp.getVersionLabel()));
         }
 
         TextView aTextFork = (TextView) view.findViewById(R.id.about_fork);

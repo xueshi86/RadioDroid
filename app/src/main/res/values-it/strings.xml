@@ -623,4 +623,9 @@ L\'app si riavvierà automaticamente per caricare la nuova base dati.</string>
     <string name="update_failed_db_migration">Aggiornamento non riuscito: versione del database incompatibile. Il database locale verrà ricostruito al prossimo aggiornamento.</string>
     <string name="error_network_unavailable">Connessione di rete non disponibile, verificare le impostazioni di rete</string>
     <string name="error_network_check_failed">Verifica della rete non riuscita</string>
+    <string name="settings_version">Versione</string>
+    <string name="statistics_total_stations">Stazioni totali (incl. non funzionanti)</string>
+    <string name="statistics_working_stations">Stazioni funzionanti</string>
+    <string name="statistics_broken_stations">Stazioni non funzionanti</string>
+    <string name="statistics_favourite_stations">Stazioni preferite</string>
 </resources>

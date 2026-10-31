@@ -811,7 +811,9 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         ((RadioDroidApp) getApplication()).getCastHandler().getRouteItem(getApplicationContext(), menu);
 
         if (menuItemCast != null) {
-            menuItemCast.setVisible(sharedPref.getBoolean("toolbar_show_cast", true));
+            boolean showCast = radioDroidApp.hasCastSupport()
+                    && sharedPref.getBoolean("toolbar_show_cast", true);
+            menuItemCast.setVisible(showCast);
         }
 
         return true;
@@ -828,7 +830,10 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
 
         menuItemRandomPlay.setVisible(selectedMenuItem == R.id.nav_item_stations && sharedPref.getBoolean("toolbar_show_random_play", true));
         if (menuItemCast != null) {
-            menuItemCast.setVisible(sharedPref.getBoolean("toolbar_show_cast", true));
+            RadioDroidApp app = (RadioDroidApp) getApplication();
+            boolean showCast = app.hasCastSupport()
+                    && sharedPref.getBoolean("toolbar_show_cast", true);
+            menuItemCast.setVisible(showCast);
         }
 
         return super.onPrepareOptionsMenu(menu);

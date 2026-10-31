@@ -546,4 +546,9 @@ Die App wird automatisch neu gestartet, um die neue Datenbank zu laden.</string>
     <string name="update_failed_db_migration">Aktualisierung fehlgeschlagen: Inkompatible Datenbankversion. Die lokale Datenbank wird beim nächsten Update neu aufgebaut.</string>
     <string name="error_network_unavailable">Keine Netzwerkverbindung verfügbar, bitte Netzwerkeinstellungen überprüfen</string>
     <string name="error_network_check_failed">Netzwerkprüfung fehlgeschlagen</string>
+    <string name="settings_version">Version</string>
+    <string name="statistics_total_stations">Sender gesamt (inkl. defekter)</string>
+    <string name="statistics_working_stations">Funktionierende Sender</string>
+    <string name="statistics_broken_stations">Defekte Sender</string>
+    <string name="statistics_favourite_stations">Favoritensender</string>
 </resources>

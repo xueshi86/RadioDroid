@@ -59,6 +59,9 @@ public final class SettingsBackupHelper {
             "last_selectedMenuItem",
             "auto_check_update_last_time",
             "record_num",
+            // 上次播放电台及其来源列表（Issue #57）：服务重启恢复切台队列用的运行时状态
+            "last_played_station_uuid",
+            "last_played_queue_source",
             // 电台自定义备注（Issue #54）：独立于设置的单独数据，走 station_notes.json 专属导入导出，
             // 不允许混入设置备份文件
             "station_notes"

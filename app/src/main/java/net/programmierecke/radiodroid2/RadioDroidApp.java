@@ -273,6 +273,26 @@ public class RadioDroidApp extends MultiDexApplication {
         return castHandler;
     }
 
+    /**
+     * Free 版不含 Google Cast SDK，即使 AndroidX MediaRouter 注入了设备列表也无法投屏。
+     * 用 flavor 声明的 HAS_CAST_SUPPORT 决定整个 cast UI 是否露出。
+     */
+    public boolean hasCastSupport() {
+        return BuildConfig.HAS_CAST_SUPPORT;
+    }
+
+    /**
+     * 供「关于」页和「其他」设置页统一显示「版本号 + 变体」，例如 1.13 Free / 1.13 Play，
+     * 便于用户反馈问题时注明安装的是哪个变体（Issue #56）。
+     */
+    public static String getVersionLabel() {
+        String flavor = BuildConfig.FLAVOR;
+        String flavorLabel = flavor.isEmpty()
+                ? ""
+                : Character.toUpperCase(flavor.charAt(0)) + flavor.substring(1);
+        return BuildConfig.VERSION_NAME + " " + flavorLabel;
+    }
+
     public TrackMetadataSearcher getTrackMetadataSearcher() {
         return trackMetadataSearcher;
     }

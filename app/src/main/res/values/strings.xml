@@ -936,4 +936,6 @@ The app will automatically restart to load the new database.</string>
     <string name="settings_audio_offload_title">Audio offload (experimental)</string>
     <string name="settings_audio_offload_summary_supported">This device supports audio offload: decoding is handled by the DSP, which can greatly reduce battery and CPU usage. Equalizer and other audio effects will not work while it is enabled.</string>
     <string name="settings_audio_offload_summary_unsupported">Audio offload is not supported on this device (requires Android 10 or newer and compatible hardware).</string>
+    <string name="settings_version">Version</string>
+    <string name="statistics_favourite_stations">Favourite stations</string>
 </resources>

@@ -46,6 +46,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.Preference;
+import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 import androidx.preference.Preference.OnPreferenceClickListener;
@@ -312,7 +313,18 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
     @Override
     public void onCreatePreferences(Bundle bundle, String s) {
         setPreferencesFromResource(R.xml.preferences, s);
-        
+
+        // Free 版不含 Google Cast SDK，整个投屏功能不可用；连同设置里的开关一起隐藏，避免露出空 UI。
+        RadioDroidApp radioDroidApp = (RadioDroidApp) requireActivity().getApplication();
+        if (!radioDroidApp.hasCastSupport()) {
+            Preference castPref = findPreference("toolbar_show_cast");
+            if (castPref != null && castPref.getParent() instanceof PreferenceScreen) {
+                ((PreferenceScreen) castPref.getParent()).removePreference(castPref);
+            } else if (castPref != null && castPref.getParent() instanceof PreferenceCategory) {
+                ((PreferenceCategory) castPref.getParent()).removePreference(castPref);
+            }
+        }
+
         // 初始化文件选择器（使用OpenDocument替代GetContent，兼容Android 13+）
         filePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.OpenDocument(),
@@ -634,6 +646,12 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 });
             }
         } else if (s.equals("pref_category_other")) {
+            Preference versionPref = findPreference("settings_version");
+            if (versionPref != null) {
+                // 只读信息行：显示当前安装的版本与变体（如 1.13 Free / 1.13 Play），Issue #56
+                versionPref.setSummary(RadioDroidApp.getVersionLabel());
+            }
+
             findPreference("show_statistics").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {

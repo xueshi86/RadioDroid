@@ -577,6 +577,11 @@
             android:title="@string/settings_about" />
 
         <Preference
+            android:key="settings_version"
+            android:selectable="false"
+            android:title="@string/settings_version" />
+
+        <Preference
             android:key="check_app_update"
             android:title="@string/settings_check_update" />
 

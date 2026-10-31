@@ -69,6 +69,7 @@ import net.programmierecke.radiodroid2.HistoryManager;
 import net.programmierecke.radiodroid2.IPlayerService;
 import net.programmierecke.radiodroid2.R;
 import net.programmierecke.radiodroid2.RadioDroidApp;
+import net.programmierecke.radiodroid2.StationSaveManager;
 import net.programmierecke.radiodroid2.Utils;
 import net.programmierecke.radiodroid2.history.TrackHistoryEntry;
 import net.programmierecke.radiodroid2.history.TrackHistoryRepository;
@@ -114,6 +115,20 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     private final String ACTION_SKIP_TO_NEXT = "next";
     private final String ACTION_SKIP_TO_PREVIOUS = "previous";
     private final String ACTION_STOP = "stop";
+
+    // 最近一次实际播放的电台及其来源列表，用于服务重启后恢复切台队列（Issue #57）
+    private static final String PREF_LAST_STATION_UUID = "last_played_station_uuid";
+    private static final String PREF_LAST_QUEUE_SOURCE = "last_played_queue_source";
+    private static final String QUEUE_SOURCE_FAVORITES = "favorites";
+    private static final String QUEUE_SOURCE_HISTORY = "history";
+    private static final String QUEUE_SOURCE_OTHER = "other";
+
+    // 上一台/下一台去抖：冷启动时系统可能同时通过 MediaSession 回调和媒体键广播
+    // 投递同一次切换请求，导致连跳两台（Issue #57）
+    private final Object skipDebounceLock = new Object();
+    private long lastSkipNextHandledAt = 0L;
+    private long lastSkipPreviousHandledAt = 0L;
+    private static final long SKIP_DEBOUNCE_MS = 300L;
 
     private static final float FULL_VOLUME = 100f;
     private static final float DUCK_VOLUME = 40f;
@@ -715,7 +730,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         if (currentStation == null) {
             RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
             HistoryManager historyManager = radioDroidApp.getHistoryManager();
-            currentStation = historyManager.getFirst();
+            currentStation = rebindRestoredStationQueue(historyManager.getFirst());
         }
 
         if (currentStation == null) {
@@ -728,6 +743,9 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
         if (intent != null) {
             String action = intent.getAction();
+            // 媒体键若已在下方处理过，则不再交给 MediaSession 二次分发，
+            // 否则服务被媒体键拉起时上一台/下一台会执行两次（Issue #57 冷启动路径）。
+            boolean mediaKeyHandled = false;
             if (action != null) {
                 switch (action) {
                     case ACTION_SKIP_TO_PREVIOUS:
@@ -747,17 +765,20 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                         break;
                     case ACTION_MEDIA_BUTTON:
                         KeyEvent key = (KeyEvent) intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
-                        if (key.getAction() == KeyEvent.ACTION_UP) {
+                        if (key != null && key.getAction() == KeyEvent.ACTION_UP) {
                             int keycode = key.getKeyCode();
                             switch (keycode) {
                                 case KeyEvent.KEYCODE_MEDIA_PLAY:
                                     resume();
+                                    mediaKeyHandled = true;
                                     break;
                                 case KeyEvent.KEYCODE_MEDIA_NEXT:
                                     next();
+                                    mediaKeyHandled = true;
                                     break;
                                 case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
                                     previous();
+                                    mediaKeyHandled = true;
                                     break;
                             }
                         }
@@ -765,7 +786,9 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                 }
             }
 
-            MediaButtonReceiver.handleIntent(mediaSession, intent);
+            if (!mediaKeyHandled) {
+                MediaButtonReceiver.handleIntent(mediaSession, intent);
+            }
 
             showNotification = !intent.getBooleanExtra(PLAYER_SERVICE_NO_NOTIFICATION_EXTRA, false);
         }
@@ -807,6 +830,85 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         this.currentStation = station;
     }
 
+    /**
+     * 记录最近一次实际播放的电台及其来源列表。
+     * 冷启动恢复 currentStation 时，历史记录会从 JSON 反序列化并把 queue 重新绑定为 HistoryManager，
+     * 若不记录来源，通知栏/车机的上一台、下一台会退化为按播放历史切换（Issue #57）。
+     */
+    private void recordPlaySource(DataRadioStation station) {
+        RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
+        if (station == null || station.StationUuid == null || radioDroidApp == null || sharedPref == null) {
+            return;
+        }
+
+        String source = QUEUE_SOURCE_OTHER;
+        if (station.queue == radioDroidApp.getFavouriteManager()) {
+            source = QUEUE_SOURCE_FAVORITES;
+        } else if (station.queue == radioDroidApp.getHistoryManager()) {
+            source = QUEUE_SOURCE_HISTORY;
+        }
+
+        sharedPref.edit()
+                .putString(PREF_LAST_STATION_UUID, station.StationUuid)
+                .putString(PREF_LAST_QUEUE_SOURCE, source)
+                .apply();
+    }
+
+    /**
+     * 服务重启后，按上次播放来源把历史里的电台对象替换为收藏列表中的同一台电台，
+     * 使切台队列与用户上次的播放来源一致；找不到时保持历史对象（原有行为）。
+     */
+    private DataRadioStation rebindRestoredStationQueue(DataRadioStation restored) {
+        RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
+        if (restored == null || restored.StationUuid == null || radioDroidApp == null || sharedPref == null) {
+            return restored;
+        }
+
+        String lastUuid = sharedPref.getString(PREF_LAST_STATION_UUID, null);
+        String lastSource = sharedPref.getString(PREF_LAST_QUEUE_SOURCE, QUEUE_SOURCE_OTHER);
+        if (lastUuid == null || !lastUuid.equals(restored.StationUuid)) {
+            return restored;
+        }
+
+        if (QUEUE_SOURCE_FAVORITES.equals(lastSource)) {
+            DataRadioStation favourite = radioDroidApp.getFavouriteManager().getById(lastUuid);
+            if (favourite != null) {
+                return favourite;
+            }
+        }
+
+        return restored;
+    }
+
+    /**
+     * 解析上一台/下一台的遍历列表。搜索结果、本地电台等页面直接使用数据库对象，
+     * queue 未绑定；此时回退到包含该电台的收藏/历史列表，避免空指针。
+     */
+    private StationSaveManager resolveQueue() {
+        if (currentStation == null || currentStation.StationUuid == null) {
+            return null;
+        }
+
+        if (currentStation.queue != null) {
+            return currentStation.queue;
+        }
+
+        RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
+        if (radioDroidApp != null) {
+            FavouriteManager favouriteManager = radioDroidApp.getFavouriteManager();
+            if (favouriteManager.getById(currentStation.StationUuid) != null) {
+                return favouriteManager;
+            }
+
+            HistoryManager historyManager = radioDroidApp.getHistoryManager();
+            if (historyManager.getById(currentStation.StationUuid) != null) {
+                return historyManager;
+            }
+        }
+
+        return null;
+    }
+
     private void setAlarmFade(int startVolume, int targetVolume, int durationMs) {
         this.alarmStartVolume = Math.max(1, Math.min(100, startVolume));
         this.alarmTargetVolume = Math.max(1, Math.min(100, targetVolume));
@@ -817,6 +919,8 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         if (currentStation == null) {
             return;
         }
+
+        recordPlaySource(currentStation);
 
         currentIsAlarm = isAlarm;
         alarmFadeApplied = false;
@@ -869,12 +973,13 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     }
 
     public void next() {
-        if (currentStation == null) {
+        if (currentStation == null || isDuplicateSkip(true)) {
             return;
         }
 
         setMediaPlaybackState(PlaybackStateCompat.STATE_SKIPPING_TO_NEXT);
-        DataRadioStation station = currentStation.queue.getNextById(currentStation.StationUuid);
+        StationSaveManager queue = resolveQueue();
+        DataRadioStation station = queue != null ? queue.getNextById(currentStation.StationUuid) : null;
 
         if (station != null) {
             playWithoutWarnings(station);
@@ -882,13 +987,36 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     }
 
     public void previous() {
-        if (currentStation == null) {
+        if (currentStation == null || isDuplicateSkip(false)) {
             return;
         }
 
-        DataRadioStation station = currentStation.queue.getPreviousById(currentStation.StationUuid);
+        StationSaveManager queue = resolveQueue();
+        DataRadioStation station = queue != null ? queue.getPreviousById(currentStation.StationUuid) : null;
         if (station != null) {
             playWithoutWarnings(station);
+        }
+    }
+
+    /**
+     * 同一次切换请求可能被系统从多个入口重复投递（MediaSession 回调 + 媒体键广播），
+     * 在短时间窗口内忽略重复请求，避免一次按键连跳两台。
+     */
+    private boolean isDuplicateSkip(boolean next) {
+        synchronized (skipDebounceLock) {
+            long now = System.currentTimeMillis();
+            if (next) {
+                if (now - lastSkipNextHandledAt < SKIP_DEBOUNCE_MS) {
+                    return true;
+                }
+                lastSkipNextHandledAt = now;
+            } else {
+                if (now - lastSkipPreviousHandledAt < SKIP_DEBOUNCE_MS) {
+                    return true;
+                }
+                lastSkipPreviousHandledAt = now;
+            }
+            return false;
         }
     }
 

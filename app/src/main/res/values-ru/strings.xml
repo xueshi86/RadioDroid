@@ -929,4 +929,9 @@
     <string name="settings_audio_offload_title">Аппаратная разгрузка аудио (экспериментально)</string>
     <string name="settings_audio_offload_summary_supported">Устройство поддерживает аппаратную разгрузку аудио: декодирование выполняет DSP, что значительно снижает энергопотребление и нагрузку на ЦП. При включении эквалайзер и другие аудиоэффекты работать не будут.</string>
     <string name="settings_audio_offload_summary_unsupported">Аппаратная разгрузка аудио не поддерживается на этом устройстве (требуется Android 10 или новее и совместимое оборудование).</string>
+    <string name="settings_version">Версия</string>
+    <string name="statistics_total_stations">Всего станций (включая нерабочие)</string>
+    <string name="statistics_working_stations">Рабочие станции</string>
+    <string name="statistics_broken_stations">Нерабочие станции</string>
+    <string name="statistics_favourite_stations">Избранные станции</string>
 </resources>

@@ -937,4 +937,9 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="settings_audio_offload_title">Descarga de audio (experimental)</string>
     <string name="settings_audio_offload_summary_supported">Este dispositivo admite la descarga de audio: la decodificación la realiza el DSP, lo que puede reducir notablemente el consumo de batería y de CPU. El ecualizador y otros efectos de audio no funcionarán mientras esté activada.</string>
     <string name="settings_audio_offload_summary_unsupported">Este dispositivo no admite la descarga de audio (requiere Android 10 o superior y hardware compatible).</string>
+    <string name="settings_version">Versión</string>
+    <string name="statistics_total_stations">Emisoras totales (incl. dañadas)</string>
+    <string name="statistics_working_stations">Emisoras en funcionamiento</string>
+    <string name="statistics_broken_stations">Emisoras dañadas</string>
+    <string name="statistics_favourite_stations">Emisoras favoritas</string>
 </resources>

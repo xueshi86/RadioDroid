@@ -922,4 +922,6 @@
     <string name="settings_audio_offload_title">音频卸载（实验性）</string>
     <string name="settings_audio_offload_summary_supported">本机支持音频卸载：解码交由 DSP 处理，可显著降低播放耗电与 CPU 占用。开启后均衡器等音效功能将不可用。</string>
     <string name="settings_audio_offload_summary_unsupported">本机不支持音频卸载（需 Android 10 及以上且设备硬件支持）。</string>
+    <string name="settings_version">版本</string>
+    <string name="statistics_favourite_stations">收藏电台数</string>
 </resources>

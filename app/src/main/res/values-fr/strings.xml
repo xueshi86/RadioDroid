@@ -625,4 +625,9 @@ L\'application redémarrera automatiquement pour charger la nouvelle base.</stri
     <string name="update_failed_db_migration">Échec de la mise à jour : version de base de données incompatible. La base locale sera reconstruite lors de la prochaine mise à jour.</string>
     <string name="error_network_unavailable">Connexion réseau indisponible, veuillez vérifier les paramètres réseau</string>
     <string name="error_network_check_failed">Échec de la vérification du réseau</string>
+    <string name="settings_version">Version</string>
+    <string name="statistics_total_stations">Total des stations (y compris défaillantes)</string>
+    <string name="statistics_working_stations">Stations fonctionnelles</string>
+    <string name="statistics_broken_stations">Stations défaillantes</string>
+    <string name="statistics_favourite_stations">Stations favorites</string>
 </resources>
