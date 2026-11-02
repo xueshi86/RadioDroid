@@ -18,7 +18,7 @@ import net.programmierecke.radiodroid2.utils.GetRealLinkAndPlayTask;
 public class MediaSessionCallback extends MediaSessionCompat.Callback {
     private static final String TAG = "MediaSessionCallback";
     public static final String BROADCAST_PLAY_STATION_BY_ID = "PLAY_STATION_BY_ID";
-    public static final String EXTRA_STATION_ID = "STATION_ID";
+    public static final String EXTRA_MEDIA_ID = "MEDIA_ID";
     public static final String ACTION_PLAY_STATION_BY_UUID = "PLAY_STATION_BY_UUID";
     public static final String EXTRA_STATION_UUID = "STATION_UUID";
 
@@ -99,11 +99,10 @@ public class MediaSessionCallback extends MediaSessionCompat.Callback {
 
     @Override
     public void onPlayFromMediaId(String mediaId, Bundle extras) {
-        final String stationId = RadioDroidBrowser.stationIdFromMediaId(mediaId);
-
-        if (!stationId.isEmpty()) {
+        // 完整 mediaId（含来源列表前缀）透传给浏览器服务，按车机点播的列表解析电台
+        if (mediaId != null && !RadioDroidBrowser.stationIdFromMediaId(mediaId).isEmpty()) {
             Intent intent = new Intent(BROADCAST_PLAY_STATION_BY_ID);
-            intent.putExtra(EXTRA_STATION_ID, stationId);
+            intent.putExtra(EXTRA_MEDIA_ID, mediaId);
 
             LocalBroadcastManager bm = LocalBroadcastManager.getInstance(context);
             bm.sendBroadcast(intent);

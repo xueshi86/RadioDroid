@@ -863,8 +863,7 @@ public class FragmentPlayerFull extends Fragment {
         DataRadioStation station = PlayerServiceUtil.getCurrentStation();
 
         if (station == null) {
-            HistoryManager historyManager = radioDroidApp.getHistoryManager();
-            station = historyManager.getFirst();
+            station = Utils.getLastPlayedStation(radioDroidApp);
         }
 
         if (station != null) {

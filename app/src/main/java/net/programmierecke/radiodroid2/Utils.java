@@ -353,16 +353,48 @@ public class Utils {
         return null;
     }
 
+    // 上次播放电台及其点播来源列表（Issue #57）：服务重启、开机自动续播、耳机/蓝牙重连续播
+    // 都需要按同一点播来源恢复「上一台/下一台」的遍历列表，不能一律退回播放历史
+    public static final String PREF_LAST_PLAYED_STATION_UUID = "last_played_station_uuid";
+    public static final String PREF_LAST_PLAYED_QUEUE_SOURCE = "last_played_queue_source";
+    public static final String QUEUE_SOURCE_FAVORITES = "favorites";
+    public static final String QUEUE_SOURCE_HISTORY = "history";
+    public static final String QUEUE_SOURCE_OTHER = "other";
+
     public static @Nullable
     DataRadioStation getCurrentOrLastStation(@NonNull Context ctx) {
         DataRadioStation station = PlayerServiceUtil.getCurrentStation();
         if (station == null) {
-            RadioDroidApp radioDroidApp = (RadioDroidApp) ctx.getApplicationContext();
-            HistoryManager historyManager = radioDroidApp.getHistoryManager();
-            station = historyManager.getFirst();
+            station = getLastPlayedStation((RadioDroidApp) ctx.getApplicationContext());
         }
 
         return station;
+    }
+
+    /**
+     * 取「上次播放的电台」。历史里恢复出来的电台对象绑定的是播放历史列表，
+     * 直接播放会让方向键退化为按历史顺序切换；这里按上次记录的点播来源，
+     * 把它替换为收藏列表中的同一台电台，保持用户点播时的切台顺序。
+     * 来源未知或收藏中已不存在时退回历史第一条（保持原有行为）。
+     */
+    public static @Nullable
+    DataRadioStation getLastPlayedStation(@NonNull RadioDroidApp radioDroidApp) {
+        DataRadioStation restored = radioDroidApp.getHistoryManager().getFirst();
+        if (restored == null || TextUtils.isEmpty(restored.StationUuid)) {
+            return restored;
+        }
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(radioDroidApp);
+        String lastUuid = prefs.getString(PREF_LAST_PLAYED_STATION_UUID, null);
+        String lastSource = prefs.getString(PREF_LAST_PLAYED_QUEUE_SOURCE, QUEUE_SOURCE_OTHER);
+        if (QUEUE_SOURCE_FAVORITES.equals(lastSource) && restored.StationUuid.equals(lastUuid)) {
+            DataRadioStation favourite = radioDroidApp.getFavouriteManager().getById(lastUuid);
+            if (favourite != null) {
+                return favourite;
+            }
+        }
+
+        return restored;
     }
 
     public static void showMpdServersDialog(final RadioDroidApp radioDroidApp, final FragmentManager fragmentManager, @Nullable final DataRadioStation station) {

@@ -94,6 +94,9 @@ public class FragmentStarred extends Fragment implements IAdapterRefreshable, Ob
 
     void onStationClick(DataRadioStation theStation) {
         RadioDroidApp radioDroidApp = (RadioDroidApp) getActivity().getApplication();
+        // 点播时显式绑定收藏列表（Issue #57）：收藏列表里可能残留从历史/搜索结果收藏进来的
+        // 电台对象，其 queue 仍指向播放历史，会导致方向键按历史顺序切换
+        theStation.queue = favouriteManager;
         Utils.showPlaySelection(radioDroidApp, theStation, getActivity().getSupportFragmentManager());
     }
 

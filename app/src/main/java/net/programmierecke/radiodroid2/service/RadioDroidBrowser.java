@@ -61,11 +61,10 @@ public class RadioDroidBrowser {
 
     private RadioDroidApp radioDroidApp;
 
-    private Map<String, DataRadioStation> stationIdToStation = new HashMap<>();
-
     private static class RetrieveStationsIconAndSendResult extends AsyncTask<Void, Void, Void> {
         private MediaBrowserServiceCompat.Result<List<MediaBrowserCompat.MediaItem>> result;
         private List<DataRadioStation> stations;
+        private String parentId;
         private WeakReference<Context> contextRef;
 
         private Map<String, Bitmap> stationIdToIcon = new HashMap<>();
@@ -74,9 +73,10 @@ public class RadioDroidBrowser {
         // Picasso stores weak references to targets
         List<Target> imageLoadTargets = new ArrayList<>();
 
-        RetrieveStationsIconAndSendResult(MediaBrowserServiceCompat.Result<List<MediaBrowserCompat.MediaItem>> result, List<DataRadioStation> stations, Context context) {
+        RetrieveStationsIconAndSendResult(MediaBrowserServiceCompat.Result<List<MediaBrowserCompat.MediaItem>> result, List<DataRadioStation> stations, String parentId, Context context) {
             this.result = result;
             this.stations = stations;
+            this.parentId = parentId;
             this.contextRef = new WeakReference<>(context);
             resources = context.getApplicationContext().getResources();
         }
@@ -175,7 +175,9 @@ public class RadioDroidBrowser {
                 extras.putParcelable(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, stationIcon);
                 extras.putParcelable(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON, stationIcon);
                 MediaDescriptionCompat.Builder mediaItem = new MediaDescriptionCompat.Builder()
-                        .setMediaId(MEDIA_ID_MUSICS_HISTORY + LEAF_SEPARATOR + station.StationUuid)
+                        // mediaId 必须带上所属列表（收藏/历史），车机据此在正确的列表内解析电台，
+                        // 否则两处点播会退化为同一个列表顺序（Issue #57）
+                        .setMediaId(parentId + LEAF_SEPARATOR + station.StationUuid)
                         .setTitle(station.Name)
                         .setDescription(station.Country + " " + station.Country + " " + station.TagsAll)
                         .setExtras(extras);
@@ -251,12 +253,8 @@ public class RadioDroidBrowser {
         }
 
         if (stations != null && !stations.isEmpty()) {
-            stationIdToStation.clear();
-            for (DataRadioStation station : stations) {
-                stationIdToStation.put(station.StationUuid, station);
-            }
             result.detach();
-            new RetrieveStationsIconAndSendResult(result, stations, radioDroidApp).execute();
+            new RetrieveStationsIconAndSendResult(result, stations, parentId, radioDroidApp).execute();
         } else {
             result.sendResult(mediaItems);
         }
@@ -264,18 +262,39 @@ public class RadioDroidBrowser {
     }
 
     @Nullable
-    public DataRadioStation getStationById(@NonNull String stationId) {
-        DataRadioStation station = stationIdToStation.get(stationId);
-        if (station != null) {
-            return station;
-        }
+    public DataRadioStation getStationById(@NonNull String mediaId) {
+        String stationId = stationIdFromMediaId(mediaId);
+        String parentId = parentIdFromMediaId(mediaId);
 
-        // 对外控制打通：外部控制器可能直接凭 mediaId（StationUuid）播放，未先浏览加载 children，
-        // 兜底从收藏/历史按 uuid 精确查询，保证任意 mediaId 都能命中文持本地播放。
+        DataRadioStation station = null;
         if (radioDroidApp != null) {
-            station = radioDroidApp.getFavouriteManager().getById(stationId);
-            if (station == null) {
+            // 按 mediaId 中记录的来源列表精确解析，并把对象重新绑定到该列表：
+            // 同一台电台可能同时存在于收藏与历史（或对象被另一列表点播过），
+            // queue 字段会残留旧列表，不重绑会让车机的上一台/下一台沿错误顺序切换（Issue #57）
+            if (MEDIA_ID_MUSICS_FAVORITE.equals(parentId)) {
+                station = radioDroidApp.getFavouriteManager().getById(stationId);
+                if (station != null) {
+                    station.queue = radioDroidApp.getFavouriteManager();
+                }
+            } else if (MEDIA_ID_MUSICS_HISTORY.equals(parentId)) {
                 station = radioDroidApp.getHistoryManager().getById(stationId);
+                if (station != null) {
+                    station.queue = radioDroidApp.getHistoryManager();
+                }
+            }
+
+            // 外部控制器可能直接凭媒体 id 播放，未先浏览加载 children；兜底按 id 查询，
+            // 并绑定到实际命中的列表
+            if (station == null) {
+                station = radioDroidApp.getFavouriteManager().getById(stationId);
+                if (station != null) {
+                    station.queue = radioDroidApp.getFavouriteManager();
+                } else {
+                    station = radioDroidApp.getHistoryManager().getById(stationId);
+                    if (station != null) {
+                        station.queue = radioDroidApp.getHistoryManager();
+                    }
+                }
             }
         }
 
@@ -319,5 +338,19 @@ public class RadioDroidBrowser {
         }
 
         return mediaId.substring(separatorIdx + 1);
+    }
+
+    private static String parentIdFromMediaId(final String mediaId) {
+        if (mediaId == null) {
+            return "";
+        }
+
+        final int separatorIdx = mediaId.indexOf(LEAF_SEPARATOR);
+
+        if (separatorIdx <= 0) {
+            return "";
+        }
+
+        return mediaId.substring(0, separatorIdx);
     }
 }

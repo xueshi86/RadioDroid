@@ -17,7 +17,6 @@ import androidx.mediarouter.media.MediaRouter;
 import androidx.preference.PreferenceManager;
 
 import net.programmierecke.radiodroid2.ActivityMain;
-import net.programmierecke.radiodroid2.HistoryManager;
 import net.programmierecke.radiodroid2.RadioDroidApp;
 import net.programmierecke.radiodroid2.Utils;
 import net.programmierecke.radiodroid2.players.selector.PlayerType;
@@ -393,8 +392,7 @@ public class AudioDeviceMonitor {
 
         Log.d(TAG, (isBluetooth ? "Bluetooth" : "Wired") + " connect: resuming playback");
         RadioDroidApp radioDroidApp = (RadioDroidApp) context.getApplicationContext();
-        HistoryManager historyManager = radioDroidApp.getHistoryManager();
-        DataRadioStation lastStation = historyManager.getFirst();
+        DataRadioStation lastStation = Utils.getLastPlayedStation(radioDroidApp);
 
         if (lastStation != null) {
             Log.d(TAG, "  resuming station: " + lastStation.Name);

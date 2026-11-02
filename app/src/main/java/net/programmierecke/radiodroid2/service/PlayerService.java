@@ -117,11 +117,11 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
     private final String ACTION_STOP = "stop";
 
     // 最近一次实际播放的电台及其来源列表，用于服务重启后恢复切台队列（Issue #57）
-    private static final String PREF_LAST_STATION_UUID = "last_played_station_uuid";
-    private static final String PREF_LAST_QUEUE_SOURCE = "last_played_queue_source";
-    private static final String QUEUE_SOURCE_FAVORITES = "favorites";
-    private static final String QUEUE_SOURCE_HISTORY = "history";
-    private static final String QUEUE_SOURCE_OTHER = "other";
+    private static final String PREF_LAST_STATION_UUID = Utils.PREF_LAST_PLAYED_STATION_UUID;
+    private static final String PREF_LAST_QUEUE_SOURCE = Utils.PREF_LAST_PLAYED_QUEUE_SOURCE;
+    private static final String QUEUE_SOURCE_FAVORITES = Utils.QUEUE_SOURCE_FAVORITES;
+    private static final String QUEUE_SOURCE_HISTORY = Utils.QUEUE_SOURCE_HISTORY;
+    private static final String QUEUE_SOURCE_OTHER = Utils.QUEUE_SOURCE_OTHER;
 
     // 上一台/下一台去抖：冷启动时系统可能同时通过 MediaSession 回调和媒体键广播
     // 投递同一次切换请求，导致连跳两台（Issue #57）
@@ -729,8 +729,8 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
 
         if (currentStation == null) {
             RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
-            HistoryManager historyManager = radioDroidApp.getHistoryManager();
-            currentStation = rebindRestoredStationQueue(historyManager.getFirst());
+            // 服务重启后按上次点播来源恢复切台队列（Issue #57）
+            currentStation = Utils.getLastPlayedStation(radioDroidApp);
         }
 
         if (currentStation == null) {
@@ -834,6 +834,8 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
      * 记录最近一次实际播放的电台及其来源列表。
      * 冷启动恢复 currentStation 时，历史记录会从 JSON 反序列化并把 queue 重新绑定为 HistoryManager，
      * 若不记录来源，通知栏/车机的上一台、下一台会退化为按播放历史切换（Issue #57）。
+     * 来源以 resolveQueue() 实际使用的列表为准：点播收藏、搜索结果等对象即使 queue 未标记
+     * 或标记过期，也与运行时的切台顺序保持一致。
      */
     private void recordPlaySource(DataRadioStation station) {
         RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
@@ -842,9 +844,10 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
         }
 
         String source = QUEUE_SOURCE_OTHER;
-        if (station.queue == radioDroidApp.getFavouriteManager()) {
+        StationSaveManager queue = resolveQueue();
+        if (queue == radioDroidApp.getFavouriteManager()) {
             source = QUEUE_SOURCE_FAVORITES;
-        } else if (station.queue == radioDroidApp.getHistoryManager()) {
+        } else if (queue == radioDroidApp.getHistoryManager()) {
             source = QUEUE_SOURCE_HISTORY;
         }
 
@@ -852,32 +855,6 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
                 .putString(PREF_LAST_STATION_UUID, station.StationUuid)
                 .putString(PREF_LAST_QUEUE_SOURCE, source)
                 .apply();
-    }
-
-    /**
-     * 服务重启后，按上次播放来源把历史里的电台对象替换为收藏列表中的同一台电台，
-     * 使切台队列与用户上次的播放来源一致；找不到时保持历史对象（原有行为）。
-     */
-    private DataRadioStation rebindRestoredStationQueue(DataRadioStation restored) {
-        RadioDroidApp radioDroidApp = (RadioDroidApp) getApplication();
-        if (restored == null || restored.StationUuid == null || radioDroidApp == null || sharedPref == null) {
-            return restored;
-        }
-
-        String lastUuid = sharedPref.getString(PREF_LAST_STATION_UUID, null);
-        String lastSource = sharedPref.getString(PREF_LAST_QUEUE_SOURCE, QUEUE_SOURCE_OTHER);
-        if (lastUuid == null || !lastUuid.equals(restored.StationUuid)) {
-            return restored;
-        }
-
-        if (QUEUE_SOURCE_FAVORITES.equals(lastSource)) {
-            DataRadioStation favourite = radioDroidApp.getFavouriteManager().getById(lastUuid);
-            if (favourite != null) {
-                return favourite;
-            }
-        }
-
-        return restored;
     }
 
     /**
@@ -1029,8 +1006,7 @@ public class PlayerService extends JobIntentService implements RadioPlayer.Playe
             DataRadioStation station = currentStation;
 
             if (currentStation == null) {
-                HistoryManager historyManager = radioDroidApp.getHistoryManager();
-                station = historyManager.getFirst();
+                station = Utils.getLastPlayedStation(radioDroidApp);
             }
 
             if (station != null) {

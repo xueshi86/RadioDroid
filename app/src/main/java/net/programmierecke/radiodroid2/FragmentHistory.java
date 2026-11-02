@@ -43,6 +43,9 @@ public class FragmentHistory extends Fragment implements IAdapterRefreshable {
     void onStationClick(DataRadioStation theStation) {
         if (getActivity() != null) {
             RadioDroidApp radioDroidApp = (RadioDroidApp) getActivity().getApplication();
+            // 点播时显式绑定历史列表（Issue #57）：历史条目可能是从收藏列表播放时加入的同一对象，
+            // 其 queue 仍指向收藏，会导致方向键按收藏顺序切换
+            theStation.queue = historyManager;
             Utils.showPlaySelection(radioDroidApp, theStation, getActivity().getSupportFragmentManager());
 
             RefreshListGui();

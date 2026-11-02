@@ -37,9 +37,9 @@ public class RadioDroidBrowserService extends MediaBrowserServiceCompat {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (MediaSessionCallback.BROADCAST_PLAY_STATION_BY_ID.equals(action)) {
-                String stationId = intent.getStringExtra(MediaSessionCallback.EXTRA_STATION_ID);
+                String mediaId = intent.getStringExtra(MediaSessionCallback.EXTRA_MEDIA_ID);
 
-                DataRadioStation station = radioDroidBrowser.getStationById(stationId);
+                DataRadioStation station = radioDroidBrowser.getStationById(mediaId);
 
                 if (station != null) {
                     if (playTask != null) {
