@@ -942,4 +942,11 @@ La aplicación se reiniciará automáticamente para cargar la nueva base de dato
     <string name="statistics_working_stations">Emisoras en funcionamiento</string>
     <string name="statistics_broken_stations">Emisoras dañadas</string>
     <string name="statistics_favourite_stations">Emisoras favoritas</string>
+
+    <!-- Full player controls: sleep timer & station switcher -->
+    <string name="action_switch_station">Cambiar emisora</string>
+    <string name="station_switch_tab_favorites">Mis favoritas</string>
+    <string name="station_switch_tab_history">Escuchadas recientemente</string>
+    <string name="station_switch_show_all">Mostrar todo</string>
+    <string name="station_switch_empty">No hay emisoras</string>
 </resources>

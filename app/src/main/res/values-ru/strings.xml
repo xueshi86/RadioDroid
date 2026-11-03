@@ -934,4 +934,11 @@
     <string name="statistics_working_stations">Рабочие станции</string>
     <string name="statistics_broken_stations">Нерабочие станции</string>
     <string name="statistics_favourite_stations">Избранные станции</string>
+
+    <!-- Full player controls: sleep timer & station switcher -->
+    <string name="action_switch_station">Сменить станцию</string>
+    <string name="station_switch_tab_favorites">Мои избранные</string>
+    <string name="station_switch_tab_history">Недавние</string>
+    <string name="station_switch_show_all">Показать все</string>
+    <string name="station_switch_empty">Нет станций</string>
 </resources>

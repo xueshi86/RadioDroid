@@ -177,9 +177,23 @@
         android:paddingTop="@dimen/space_xs"
         android:paddingBottom="@dimen/space_xs">
 
-        <!-- v3.1 控制条（直播形态，v2 已确立）：仅 录音 · 播放 · 收藏 三键，
-             移除上一曲 / 下一曲。按键尺寸沿用现版本（用户确认：设计稿按键过小，
-             以现状为准）——播放 72dp、录音/收藏 48dp，图标满幅显示 -->
+        <!-- 控制条五键（v4.x 扩展）：定时 · 录音 · 播放 · 收藏 · 换台。
+             按键尺寸沿用现版本——播放 72dp、其余 48dp；五键构成横向 spread 链，
+             由 ConstraintLayout 把剩余空间均分为按键间距，首尾键贴屏幕两侧。 -->
+
+        <ImageButton
+            android:id="@+id/buttonSleepTimer"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/nav_item_add_sleep"
+            android:scaleType="fitXY"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/buttonRecord"
+            app:layout_constraintHorizontal_chainStyle="spread"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_hourglass_empty_black_24dp" />
 
         <ImageButton
             android:id="@+id/buttonRecord"
@@ -190,8 +204,7 @@
             android:scaleType="fitXY"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/buttonPlay"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/buttonSleepTimer"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_start_recording" />
 
@@ -203,8 +216,8 @@
             android:contentDescription="@string/detail_play"
             android:scaleType="fitXY"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/buttonFavorite"
+            app:layout_constraintStart_toEndOf="@+id/buttonRecord"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_play_circle" />
 
@@ -216,12 +229,23 @@
             android:contentDescription="@string/action_favorite"
             android:scaleType="fitXY"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintEnd_toStartOf="@+id/buttonSwitchStation"
             app:layout_constraintStart_toEndOf="@+id/buttonPlay"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_star_24dp" />
 
+        <ImageButton
+            android:id="@+id/buttonSwitchStation"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/action_switch_station"
+            android:scaleType="fitXY"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/buttonFavorite"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_list_24dp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

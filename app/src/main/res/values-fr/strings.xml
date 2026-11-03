@@ -630,4 +630,11 @@ L\'application redémarrera automatiquement pour charger la nouvelle base.</stri
     <string name="statistics_working_stations">Stations fonctionnelles</string>
     <string name="statistics_broken_stations">Stations défaillantes</string>
     <string name="statistics_favourite_stations">Stations favorites</string>
+
+    <!-- Full player controls: sleep timer & station switcher -->
+    <string name="action_switch_station">Changer de station</string>
+    <string name="station_switch_tab_favorites">Mes favoris</string>
+    <string name="station_switch_tab_history">Écoutés récemment</string>
+    <string name="station_switch_show_all">Tout afficher</string>
+    <string name="station_switch_empty">Aucune station</string>
 </resources>

@@ -551,4 +551,11 @@ Die App wird automatisch neu gestartet, um die neue Datenbank zu laden.</string>
     <string name="statistics_working_stations">Funktionierende Sender</string>
     <string name="statistics_broken_stations">Defekte Sender</string>
     <string name="statistics_favourite_stations">Favoritensender</string>
+
+    <!-- Full player controls: sleep timer & station switcher -->
+    <string name="action_switch_station">Sender wechseln</string>
+    <string name="station_switch_tab_favorites">Meine Favoriten</string>
+    <string name="station_switch_tab_history">Kürzlich gehört</string>
+    <string name="station_switch_show_all">Alle anzeigen</string>
+    <string name="station_switch_empty">Keine Sender</string>
 </resources>

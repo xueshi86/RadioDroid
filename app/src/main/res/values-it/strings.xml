@@ -628,4 +628,11 @@ L\'app si riavvierà automaticamente per caricare la nuova base dati.</string>
     <string name="statistics_working_stations">Stazioni funzionanti</string>
     <string name="statistics_broken_stations">Stazioni non funzionanti</string>
     <string name="statistics_favourite_stations">Stazioni preferite</string>
+
+    <!-- Full player controls: sleep timer & station switcher -->
+    <string name="action_switch_station">Cambia stazione</string>
+    <string name="station_switch_tab_favorites">I miei preferiti</string>
+    <string name="station_switch_tab_history">Ascoltati di recente</string>
+    <string name="station_switch_show_all">Mostra tutto</string>
+    <string name="station_switch_empty">Nessuna stazione</string>
 </resources>

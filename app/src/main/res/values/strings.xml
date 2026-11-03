@@ -938,4 +938,11 @@ The app will automatically restart to load the new database.</string>
     <string name="settings_audio_offload_summary_unsupported">Audio offload is not supported on this device (requires Android 10 or newer and compatible hardware).</string>
     <string name="settings_version">Version</string>
     <string name="statistics_favourite_stations">Favourite stations</string>
+
+    <!-- Full player controls: sleep timer & station switcher -->
+    <string name="action_switch_station">Switch station</string>
+    <string name="station_switch_tab_favorites">My favorites</string>
+    <string name="station_switch_tab_history">Recently played</string>
+    <string name="station_switch_show_all">Show all</string>
+    <string name="station_switch_empty">No stations</string>
 </resources>

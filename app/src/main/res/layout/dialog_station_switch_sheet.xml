@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 换台底部弹窗（全屏播放器控制条「换台」按钮）：双页签「我的收藏 / 最近收听」，
+     右上角「显示全部」跳转对应列表页。文字颜色全部走主题属性
+     （colorTextPrimary / colorTextSecondary / presetAccentColor），弹窗主题由
+     Utils.getBottomSheetDialogThemeResId 按应用当前明暗主题选择，背景与应用保持一致 -->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <!-- 顶部拖动条提示，居中小短条 -->
+    <View
+        android:id="@+id/viewDragHandle"
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_marginTop="@dimen/space_sm"
+        android:alpha="0.35"
+        android:background="?attr/colorTextSecondary"
+        android:gravity="center"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/rowTabs"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/space_lg"
+        android:paddingLeft="@dimen/space_lg"
+        android:paddingTop="@dimen/space_md"
+        android:paddingEnd="@dimen/space_lg"
+        android:paddingRight="@dimen/space_lg"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/viewDragHandle">
+
+        <TextView
+            android:id="@+id/textTabFavorites"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:paddingTop="@dimen/space_xs"
+            android:paddingBottom="@dimen/space_xs"
+            android:text="@string/station_switch_tab_favorites"
+            android:textAppearance="@style/TextAppearance.RadioDroid.Title"
+            tools:text="My favorites" />
+
+        <TextView
+            android:id="@+id/textTabHistory"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_lg"
+            android:layout_marginLeft="@dimen/space_lg"
+            android:background="?attr/selectableItemBackground"
+            android:paddingTop="@dimen/space_xs"
+            android:paddingBottom="@dimen/space_xs"
+            android:text="@string/station_switch_tab_history"
+            android:textAppearance="@style/TextAppearance.RadioDroid.Title"
+            tools:text="Recently played" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/textShowAll"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:padding="@dimen/space_xs"
+            android:text="@string/station_switch_show_all"
+            android:textAppearance="@style/TextAppearance.RadioDroid.BodySmall"
+            tools:text="Show all" />
+    </LinearLayout>
+
+    <View
+        android:id="@+id/dividerTabs"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/divider_thickness"
+        android:background="?attr/colorSeparator"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/rowTabs" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewSwitchStations"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingTop="@dimen/space_xs"
+        android:paddingBottom="@dimen/space_lg"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_max="420dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/dividerTabs"
+        tools:listitem="@layout/list_item_station_switch" />
+
+    <!-- 空态：当前页签没有电台时显示 -->
+    <TextView
+        android:id="@+id/textEmptySwitch"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingTop="@dimen/space_2xl"
+        android:paddingBottom="@dimen/space_2xl"
+        android:text="@string/station_switch_empty"
+        android:textAppearance="@style/TextAppearance.RadioDroid.Body"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/dividerTabs" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

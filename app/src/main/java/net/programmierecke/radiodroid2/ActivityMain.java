@@ -1607,6 +1607,20 @@ public class ActivityMain extends AppCompatActivity implements SearchView.OnQuer
         return displayName;
     }
 
+    /**
+     * 供全屏播放器「定时」按钮调起睡眠定时对话框（与工具栏入口共用 changeTimer）
+     */
+    public void showSleepTimerDialog() {
+        changeTimer();
+    }
+
+    /**
+     * 供换台弹窗「显示全部」跳转到收藏 / 历史界面（导航过程会同时收起播放器）
+     */
+    public void openStationList(int navItemId) {
+        selectMenuItem(navItemId);
+    }
+
     private void changeTimer() {
         final AlertDialog.Builder seekDialog = new AlertDialog.Builder(this, Utils.getAlertDialogThemeResId(this));
         View seekView = View.inflate(this, R.layout.layout_timer_chooser, null);

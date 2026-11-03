@@ -429,4 +429,11 @@
     <string name="statistics_working_stations">Λειτουργικοί σταθμοί</string>
     <string name="statistics_broken_stations">Προβληματικοί σταθμοί</string>
     <string name="statistics_favourite_stations">Αγαπημένοι σταθμοί</string>
+
+    <!-- Full player controls: sleep timer & station switcher -->
+    <string name="action_switch_station">Αλλαγή σταθμού</string>
+    <string name="station_switch_tab_favorites">Τα αγαπημένα μου</string>
+    <string name="station_switch_tab_history">Πρόσφατα ακούσματα</string>
+    <string name="station_switch_show_all">Εμφάνιση όλων</string>
+    <string name="station_switch_empty">Δεν υπάρχουν σταθμοί</string>
 </resources>

@@ -43,6 +43,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -85,6 +86,7 @@ import net.programmierecke.radiodroid2.station.StationNoteDialog;
 import net.programmierecke.radiodroid2.station.StationNoteManager;
 import net.programmierecke.radiodroid2.ui.StationPlaceholderUtils;
 import net.programmierecke.radiodroid2.station.StationActions;
+import net.programmierecke.radiodroid2.station.StationSwitchSheetDialog;
 import net.programmierecke.radiodroid2.station.live.ShoutcastInfo;
 import net.programmierecke.radiodroid2.station.live.StreamLiveInfo;
 import net.programmierecke.radiodroid2.station.live.metadata.TrackMetadata;
@@ -292,6 +294,8 @@ public class FragmentPlayerFull extends Fragment {
     private ImageButton btnPlay;
     private ImageButton btnRecord;
     private ImageButton btnFavourite;
+    private ImageButton btnSleepTimer;
+    private ImageButton btnSwitchStation;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -572,6 +576,8 @@ public class FragmentPlayerFull extends Fragment {
         btnPlay = view.findViewById(R.id.buttonPlay);
         btnRecord = view.findViewById(R.id.buttonRecord);
         btnFavourite = view.findViewById(R.id.buttonFavorite);
+        btnSleepTimer = view.findViewById(R.id.buttonSleepTimer);
+        btnSwitchStation = view.findViewById(R.id.buttonSwitchStation);
 
         historyAndRecordsPagerAdapter.recyclerViewCurrentStationHistory.setAdapter(stationHistoryAdapter);
 
@@ -761,6 +767,26 @@ public class FragmentPlayerFull extends Fragment {
             } else {
                 StationActions.markAsFavourite(requireContext(), station);
             }
+        });
+
+        // 睡眠定时：复用主界面「在选定的分钟后停止播放」对话框
+        btnSleepTimer.setOnClickListener(v -> {
+            if (getActivity() instanceof ActivityMain) {
+                ((ActivityMain) getActivity()).showSleepTimerDialog();
+            }
+        });
+
+        // 换台：弹出「我的收藏 / 最近收听」底部弹窗（按标签去重，避免重复弹出）
+        btnSwitchStation.setOnClickListener(v -> {
+            if (!isAdded()) {
+                return;
+            }
+            FragmentManager fm = requireActivity().getSupportFragmentManager();
+            Fragment old = fm.findFragmentByTag(StationSwitchSheetDialog.FRAGMENT_TAG);
+            if (old != null && old.isVisible()) {
+                return;
+            }
+            new StationSwitchSheetDialog().show(fm, StationSwitchSheetDialog.FRAGMENT_TAG);
         });
     }
 
