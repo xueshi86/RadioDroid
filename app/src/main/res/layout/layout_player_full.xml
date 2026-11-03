@@ -193,7 +193,7 @@
             app:layout_constraintHorizontal_chainStyle="spread"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_hourglass_empty_black_24dp" />
+            app:srcCompat="@drawable/ic_sleep_timer_24dp" />
 
         <ImageButton
             android:id="@+id/buttonRecord"
@@ -245,7 +245,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/buttonFavorite"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_list_24dp" />
+            app:srcCompat="@drawable/ic_station_queue_24dp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

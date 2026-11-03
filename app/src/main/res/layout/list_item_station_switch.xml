@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 换台弹窗里的电台行：图标 + 名称 + 标签（标签可为空，隐藏时行内居中） -->
+<!-- 换台弹窗里的电台行：图标 + 名称 + 标签（标签可为空，隐藏时行内居中）。
+     底部 1dp 分隔线，左缩进与文字列对齐（16 + 56 + 12 = 84dp），使用主题色 colorSeparator，
+     明暗主题均可见。 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -8,46 +10,61 @@
     android:background="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
-    android:gravity="center_vertical"
-    android:orientation="horizontal"
-    android:paddingStart="@dimen/space_lg"
-    android:paddingLeft="@dimen/space_lg"
-    android:paddingTop="@dimen/space_sm"
-    android:paddingEnd="@dimen/space_lg"
-    android:paddingRight="@dimen/space_lg"
-    android:paddingBottom="@dimen/space_sm">
-
-    <ImageView
-        android:id="@+id/imageViewSwitchIcon"
-        android:layout_width="@dimen/icon_station_history"
-        android:layout_height="@dimen/icon_station_history"
-        android:contentDescription="@null"
-        tools:src="@drawable/ic_launcher" />
+    android:orientation="vertical">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/space_md"
-        android:layout_marginLeft="@dimen/space_md"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/space_lg"
+        android:paddingLeft="@dimen/space_lg"
+        android:paddingTop="@dimen/space_sm"
+        android:paddingEnd="@dimen/space_lg"
+        android:paddingRight="@dimen/space_lg"
+        android:paddingBottom="@dimen/space_sm">
 
-        <TextView
-            android:id="@+id/textViewSwitchName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textAppearance="@style/TextAppearance.RadioDroid.Body"
-            tools:text="Station name" />
+        <ImageView
+            android:id="@+id/imageViewSwitchIcon"
+            android:layout_width="@dimen/icon_station_history"
+            android:layout_height="@dimen/icon_station_history"
+            android:contentDescription="@null"
+            tools:src="@drawable/ic_launcher" />
 
-        <TextView
-            android:id="@+id/textViewSwitchTags"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textAppearance="@style/TextAppearance.RadioDroid.Caption"
-            tools:text="pop, news" />
+            android:layout_marginStart="@dimen/space_md"
+            android:layout_marginLeft="@dimen/space_md"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/textViewSwitchName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="@style/TextAppearance.RadioDroid.Body"
+                tools:text="Station name" />
+
+            <TextView
+                android:id="@+id/textViewSwitchTags"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="@style/TextAppearance.RadioDroid.Caption"
+                tools:text="pop, news" />
+        </LinearLayout>
     </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/divider_thickness"
+        android:layout_marginStart="84dp"
+        android:layout_marginLeft="84dp"
+        android:layout_marginEnd="@dimen/space_lg"
+        android:layout_marginRight="@dimen/space_lg"
+        android:background="?attr/colorSeparator" />
 </LinearLayout>

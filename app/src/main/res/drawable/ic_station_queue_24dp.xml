@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 换台按钮专用图标：方框列表（细线版）。外框与内部三行线宽由 1.8dp 降为 0.9dp，
+     各线中心位置不变，保持原有对齐；内容框 20×18dp，与收藏星、定时圆钟高度接近。
+     独立 drawable，避免影响底部导航/抽屉菜单共用的 ic_list_24dp。
+     fillColor 走 ?attr/presetAccentColor，随主题切换。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- 外框：上边 x 2-22 / y 3.45-4.35 -->
+    <path
+        android:fillColor="?attr/presetAccentColor"
+        android:pathData="M2,3.45H22V4.35H2Z" />
+    <!-- 外框：下边 x 2-22 / y 19.65-20.55 -->
+    <path
+        android:fillColor="?attr/presetAccentColor"
+        android:pathData="M2,19.65H22V20.55H2Z" />
+    <!-- 外框：左边 x 2.45-3.35 / y 3-21 -->
+    <path
+        android:fillColor="?attr/presetAccentColor"
+        android:pathData="M2.45,3H3.35V21H2.45Z" />
+    <!-- 外框：右边 x 20.65-21.55 / y 3-21 -->
+    <path
+        android:fillColor="?attr/presetAccentColor"
+        android:pathData="M20.65,3H21.55V21H20.65Z" />
+
+    <!-- 内容行 1：x 6.5-17.5 / y 8.45-9.35 -->
+    <path
+        android:fillColor="?attr/presetAccentColor"
+        android:pathData="M6.5,8.45H17.5V9.35H6.5Z" />
+    <!-- 内容行 2：x 6.5-17.5 / y 11.95-12.85 -->
+    <path
+        android:fillColor="?attr/presetAccentColor"
+        android:pathData="M6.5,11.95H17.5V12.85H6.5Z" />
+    <!-- 内容行 3：x 6.5-14.5 / y 15.45-16.35 -->
+    <path
+        android:fillColor="?attr/presetAccentColor"
+        android:pathData="M6.5,15.45H14.5V16.35H6.5Z" />
+</vector>
