@@ -1,6 +1,7 @@
 package net.programmierecke.radiodroid2.history;
 
 import android.app.Application;
+import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -28,7 +29,7 @@ public class TrackHistoryRepository {
         void onItemFetched(@Nullable TrackHistoryEntry trackHistoryEntry, @NonNull TrackHistoryDao dao);
     }
 
-    private final TrackHistoryDao dao;
+    private final Context appContext;
     private final Executor queryExecutor;
     private final LiveData<PagedList<TrackHistoryEntry>> allHistoryPaged;
     private final PagedList.Config pagedConfig;
@@ -38,9 +39,9 @@ public class TrackHistoryRepository {
     private int insertsToTruncateLeft = 0;
 
     public TrackHistoryRepository(Application application) {
+        appContext = application.getApplicationContext();
         RadioDroidDatabase db = RadioDroidDatabase.getDatabase(application);
 
-        dao = db.songHistoryDao();
         queryExecutor = db.getQueryExecutor();
 
         pagedConfig = new PagedList.Config.Builder()
@@ -49,9 +50,17 @@ public class TrackHistoryRepository {
                 .build();
 
         allHistoryPaged = new LivePagedListBuilder<>(
-                dao.getAllHistoryPositional(),
+                db.songHistoryDao().getAllHistoryPositional(),
                 pagedConfig)
                 .build();
+    }
+
+    /**
+     * 每次操作时动态获取 DAO：设置页恢复数据库/WebDAV 恢复等流程会关闭并重建共享
+     * Room 单例，若缓存旧实例的 DAO，之后播放服务写历史将因连接池已关闭而崩溃。
+     */
+    private TrackHistoryDao dao() {
+        return RadioDroidDatabase.getDatabase(appContext).songHistoryDao();
     }
 
     public LiveData<PagedList<TrackHistoryEntry>> getAllHistoryPaged() {
@@ -60,17 +69,17 @@ public class TrackHistoryRepository {
 
     public LiveData<PagedList<TrackHistoryEntry>> getStationHistoryPaged(String stationUuid) {
         return new LivePagedListBuilder<>(
-                dao.getStationHistoryPositional(stationUuid),
+                dao().getStationHistoryPositional(stationUuid),
                 pagedConfig)
                 .build();
     }
 
     public void insert(final TrackHistoryEntry historyEntry) {
         queryExecutor.execute(() -> {
-            dao.insert(historyEntry);
+            dao().insert(historyEntry);
             if (insertsToTruncateLeft == 0) {
                 insertsToTruncateLeft = TRUNCATE_FREQUENCY;
-                dao.truncateHistory(MAX_HISTORY_ITEMS_IN_TABLE);
+                dao().truncateHistory(MAX_HISTORY_ITEMS_IN_TABLE);
             } else {
                 insertsToTruncateLeft--;
             }
@@ -78,27 +87,28 @@ public class TrackHistoryRepository {
     }
 
     public void setCurrentPlayingTrackEndTime(final Date time) {
-        queryExecutor.execute(() -> dao.setCurrentPlayingTrackEndTime(time));
+        queryExecutor.execute(() -> dao().setCurrentPlayingTrackEndTime(time));
     }
 
     public void setLastHistoryItemEndTimeRelative(final int deltaSeconds) {
-        queryExecutor.execute(() -> dao.setLastHistoryItemEndTimeRelative(deltaSeconds));
+        queryExecutor.execute(() -> dao().setLastHistoryItemEndTimeRelative(deltaSeconds));
     }
 
     public void setTrackArtUrl(int id, @NonNull final String artUrl) {
-        queryExecutor.execute(() -> dao.setTrackArtUrl(id, artUrl));
+        queryExecutor.execute(() -> dao().setTrackArtUrl(id, artUrl));
     }
 
     public void getLastInsertedHistoryItem(@NonNull final GetItemCallback callback) {
         queryExecutor.execute(() -> {
-            TrackHistoryEntry item = dao.getLastInsertedHistoryItem();
-            callback.onItemFetched(item, dao);
+            TrackHistoryDao currentDao = dao();
+            TrackHistoryEntry item = currentDao.getLastInsertedHistoryItem();
+            callback.onItemFetched(item, currentDao);
         });
     }
 
     public void deleteHistory() {
         queryExecutor.execute(() -> {
-            dao.deleteHistory();
+            dao().deleteHistory();
         });
     }
 }

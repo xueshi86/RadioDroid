@@ -2608,13 +2608,13 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
         progressDialog.show();
         
         new Thread(() -> {
-            boolean databaseClosed = false;
             try {
                 File mainDatabaseFile = context.getDatabasePath("radio_droid_database");
-                RadioStationRepository repository = RadioStationRepository.getInstance(context);
-                repository.closeDatabase();
-                databaseClosed = true;
-                // 将 WAL 数据合并回主库文件，确保导出的 .db 完整且自包含
+                // 不关闭数据库：播放服务运行时仍在写入（播放历史等），关闭共享单例会使
+                // 其他组件持有的 DAO 失效，之后换台写历史将触发
+                // "connection pool has been closed" 崩溃。
+                // 改为仅做 WAL checkpoint：合并后主文件完整自包含，checkpoint 之后的新写入
+                // 会进入 WAL 文件而不再触碰主文件，此时拷贝主文件与运行中的数据库安全共存。
                 checkpointDatabase(mainDatabaseFile);
                 validateDatabaseFile(mainDatabaseFile, true);
 
@@ -2632,8 +2632,6 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                     }
                     outputStream.flush();
                 }
-                repository.reinitializeDatabase(context);
-                databaseClosed = false;
                 activity.runOnUiThread(() -> {
                     if (progressDialog.isShowing()) {
                         progressDialog.dismiss();
@@ -2651,13 +2649,6 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Shared
                 });
             } catch (Exception e) {
                 Log.e(TAG, "Failed to export data", e);
-                if (databaseClosed) {
-                    try {
-                        RadioStationRepository.getInstance(context).reinitializeDatabase(context);
-                    } catch (Exception reinitializeException) {
-                        Log.e(TAG, "Failed to reopen database after export", reinitializeException);
-                    }
-                }
                 final String errorMessage = e.getMessage() != null
                         ? e.getMessage()
                         : e.getClass().getSimpleName();
