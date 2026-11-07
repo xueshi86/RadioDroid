@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 睡眠定时按钮专用图标：圆钟（细线版）。
-     外圈与指针均改为 1dp 描边（原为 2dp 实心环），线条细一半，更轻盈。
-     内容框 19×19dp，与收藏星、换台按钮高度接近。
+     外圈与指针均为 1dp 描边，线条细，更轻盈。
+     内容框 14×14dp，与录音按钮的实心圆（直径 14dp）视觉大小一致。
      独立 drawable，不影响工具栏菜单的沙漏 ic_hourglass_empty_black_24dp。
      strokeColor 走 ?attr/presetAccentColor，随主题切换。 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
@@ -10,13 +10,13 @@
     android:viewportWidth="24"
     android:viewportHeight="24">
 
-    <!-- 外圈：圆心(12,12) 半径 9，描边 1dp -->
+    <!-- 外圈：圆心(12,12) 半径 7，描边 1dp -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="?attr/presetAccentColor"
         android:strokeWidth="1"
         android:strokeLineCap="round"
-        android:pathData="M12,3 A9,9 0 1,1 12,21 A9,9 0 0,1 12,3 Z" />
+        android:pathData="M12,5 A7,7 0 1,1 12,19 A7,7 0 0,1 12,5 Z" />
 
     <!-- 指针：从 12 点方向下行至圆心再折向右下，描边 1dp -->
     <path
@@ -25,5 +25,5 @@
         android:strokeWidth="1"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M12,6.8 L12,12 L16.2,14.4" />
+        android:pathData="M12,8 L12,12 L15.3,13.9" />
 </vector>
