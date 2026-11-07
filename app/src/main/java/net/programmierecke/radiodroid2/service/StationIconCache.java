@@ -3,6 +3,8 @@ package net.programmierecke.radiodroid2.service;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import androidx.collection.LruCache;
+import androidx.collection.SimpleArrayMap;
 import android.util.Log;
 
 import java.io.File;
@@ -46,6 +48,31 @@ public class StationIconCache {
     private final File permanentDir;
     private final File semiPermanentDir;
     private final Context appContext;
+
+    /**
+     * 内存层缓存：
+     *  - pathCache: uuid -> 缓存文件绝对路径。避免每次 getIconPath 都做文件系统探测。
+     *  - bitmapCache: uuid -> 解码后的 Bitmap（按字节占用做 LRU 淘汰）。
+     *    列表快速滚动、播放器/通知栏刷新时直接命中内存，免去磁盘 IO + PNG 解码。
+     *  - verifiedCache: uuid -> true 表示已通过截断损坏检测。每个文件只校验一次，
+     *    避免同一 PNG 被反复全量解码校验（此前是缓存命中路径上的最大开销）。
+     */
+    private static final int MAX_MEMORY_CACHE_BYTES = 8 * 1024 * 1024; // 8MB
+    private final LruCache<String, String> pathCache = new LruCache<String, String>(512) {
+        @Override
+        protected void entryRemoved(boolean evicted, String key, String oldValue, String newValue) {
+            if (oldValue != null && bitmapCache.get(key) == null) {
+                verifiedCache.remove(key);
+            }
+        }
+    };
+    private final LruCache<String, Bitmap> bitmapCache = new LruCache<String, Bitmap>(MAX_MEMORY_CACHE_BYTES) {
+        @Override
+        protected int sizeOf(String key, Bitmap value) {
+            return value.getByteCount();
+        }
+    };
+    private final SimpleArrayMap<String, Boolean> verifiedCache = new SimpleArrayMap<>();
 
     private StationIconCache(Context context) {
         appContext = context.getApplicationContext();
@@ -123,49 +150,87 @@ public class StationIconCache {
         if (stationUuid == null || stationUuid.isEmpty()) {
             return null;
         }
-        String fileName = getCacheFileName(stationUuid);
 
-        // 优先查永久缓存
-        File permanentFile = new File(permanentDir, fileName);
-        if (permanentFile.exists() && permanentFile.length() > 0) {
-            if (isCachedIconTruncated(permanentFile)) {
-                Log.w(TAG, "getIconPath: truncated permanent cache detected, deleting: " + stationUuid);
-                permanentFile.delete();
-                clearFallbackMark(stationUuid);
-                clearIconUrlRetryTime(stationUuid);
-            } else {
-                Log.d(TAG, "getIconPath HIT permanent: " + stationUuid + " size=" + permanentFile.length() + "B");
-                return permanentFile.getAbsolutePath();
+        // 1. 内存缓存命中（含校验状态），零磁盘 IO 直接返回
+        String cachedPath = pathCache.get(stationUuid);
+        if (cachedPath != null) {
+            File cachedFile = new File(cachedPath);
+            if (cachedFile.exists() && cachedFile.length() > 0) {
+                Log.d(TAG, "getIconPath HIT memory: " + stationUuid);
+                return cachedPath;
             }
+            // 文件已被外部删除，清除内存缓存
+            invalidateMemoryCache(stationUuid);
         }
 
-        // 查半永久缓存
-        File semiFile = new File(semiPermanentDir, fileName);
-        if (semiFile.exists() && semiFile.length() > 0) {
-            // 检查是否过期
-            long now = System.currentTimeMillis();
-            long lastModified = semiFile.lastModified();
-            if (now - lastModified > SEMI_PERMANENT_TTL_MS) {
-                // 已过期，删除
-                Log.d(TAG, "getIconPath EXPIRED: " + stationUuid);
-                semiFile.delete();
-                return null;
-            }
-            if (isCachedIconTruncated(semiFile)) {
-                Log.w(TAG, "getIconPath: truncated semipermanent cache detected, deleting: " + stationUuid);
-                semiFile.delete();
-                clearFallbackMark(stationUuid);
-                clearIconUrlRetryTime(stationUuid);
-                return null;
-            }
-            // 命中半永久缓存，重置TTL
-            semiFile.setLastModified(now);
-            Log.d(TAG, "getIconPath HIT semipermanent: " + stationUuid + " size=" + semiFile.length() + "B");
-            return semiFile.getAbsolutePath();
+        String fileName = getCacheFileName(stationUuid);
+        String resolvedPath = resolveIconPathFromDisk(stationUuid, fileName,
+                new File(permanentDir, fileName), false);
+        if (resolvedPath == null) {
+            resolvedPath = resolveIconPathFromDisk(stationUuid, fileName,
+                    new File(semiPermanentDir, fileName), true);
+        }
+        if (resolvedPath != null) {
+            pathCache.put(stationUuid, resolvedPath);
+            return resolvedPath;
         }
 
         Log.d(TAG, "getIconPath MISS: " + stationUuid);
         return null;
+    }
+
+    /**
+     * 从磁盘解析单个缓存文件：存在性/过期/截断校验，校验结果记入 verifiedCache。
+     *
+     * @param isSemiPermanent 是否半永久缓存（需要 TTL 检查与重置）
+     * @return 校验通过的文件绝对路径；无效返回 null（损坏文件会被删除）
+     */
+    private String resolveIconPathFromDisk(String stationUuid, String fileName, File file, boolean isSemiPermanent) {
+        if (!file.exists() || file.length() <= 0) {
+            return null;
+        }
+
+        if (isSemiPermanent) {
+            long now = System.currentTimeMillis();
+            if (now - file.lastModified() > SEMI_PERMANENT_TTL_MS) {
+                Log.d(TAG, "getIconPath EXPIRED: " + stationUuid);
+                file.delete();
+                invalidateMemoryCache(stationUuid);
+                return null;
+            }
+        }
+
+        // 截断损坏检测：每个文件只做一次全量解码校验，之后信任缓存文件不再重复解码
+        if (verifiedCache.get(stationUuid) == null) {
+            if (isCachedIconTruncated(file)) {
+                Log.w(TAG, "getIconPath: truncated cache detected, deleting: " + stationUuid);
+                file.delete();
+                clearFallbackMark(stationUuid);
+                clearIconUrlRetryTime(stationUuid);
+                return null;
+            }
+            verifiedCache.put(stationUuid, Boolean.TRUE);
+        }
+
+        if (isSemiPermanent) {
+            // 命中半永久缓存，重置TTL
+            file.setLastModified(System.currentTimeMillis());
+        }
+        Log.d(TAG, "getIconPath HIT disk: " + stationUuid + " size=" + file.length() + "B");
+        return file.getAbsolutePath();
+    }
+
+    /**
+     * 清除某个电台的内存缓存（路径/位图/校验标记）。
+     * 缓存文件被删除、覆盖或移动时必须调用，避免内存缓存指向失效文件。
+     */
+    public void invalidateMemoryCache(String stationUuid) {
+        if (stationUuid == null || stationUuid.isEmpty()) {
+            return;
+        }
+        pathCache.remove(stationUuid);
+        bitmapCache.remove(stationUuid);
+        verifiedCache.remove(stationUuid);
     }
 
     /**
@@ -241,10 +306,14 @@ public class StationIconCache {
     }
 
     /**
-     * 获取缓存的图标 Bitmap。优先查永久缓存，再查半永久缓存。
-     * 从半永久缓存命中时，自动重置TTL。
+     * 获取缓存的图标 Bitmap。优先内存缓存 -> 永久缓存 -> 半永久缓存。
+     * 磁盘解码结果写入内存缓存，后续读取零开销。
      */
     public Bitmap getIconBitmap(String stationUuid) {
+        Bitmap cached = bitmapCache.get(stationUuid);
+        if (cached != null && !cached.isRecycled()) {
+            return cached;
+        }
         String path = getIconPath(stationUuid);
         if (path == null) {
             return null;
@@ -256,8 +325,10 @@ public class StationIconCache {
             Bitmap bitmap = BitmapFactory.decodeStream(fis);
             if (bitmap == null) {
                 file.delete();
+                invalidateMemoryCache(stationUuid);
                 return null;
             }
+            bitmapCache.put(stationUuid, bitmap);
             return bitmap;
         } catch (IOException e) {
             Log.w(TAG, "Failed to read cached icon for: " + stationUuid, e);
@@ -307,6 +378,11 @@ public class StationIconCache {
             fos.flush();
             fos.close();
             fos = null;
+            // 写入成功后同步内存缓存：路径指向新文件，位图直接复用，校验标记记为已验证
+            invalidateMemoryCache(stationUuid);
+            pathCache.put(stationUuid, file.getAbsolutePath());
+            bitmapCache.put(stationUuid, bitmap);
+            verifiedCache.put(stationUuid, Boolean.TRUE);
             // 验证文件确实写入
             boolean exists = file.exists();
             long length = file.length();
@@ -343,7 +419,10 @@ public class StationIconCache {
 
         // 半永久缓存有则移动
         if (semiFile.exists() && semiFile.length() > 0) {
-            semiFile.renameTo(permanentFile);
+            if (semiFile.renameTo(permanentFile)) {
+                invalidateMemoryCache(stationUuid);
+                pathCache.put(stationUuid, permanentFile.getAbsolutePath());
+            }
         }
     }
 
@@ -362,6 +441,8 @@ public class StationIconCache {
             // 移入半永久缓存，重置TTL
             if (permanentFile.renameTo(semiFile)) {
                 semiFile.setLastModified(System.currentTimeMillis());
+                invalidateMemoryCache(stationUuid);
+                pathCache.put(stationUuid, semiFile.getAbsolutePath());
             }
         }
     }
@@ -377,6 +458,10 @@ public class StationIconCache {
         for (File file : files) {
             if (file.isFile() && now - file.lastModified() > SEMI_PERMANENT_TTL_MS) {
                 file.delete();
+                // 文件名即 uuid 的 MD5，无法反推 uuid，整体失效内存缓存最安全
+                pathCache.evictAll();
+                bitmapCache.evictAll();
+                verifiedCache.clear();
             }
         }
     }
@@ -391,6 +476,7 @@ public class StationIconCache {
         String fileName = getCacheFileName(stationUuid);
         new File(permanentDir, fileName).delete();
         new File(semiPermanentDir, fileName).delete();
+        invalidateMemoryCache(stationUuid);
         clearFallbackMark(stationUuid);
         clearIconUrlRetryTime(stationUuid);
     }
@@ -404,6 +490,9 @@ public class StationIconCache {
         int count = 0;
         count += deleteAllFilesInDir(permanentDir);
         count += deleteAllFilesInDir(semiPermanentDir);
+        pathCache.evictAll();
+        bitmapCache.evictAll();
+        verifiedCache.clear();
         return count;
     }
 

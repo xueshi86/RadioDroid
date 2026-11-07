@@ -91,18 +91,12 @@ public class RadioDroidBrowser {
                     break;
                 }
 
-                // 优先从缓存加载
-                StationIconCache iconCache = StationIconCache.getInstance(context);
-                String cachedPath = iconCache.getIconPath(station.StationUuid);
-                if (cachedPath != null) {
-                    try {
-                        Bitmap cachedBitmap = iconCache.getIconBitmap(station.StationUuid);
-                        if (cachedBitmap != null) {
-                            stationIdToIcon.put(station.StationUuid, cachedBitmap);
-                            countDownLatch.countDown();
-                            continue;
-                        }
-                    } catch (Exception ignored) {}
+                // 优先从缓存加载（getIconBitmap 内部含内存缓存，直接命中时零磁盘IO）
+                Bitmap cachedBitmap = StationIconCache.getInstance(context).getIconBitmap(station.StationUuid);
+                if (cachedBitmap != null) {
+                    stationIdToIcon.put(station.StationUuid, cachedBitmap);
+                    countDownLatch.countDown();
+                    continue;
                 }
 
                 Target imageLoadTarget = new Target() {
