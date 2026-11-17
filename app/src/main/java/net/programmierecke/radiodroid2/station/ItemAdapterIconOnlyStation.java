@@ -1,9 +1,6 @@
 package net.programmierecke.radiodroid2.station;
 
 import android.content.SharedPreferences;
-import android.content.res.ColorStateList;
-import android.graphics.Color;
-import android.graphics.Typeface;
 
 import android.text.TextUtils;
 import android.util.Log;
@@ -34,8 +31,6 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
     class StationViewHolder extends ItemAdapterStation.StationViewHolder implements View.OnClickListener, View.OnCreateContextMenuListener, SwipeableViewHolder {
         PopupMenu contextMenu = null;
         boolean suppressContextMenu = false;
-        // 记录布局中声明的默认标题颜色，退出“正在播放”状态时还原（否则列表复用会残留强调色）
-        final ColorStateList defaultTitleColors;
 
         StationViewHolder(View itemView) {
             super(itemView);
@@ -47,7 +42,6 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
             transparentImageView = itemView.findViewById(R.id.iconTransparentCircle);
             playingOverlay = itemView.findViewById(R.id.playingOverlay);
             textViewTitle = itemView.findViewById(R.id.textViewStationName);
-            defaultTitleColors = textViewTitle.getTextColors();
             itemView.setOnCreateContextMenuListener(this);
         }
 
@@ -110,30 +104,8 @@ public class ItemAdapterIconOnlyStation extends ItemAdapaterContextMenuStation i
             }
         }
 
-        if (playingStationPosition == position) {
-            // “正在播放”高亮色跟随预设配色（强调色）
-            int highlightColor = Utils.getThemeColor(getContext(), R.attr.presetAccentColor);
-            holder.frameLayout.setBackground(buildPlayingBorderDrawable(highlightColor));
-            // 图标上的同色淡遮盖（约 30% 强调色）：恢复改版前“正在播放”图标的着色效果
-            int overlayColor = Color.argb(80, Color.red(highlightColor), Color.green(highlightColor), Color.blue(highlightColor));
-            holder.playingOverlay.setBackgroundColor(overlayColor);
-            holder.playingOverlay.setVisibility(View.VISIBLE);
-            holder.textViewTitle.setTextColor(highlightColor);
-            holder.textViewTitle.setTypeface(null, Typeface.BOLD);
-        } else {
-            holder.frameLayout.setBackground(null);
-            holder.playingOverlay.setVisibility(View.GONE);
-            // 还原默认标题颜色，避免 ViewHolder 复用后残留上一首的强调色
-            holder.textViewTitle.setTextColor(((StationViewHolder) holder).defaultTitleColors);
-            holder.textViewTitle.setTypeface(null, Typeface.NORMAL);
-        }
-
-        // 圆形图标下高亮蒙层也要跟着裁成圆形，否则蒙层会在圆形图标四周露出方形色块
-        if (useCircularIcons) {
-            Utils.applyCircularIcon(holder.playingOverlay, null);
-        } else {
-            Utils.clearCircularIcon(holder.playingOverlay, null);
-        }
+        // “正在播放”角标居中放在台标中心，由基类统一处理
+        updatePlayingIndicator(holder, playingStationPosition == position);
 
         holder.textViewTitle.setText(station.Name);
     }

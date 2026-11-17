@@ -77,10 +77,11 @@
                         android:scaleType="fitCenter"
                         app:srcCompat="@drawable/ic_star_transparent_with_border_24dp" />
 
+                <!-- “正在播放”角标：居中放在台标中心 -->
                 <ImageView
                     android:id="@+id/playingOverlay"
-                    android:layout_width="@dimen/icon_station_list"
-                    android:layout_height="@dimen/icon_station_list"
+                    android:layout_width="@dimen/playing_bars_width"
+                    android:layout_height="@dimen/playing_bars_height"
                     android:layout_gravity="center"
                     android:contentDescription="@null"
                     android:visibility="gone"

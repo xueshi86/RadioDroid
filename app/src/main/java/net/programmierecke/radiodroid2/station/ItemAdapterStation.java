@@ -9,10 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.graphics.Color;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.annotation.SuppressLint;
 import android.text.TextUtils;
@@ -409,32 +406,7 @@ public class ItemAdapterStation
         // 确保电台名称可见
         holder.textViewTitle.setText(station.Name != null ? station.Name : activity.getString(R.string.unknown_station));
         
-        // 文字颜色统一走主题角色，不再按亮/暗主题硬编码
-        // “正在播放”高亮色跟随预设配色（强调色）
-        int highlightColor = Utils.getThemeColor(getContext(), R.attr.presetAccentColor);
-
-        if (playingStationPosition == position) {
-            holder.textViewTitle.setTextColor(highlightColor);
-            holder.textViewTitle.setTypeface(null, Typeface.BOLD);
-            holder.frameLayout.setBackground(buildPlayingBorderDrawable(highlightColor));
-            // 图标上的同色淡遮盖（约 30% 强调色）：恢复改版前“正在播放”图标的着色效果
-            int overlayColor = Color.argb(80, Color.red(highlightColor), Color.green(highlightColor), Color.blue(highlightColor));
-            holder.playingOverlay.setBackgroundColor(overlayColor);
-            holder.playingOverlay.setVisibility(View.VISIBLE);
-        } else {
-            // 还原主题主文字色，避免 ViewHolder 复用残留上一首的强调色
-            holder.textViewTitle.setTextColor(Utils.getThemeColor(getContext(), R.attr.colorTextPrimary));
-            holder.textViewTitle.setTypeface(null, Typeface.NORMAL);
-            holder.frameLayout.setBackground(null);
-            holder.playingOverlay.setVisibility(View.GONE);
-        }
-
-        // 圆形图标下高亮蒙层也要跟着裁成圆形，否则蒙层会在圆形图标四周露出方形色块
-        if (useCircularIcons) {
-            Utils.applyCircularIcon(holder.playingOverlay, null);
-        } else {
-            Utils.clearCircularIcon(holder.playingOverlay, null);
-        }
+        updatePlayingIndicator(holder, playingStationPosition == position);
 
         holder.textViewShortDescription.setText(station.getShortDetails(getContext()));
         holder.textViewTags.setText(station.TagsAll != null ? station.TagsAll.replace(",", ", ") : "");
@@ -679,20 +651,6 @@ public class ItemAdapterStation
         }
     }
 
-    /**
-     * 构建“正在播放”高亮方框：直角（不圆角）细描边，与图标留出空隙。
-     * 描边宽度用 dp 换算：此前直接传 px（3px，高密度屏上过细），后来修正成 3dp 又偏粗，现取 2dp。
-     */
-    GradientDrawable buildPlayingBorderDrawable(int color) {
-        float density = getContext().getResources().getDisplayMetrics().density;
-        GradientDrawable borderDrawable = new GradientDrawable();
-        borderDrawable.setShape(GradientDrawable.RECTANGLE);
-        borderDrawable.setCornerRadius(0);
-        borderDrawable.setStroke(Math.max(1, Math.round(2 * density)), color);
-        borderDrawable.setColor(Color.TRANSPARENT);
-        return borderDrawable;
-    }
-
     private void setupCompactStyle(final StationViewHolder holder) {
         int containerSize = (int) getContext().getResources().getDimension(R.dimen.compact_style_icon_container_width);
         int iconSize = (int) getContext().getResources().getDimension(R.dimen.compact_style_icon_width);
@@ -703,9 +661,9 @@ public class ItemAdapterStation
         holder.frameLayout.getLayoutParams().height = containerSize;
         holder.imageViewIcon.getLayoutParams().width = iconSize;
         holder.imageViewIcon.getLayoutParams().height = iconSize;
-        // 高亮遮罩与圆形遮罩需与图标同尺寸，保证方框紧贴图标
-        holder.playingOverlay.getLayoutParams().width = iconSize;
-        holder.playingOverlay.getLayoutParams().height = iconSize;
+        // 正在播放角标固定尺寸（居中放在台标中心），不随图标缩放
+        holder.playingOverlay.getLayoutParams().width = (int) getContext().getResources().getDimension(R.dimen.playing_bars_width);
+        holder.playingOverlay.getLayoutParams().height = (int) getContext().getResources().getDimension(R.dimen.playing_bars_height);
         holder.transparentImageView.getLayoutParams().width = (int) getContext().getResources().getDimension(R.dimen.compact_style_icon_width);
         holder.transparentImageView.getLayoutParams().height = (int) getContext().getResources().getDimension(R.dimen.compact_style_icon_height);
 
@@ -732,8 +690,8 @@ public class ItemAdapterStation
         holder.frameLayout.getLayoutParams().height = frameSize;
         holder.imageViewIcon.getLayoutParams().width = iconSize;
         holder.imageViewIcon.getLayoutParams().height = iconSize;
-        holder.playingOverlay.getLayoutParams().width = iconSize;
-        holder.playingOverlay.getLayoutParams().height = iconSize;
+        holder.playingOverlay.getLayoutParams().width = (int) getContext().getResources().getDimension(R.dimen.playing_bars_width);
+        holder.playingOverlay.getLayoutParams().height = (int) getContext().getResources().getDimension(R.dimen.playing_bars_height);
         holder.transparentImageView.getLayoutParams().width = iconSize;
         holder.transparentImageView.getLayoutParams().height = iconSize;
 
@@ -794,6 +752,18 @@ public class ItemAdapterStation
                 notifyItemChanged(i);
                 break;
             }
+        }
+    }
+
+    /**
+     * 更新“正在播放”角标：播放圆居中放在台标中心。
+     */
+    protected void updatePlayingIndicator(StationViewHolder holder, boolean isPlaying) {
+        if (isPlaying) {
+            holder.playingOverlay.setImageResource(R.drawable.playing_badge);
+            holder.playingOverlay.setVisibility(View.VISIBLE);
+        } else {
+            holder.playingOverlay.setVisibility(View.GONE);
         }
     }
 }
