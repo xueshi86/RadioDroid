@@ -42,6 +42,9 @@
          受网格列宽（regular_style_icon_container_width=80dp）限制不可再放大，
          否则在 320dp 等窄屏上会超出列宽被裁切 -->
     <dimen name="icon_station_grid_frame">80dp</dimen>
+    <!-- 「正在播放」角标（播放圆）：面积为台标的九分之一 → 边长为 70dp/3 ≈ 23dp，居中放在台标中心 -->
+    <dimen name="playing_bars_width">23dp</dimen>
+    <dimen name="playing_bars_height">23dp</dimen>
     <dimen name="icon_action">24dp</dimen>
     <dimen name="icon_action_small">20dp</dimen>
     <dimen name="mini_player_height">64dp</dimen>
